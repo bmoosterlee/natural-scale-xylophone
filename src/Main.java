@@ -9,6 +9,8 @@ public class Main {
 
         byte[] clipBuffer = new byte[ 1 ];
         int sampleRate = 44100;
+        float frequency = 440f;
+
         AudioFormat af = new AudioFormat( (float ) sampleRate, 8, 1, true, false );
         SourceDataLine sdl = null;
         try {
@@ -19,7 +21,7 @@ public class Main {
         }
         sdl.start();
         for(int i = 0; i < 1000 * (float ) sampleRate / 1000; i++ ) {
-            double angle = i / ( (float ) sampleRate / 440 ) * 2.0 * Math.PI;
+            double angle = i / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
             clipBuffer[ 0 ] = (byte )( Math.sin( angle ) * 100 );
             sdl.write( clipBuffer, 0, 1 );
         }
