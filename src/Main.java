@@ -9,7 +9,7 @@ public class Main {
 
         byte[] clipBuffer = new byte[ 1 ];
         int sampleRate = 44100;
-        float frequency = 440f;
+        double frequency = 440.;
 
         AudioFormat af = new AudioFormat( (float ) sampleRate, 8, 1, true, false );
         SourceDataLine sdl = null;
