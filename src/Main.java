@@ -9,7 +9,6 @@ public class Main {
 
         byte[] clipBuffer = new byte[ 1 ];
         int sampleRate = 44100;
-        double frequency = 440.;
 
         AudioFormat af = new AudioFormat( (float ) sampleRate, 8, 1, true, false );
         SourceDataLine sdl = null;
@@ -21,11 +20,15 @@ public class Main {
         }
         sdl.start();
 
+        double frequency = 440.;
+        long startingTick = 0;
+
         long tick = 0l;
         while(true){
             clipBuffer[ 0 ] = 0;
-            double volume = 100. * 1000./(1000.+tick);
-            double angle = tick / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
+            long tickDifference = tick-startingTick;
+            double volume = 100. * 1000./(1000.+tickDifference);
+            double angle = tickDifference / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
             byte amplitude = (byte) (Math.sin(angle) * volume);
             clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
             sdl.write( clipBuffer, 0, 1 );
