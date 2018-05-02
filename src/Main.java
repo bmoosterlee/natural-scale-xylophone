@@ -20,7 +20,8 @@ public class Main {
             e.printStackTrace();
         }
         sdl.start();
-        int i = 0;
+
+        long i = 0;
         while(true){
             double amplitude = 100. * 1000./(1000.+i);
             double angle = i / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
