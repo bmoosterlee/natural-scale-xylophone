@@ -20,13 +20,16 @@ public class Main {
             e.printStackTrace();
         }
         sdl.start();
-        for(int i = 0; i < 1000 * (float ) sampleRate / 1000; i++ ) {
+        int i = 0;
+        while(true){
+            double amplitude = 100. * 1000./(1000.+i);
             double angle = i / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
-            clipBuffer[ 0 ] = (byte )( Math.sin( angle ) * 100 );
+            clipBuffer[ 0 ] = (byte )( Math.sin( angle ) * amplitude );
             sdl.write( clipBuffer, 0, 1 );
+            i++;
         }
-        sdl.drain();
-        sdl.stop();
+//        sdl.drain();
+//        sdl.stop();
 
     }
 
