@@ -23,9 +23,9 @@ public class Main {
 
         long tick = 0l;
         while(true){
-            double amplitude = 100. * 1000./(1000.+tick);
+            double volume = 100. * 1000./(1000.+tick);
             double angle = tick / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
-            clipBuffer[ 0 ] = (byte )( Math.sin( angle ) * amplitude );
+            clipBuffer[ 0 ] = (byte )( Math.sin( angle ) * volume );
             sdl.write( clipBuffer, 0, 1 );
             tick++;
         }
