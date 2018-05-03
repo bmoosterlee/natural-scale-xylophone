@@ -25,10 +25,7 @@ public class Main {
         long tick = 0l;
         while(true){
             clipBuffer[ 0 ] = 0;
-            long tickDifference = tick-testTone.getStartingTick();
-            double volume = 100. * 1000./(1000.+tickDifference);
-            double angle = tickDifference / ( (float ) sampleRate / testTone.getFrequency()) * 2.0 * Math.PI;
-            byte amplitude = (byte) (Math.sin(angle) * volume);
+            byte amplitude = testTone.getAmplitude(sampleRate, tick);
             clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
             sdl.write( clipBuffer, 0, 1 );
             tick++;
