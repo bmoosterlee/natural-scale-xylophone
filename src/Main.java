@@ -21,12 +21,15 @@ public class Main {
         sdl.start();
 
         Note testTone = new Note(440., 0);
+        Note testTone2 = new Note(1100., sampleRate/2);
 
         long tick = 0l;
         while(true){
             clipBuffer[ 0 ] = 0;
             byte amplitude = testTone.getAmplitude(sampleRate, tick);
             clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
+            byte amplitude2 = testTone2.getAmplitude(sampleRate, tick);
+            clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude2));
             sdl.write( clipBuffer, 0, 1 );
             tick++;
         }
