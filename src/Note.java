@@ -9,6 +9,9 @@ public class Note {
     }
 
     public byte getAmplitude(float sampleRate, long tick) {
+        if(startingTick>tick){
+            return (byte) 0;
+        }
         long tickDifference = tick-getStartingTick();
         double volume = 100. * 1000./(1000.+tickDifference);
         double angle = tickDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
