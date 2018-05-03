@@ -20,15 +20,14 @@ public class Main {
         }
         sdl.start();
 
-        double frequency = 440.;
-        long startingTick = 0;
+        Note testTone = new Note(440., 0);
 
         long tick = 0l;
         while(true){
             clipBuffer[ 0 ] = 0;
-            long tickDifference = tick-startingTick;
+            long tickDifference = tick-testTone.getStartingTick();
             double volume = 100. * 1000./(1000.+tickDifference);
-            double angle = tickDifference / ( (float ) sampleRate / frequency) * 2.0 * Math.PI;
+            double angle = tickDifference / ( (float ) sampleRate / testTone.getFrequency()) * 2.0 * Math.PI;
             byte amplitude = (byte) (Math.sin(angle) * volume);
             clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
             sdl.write( clipBuffer, 0, 1 );
