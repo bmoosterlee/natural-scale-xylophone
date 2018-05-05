@@ -21,7 +21,7 @@ public class Main {
         sdl.start();
 
         Note testTone = new Note(440., 0);
-        Note testTone2 = new Note(1100., sampleRate/2);
+        Note testTone2 = new Note(1100., (long)(sampleRate * 0.5));
 
         long tick = 0l;
         while(true){
