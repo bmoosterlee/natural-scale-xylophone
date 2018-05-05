@@ -13,11 +13,14 @@ public class Note {
             return (byte) 0;
         }
         long tickDifference = tick-getStartingTick();
-        double volume = 100. * 1000./(1000.+tickDifference);
+        double volume = getVolume(tickDifference);
         double angle = tickDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
         return (byte) (Math.sin(angle) * volume);
     }
 
+    private double getVolume(long tickDifference) {
+        return 100. * 1000./(1000.+tickDifference);
+    }
     public double getFrequency() {
         return frequency;
     }
