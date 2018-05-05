@@ -7,13 +7,13 @@ import java.util.LinkedList;
 public class Main {
 
     public static final int SAMPLE_SIZE_IN_BITS = 8;
+    public static final int SAMPLE_RATE = 44100;
 
     public static void main(String[] args){
 
         byte[] clipBuffer = new byte[ 1 ];
-        int sampleRate = 44100;
 
-        AudioFormat af = new AudioFormat( (float ) sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false );
+        AudioFormat af = new AudioFormat( (float ) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false );
         SourceDataLine sdl = null;
         try {
             sdl = AudioSystem.getSourceDataLine( af );
@@ -24,7 +24,7 @@ public class Main {
         sdl.start();
 
         Note testTone = new Note(440., 0);
-        Note testTone2 = new Note(1100., (long)(sampleRate * 0.5));
+        Note testTone2 = new Note(1100., (long)(SAMPLE_RATE * 0.5));
 
         LinkedList<Note> liveNotes = new LinkedList<Note>();
         liveNotes.add(testTone);
@@ -34,7 +34,7 @@ public class Main {
         while(true){
             clipBuffer[ 0 ] = 0;
             for(Note note : liveNotes) {
-                addAmplitude(clipBuffer, sampleRate, note, tick);
+                addAmplitude(clipBuffer, SAMPLE_RATE, note, tick);
             }
             sdl.write( clipBuffer, 0, 1 );
             tick++;
