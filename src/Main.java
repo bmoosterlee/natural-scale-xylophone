@@ -6,12 +6,14 @@ import java.util.LinkedList;
 
 public class Main {
 
+    public static final int SAMPLE_SIZE_IN_BITS = 8;
+
     public static void main(String[] args){
 
         byte[] clipBuffer = new byte[ 1 ];
         int sampleRate = 44100;
 
-        AudioFormat af = new AudioFormat( (float ) sampleRate, 8, 1, true, false );
+        AudioFormat af = new AudioFormat( (float ) sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false );
         SourceDataLine sdl = null;
         try {
             sdl = AudioSystem.getSourceDataLine( af );
