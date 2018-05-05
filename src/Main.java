@@ -45,7 +45,7 @@ public class Main {
     }
 
     private static void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long tick) {
-        byte amplitude = note.getAmplitude(sampleRate, tick);
+        byte amplitude = (byte)(255.*(0.5*(1.+note.getAmplitude(sampleRate, tick)))-128.);
         clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
     }
 
