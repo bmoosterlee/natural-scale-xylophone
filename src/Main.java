@@ -30,12 +30,21 @@ public class Main {
         liveNotes.add(testTone);
         liveNotes.add(testTone2);
 
+        LinkedList<Note> notesToBeRemoved = new LinkedList<Note>();
+
         long tick = 0l;
         while(true){
             clipBuffer[ 0 ] = 0;
+
             for(Note note : liveNotes) {
+                if(note.isDead(tick)){
+                    notesToBeRemoved.add(note);
+                }
                 addAmplitude(clipBuffer, SAMPLE_RATE, note, tick);
             }
+            liveNotes.remove(notesToBeRemoved);
+            notesToBeRemoved.clear();
+
             sdl.write( clipBuffer, 0, 1 );
             tick++;
         }

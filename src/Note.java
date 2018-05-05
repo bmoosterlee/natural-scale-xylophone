@@ -21,6 +21,11 @@ public class Note {
     private double getVolume(long tickDifference) {
         return 1000./(1000.+tickDifference);
     }
+
+    public boolean isDead(long tick){
+        return Math.abs(getVolume(tick-getStartingTick()))<1./Math.pow(2, Main.SAMPLE_SIZE_IN_BITS);
+    }
+
     public double getFrequency() {
         return frequency;
     }
