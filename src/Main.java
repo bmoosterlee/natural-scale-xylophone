@@ -26,11 +26,11 @@ public class Main {
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long)(SAMPLE_RATE * 0.5));
 
-        LinkedList<Note> liveNotes = new LinkedList<Note>();
+        LinkedList<Note> liveNotes = new LinkedList<>();
         liveNotes.add(testTone);
         liveNotes.add(testTone2);
 
-        LinkedList<Note> notesToBeRemoved = new LinkedList<Note>();
+        LinkedList<Note> notesToBeRemoved = new LinkedList<>();
 
         long tick = 0l;
         while(true){
