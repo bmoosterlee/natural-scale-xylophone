@@ -22,8 +22,8 @@ public class Note {
         return 1000./(1000.+tickDifference);
     }
 
-    public boolean isDead(long tick){
-        return Math.abs(getVolume(tick-getStartingTick()))<1./Math.pow(2, NoteEnvironment.SAMPLE_SIZE_IN_BITS);
+    public boolean isDead(long tick, double marginalSampleSize){
+        return Math.abs(getVolume(tick-getStartingTick()))<marginalSampleSize;
     }
 
     public double getFrequency() {

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 
 public class NoteEnvironment {
 
-    static int SAMPLE_SIZE_IN_BITS;
+    private final int SAMPLE_SIZE_IN_BITS;
     private final int SAMPLE_RATE;
     private byte[] clipBuffer;
     private SourceDataLine sdl;
@@ -32,7 +32,7 @@ public class NoteEnvironment {
             getClipBuffer()[0] = 0;
 
             for (Note note : getLiveNotes()) {
-                if (note.isDead(tick)) {
+                if (note.isDead(tick, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                     notesToBeRemoved.add(note);
                 }
                 addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
