@@ -33,6 +33,10 @@ public class NoteEnvironment implements Runnable{
 
     @Override
     public void run() {
+        //TODO Move ticker to it's own class, which sends a message to the NoteEnvironment and HarmonicCalculator
+        // at each new tick, and waits for the next tick instead of calculating as many ticks as possible, because this
+        //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
+        // than the sdl, causing there to be a backlog of ticks which need to be played before our note is.
         tick = 0l;
         while (true) {
             tick();
