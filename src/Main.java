@@ -9,43 +9,48 @@ public class Main {
     public static final int SAMPLE_SIZE_IN_BITS = 8;
     public static final int SAMPLE_RATE = 44100;
 
+    private static byte[] clipBuffer;
+    private static SourceDataLine sdl;
+    private static LinkedList<Note> liveNotes;
+    private static LinkedList<Note> notesToBeRemoved;
+    private static long tick;
+
     public static void main(String[] args){
 
-        byte[] clipBuffer = new byte[ 1 ];
+        setClipBuffer(new byte[ 1 ]);
 
         AudioFormat af = new AudioFormat( (float ) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false );
-        SourceDataLine sdl = null;
+        setSdl(null);
         try {
-            sdl = AudioSystem.getSourceDataLine( af );
-            sdl.open();
+            setSdl(AudioSystem.getSourceDataLine( af ));
+            getSdl().open();
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
-        sdl.start();
+        getSdl().start();
+
+        liveNotes = new LinkedList<>();
+        notesToBeRemoved = new LinkedList<>();
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long)(SAMPLE_RATE * 0.5));
-
-        LinkedList<Note> liveNotes = new LinkedList<>();
         liveNotes.add(testTone);
         liveNotes.add(testTone2);
 
-        LinkedList<Note> notesToBeRemoved = new LinkedList<>();
-
-        long tick = 0l;
+        tick = 0l;
         while(true){
-            clipBuffer[ 0 ] = 0;
+            getClipBuffer()[ 0 ] = 0;
 
             for(Note note : liveNotes) {
                 if(note.isDead(tick)){
                     notesToBeRemoved.add(note);
                 }
-                addAmplitude(clipBuffer, SAMPLE_RATE, note, tick);
+                addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
             }
             liveNotes.remove(notesToBeRemoved);
             notesToBeRemoved.clear();
 
-            sdl.write( clipBuffer, 0, 1 );
+            getSdl().write(getClipBuffer(), 0, 1 );
             tick++;
         }
 //        sdl.drain();
@@ -58,4 +63,19 @@ public class Main {
         clipBuffer[ 0 ] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[ 0 ] + amplitude));
     }
 
+    public static byte[] getClipBuffer() {
+        return clipBuffer;
+    }
+
+    public static void setClipBuffer(byte[] clipBuffer) {
+        Main.clipBuffer = clipBuffer;
+    }
+
+    public static SourceDataLine getSdl() {
+        return sdl;
+    }
+
+    public static void setSdl(SourceDataLine sdl) {
+        Main.sdl = sdl;
+    }
 }
