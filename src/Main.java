@@ -9,8 +9,8 @@ public class Main {
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long) (SAMPLE_RATE * 0.5));
-        noteEnvironment.getLiveNotes().add(testTone);
-        noteEnvironment.getLiveNotes().add(testTone2);
+        noteEnvironment.addNote(testTone);
+        noteEnvironment.addNote(testTone2);
 
         noteEnvironment.run();
         noteEnvironment.close();

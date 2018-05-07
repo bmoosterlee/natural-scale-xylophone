@@ -90,4 +90,8 @@ public class NoteEnvironment {
     private void setLiveNotes(LinkedList<Note> liveNotes) {
         this.liveNotes = liveNotes;
     }
+
+    public void addNote(Note note) {
+        getLiveNotes().add(note);
+    }
 }
