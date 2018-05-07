@@ -1,5 +1,11 @@
 public class HarmonicCalculator {
 
+    private final NoteEnvironment noteEnvironment;
+
+    public HarmonicCalculator(NoteEnvironment noteEnvironment){
+        this.noteEnvironment = noteEnvironment;
+    }
+
     //Find the next fraction by increasing the denominator and cycling through the numerators
     //we then reduce each fraction using euclid's algorithm.
     //After reducing, we need to check whether the fraction was already used.

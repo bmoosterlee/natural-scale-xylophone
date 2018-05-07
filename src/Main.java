@@ -6,6 +6,7 @@ public class Main {
         int SAMPLE_RATE = 44100;
 
         NoteEnvironment noteEnvironment = new NoteEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(noteEnvironment);
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long) (SAMPLE_RATE * 0.5));
