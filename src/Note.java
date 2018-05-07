@@ -23,7 +23,7 @@ public class Note {
     }
 
     public boolean isDead(long tick){
-        return Math.abs(getVolume(tick-getStartingTick()))<1./Math.pow(2, Main.SAMPLE_SIZE_IN_BITS);
+        return Math.abs(getVolume(tick-getStartingTick()))<1./Math.pow(2, NoteEnvironment.SAMPLE_SIZE_IN_BITS);
     }
 
     public double getFrequency() {
