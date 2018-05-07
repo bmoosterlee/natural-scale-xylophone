@@ -29,20 +29,24 @@ public class NoteEnvironment {
     public void run() {
         tick = 0l;
         while (true) {
-            getClipBuffer()[0] = 0;
-
-            for (Note note : getLiveNotes()) {
-                if (note.isDead(tick, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
-                    notesToBeRemoved.add(note);
-                }
-                addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
-            }
-            getLiveNotes().remove(notesToBeRemoved);
-            notesToBeRemoved.clear();
-
-            getSdl().write(getClipBuffer(), 0, 1);
+            tick();
             tick++;
         }
+    }
+
+    private void tick() {
+        getClipBuffer()[0] = 0;
+
+        for (Note note : getLiveNotes()) {
+            if (note.isDead(tick, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
+                notesToBeRemoved.add(note);
+            }
+            addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
+        }
+        getLiveNotes().remove(notesToBeRemoved);
+        notesToBeRemoved.clear();
+
+        getSdl().write(getClipBuffer(), 0, 1);
     }
 
     private void initialize() {
