@@ -1,9 +1,21 @@
-public class HarmonicCalculator {
+public class HarmonicCalculator implements Runnable{
 
     private final NoteEnvironment noteEnvironment;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
+    }
+
+    public void start(){
+        Thread thread = new Thread(this);
+        thread.start();
+    }
+
+    @Override
+    public void run() {
+        while(true){
+
+        }
     }
 
     //Find the next fraction by increasing the denominator and cycling through the numerators
