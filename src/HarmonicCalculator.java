@@ -1,9 +1,14 @@
+import java.util.LinkedList;
+
 public class HarmonicCalculator implements Runnable{
 
     private final NoteEnvironment noteEnvironment;
+    Boolean tickHasBeenUpdated;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
+
+        tickHasBeenUpdated = false;
     }
 
     public void start(){
@@ -13,8 +18,20 @@ public class HarmonicCalculator implements Runnable{
 
     @Override
     public void run() {
-        while(true){
+        boolean newTick;
+        long tick = 0l;
 
+        while(true){
+            newTick = false;
+            synchronized(tickHasBeenUpdated) {
+                if (tickHasBeenUpdated) {
+                    newTick = true;
+                    tickHasBeenUpdated = false;
+                }
+            }
+            if(newTick){
+                
+            }
         }
     }
 
