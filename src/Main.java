@@ -8,13 +8,12 @@ public class Main {
         NoteEnvironment noteEnvironment = new NoteEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator(noteEnvironment);
 
+        noteEnvironment.start();
+
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long) (SAMPLE_RATE * 0.5));
         noteEnvironment.addNote(testTone);
         noteEnvironment.addNote(testTone2);
-
-        noteEnvironment.run();
-        noteEnvironment.close();
 
     }
 

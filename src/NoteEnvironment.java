@@ -4,7 +4,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import java.util.LinkedList;
 
-public class NoteEnvironment {
+public class NoteEnvironment implements Runnable{
 
     private final int SAMPLE_SIZE_IN_BITS;
     private final int SAMPLE_RATE;
@@ -21,17 +21,24 @@ public class NoteEnvironment {
         initialize();
     }
 
+    public void start(){
+        Thread thread = new Thread(this);
+        thread.start();
+    }
+
     public void close() {
         sdl.drain();
         sdl.stop();
     }
 
+    @Override
     public void run() {
         tick = 0l;
         while (true) {
             tick();
             tick++;
         }
+//        close();
     }
 
     private void tick() {
