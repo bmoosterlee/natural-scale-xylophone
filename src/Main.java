@@ -21,8 +21,8 @@ public class Main {
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long)(SAMPLE_RATE * 0.5));
-        liveNotes.add(testTone);
-        liveNotes.add(testTone2);
+        getLiveNotes().add(testTone);
+        getLiveNotes().add(testTone2);
 
         run();
         close();
@@ -39,13 +39,13 @@ public class Main {
         while(true){
             getClipBuffer()[ 0 ] = 0;
 
-            for(Note note : liveNotes) {
+            for(Note note : getLiveNotes()) {
                 if(note.isDead(tick)){
                     notesToBeRemoved.add(note);
                 }
                 addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
             }
-            liveNotes.remove(notesToBeRemoved);
+            getLiveNotes().remove(notesToBeRemoved);
             notesToBeRemoved.clear();
 
             getSdl().write(getClipBuffer(), 0, 1 );
@@ -66,7 +66,7 @@ public class Main {
         }
         getSdl().start();
 
-        liveNotes = new LinkedList<>();
+        setLiveNotes(new LinkedList<>());
         notesToBeRemoved = new LinkedList<>();
     }
 
@@ -89,5 +89,13 @@ public class Main {
 
     public static void setSdl(SourceDataLine sdl) {
         Main.sdl = sdl;
+    }
+
+    public static LinkedList<Note> getLiveNotes() {
+        return liveNotes;
+    }
+
+    public static void setLiveNotes(LinkedList<Note> liveNotes) {
+        Main.liveNotes = liveNotes;
     }
 }
