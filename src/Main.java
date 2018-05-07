@@ -17,26 +17,24 @@ public class Main {
 
     public static void main(String[] args){
 
-        setClipBuffer(new byte[ 1 ]);
-
-        AudioFormat af = new AudioFormat( (float ) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false );
-        setSdl(null);
-        try {
-            setSdl(AudioSystem.getSourceDataLine( af ));
-            getSdl().open();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-        getSdl().start();
-
-        liveNotes = new LinkedList<>();
-        notesToBeRemoved = new LinkedList<>();
+        initialize();
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long)(SAMPLE_RATE * 0.5));
         liveNotes.add(testTone);
         liveNotes.add(testTone2);
 
+        run();
+        close();
+
+    }
+
+    private static void close() {
+        sdl.drain();
+        sdl.stop();
+    }
+
+    private static void run() {
         tick = 0l;
         while(true){
             getClipBuffer()[ 0 ] = 0;
@@ -53,9 +51,23 @@ public class Main {
             getSdl().write(getClipBuffer(), 0, 1 );
             tick++;
         }
-//        sdl.drain();
-//        sdl.stop();
+    }
 
+    private static void initialize() {
+        setClipBuffer(new byte[ 1 ]);
+
+        AudioFormat af = new AudioFormat( (float ) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false );
+        setSdl(null);
+        try {
+            setSdl(AudioSystem.getSourceDataLine( af ));
+            getSdl().open();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
+        getSdl().start();
+
+        liveNotes = new LinkedList<>();
+        notesToBeRemoved = new LinkedList<>();
     }
 
     private static void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long tick) {
