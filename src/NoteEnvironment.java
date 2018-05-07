@@ -9,7 +9,7 @@ public class NoteEnvironment implements Runnable{
     private final int SAMPLE_SIZE_IN_BITS;
     private final int SAMPLE_RATE;
     private byte[] clipBuffer;
-    private SourceDataLine sdl;
+    private SourceDataLine sourceDataLine;
     private LinkedList<Note> liveNotes;
     private LinkedList<Note> notesToBeRemoved;
     private long tick;
@@ -27,8 +27,8 @@ public class NoteEnvironment implements Runnable{
     }
 
     public void close() {
-        sdl.drain();
-        sdl.stop();
+        sourceDataLine.drain();
+        sourceDataLine.stop();
     }
 
     @Override
@@ -36,7 +36,7 @@ public class NoteEnvironment implements Runnable{
         //TODO Move ticker to it's own class, which sends a message to the NoteEnvironment and HarmonicCalculator
         // at each new tick, and waits for the next tick instead of calculating as many ticks as possible, because this
         //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
-        // than the sdl, causing there to be a backlog of ticks which need to be played before our note is.
+        // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
         tick = 0l;
         while (true) {
             tick();
@@ -57,21 +57,21 @@ public class NoteEnvironment implements Runnable{
         getLiveNotes().remove(notesToBeRemoved);
         notesToBeRemoved.clear();
 
-        getSdl().write(getClipBuffer(), 0, 1);
+        getSourceDataLine().write(getClipBuffer(), 0, 1);
     }
 
     private void initialize() {
         setClipBuffer(new byte[1]);
 
         AudioFormat af = new AudioFormat((float) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false);
-        setSdl(null);
+        setSourceDataLine(null);
         try {
-            setSdl(AudioSystem.getSourceDataLine(af));
-            getSdl().open();
+            setSourceDataLine(AudioSystem.getSourceDataLine(af));
+            getSourceDataLine().open();
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
-        getSdl().start();
+        getSourceDataLine().start();
 
         setLiveNotes(new LinkedList<Note>());
         notesToBeRemoved = new LinkedList<Note>();
@@ -90,12 +90,12 @@ public class NoteEnvironment implements Runnable{
         this.clipBuffer = clipBuffer;
     }
 
-    private SourceDataLine getSdl() {
-        return sdl;
+    private SourceDataLine getSourceDataLine() {
+        return sourceDataLine;
     }
 
-    private void setSdl(SourceDataLine sdl) {
-        this.sdl = sdl;
+    private void setSourceDataLine(SourceDataLine sourceDataLine) {
+        this.sourceDataLine = sourceDataLine;
     }
 
     public LinkedList<Note> getLiveNotes() {
