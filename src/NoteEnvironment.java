@@ -48,13 +48,16 @@ public class NoteEnvironment implements Runnable{
     private void tick() {
         getClipBuffer()[0] = 0;
 
-        for (Note note : getLiveNotes()) {
+        LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
+        for (Note note : currentLiveNotes) {
             if (note.isDead(tick, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
             }
             addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
         }
-        getLiveNotes().remove(notesToBeRemoved);
+        LinkedList<Note> newLiveNotes = (LinkedList<Note>) currentLiveNotes.clone();
+        newLiveNotes.remove(notesToBeRemoved);
+        setLiveNotes(newLiveNotes);
         notesToBeRemoved.clear();
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
@@ -102,7 +105,7 @@ public class NoteEnvironment implements Runnable{
         return liveNotes;
     }
 
-    private void setLiveNotes(LinkedList<Note> liveNotes) {
+    private synchronized void setLiveNotes(LinkedList<Note> liveNotes) {
         this.liveNotes = liveNotes;
     }
 
