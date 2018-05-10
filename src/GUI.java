@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class GUI {
+public class GUI extends JPanel{
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -12,9 +12,8 @@ public class GUI {
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(800, 600));
-        frame.getContentPane().add(panel);
+        setPreferredSize(new Dimension(800, 600));
+        frame.getContentPane().add(this);
 
         frame.pack();
 
