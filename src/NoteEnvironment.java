@@ -98,7 +98,7 @@ public class NoteEnvironment implements Runnable{
         this.sourceDataLine = sourceDataLine;
     }
 
-    public LinkedList<Note> getLiveNotes() {
+    public synchronized LinkedList<Note> getLiveNotes() {
         return liveNotes;
     }
 
