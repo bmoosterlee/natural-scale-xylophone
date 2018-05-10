@@ -2,8 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GUI {
+    NoteEnvironment noteEnvironment;
+    HarmonicCalculator harmonicCalculator;
 
-    public GUI(){
+    public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
+        this.noteEnvironment = noteEnvironment;
+        this.harmonicCalculator = harmonicCalculator;
+
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
