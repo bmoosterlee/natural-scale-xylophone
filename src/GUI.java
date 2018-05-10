@@ -3,14 +3,22 @@ import java.awt.*;
 import java.util.Random;
 
 public class GUI extends JPanel implements Runnable{
-    public static final int WIDTH = 800;
-    public static final int HEIGHT = 600;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
+
+    public static final int WIDTH = 800;
+    public static final int HEIGHT = 600;
+    final double centerFrequency = 261.63;
+    final double octaveRange = 2.;
+    final double lowerBound;
+    final double upperBound;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
         this.harmonicCalculator = harmonicCalculator;
+
+        lowerBound = centerFrequency/octaveRange;
+        upperBound = centerFrequency*octaveRange;
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
