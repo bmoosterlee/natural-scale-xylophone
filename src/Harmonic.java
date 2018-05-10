@@ -4,7 +4,7 @@ public class Harmonic {
     Fraction harmonicAsFraction;
 
     public Harmonic(Note tonic){
-        tonic = tonic;
+        this.tonic = tonic;
         harmonicAsFraction = new Fraction(1, 1);
     }
 
