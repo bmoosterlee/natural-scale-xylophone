@@ -7,6 +7,7 @@ public class Main {
 
         NoteEnvironment noteEnvironment = new NoteEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator(noteEnvironment);
+        GUI gui = new GUI();
 
         harmonicCalculator.start();
         noteEnvironment.start();
