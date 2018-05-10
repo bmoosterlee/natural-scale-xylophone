@@ -2,7 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 
-public class GUI extends JPanel{
+public class GUI extends JPanel implements Runnable{
     public static final int WIDTH = 800;
     public static final int HEIGHT = 600;
     NoteEnvironment noteEnvironment;
@@ -34,4 +34,32 @@ public class GUI extends JPanel{
         }
     }
 
+    public void start(){
+        Thread thread = new Thread(this);
+        thread.start();
+    }
+
+    @Override
+    public void run() {
+        long frameTime = 1000/60;
+        long startTime = System.nanoTime();
+        long currentTime;
+
+        while(true) {
+            repaint();
+
+            currentTime = System.nanoTime();
+            long timePassed = (currentTime-startTime)/1000000;
+            startTime = currentTime;
+            long waitTime = frameTime-timePassed;
+
+            if(waitTime>0){
+                try {
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

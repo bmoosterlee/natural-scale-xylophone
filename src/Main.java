@@ -11,6 +11,7 @@ public class Main {
 
         harmonicCalculator.start();
         noteEnvironment.start();
+        gui.start();
 
         Note testTone = new Note(440., 0);
         Note testTone2 = new Note(1100., (long) (SAMPLE_RATE * 0.5));
