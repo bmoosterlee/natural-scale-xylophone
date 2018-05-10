@@ -40,7 +40,6 @@ public class NoteEnvironment implements Runnable{
         tick = 0l;
         while (true) {
             tick();
-            tick++;
         }
 //        close();
     }
@@ -61,6 +60,7 @@ public class NoteEnvironment implements Runnable{
         notesToBeRemoved.clear();
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
+        tick++;
     }
 
     private void initialize() {
