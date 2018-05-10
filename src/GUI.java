@@ -3,6 +3,8 @@ import java.awt.*;
 import java.util.Random;
 
 public class GUI extends JPanel{
+    public static final int WIDTH = 800;
+    public static final int HEIGHT = 600;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -13,7 +15,7 @@ public class GUI extends JPanel{
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        setPreferredSize(new Dimension(800, 600));
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
         frame.getContentPane().add(this);
 
         frame.pack();
@@ -24,8 +26,8 @@ public class GUI extends JPanel{
     @Override
     public void paintComponent(Graphics g){
         Random random = new Random();
-        for(int x = 0; x<100; x++){
-            for(int y = 0; y<100; y++){
+        for(int x = 0; x<WIDTH; x++){
+            for(int y = 0; y<HEIGHT; y++){
                 g.setColor(new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
                 g.drawRect(x, y, 1, 1);
             }
