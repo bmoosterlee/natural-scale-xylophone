@@ -63,18 +63,24 @@ public class NoteEnvironment implements Runnable{
 
         byte amplitudeSum = 0;
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
+
+
+
+        for (Note note : currentLiveNotes) {
+            byte amplitude = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount)));
+            amplitudeSum += amplitude;
+        }
+        clipBuffer[0] = amplitudeSum;
+
         for (Note note : currentLiveNotes) {
             if (note.isDead(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
             }
-            byte amplitude = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount)));
-            amplitudeSum += amplitude;
         }
         LinkedList<Note> newLiveNotes = (LinkedList<Note>) currentLiveNotes.clone();
         newLiveNotes.remove(notesToBeRemoved);
         setLiveNotes(newLiveNotes);
         notesToBeRemoved.clear();
-        clipBuffer[0] = amplitudeSum;
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
         sampleCount++;
