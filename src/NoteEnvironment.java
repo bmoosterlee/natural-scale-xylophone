@@ -12,7 +12,7 @@ public class NoteEnvironment implements Runnable{
     private SourceDataLine sourceDataLine;
     private LinkedList<Note> liveNotes;
     private LinkedList<Note> notesToBeRemoved;
-    private long tick;
+    private long sampleCount;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
@@ -34,22 +34,22 @@ public class NoteEnvironment implements Runnable{
     @Override
     public void run() {
         //TODO Move ticker to it's own class, which sends a message to the NoteEnvironment and HarmonicCalculator
-        // at each new tick, and waits for the next tick instead of calculating as many ticks as possible, because this
+        // at each new sampleCount, and waits for the next sampleCount instead of calculating as many ticks as possible, because this
         //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
         // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
 
-        //TODO implement code dependent on current nanotime instead of tick count, so we can move towards a
+        //TODO implement code dependent on current nanotime instead of sampleCount count, so we can move towards a
         //note environment thread which can sleep every now and then without messing up at what point in time we are.
-        tick = 0l;
+        sampleCount = 0l;
         long timeZero = System.nanoTime();
         long frameTime = 1000000000/SAMPLE_RATE;
         int tickLookahead = (int) (frameTime*1000);
 
         while(true) {
-            tick();
+            writeSample();
 
             long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
-            if(tick > expectedTickCount+tickLookahead){
+            if(sampleCount > expectedTickCount+tickLookahead){
                 try {
                     Thread.sleep(0,tickLookahead/2);
                 } catch (InterruptedException e) {
@@ -60,15 +60,15 @@ public class NoteEnvironment implements Runnable{
 //        close();
     }
 
-    private void tick() {
+    private void writeSample() {
         getClipBuffer()[0] = 0;
 
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
-            if (note.isDead(tick, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
+            if (note.isDead(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
             }
-            addAmplitude(getClipBuffer(), SAMPLE_RATE, note, tick);
+            addAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount);
         }
         LinkedList<Note> newLiveNotes = (LinkedList<Note>) currentLiveNotes.clone();
         newLiveNotes.remove(notesToBeRemoved);
@@ -76,7 +76,7 @@ public class NoteEnvironment implements Runnable{
         notesToBeRemoved.clear();
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
-        tick++;
+        sampleCount++;
     }
 
     private void initialize() {
@@ -96,8 +96,8 @@ public class NoteEnvironment implements Runnable{
         notesToBeRemoved = new LinkedList<Note>();
     }
 
-    private void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long tick) {
-        byte amplitude = (byte) ((Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1) * (0.5 * (1. + note.getAmplitude(sampleRate, tick))) - Math.pow(2, SAMPLE_SIZE_IN_BITS) / 2);
+    private void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long sampleCount) {
+        byte amplitude = (byte) ((Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1) * (0.5 * (1. + note.getAmplitude(sampleRate, sampleCount))) - Math.pow(2, SAMPLE_SIZE_IN_BITS) / 2);
         clipBuffer[0] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[0] + amplitude));
     }
 
@@ -129,7 +129,7 @@ public class NoteEnvironment implements Runnable{
         getLiveNotes().add(note);
     }
 
-    public long getCurrentTick() {
-        return tick;
+    public long sampleCount() {
+        return sampleCount;
     }
 }
