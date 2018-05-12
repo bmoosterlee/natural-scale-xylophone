@@ -78,7 +78,7 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes() {
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
-            if (note.hasStarted(sampleCount) && note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
+            if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
                 getLiveNotes().remove(note);
             }
         }
