@@ -45,7 +45,7 @@ public class NoteEnvironment implements Runnable{
 
         while(true) {
             removeInaudibleNotes();
-            calculateAmplitudeSum();
+            clipBuffer[0] = calculateAmplitudeSum();
             writeSample();
 
             long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
@@ -65,7 +65,7 @@ public class NoteEnvironment implements Runnable{
         sampleCount++;
     }
 
-    private void calculateAmplitudeSum() {
+    private byte calculateAmplitudeSum() {
         byte amplitudeSum = 0;
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
 
@@ -73,7 +73,7 @@ public class NoteEnvironment implements Runnable{
             byte amplitude = getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount);
             amplitudeSum = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum + amplitude));
         }
-        clipBuffer[0] = amplitudeSum;
+        return amplitudeSum;
     }
 
     private void removeInaudibleNotes() {
