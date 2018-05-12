@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class GUI extends JPanel implements Runnable{
@@ -33,12 +34,14 @@ public class GUI extends JPanel implements Runnable{
 
     @Override
     public void paintComponent(Graphics g){
-        Random random = new Random();
-        for(int x = 0; x<WIDTH; x++){
-            for(int y = 0; y<HEIGHT; y++){
-                g.setColor(new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
-                g.drawRect(x, y, 1, 1);
-            }
+        g.clearRect(0,0,WIDTH,HEIGHT);
+        LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
+
+        g.setColor(Color.blue);
+        for(Note note : liveNotes) {
+            int x = (int) ((note.getFrequency() - lowerBound) / upperBound * WIDTH);
+            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getCurrentTick())));
+            g.drawRect(x, HEIGHT-y, 1, y);
         }
     }
 
