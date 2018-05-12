@@ -37,7 +37,7 @@ public class NoteEnvironment implements Runnable{
         // at each new sampleCount, and waits for the next sampleCount instead of calculating as many ticks as possible, because this
         //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
         // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
-        
+
         sampleCount = 0l;
         long timeZero = System.nanoTime();
         long frameTime = 1000000000/SAMPLE_RATE;
@@ -61,17 +61,19 @@ public class NoteEnvironment implements Runnable{
     private void writeSample() {
         getClipBuffer()[0] = 0;
 
+        byte amplitudeSum = 0;
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
             if (note.isDead(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
             }
-            addAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount);
+            amplitudeSum += Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount)));
         }
         LinkedList<Note> newLiveNotes = (LinkedList<Note>) currentLiveNotes.clone();
         newLiveNotes.remove(notesToBeRemoved);
         setLiveNotes(newLiveNotes);
         notesToBeRemoved.clear();
+        clipBuffer[0] = amplitudeSum;
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
         sampleCount++;
@@ -94,10 +96,10 @@ public class NoteEnvironment implements Runnable{
         notesToBeRemoved = new LinkedList<Note>();
     }
 
-    private void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long sampleCount) {
+    private byte getAmplitude(byte[] clipBuffer, int sampleRate, Note note, long sampleCount) {
         int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(sampleRate, sampleCount) / 2);
-        clipBuffer[0] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[0] + amplitude));
+        return amplitude;
     }
 
     private byte[] getClipBuffer() {
