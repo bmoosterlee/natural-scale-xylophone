@@ -9,8 +9,8 @@ public class Main {
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator(noteEnvironment);
         GUI gui = new GUI(noteEnvironment, harmonicCalculator);
 
-        harmonicCalculator.start();
         noteEnvironment.start();
+        harmonicCalculator.start();
         gui.start();
 
         Note testTone = new Note(440., 0);
