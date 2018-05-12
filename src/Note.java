@@ -14,7 +14,8 @@ public class Note {
         }
         double volume = getVolume(sampleCount);
         long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double angle = sampleCountDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
+        double timeDifference = sampleCountDifference / sampleRate;
+        double angle = timeDifference * getFrequency() * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
