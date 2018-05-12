@@ -60,6 +60,13 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void writeSample() {
+        calculateAmplitudeSum();
+
+        getSourceDataLine().write(getClipBuffer(), 0, 1);
+        sampleCount++;
+    }
+
+    private void calculateAmplitudeSum() {
         byte amplitudeSum = 0;
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
 
@@ -68,9 +75,6 @@ public class NoteEnvironment implements Runnable{
             amplitudeSum += amplitude;
         }
         clipBuffer[0] = amplitudeSum;
-
-        getSourceDataLine().write(getClipBuffer(), 0, 1);
-        sampleCount++;
     }
 
     private void removeInaudibleNotes() {
