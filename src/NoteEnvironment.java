@@ -60,8 +60,6 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void writeSample() {
-        getClipBuffer()[0] = 0;
-
         byte amplitudeSum = 0;
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
 
