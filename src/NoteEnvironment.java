@@ -33,7 +33,7 @@ public class NoteEnvironment implements Runnable{
     @Override
     public void run() {
         //TODO Move ticker to it's own class, which sends a message to the NoteEnvironment and HarmonicCalculator
-        // at each new sampleCount, and waits for the next sampleCount instead of calculating as many ticks as possible, because this
+        // at each new getSampleCount, and waits for the next getSampleCount instead of calculating as many ticks as possible, because this
         //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
         // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
 
@@ -134,7 +134,7 @@ public class NoteEnvironment implements Runnable{
         getLiveNotes().add(note);
     }
 
-    public long sampleCount() {
+    public long getSampleCount() {
         return sampleCount;
     }
 }

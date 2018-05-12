@@ -39,7 +39,7 @@ public class GUI extends JPanel implements Runnable{
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
             int x = (int) ((note.getFrequency() - lowerBound) / upperBound * WIDTH);
-            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.sampleCount())));
+            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getSampleCount())));
             g.drawRect(x, HEIGHT-y, 1, y);
         }
     }
