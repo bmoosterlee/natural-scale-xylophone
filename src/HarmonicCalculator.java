@@ -1,14 +1,17 @@
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 public class HarmonicCalculator implements Runnable{
 
     private final NoteEnvironment noteEnvironment;
     Boolean tickHasBeenUpdated;
+    PriorityQueue<Harmonic> currentHarmonics;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
 
         tickHasBeenUpdated = false;
+        currentHarmonics = new PriorityQueue<>();
     }
 
     public void start(){
@@ -21,6 +24,8 @@ public class HarmonicCalculator implements Runnable{
         boolean newTick;
         long tick = 0l;
 
+        PriorityQueue<Harmonic> notYetCalculatedHarmonics = new PriorityQueue<>();
+
         while(true){
             newTick = false;
             synchronized(tickHasBeenUpdated) {
@@ -30,7 +35,15 @@ public class HarmonicCalculator implements Runnable{
                 }
             }
             if(newTick){
-                
+                notYetCalculatedHarmonics.clear();
+
+                LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
+                for(Note note : liveNotes){
+                    notYetCalculatedHarmonics.add(new Harmonic(note));
+                }
+            }
+            if(!notYetCalculatedHarmonics.isEmpty()){
+
             }
         }
     }
