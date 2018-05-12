@@ -9,7 +9,7 @@ public class Note {
     }
 
     public double getAmplitude(float sampleRate, long sampleCount) {
-        if(startingSampleCount >sampleCount){
+        if(hasStarted(sampleCount)){
             return (byte) 0;
         }
         double volume = getVolume(sampleCount);
@@ -17,6 +17,10 @@ public class Note {
         double timeDifference = sampleCountDifference / sampleRate;
         double angle = timeDifference * getFrequency() * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
+    }
+
+    private boolean hasStarted(long sampleCount) {
+        return startingSampleCount >sampleCount;
     }
 
     public double getVolume(long sampleCount) {
