@@ -23,10 +23,6 @@ public class Note {
         return 1000./(1000.+(sampleCount- getStartingSampleCount()));
     }
 
-    public boolean isInaudible(long sampleCount, double marginalSampleSize){
-        return Math.abs(getVolume(sampleCount))<marginalSampleSize;
-    }
-
     public double getFrequency() {
         return frequency;
     }
