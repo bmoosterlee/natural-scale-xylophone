@@ -115,4 +115,8 @@ public class NoteEnvironment implements Runnable{
     public void addNote(Note note) {
         getLiveNotes().add(note);
     }
+
+    public long getCurrentTick() {
+        return tick;
+    }
 }
