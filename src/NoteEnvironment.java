@@ -70,6 +70,14 @@ public class NoteEnvironment implements Runnable{
         }
         clipBuffer[0] = amplitudeSum;
 
+        removeInaudibleNotes();
+
+        getSourceDataLine().write(getClipBuffer(), 0, 1);
+        sampleCount++;
+    }
+
+    private void removeInaudibleNotes() {
+        LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
             if (note.isInaudible(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
@@ -77,9 +85,6 @@ public class NoteEnvironment implements Runnable{
         }
         getLiveNotes().remove(notesToBeRemoved);
         notesToBeRemoved.clear();
-
-        getSourceDataLine().write(getClipBuffer(), 0, 1);
-        sampleCount++;
     }
 
     private void initialize() {
