@@ -45,6 +45,7 @@ public class NoteEnvironment implements Runnable{
 
         while(true) {
             removeInaudibleNotes();
+            calculateAmplitudeSum();
             writeSample();
 
             long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
@@ -60,8 +61,6 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void writeSample() {
-        calculateAmplitudeSum();
-
         getSourceDataLine().write(getClipBuffer(), 0, 1);
         sampleCount++;
     }
