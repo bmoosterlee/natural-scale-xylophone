@@ -70,8 +70,8 @@ public class NoteEnvironment implements Runnable{
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
 
         for (Note note : currentLiveNotes) {
-            byte amplitude = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount)));
-            amplitudeSum += amplitude;
+            byte amplitude = getAmplitude(getClipBuffer(), SAMPLE_RATE, note, sampleCount);
+            amplitudeSum = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum + amplitude));
         }
         clipBuffer[0] = amplitudeSum;
     }
