@@ -37,9 +37,7 @@ public class NoteEnvironment implements Runnable{
         // at each new sampleCount, and waits for the next sampleCount instead of calculating as many ticks as possible, because this
         //might cause cause timing issues with notes that are played in the interface, and the ticker has moved faster
         // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
-
-        //TODO implement code dependent on current nanotime instead of sampleCount count, so we can move towards a
-        //note environment thread which can sleep every now and then without messing up at what point in time we are.
+        
         sampleCount = 0l;
         long timeZero = System.nanoTime();
         long frameTime = 1000000000/SAMPLE_RATE;
