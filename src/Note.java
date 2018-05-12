@@ -23,7 +23,7 @@ public class Note {
         return 1000./(1000.+(sampleCount- getStartingSampleCount()));
     }
 
-    public boolean isDead(long sampleCount, double marginalSampleSize){
+    public boolean isInaudible(long sampleCount, double marginalSampleSize){
         return Math.abs(getVolume(sampleCount))<marginalSampleSize;
     }
 
