@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class GUI extends JPanel implements Runnable{
     NoteEnvironment noteEnvironment;
@@ -39,7 +40,7 @@ public class GUI extends JPanel implements Runnable{
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
             int x = (int) ((note.getFrequency() - lowerBound) / upperBound * WIDTH);
-            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getSampleCount())));
+            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getCurrentTick())));
             g.drawRect(x, HEIGHT-y, 1, y);
         }
     }

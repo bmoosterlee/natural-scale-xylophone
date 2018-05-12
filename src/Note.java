@@ -1,37 +1,37 @@
 public class Note {
 
     private double frequency;
-    private long startingSampleCount;
+    private long startingTick;
 
-    public Note(double frequency, long startingSampleCount){
+    public Note(double frequency, long startingTick){
         this.frequency = frequency;
-        this.startingSampleCount = startingSampleCount;
+        this.startingTick = startingTick;
     }
 
-    public double getAmplitude(float sampleRate, long currentSampleCount) {
-        if(startingSampleCount >currentSampleCount){
+    public double getAmplitude(float sampleRate, long currentTick) {
+        if(startingTick>currentTick){
             return (byte) 0;
         }
-        double volume = getVolume(currentSampleCount);
-        long sampleDifference = currentSampleCount- getStartingSampleCount();
-        double angle = sampleDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
+        double volume = getVolume(currentTick);
+        long tickDifference = currentTick-getStartingTick();
+        double angle = tickDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
-    public double getVolume(long currentSampleCount) {
-        return 1000./(1000.+(currentSampleCount- getStartingSampleCount()));
+    public double getVolume(long currentTick) {
+        return 1000./(1000.+(currentTick-getStartingTick()));
     }
 
-    public boolean isDead(long currentSampleCount, double marginalSampleSize){
-        return Math.abs(getVolume(currentSampleCount))<marginalSampleSize;
+    public boolean isDead(long currentTick, double marginalSampleSize){
+        return Math.abs(getVolume(currentTick))<marginalSampleSize;
     }
 
     public double getFrequency() {
         return frequency;
     }
 
-    public long getStartingSampleCount() {
-        return startingSampleCount;
+    public long getStartingTick() {
+        return startingTick;
     }
 
 }
