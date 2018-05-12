@@ -41,8 +41,21 @@ public class NoteEnvironment implements Runnable{
         //TODO implement code dependent on current nanotime instead of tick count, so we can move towards a
         //note environment thread which can sleep every now and then without messing up at what point in time we are.
         tick = 0l;
-        while (true) {
+        long timeZero = System.nanoTime();
+        long frameTime = 1000000000/SAMPLE_RATE;
+        int tickLookahead = (int) (frameTime*1000);
+
+        while(true) {
             tick();
+
+            long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
+            if(tick > expectedTickCount+tickLookahead){
+                try {
+                    Thread.sleep(0,tickLookahead/2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 //        close();
     }
