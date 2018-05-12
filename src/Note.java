@@ -22,8 +22,8 @@ public class Note {
         return 1000./(1000.+(currentTick-getStartingTick()));
     }
 
-    public boolean isDead(long tick, double marginalSampleSize){
-        return Math.abs(getVolume(tick-getStartingTick()))<marginalSampleSize;
+    public boolean isDead(long currentTick, double marginalSampleSize){
+        return Math.abs(getVolume(currentTick))<marginalSampleSize;
     }
 
     public double getFrequency() {
