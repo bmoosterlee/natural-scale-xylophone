@@ -73,7 +73,7 @@ public class NoteEnvironment implements Runnable{
         clipBuffer[0] = amplitudeSum;
 
         for (Note note : currentLiveNotes) {
-            if (note.isDead(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
+            if (note.isInaudible(sampleCount, 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS))) {
                 notesToBeRemoved.add(note);
             }
         }
