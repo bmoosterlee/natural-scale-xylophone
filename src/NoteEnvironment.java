@@ -97,7 +97,8 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void addAmplitude(byte[] clipBuffer, int sampleRate, Note note, long sampleCount) {
-        byte amplitude = (byte) ((Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1) * (0.5 * (1. + note.getAmplitude(sampleRate, sampleCount))) - Math.pow(2, SAMPLE_SIZE_IN_BITS) / 2);
+        int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
+        byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(sampleRate, sampleCount) / 2);
         clipBuffer[0] = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, clipBuffer[0] + amplitude));
     }
 
