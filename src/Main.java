@@ -13,9 +13,20 @@ public class Main {
         harmonicCalculator.start();
         gui.start();
 
-        Note testTone = new Note(440., 0);
-        Note testTone2 = new Note(1100., (long) (SAMPLE_RATE * 0.5));
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Note testTone = new Note(440., noteEnvironment.sampleCount());
         noteEnvironment.addNote(testTone);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Note testTone2 = new Note(1100., noteEnvironment.sampleCount());
         noteEnvironment.addNote(testTone2);
 
     }
