@@ -45,7 +45,7 @@ public class NoteEnvironment implements Runnable{
         while(true) {
             tick();
 
-            long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
+            long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE / 1000000000;
             if(sampleCount > expectedTickCount+tickLookahead){
                 try {
                     Thread.sleep(0,tickLookahead/2);
