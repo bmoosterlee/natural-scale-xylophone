@@ -13,8 +13,8 @@ public class Note {
             return (byte) 0;
         }
         double volume = getVolume(sampleCount);
-        long tickDifference = sampleCount- getStartingSampleCount();
-        double angle = tickDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
+        long sampleCountDifference = sampleCount - getStartingSampleCount();
+        double angle = sampleCountDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
