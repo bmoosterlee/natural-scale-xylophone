@@ -9,6 +9,7 @@ public class GUI extends JPanel implements Runnable{
     public static final int WIDTH = 800;
     public static final int HEIGHT = 600;
     final double centerFrequency = 261.63;
+    final double centerFrequency = 2 * 261.63;
     final double octaveRange = 2.;
     final double lowerBound;
     final double upperBound;
