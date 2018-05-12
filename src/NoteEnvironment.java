@@ -11,7 +11,6 @@ public class NoteEnvironment implements Runnable{
     private byte[] clipBuffer;
     private SourceDataLine sourceDataLine;
     private LinkedList<Note> liveNotes;
-    private LinkedList<Note> notesToBeRemoved;
     private long sampleCount;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
@@ -79,12 +78,10 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes() {
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
-            if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
-                notesToBeRemoved.add(note);
+            if (note.hasStarted(sampleCount) && note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
+                getLiveNotes().remove(note);
             }
         }
-        getLiveNotes().remove(notesToBeRemoved);
-        notesToBeRemoved.clear();
     }
 
     private void initialize() {
@@ -101,7 +98,6 @@ public class NoteEnvironment implements Runnable{
         getSourceDataLine().start();
 
         setLiveNotes(new LinkedList<Note>());
-        notesToBeRemoved = new LinkedList<Note>();
     }
 
     private byte getAmplitude(byte[] clipBuffer, int sampleRate, Note note, long sampleCount) {
