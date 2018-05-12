@@ -44,6 +44,7 @@ public class NoteEnvironment implements Runnable{
         int tickLookahead = (int) (frameTime*1000);
 
         while(true) {
+            removeInaudibleNotes();
             writeSample();
 
             long expectedTickCount = (System.nanoTime()-timeZero) * SAMPLE_RATE;
@@ -69,8 +70,6 @@ public class NoteEnvironment implements Runnable{
             amplitudeSum += amplitude;
         }
         clipBuffer[0] = amplitudeSum;
-
-        removeInaudibleNotes();
 
         getSourceDataLine().write(getClipBuffer(), 0, 1);
         sampleCount++;
