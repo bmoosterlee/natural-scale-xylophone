@@ -8,18 +8,18 @@ public class Note {
         this.startingTick = startingTick;
     }
 
-    public double getAmplitude(float sampleRate, long tick) {
-        if(startingTick>tick){
+    public double getAmplitude(float sampleRate, long currentTick) {
+        if(startingTick>currentTick){
             return (byte) 0;
         }
-        long tickDifference = tick-getStartingTick();
-        double volume = getVolume(tickDifference);
+        double volume = getVolume(currentTick);
+        long tickDifference = currentTick-getStartingTick();
         double angle = tickDifference / ( sampleRate / getFrequency()) * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
-    private double getVolume(long tickDifference) {
-        return 1000./(1000.+tickDifference);
+    public double getVolume(long currentTick) {
+        return 1000./(1000.+(currentTick-getStartingTick()));
     }
 
     public boolean isDead(long tick, double marginalSampleSize){
