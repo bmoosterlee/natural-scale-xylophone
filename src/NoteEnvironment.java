@@ -40,7 +40,6 @@ public class NoteEnvironment implements Runnable{
         sampleCount = 0l;
         long timeZero = System.nanoTime();
         double frameTime = 1000000000./SAMPLE_RATE;
-        int sampleLookahead = SAMPLE_RATE/10;
         long lookaheadTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
         int lookaheadTimeNanos = (int) (frameTime*sampleLookahead)%1000;
 
