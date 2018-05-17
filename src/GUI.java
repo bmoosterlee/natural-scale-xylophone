@@ -58,7 +58,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void run() {
         long frameTime = 1000/60;
-        long startTime = System.nanoTime();
+        long startTime;
         long currentTime;
 
         while(true) {
