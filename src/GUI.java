@@ -12,6 +12,7 @@ public class GUI extends JPanel implements Runnable{
     final double octaveRange = 2.;
     final double lowerBound;
     final double upperBound;
+    final double frequencyRange;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -20,6 +21,8 @@ public class GUI extends JPanel implements Runnable{
         lowerBound = centerFrequency/octaveRange;
         upperBound = centerFrequency*octaveRange;
 
+        frequencyRange = upperBound-lowerBound;
+        
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
