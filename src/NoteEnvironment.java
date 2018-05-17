@@ -40,16 +40,26 @@ public class NoteEnvironment implements Runnable{
         sampleCount = 0l;
         long timeZero = System.nanoTime();
         double frameTime = 1000000000./SAMPLE_RATE;
-        long lookaheadTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
-        int lookaheadTimeNanos = (int) (frameTime*sampleLookahead)%1000;
+        int sampleLookahead = SAMPLE_RATE/100;
+        long sampleBacklog = 0;
 
         while(true) {
-            tick();
+            while(sampleBacklog>0) {
+                TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment tick");
+                tick();
+                PerformanceTracker.stopTracking(timeKeeper);
+                sampleBacklog--;
+            }
 
             long expectedTickCount = (System.nanoTime()-timeZero) / 1000000000 * SAMPLE_RATE;
-            if(sampleCount > expectedTickCount+sampleLookahead){
+            sampleBacklog = expectedTickCount+sampleLookahead-sampleCount;
+            long waitTime = (long) ((-sampleBacklog)*frameTime);
+
+            long waitTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
+            int waitTimeNanos = (int) (frameTime*sampleLookahead)%1000;
+            if(waitTime>0){
                 try {
-                    Thread.sleep(lookaheadTimeMillis/2,lookaheadTimeNanos/2);
+                    Thread.sleep(waitTimeMillis,waitTimeNanos);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
