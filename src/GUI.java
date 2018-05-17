@@ -1,8 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.LinkedList;
 
-public class GUI extends JPanel implements Runnable{
+public class GUI extends JPanel implements Runnable, MouseListener {
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -28,6 +30,7 @@ public class GUI extends JPanel implements Runnable{
 
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         frame.getContentPane().add(this);
+        frame.addMouseListener(this);
 
         frame.pack();
 
@@ -74,5 +77,31 @@ public class GUI extends JPanel implements Runnable{
                 }
             }
         }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        double frequency = (double)e.getX()/WIDTH*frequencyRange+lowerBound;
+        noteEnvironment.addNote(new Note(frequency, noteEnvironment.getSampleCount()));
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
     }
 }
