@@ -69,11 +69,11 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             currentTime = System.nanoTime();
 
             long timePassed = (currentTime-startTime)/1000000;
-            long waitTime = frameTime-timePassed;
+            long timeLeft = frameTime-timePassed;
 
-            if(waitTime>0){
+            if(timeLeft>0){
                 try {
-                    Thread.sleep(waitTime);
+                    Thread.sleep(timeLeft);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
