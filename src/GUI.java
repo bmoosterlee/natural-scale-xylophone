@@ -8,7 +8,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
-    public static final int WIDTH = 800;
+    public static final int WIDTH = 800*2;
     public static final int HEIGHT = 600;
     final double centerFrequency = 2 * 261.63;
     final double octaveRange = 3.;
