@@ -1,36 +1,9 @@
-public class HarmonicCalculator implements Runnable{
+public class HarmonicCalculator {
 
     private final NoteEnvironment noteEnvironment;
-    Boolean tickHasBeenUpdated;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
-
-        tickHasBeenUpdated = false;
-    }
-
-    public void start(){
-        Thread thread = new Thread(this);
-        thread.start();
-    }
-
-    @Override
-    public void run() {
-        boolean newTick;
-        long tick = 0l;
-
-        while(true){
-            newTick = false;
-            synchronized(tickHasBeenUpdated) {
-                if (tickHasBeenUpdated) {
-                    newTick = true;
-                    tickHasBeenUpdated = false;
-                }
-            }
-            if(newTick){
-                
-            }
-        }
     }
 
     public Harmonic getNextHarmonic(long sampleCount) {
