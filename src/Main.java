@@ -11,7 +11,6 @@ public class Main {
         GUI gui = new GUI(noteEnvironment, harmonicCalculator);
 
         noteEnvironment.start();
-        harmonicCalculator.start();
         gui.start();
 
         try {
