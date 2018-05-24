@@ -71,14 +71,25 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             long timePassed = (currentTime-startTime)/1000000;
             long timeLeft = frameTime-timePassed;
 
-            if(timeLeft>0){
-                try {
-                    Thread.sleep(timeLeft);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            while(timeLeft>10) {
+                Harmonic harmonic = harmonicCalculator.getNextHarmonic(noteEnvironment.getSampleCount());
+                render(harmonic);
+                currentTime = System.nanoTime();
+
+                timePassed = (currentTime - startTime) / 1000000;
+                timeLeft = frameTime - timePassed;
+            }
+
+            try {
+                Thread.sleep(timeLeft);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
+    }
+
+    private void render(Harmonic harmonic) {
+        
     }
 
     @Override

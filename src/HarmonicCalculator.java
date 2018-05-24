@@ -1,5 +1,3 @@
-import java.util.LinkedList;
-
 public class HarmonicCalculator implements Runnable{
 
     private final NoteEnvironment noteEnvironment;
@@ -33,6 +31,10 @@ public class HarmonicCalculator implements Runnable{
                 
             }
         }
+    }
+
+    public Harmonic getNextHarmonic(long sampleCount) {
+        return null;
     }
 
     //Find the next fraction by increasing the denominator and cycling through the numerators
