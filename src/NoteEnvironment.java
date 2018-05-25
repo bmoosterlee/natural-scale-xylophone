@@ -52,8 +52,8 @@ public class NoteEnvironment implements Runnable{
                 sampleBacklog--;
             }
 
-            long expectedTickCount = (System.nanoTime()-timeZero) / 1000000000 * SAMPLE_RATE;
-            sampleBacklog = expectedTickCount+sampleLookahead-sampleCount;
+            long expectedSampleCount = getExpectedSampleCount();
+            sampleBacklog = expectedSampleCount+sampleLookahead- sampleCount;
             long waitTime = (long) ((-sampleBacklog)*frameTime);
 
             long waitTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
