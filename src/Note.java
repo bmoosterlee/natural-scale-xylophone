@@ -17,6 +17,7 @@ public class Note {
     }
 
     public double getVolume(long sampleCount) {
+        //TODO Create method with decay as an argument, let harmonics extract the volume for a longer decay, such that they remain on the screen longer
         return 0.5*10000./(10000.+(sampleCount- getStartingSampleCount()));
     }
 
