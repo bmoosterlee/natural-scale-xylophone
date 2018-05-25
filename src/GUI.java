@@ -17,6 +17,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     final double frequencyRange;
 
     Image offScreen;
+    Graphics offScreenGraphics;
+
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
         this.harmonicCalculator = harmonicCalculator;
