@@ -16,6 +16,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     final double upperBound;
     final double frequencyRange;
 
+    Image offScreen;
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
         this.harmonicCalculator = harmonicCalculator;
@@ -35,11 +36,17 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         frame.pack();
 
         frame.setVisible(true);
+
+        offScreen = createImage(WIDTH, HEIGHT);
+        offScreenGraphics = offScreen.getGraphics();
     }
 
     @Override
     public void paintComponent(Graphics g){
-        g.clearRect(0,0,WIDTH,HEIGHT);
+        g.drawImage(offScreen, 0, 0, null);
+    }
+
+    private void renderNotes(Graphics g) {
         LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
 
         g.setColor(Color.blue);
@@ -64,12 +71,13 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         while(true) {
             startTime = System.nanoTime();
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
-            repaint();
-            PerformanceTracker.stopTracking(timeKeeper);
-            currentTime = System.nanoTime();
 
-            long timePassed = (currentTime-startTime)/1000000;
-            long timeLeft = frameTime-timePassed;
+            offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
+
+            currentTime = System.nanoTime();
+            long timePassed = (currentTime - startTime) / 1000000;
+            long timeLeft = frameTime - timePassed;
+
 
             while(timeLeft>10) {
                 Harmonic harmonic = harmonicCalculator.getNextHarmonic(noteEnvironment.getSampleCount());
@@ -80,10 +88,20 @@ public class GUI extends JPanel implements Runnable, MouseListener {
                 timeLeft = frameTime - timePassed;
             }
 
-            try {
-                Thread.sleep(timeLeft);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            renderNotes(offScreenGraphics);
+            repaint();
+
+            PerformanceTracker.stopTracking(timeKeeper);
+            currentTime = System.nanoTime();
+            timePassed = (currentTime - startTime) / 1000000;
+            timeLeft = frameTime - timePassed;
+
+            if (timeLeft > 0) {
+                try {
+                    Thread.sleep(timeLeft);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
