@@ -1,13 +1,42 @@
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+
 public class HarmonicCalculator {
 
     private final NoteEnvironment noteEnvironment;
+    long lastSampleCount = -1;
+
+    PriorityQueue<NoteHarmonicCalculator> noteHarmonicCalculators;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
+
+        noteHarmonicCalculators = new PriorityQueue<>();
     }
 
-    public Harmonic getNextHarmonic(long sampleCount) {
-        return null;
+    public Harmonic getNextHarmonic(long currentSampleCount) {
+        Harmonic highestValueHarmonic;
+        synchronized(noteHarmonicCalculators) {
+            if (noteHarmonicCalculators.isEmpty()) {
+                return null;
+            }
+            if(currentSampleCount>lastSampleCount) {
+                lastSampleCount = currentSampleCount;
+                LinkedList<Note> liveNotes = new LinkedList<>();
+                while(!noteHarmonicCalculators.isEmpty()){
+                    liveNotes.add(noteHarmonicCalculators.poll().note);
+                }
+                for(Note note : liveNotes) {
+                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, currentSampleCount));
+                }
+            }
+
+            NoteHarmonicCalculator highestValueHarmonicCalculator = noteHarmonicCalculators.poll();
+            highestValueHarmonic = highestValueHarmonicCalculator.poll();
+            noteHarmonicCalculators.add(highestValueHarmonicCalculator);
+        }
+
+        return highestValueHarmonic;
     }
 
     //Find the next fraction by increasing the denominator and cycling through the numerators
