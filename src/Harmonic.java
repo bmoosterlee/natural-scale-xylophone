@@ -3,9 +3,9 @@ public class Harmonic implements Comparable<Harmonic>{
     Note tonic;
     Fraction harmonicAsFraction;
 
-    public Harmonic(Note tonic){
+    public Harmonic(Note tonic, Fraction harmonicAsFraction){
         this.tonic = tonic;
-        harmonicAsFraction = new Fraction(1, 1);
+        this.harmonicAsFraction = harmonicAsFraction;
     }
 
     @Override
