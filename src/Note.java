@@ -17,7 +17,7 @@ public class Note {
     }
 
     public double getVolume(long sampleCount) {
-        return 1000./(1000.+(sampleCount- getStartingSampleCount()));
+        return 0.5*10000./(10000.+(sampleCount- getStartingSampleCount()));
     }
 
     public double getFrequency() {
