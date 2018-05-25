@@ -17,4 +17,8 @@ public class Harmonic implements Comparable<Harmonic>{
     public double getSonanceValue(long sampleCount) {
         return tonic.getVolume(sampleCount)/Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
     }
+
+    public double getFrequency() {
+        return tonic.getFrequency()*(double)harmonicAsFraction.numerator/(double)harmonicAsFraction.denominator;
+    }
 }
