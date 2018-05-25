@@ -110,6 +110,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void render(Graphics g, Harmonic harmonic) {
+        //TODO currently when multiple harmonics lie on the same frequency, or the same pixel, we will overlay them instead of add them. Implement the use of buckets for each pixel to sum all harmonics which fall in it.
+
         if(harmonic==null){
             return;
         }
