@@ -53,7 +53,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
-            int x = (int) ((note.getFrequency() - lowerBound) / frequencyRange * WIDTH);
+            double frequency = note.getFrequency();
+            int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
             int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getExpectedSampleCount())));
             g.drawRect(x, HEIGHT-y, 1, y);
         }
@@ -119,7 +120,10 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        double frequency = (double)e.getX()/WIDTH*frequencyRange+lowerBound;
+//        double frequency = (double)e.getX()/WIDTH*frequencyRange+lowerBound; //linear version
+//        frequency = e^((x/width*(Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2))+Math.log(lowerBound)/Math.log(2))*Math.log(2));
+        double frequency = Math.exp(((double)e.getX()/WIDTH)*(Math.log(upperBound)-Math.log(lowerBound))+Math.log(lowerBound));
+
         noteEnvironment.addNote(new Note(frequency, noteEnvironment.getExpectedSampleCount()));
     }
 
