@@ -38,7 +38,7 @@ public class NoteEnvironment implements Runnable{
         // than the sourceDataLine, causing there to be a backlog of ticks which need to be played before our note is.
 
         sampleCount = 0l;
-        long timeZero = System.nanoTime();
+        timeZero = System.nanoTime();
         double frameTime = 1000000000./SAMPLE_RATE;
         int sampleLookahead = SAMPLE_RATE/100;
         long sampleBacklog = 0;
