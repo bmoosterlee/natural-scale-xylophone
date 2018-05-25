@@ -148,5 +148,8 @@ public class NoteEnvironment implements Runnable{
 
     public long getSampleCount() {
         return sampleCount;
+    public long getExpectedSampleCount() {
+        return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
+
 }

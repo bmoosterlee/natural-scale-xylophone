@@ -18,7 +18,7 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Note testTone = new Note(440., noteEnvironment.getSampleCount());
+        Note testTone = new Note(440., noteEnvironment.getExpectedSampleCount());
         noteEnvironment.addNote(testTone);
 
         try {
@@ -26,7 +26,7 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Note testTone2 = new Note(1100., noteEnvironment.getSampleCount());
+        Note testTone2 = new Note(1100., noteEnvironment.getExpectedSampleCount());
         noteEnvironment.addNote(testTone2);
 
     }
