@@ -7,8 +7,6 @@ public class HarmonicCalculator {
     long lastSampleCount = -1;
 
     PriorityQueue<NoteHarmonicCalculator> noteHarmonicCalculators;
-    Observer addNoteObserver;
-    Observer removeNoteObserver;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
