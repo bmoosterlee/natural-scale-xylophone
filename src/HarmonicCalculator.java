@@ -7,11 +7,28 @@ public class HarmonicCalculator {
     long lastSampleCount = -1;
 
     PriorityQueue<NoteHarmonicCalculator> noteHarmonicCalculators;
+    Observer addNoteObserver;
+    Observer removeNoteObserver;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
 
         noteHarmonicCalculators = new PriorityQueue<>();
+        noteEnvironment.addNoteObservable.addObserver((Observer<Note>) note -> {
+            synchronized(noteHarmonicCalculators) {
+                noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, lastSampleCount));
+            }
+        });
+        noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
+            synchronized(noteHarmonicCalculators) {
+                for(NoteHarmonicCalculator calculator : noteHarmonicCalculators){
+                    if(calculator.note == note){
+                        noteHarmonicCalculators.remove(calculator);
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     public Harmonic getNextHarmonic(long currentSampleCount) {

@@ -12,11 +12,16 @@ public class NoteEnvironment implements Runnable{
     private SourceDataLine sourceDataLine;
     private LinkedList<Note> liveNotes;
     private long sampleCount;
+    public Observable<Note> addNoteObservable;
+    public Observable<Note> removeNoteObservable;
     private long timeZero;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
+
+        addNoteObservable = new Observable<Note>();
+        removeNoteObservable = new Observable<Note>();
 
         initialize();
     }
@@ -92,6 +97,7 @@ public class NoteEnvironment implements Runnable{
         for (Note note : currentLiveNotes) {
             if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
                 getLiveNotes().remove(note);
+                removeNoteObservable.notifyObservers(note);
             }
         }
     }
@@ -144,10 +150,9 @@ public class NoteEnvironment implements Runnable{
 
     public void addNote(Note note) {
         getLiveNotes().add(note);
+        addNoteObservable.notifyObservers(note);
     }
 
-    public long getSampleCount() {
-        return sampleCount;
     public long getExpectedSampleCount() {
         return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
