@@ -28,4 +28,8 @@ public class Harmonic implements Comparable<Harmonic>{
             return 1;
         }
     }
+
+    public double getSonanceValue(long sampleCount) {
+        return tonic.getVolume(sampleCount)/Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
+    }
 }
