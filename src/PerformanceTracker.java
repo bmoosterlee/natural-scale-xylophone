@@ -7,6 +7,10 @@ public class PerformanceTracker implements Runnable{
     static PerformanceTracker performanceTracker;
     ConcurrentHashMap<String, Long> stateTimes = new ConcurrentHashMap<>();
 
+    public PerformanceTracker(){
+        performanceTracker = this;
+    }
+
     public static TimeKeeper startTracking(String stateName){
         TimeKeeper timeKeeper = new TimeKeeper(stateName);
         timeKeeper.start();
@@ -24,7 +28,6 @@ public class PerformanceTracker implements Runnable{
     }
 
     public static void start(){
-        performanceTracker = new PerformanceTracker();
         Thread thread = new Thread(performanceTracker);
         thread.start();
     }
