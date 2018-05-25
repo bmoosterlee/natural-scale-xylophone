@@ -55,7 +55,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         for(Note note : liveNotes) {
             double frequency = note.getFrequency();
             int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
-            int y = (int)(HEIGHT*(0.05+0.95*note.getVolume(noteEnvironment.getExpectedSampleCount())));
+            int y = (int)(HEIGHT*(0.05+0.95*noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount())));
             g.drawRect(x, HEIGHT-y, 1, y);
         }
     }
@@ -84,7 +84,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
             while (timeLeft > 10) {
                 Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
-                render(offScreenGraphics, harmonic, sampleCountAtFrame);
+                render(offScreenGraphics, harmonic);
 
                 currentTime = System.nanoTime();
                 timePassed = (currentTime - startTime) / 1000000;
@@ -109,7 +109,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
-    private void render(Graphics g, Harmonic harmonic, long sampleCountAtFrame) {
+    private void render(Graphics g, Harmonic harmonic) {
         if(harmonic==null){
             return;
         }
@@ -118,7 +118,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         double frequency = harmonic.getFrequency();
         int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
 //        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
-        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame);
+        double sonanceValue = harmonic.getSonanceValue();
         int y = (int)(HEIGHT*(0.05+0.95* sonanceValue));
         g.drawRect(x, HEIGHT-y, 1, y);
     }

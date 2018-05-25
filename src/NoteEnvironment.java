@@ -90,7 +90,7 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes() {
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
-            if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
+            if (note.getVolume(SAMPLE_RATE, sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
                 getLiveNotes().remove(note);
                 removeNoteObservable.notifyObservers(note);
             }
@@ -152,4 +152,7 @@ public class NoteEnvironment implements Runnable{
         return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
 
+    public double getVolume(Note note, long sampleCount){
+        return note.getVolume(SAMPLE_RATE, sampleCount);
+    }
 }
