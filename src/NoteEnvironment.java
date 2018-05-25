@@ -12,6 +12,7 @@ public class NoteEnvironment implements Runnable{
     private SourceDataLine sourceDataLine;
     private LinkedList<Note> liveNotes;
     private long sampleCount;
+    private long timeZero;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
