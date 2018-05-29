@@ -5,7 +5,7 @@ import java.awt.event.MouseListener;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener {
-    private final Bucket bucket;
+    private final Bucket harmonicsBucket;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -44,7 +44,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         offScreen = createImage(WIDTH, HEIGHT);
         offScreenGraphics = offScreen.getGraphics();
 
-        bucket = new Bucket(WIDTH);
+        harmonicsBucket = new Bucket(WIDTH);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
 
             offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
-            bucket.clear();
+            harmonicsBucket.clear();
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
@@ -110,6 +110,14 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
+    private void renderHarmonicsBucket() {
+        for(int i = 0; i<WIDTH; i++) {
+            double value = harmonicsBucket.getValue(i);
+            int x = i;
+            int y = (int)(HEIGHT*(0.05+0.95* value));
+            offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
+        }
+    }
 
     private long getTimeLeftInFrame(long startTime) {
         long currentTime;
@@ -130,7 +138,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
 //        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
         double sonanceValue = harmonic.getSonanceValue();
-        bucket.fill(x, sonanceValue);
+        harmonicsBucket.fill(x, sonanceValue);
     }
 
     @Override
