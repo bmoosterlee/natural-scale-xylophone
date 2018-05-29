@@ -60,7 +60,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             double frequency = note.getFrequency();
             int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
             int y = (int)(HEIGHT*(0.05+0.95*noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount())));
-            g.drawRect(x, HEIGHT-y, 1, y);
+            offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
         }
     }
 
