@@ -18,6 +18,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     Image offScreen;
     Graphics offScreenGraphics;
+    public static final long FRAME_TIME = 1000 / 60;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -67,7 +68,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void run() {
-        long frameTime = 1000/60;
         long startTime;
         long currentTime;
 
@@ -79,7 +79,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
             currentTime = System.nanoTime();
             long timePassed = (currentTime - startTime) / 1000000;
-            long timeLeft = frameTime - timePassed;
+            long timeLeft = FRAME_TIME - timePassed;
 
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
             while (timeLeft > 10) {
@@ -88,7 +88,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
                 currentTime = System.nanoTime();
                 timePassed = (currentTime - startTime) / 1000000;
-                timeLeft = frameTime - timePassed;
+                timeLeft = FRAME_TIME - timePassed;
             }
 
             renderNotes(offScreenGraphics);
@@ -97,7 +97,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             PerformanceTracker.stopTracking(timeKeeper);
             currentTime = System.nanoTime();
             timePassed = (currentTime - startTime) / 1000000;
-            timeLeft = frameTime - timePassed;
+            timeLeft = FRAME_TIME - timePassed;
 
             if (timeLeft > 0) {
                 try {
