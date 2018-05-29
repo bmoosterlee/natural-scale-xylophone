@@ -77,13 +77,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             startTime = System.nanoTime();
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
 
-            offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
-
-            addHarmonicsToBuckets(startTime);
-            renderHarmonicsBuckets();
-
-            renderNotes(offScreenGraphics);
-            repaint();
+            tick(startTime);
 
             PerformanceTracker.stopTracking(timeKeeper);
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
@@ -96,6 +90,16 @@ public class GUI extends JPanel implements Runnable, MouseListener {
                 }
             }
         }
+    }
+
+    private void tick(long startTime) {
+        offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
+
+        addHarmonicsToBuckets(startTime);
+        renderHarmonicsBuckets();
+
+        renderNotes(offScreenGraphics);
+        repaint();
     }
 
     private void addHarmonicsToBuckets(long startTime) {
