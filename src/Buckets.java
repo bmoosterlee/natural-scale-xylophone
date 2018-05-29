@@ -1,9 +1,9 @@
 
-public class Bucket {
+public class Buckets {
     private double[] buckets;
     private final int width;
 
-    public Bucket(int width) {
+    public Buckets(int width) {
         this.width = width;
         buckets = new double[width];
     }

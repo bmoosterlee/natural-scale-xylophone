@@ -5,7 +5,7 @@ import java.awt.event.MouseListener;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener {
-    private final Bucket harmonicsBucket;
+    private final Buckets harmonicsBuckets;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -44,7 +44,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         offScreen = createImage(WIDTH, HEIGHT);
         offScreenGraphics = offScreen.getGraphics();
 
-        harmonicsBucket = new Bucket(WIDTH);
+        harmonicsBuckets = new Buckets(WIDTH);
     }
 
     @Override
@@ -79,8 +79,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
             offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
 
-            addHarmonicsToBucket(startTime);
-            renderHarmonicsBucket();
+            addHarmonicsToBuckets(startTime);
+            renderHarmonicsBuckets();
 
             renderNotes(offScreenGraphics);
             repaint();
@@ -98,8 +98,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
-    private void addHarmonicsToBucket(long startTime) {
-        harmonicsBucket.clear();
+    private void addHarmonicsToBuckets(long startTime) {
+        harmonicsBuckets.clear();
         long timeLeftInFrame = getTimeLeftInFrame(startTime);
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
         while (timeLeftInFrame > 10) {
@@ -110,11 +110,11 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
-    private void renderHarmonicsBucket() {
+    private void renderHarmonicsBuckets() {
         offScreenGraphics.setColor(Color.gray);
 
         for(int i = 0; i<WIDTH; i++) {
-            double value = harmonicsBucket.getValue(i);
+            double value = harmonicsBuckets.getValue(i);
             int x = i;
             int y = (int)(HEIGHT*(0.05+0.95* value));
             offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
@@ -140,7 +140,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
 //        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
         double sonanceValue = harmonic.getSonanceValue();
-        harmonicsBucket.fill(x, sonanceValue);
+        harmonicsBuckets.fill(x, sonanceValue);
     }
 
     @Override
