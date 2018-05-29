@@ -70,6 +70,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     public void run() {
         long startTime;
         long currentTime;
+        double[] buckets = new double[WIDTH];
 
         while(true) {
             startTime = System.nanoTime();
@@ -81,14 +82,27 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             long timePassed = (currentTime - startTime) / 1000000;
             long timeLeft = FRAME_TIME - timePassed;
 
+            for(int i = 0; i<WIDTH; i++){
+                buckets[i] = 0;
+            }
+
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
             while (timeLeft > 10) {
                 Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
-                render(offScreenGraphics, harmonic);
+                addToBucket(harmonic, buckets);
 
                 currentTime = System.nanoTime();
                 timePassed = (currentTime - startTime) / 1000000;
                 timeLeft = FRAME_TIME - timePassed;
+            }
+
+            offScreenGraphics.setColor(Color.gray);
+
+            for(int i = 0; i<WIDTH; i++) {
+                double value = buckets[i];
+                int x = i;
+                int y = (int)(HEIGHT*(0.05+0.95* value));
+                offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
             }
 
             renderNotes(offScreenGraphics);
@@ -109,20 +123,19 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
-    private void render(Graphics g, Harmonic harmonic) {
-        //TODO currently when multiple harmonics lie on the same frequency, or the same pixel, we will overlay them instead of add them. Implement the use of buckets for each pixel to sum all harmonics which fall in it.
-
+    private void addToBucket(Harmonic harmonic, double[] buckets) {
         if(harmonic==null){
             return;
         }
-        g.setColor(Color.gray);
 
         double frequency = harmonic.getFrequency();
         int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
+        if(x<0 || x>=WIDTH){
+            return;
+        }
 //        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
         double sonanceValue = harmonic.getSonanceValue();
-        int y = (int)(HEIGHT*(0.05+0.95* sonanceValue));
-        g.drawRect(x, HEIGHT-y, 1, y);
+        buckets[x]+=sonanceValue;
     }
 
     @Override
