@@ -72,55 +72,50 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void run() {
         long startTime;
-        long currentTime;
 
         while(true) {
             startTime = System.nanoTime();
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
 
             offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
-
-            currentTime = System.nanoTime();
-            long timePassed = (currentTime - startTime) / 1000000;
-            long timeLeft = FRAME_TIME - timePassed;
-
             bucket.clear();
-
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
-            while (timeLeft > 10) {
+
+            long timeLeftInFrame = getTimeLeftInFrame(startTime);
+
+            while (timeLeftInFrame > 10) {
                 Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
                 addToBucket(harmonic);
 
-                currentTime = System.nanoTime();
-                timePassed = (currentTime - startTime) / 1000000;
-                timeLeft = FRAME_TIME - timePassed;
+                timeLeftInFrame = getTimeLeftInFrame(startTime);
             }
 
             offScreenGraphics.setColor(Color.gray);
 
-            for(int i = 0; i<WIDTH; i++) {
-                double value = bucket.getValue(i);
-                int x = i;
-                int y = (int)(HEIGHT*(0.05+0.95* value));
-                offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
-            }
+            renderHarmonicsBucket();
 
             renderNotes(offScreenGraphics);
             repaint();
 
             PerformanceTracker.stopTracking(timeKeeper);
-            currentTime = System.nanoTime();
-            timePassed = (currentTime - startTime) / 1000000;
-            timeLeft = FRAME_TIME - timePassed;
+            timeLeftInFrame = getTimeLeftInFrame(startTime);
 
-            if (timeLeft > 0) {
+            if (timeLeftInFrame > 0) {
                 try {
-                    Thread.sleep(timeLeft);
+                    Thread.sleep(timeLeftInFrame);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
+    }
+
+
+    private long getTimeLeftInFrame(long startTime) {
+        long currentTime;
+        currentTime = System.nanoTime();
+        long timePassed = (currentTime - startTime) / 1000000;
+        return FRAME_TIME - timePassed;
     }
 
     private void addToBucket(Harmonic harmonic) {
