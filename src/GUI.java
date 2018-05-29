@@ -154,10 +154,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-//        double frequency = (double)e.getX()/WIDTH*frequencyRange+lowerBound; //linear version
-//        frequency = e^((x/width*(Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2))+Math.log(lowerBound)/Math.log(2))*Math.log(2));
         double frequency = Math.exp(((double)e.getX()/WIDTH)*(Math.log(upperBound)-Math.log(lowerBound))+Math.log(lowerBound));
-
         noteEnvironment.addNote(new Note(frequency, noteEnvironment.getExpectedSampleCount()));
     }
 
