@@ -80,9 +80,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
 
             addHarmonicsToBucket(startTime);
-
-            offScreenGraphics.setColor(Color.gray);
-
             renderHarmonicsBucket();
 
             renderNotes(offScreenGraphics);
@@ -114,6 +111,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void renderHarmonicsBucket() {
+        offScreenGraphics.setColor(Color.gray);
+
         for(int i = 0; i<WIDTH; i++) {
             double value = harmonicsBucket.getValue(i);
             int x = i;
