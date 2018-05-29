@@ -52,10 +52,10 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         g.drawImage(offScreen, 0, 0, null);
     }
 
-    private void renderNotes(Graphics g) {
+    private void renderNotes() {
         LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
 
-        g.setColor(Color.blue);
+        offScreenGraphics.setColor(Color.blue);
         for(Note note : liveNotes) {
             double frequency = note.getFrequency();
             int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
@@ -98,7 +98,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         addHarmonicsToBuckets(startTime);
         renderHarmonicsBuckets();
 
-        renderNotes(offScreenGraphics);
+        renderNotes();
         repaint();
     }
 
