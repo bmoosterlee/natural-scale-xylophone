@@ -78,17 +78,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
 
             offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
-            harmonicsBucket.clear();
-            long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
-            long timeLeftInFrame = getTimeLeftInFrame(startTime);
-
-            while (timeLeftInFrame > 10) {
-                Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
-                addToBucket(harmonic);
-
-                timeLeftInFrame = getTimeLeftInFrame(startTime);
-            }
+            addHarmonicsToBucket(startTime);
 
             offScreenGraphics.setColor(Color.gray);
 
@@ -98,7 +89,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             repaint();
 
             PerformanceTracker.stopTracking(timeKeeper);
-            timeLeftInFrame = getTimeLeftInFrame(startTime);
+            long timeLeftInFrame = getTimeLeftInFrame(startTime);
 
             if (timeLeftInFrame > 0) {
                 try {
@@ -107,6 +98,18 @@ public class GUI extends JPanel implements Runnable, MouseListener {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void addHarmonicsToBucket(long startTime) {
+        harmonicsBucket.clear();
+        long timeLeftInFrame = getTimeLeftInFrame(startTime);
+        long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
+        while (timeLeftInFrame > 10) {
+            Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
+            addToBucket(harmonic);
+
+            timeLeftInFrame = getTimeLeftInFrame(startTime);
         }
     }
 
