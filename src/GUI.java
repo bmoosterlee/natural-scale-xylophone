@@ -5,6 +5,7 @@ import java.awt.event.MouseListener;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener {
+    private final Bucket bucket;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -42,6 +43,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         offScreen = createImage(WIDTH, HEIGHT);
         offScreenGraphics = offScreen.getGraphics();
+
+        bucket = new Bucket(WIDTH);
     }
 
     @Override
@@ -70,7 +73,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     public void run() {
         long startTime;
         long currentTime;
-        double[] buckets = new double[WIDTH];
 
         while(true) {
             startTime = System.nanoTime();
@@ -82,14 +84,12 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             long timePassed = (currentTime - startTime) / 1000000;
             long timeLeft = FRAME_TIME - timePassed;
 
-            for(int i = 0; i<WIDTH; i++){
-                buckets[i] = 0;
-            }
+            bucket.clear();
 
             long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
             while (timeLeft > 10) {
                 Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
-                addToBucket(harmonic, buckets);
+                addToBucket(harmonic);
 
                 currentTime = System.nanoTime();
                 timePassed = (currentTime - startTime) / 1000000;
@@ -99,7 +99,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             offScreenGraphics.setColor(Color.gray);
 
             for(int i = 0; i<WIDTH; i++) {
-                double value = buckets[i];
+                double value = bucket.getValue(i);
                 int x = i;
                 int y = (int)(HEIGHT*(0.05+0.95* value));
                 offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
@@ -123,7 +123,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
     }
 
-    private void addToBucket(Harmonic harmonic, double[] buckets) {
+    private void addToBucket(Harmonic harmonic) {
         if(harmonic==null){
             return;
         }
@@ -135,7 +135,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
 //        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
         double sonanceValue = harmonic.getSonanceValue();
-        buckets[x]+=sonanceValue;
+        bucket.fill(x, sonanceValue);
     }
 
     @Override
