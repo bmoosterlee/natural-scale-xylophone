@@ -71,10 +71,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void run() {
-        long startTime;
-
         while(true) {
-            startTime = System.nanoTime();
+            long startTime = System.nanoTime();
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
 
             tick(startTime);
@@ -106,7 +104,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         harmonicsBuckets.clear();
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
         long timeLeftInFrame = getTimeLeftInFrame(startTime);
-        
+
         while (timeLeftInFrame > 10) {
             Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
             addToBucket(harmonic);
