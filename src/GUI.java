@@ -65,8 +65,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         offScreenGraphics.setColor(Color.blue);
         for(Note note : liveNotes) {
-            double frequency = note.getFrequency();
-            int x = (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
+            int x = (int) (Math.log(note.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
             int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
         }
@@ -142,8 +141,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             return;
         }
 
-        double frequency = harmonic.getFrequency();
-        int x = (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
+        int x = (int) (Math.log(harmonic.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
         if(x<0 || x>=WIDTH){
             return;
         }
