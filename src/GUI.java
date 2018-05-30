@@ -54,14 +54,12 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
-
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         g.clearRect(0, 0, WIDTH, HEIGHT);
+
         renderHarmonicsBuckets(g);
         renderNotes(g);
 
         addHarmonicsToBuckets(startTime);
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderNotes(Graphics g) {
@@ -105,8 +103,10 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void tick(long startTime) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         this.startTime = startTime;
         repaint();
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void addHarmonicsToBuckets(long startTime) {
