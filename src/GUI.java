@@ -17,7 +17,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     final double octaveRange = 3.;
     final double lowerBound;
     final double upperBound;
-    final double frequencyRange;
     private final double logFrequencyMultiplier;
     private final double logFrequencyAdditive;
     private final double xMultiplier;
@@ -32,7 +31,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         lowerBound = centerFrequency/octaveRange;
         upperBound = centerFrequency*octaveRange;
-        frequencyRange = upperBound-lowerBound;
 
         double logLowerBound = Math.log(lowerBound);
         double logUpperBound = Math.log(upperBound);
