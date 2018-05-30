@@ -16,6 +16,9 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     final double lowerBound;
     final double upperBound;
     final double frequencyRange;
+    private final double logFrequencyMultiplier;
+    private final double logFrequencyAdditive;
+    private final double xMultiplier;
 
     Image offScreen;
     Graphics offScreenGraphics;
@@ -27,9 +30,14 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         lowerBound = centerFrequency/octaveRange;
         upperBound = centerFrequency*octaveRange;
-
         frequencyRange = upperBound-lowerBound;
-        
+
+        double logLowerBound = Math.log(lowerBound);
+        double logUpperBound = Math.log(upperBound);
+        logFrequencyMultiplier = WIDTH / (logUpperBound - logLowerBound);
+        logFrequencyAdditive = logLowerBound * WIDTH / (logUpperBound - logLowerBound);
+        xMultiplier = (logUpperBound - logLowerBound) / WIDTH;
+
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -58,7 +66,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         offScreenGraphics.setColor(Color.blue);
         for(Note note : liveNotes) {
             double frequency = note.getFrequency();
-            int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
+            int x = (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
             int y = (int)(HEIGHT*(0.05+0.95*noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount())));
             offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
         }
@@ -137,7 +145,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         }
 
         double frequency = harmonic.getFrequency();
-        int x = (int) ((Math.log(frequency)/Math.log(2) - Math.log(lowerBound)/Math.log(2)) / (Math.log(upperBound)/Math.log(2)-Math.log(lowerBound)/Math.log(2)) * WIDTH);
+        int x = (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
         if(x<0 || x>=WIDTH){
             return;
         }
@@ -153,7 +161,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        double frequency = Math.exp(((double)e.getX()/WIDTH)*(Math.log(upperBound)-Math.log(lowerBound))+Math.log(lowerBound));
+        double frequency = Math.exp((double) e.getX() * xMultiplier) * lowerBound;
         noteEnvironment.addNote(new Note(frequency, noteEnvironment.getExpectedSampleCount()));
     }
 
