@@ -21,11 +21,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
-    Image onScreen;
-    Image offScreen;
-    Graphics onScreenGraphics;
-    Graphics offScreenGraphics;
     public static final long FRAME_TIME = 1000 / 60;
+    public long startTime;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -51,28 +48,31 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         frame.setVisible(true);
 
-        onScreen = createImage(WIDTH, HEIGHT);
-        offScreen = createImage(WIDTH, HEIGHT);
-        onScreenGraphics = onScreen.getGraphics();
-        offScreenGraphics = offScreen.getGraphics();
-
         harmonicsBuckets = new Buckets(WIDTH);
     }
 
     @Override
     public void paintComponent(Graphics g){
-        g.drawImage(onScreen, 0, 0, null);
+        super.paintComponent(g);
+
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
+        g.clearRect(0, 0, WIDTH, HEIGHT);
+        renderHarmonicsBuckets(g);
+        renderNotes(g);
+
+        addHarmonicsToBuckets(startTime);
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void renderNotes() {
+    private void renderNotes(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderNotes");
         LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
 
-        offScreenGraphics.setColor(Color.blue);
+        g.setColor(Color.blue);
         for(Note note : liveNotes) {
             int x = (int) (Math.log(note.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
             int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
-            offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
+            g.drawRect(x, HEIGHT-y, 1, y);
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
@@ -105,26 +105,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void tick(long startTime) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
-        renderHarmonicsBuckets();
-        renderNotes();
-
-        flipBuffer();
+        this.startTime = startTime;
         repaint();
-        offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
-
-        addHarmonicsToBuckets(startTime);
-        PerformanceTracker.stopTracking(timeKeeper);
-    }
-
-    private void flipBuffer() {
-        Image tempImage = onScreen;
-        onScreen = offScreen;
-        offScreen = tempImage;
-
-        Graphics tempGraphics = onScreenGraphics;
-        onScreenGraphics = offScreenGraphics;
-        offScreenGraphics = tempGraphics;
     }
 
     private void addHarmonicsToBuckets(long startTime) {
@@ -139,13 +121,13 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void renderHarmonicsBuckets() {
+    private void renderHarmonicsBuckets(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
-        offScreenGraphics.setColor(Color.gray);
+        g.setColor(Color.gray);
 
         for(int x = 0; x<WIDTH; x++) {
             int y = (int)(harmonicsBuckets.getValue(x) * yScale + margin);
-            offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
+            g.drawRect(x, HEIGHT - y, 1, y);
         }
 
         PerformanceTracker.stopTracking(timeKeeper);
