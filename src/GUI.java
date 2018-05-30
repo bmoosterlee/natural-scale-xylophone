@@ -54,7 +54,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
-        g.clearRect(0, 0, WIDTH, HEIGHT);
 
         renderHarmonicsBuckets(g);
         renderNotes(g);
