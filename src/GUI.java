@@ -109,7 +109,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     private void addHarmonicsToBuckets(long startTime) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("addHarmonicsToBuckets");
-        harmonicsBuckets.clear();
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
         while (getTimeLeftInFrame(startTime) > 1) {
@@ -126,6 +125,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         for(int x = 0; x<WIDTH; x++) {
             int y = (int)(harmonicsBuckets.getValue(x) * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
+            harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
         }
 
         PerformanceTracker.stopTracking(timeKeeper);
@@ -147,9 +147,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         if(x<0 || x>=WIDTH){
             return;
         }
-//        double sonanceValue = harmonic.getSonanceValue(sampleCountAtFrame)/harmonic.tonic.getVolume(sampleCountAtFrame) * 0.5*100000./(100000.+(sampleCountAtFrame- harmonic.tonic.getStartingSampleCount()));
         double sonanceValue = harmonic.getSonanceValue();
-        harmonicsBuckets.fill(x, sonanceValue);
+        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.01 * sonanceValue);
     }
 
     @Override

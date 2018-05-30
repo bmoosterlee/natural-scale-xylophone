@@ -18,6 +18,10 @@ public class Buckets {
         buckets[x]+=value;
     }
 
+    void put(int x, double value) {
+        buckets[x] = value;
+    }
+
     double getValue(int i) {
         return buckets[i];
     }
