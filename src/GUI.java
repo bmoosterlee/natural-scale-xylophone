@@ -41,7 +41,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        frame.getContentPane().add(this);
+        frame.setContentPane(this);
         frame.addMouseListener(this);
 
         frame.pack();
