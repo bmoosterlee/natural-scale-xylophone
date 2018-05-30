@@ -21,7 +21,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
-    public static final long FRAME_TIME = 1000 / 60;
+    public static final long FRAME_TIME = 1000000000 / 60;
     public long startTime;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
@@ -136,8 +136,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     private long getTimeLeftInFrame(long startTime) {
         long currentTime;
         currentTime = System.nanoTime();
-        long timePassed = (currentTime - startTime) / 1000000;
-        return FRAME_TIME - timePassed;
+        long timePassed = (currentTime - startTime);
+        return (FRAME_TIME - timePassed)/ 1000000;
     }
 
     private void addToBucket(Harmonic harmonic) {
