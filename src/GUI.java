@@ -57,8 +57,6 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         renderHarmonicsBuckets(g);
         renderNotes(g);
-
-        addHarmonicsToBuckets(startTime);
     }
 
     private void renderNotes(Graphics g) {
@@ -105,6 +103,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         this.startTime = startTime;
         repaint();
+        addHarmonicsToBuckets(startTime);
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
