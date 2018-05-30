@@ -11,6 +11,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     public static final int WIDTH = 800*2;
     public static final int HEIGHT = 600;
+    public static final double yScale = HEIGHT * 0.95;
+    public static final double margin = HEIGHT * 0.05;
     final double centerFrequency = 2 * 261.63;
     final double octaveRange = 3.;
     final double lowerBound;
@@ -67,7 +69,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         for(Note note : liveNotes) {
             double frequency = note.getFrequency();
             int x = (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
-            int y = (int)(HEIGHT*(0.05+0.95*noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount())));
+            int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
         }
     }
@@ -124,10 +126,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     private void renderHarmonicsBuckets() {
         offScreenGraphics.setColor(Color.gray);
 
-        for(int i = 0; i<WIDTH; i++) {
-            double value = harmonicsBuckets.getValue(i);
-            int x = i;
-            int y = (int)(HEIGHT*(0.05+0.95* value));
+        for(int x = 0; x<WIDTH; x++) {
+            int y = (int)(harmonicsBuckets.getValue(x) * yScale + margin);
             offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
         }
     }
