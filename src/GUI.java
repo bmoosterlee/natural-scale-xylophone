@@ -21,7 +21,9 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
+    Image onScreen;
     Image offScreen;
+    Graphics onScreenGraphics;
     Graphics offScreenGraphics;
     public static final long FRAME_TIME = 1000 / 60;
 
@@ -49,7 +51,9 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         frame.setVisible(true);
 
+        onScreen = createImage(WIDTH, HEIGHT);
         offScreen = createImage(WIDTH, HEIGHT);
+        onScreenGraphics = onScreen.getGraphics();
         offScreenGraphics = offScreen.getGraphics();
 
         harmonicsBuckets = new Buckets(WIDTH);
@@ -57,7 +61,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     @Override
     public void paintComponent(Graphics g){
-        g.drawImage(offScreen, 0, 0, null);
+        g.drawImage(onScreen, 0, 0, null);
     }
 
     private void renderNotes() {
@@ -104,7 +108,18 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         renderHarmonicsBuckets();
 
         renderNotes();
+        flipBuffer();
         repaint();
+    }
+
+    private void flipBuffer() {
+        Image tempImage = onScreen;
+        onScreen = offScreen;
+        offScreen = tempImage;
+
+        Graphics tempGraphics = onScreenGraphics;
+        onScreenGraphics = offScreenGraphics;
+        offScreenGraphics = tempGraphics;
     }
 
     private void addHarmonicsToBuckets(long startTime) {
