@@ -132,7 +132,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         harmonicsBuckets.clear();
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
-        while (getTimeLeftInFrame(startTime) > 10) {
+        while (getTimeLeftInFrame(startTime) > 1) {
             Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
             addToBucket(harmonic);
         }
