@@ -106,14 +106,14 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     private void tick(long startTime) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
+        renderHarmonicsBuckets();
+        renderNotes();
+
+        flipBuffer();
+        repaint();
         offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
 
         addHarmonicsToBuckets(startTime);
-        renderHarmonicsBuckets();
-
-        renderNotes();
-        flipBuffer();
-        repaint();
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
