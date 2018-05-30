@@ -65,6 +65,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void renderNotes() {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderNotes");
         LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
 
         offScreenGraphics.setColor(Color.blue);
@@ -73,6 +74,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             offScreenGraphics.drawRect(x, HEIGHT-y, 1, y);
         }
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     public void start(){
@@ -83,14 +85,12 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void run() {
         while(true) {
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI loop");
             long startTime = System.nanoTime();
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI repaint");
-
             tick(startTime);
 
-            PerformanceTracker.stopTracking(timeKeeper);
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("GUI sleep");
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
-
             if (timeLeftInFrame > 0) {
                 try {
                     Thread.sleep(timeLeftInFrame);
@@ -98,10 +98,14 @@ public class GUI extends JPanel implements Runnable, MouseListener {
                     e.printStackTrace();
                 }
             }
+            PerformanceTracker.stopTracking(sleepTimeKeeper);
+
+            PerformanceTracker.stopTracking(timeKeeper);
         }
     }
 
     private void tick(long startTime) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         offScreenGraphics.clearRect(0, 0, WIDTH, HEIGHT);
 
         addHarmonicsToBuckets(startTime);
@@ -110,6 +114,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         renderNotes();
         flipBuffer();
         repaint();
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void flipBuffer() {
@@ -123,6 +128,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     }
 
     private void addHarmonicsToBuckets(long startTime) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("addHarmonicsToBuckets");
         harmonicsBuckets.clear();
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
@@ -130,15 +136,19 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
             addToBucket(harmonic);
         }
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderHarmonicsBuckets() {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         offScreenGraphics.setColor(Color.gray);
 
         for(int x = 0; x<WIDTH; x++) {
             int y = (int)(harmonicsBuckets.getValue(x) * yScale + margin);
             offScreenGraphics.drawRect(x, HEIGHT - y, 1, y);
         }
+
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private long getTimeLeftInFrame(long startTime) {
