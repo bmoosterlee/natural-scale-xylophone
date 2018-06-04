@@ -1,12 +1,10 @@
 public class Harmonic implements Comparable<Harmonic>{
 
-    final Note tonic;
     final int sharedPeriod;
     final double frequency;
     double noteVolume;
 
     public Harmonic(Note tonic, Fraction harmonicAsFraction){
-        this.tonic = tonic;
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
         frequency = calculateFrequency(tonic, harmonicAsFraction);
     }
