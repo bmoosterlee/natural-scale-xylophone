@@ -1,7 +1,7 @@
 public class Harmonic implements Comparable<Harmonic>{
 
-    Note tonic;
-    Fraction harmonicAsFraction;
+    final Note tonic;
+    final Fraction harmonicAsFraction;
     double noteVolume;
 
     public Harmonic(Note tonic, Fraction harmonicAsFraction){
