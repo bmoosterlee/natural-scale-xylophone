@@ -8,7 +8,7 @@ public class Harmonic implements Comparable<Harmonic>{
     public Harmonic(Note tonic, Fraction harmonicAsFraction){
         this.tonic = tonic;
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
-        frequency = calculateFrequency(harmonicAsFraction);
+        frequency = calculateFrequency(tonic, harmonicAsFraction);
     }
 
     @Override
@@ -24,7 +24,7 @@ public class Harmonic implements Comparable<Harmonic>{
         return Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
     }
 
-    private double calculateFrequency(Fraction harmonicAsFraction) {
+    private double calculateFrequency(Note tonic, Fraction harmonicAsFraction) {
         return tonic.getFrequency()*(double)harmonicAsFraction.numerator/(double)harmonicAsFraction.denominator;
     }
 
