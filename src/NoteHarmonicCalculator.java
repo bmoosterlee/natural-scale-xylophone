@@ -1,29 +1,31 @@
 public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator>{
 
     Note note;
-    Harmonic currentHarmonic;
+    Fraction currentFraction;
     RelativelyPrimeFractionIterator iterator;
     double noteVolume;
 
     public NoteHarmonicCalculator(Note note, double noteVolume){
         this.note = note;
         iterator = new RelativelyPrimeFractionIterator();
-        currentHarmonic = getNextHarmonic();
+        currentFraction = getNextHarmonic();
         this.noteVolume = noteVolume;
     }
 
     public Harmonic poll(){
-        Harmonic tempCurrentHarmonic = currentHarmonic;
-        tempCurrentHarmonic.noteVolume = noteVolume;
-        currentHarmonic = getNextHarmonic();
-        return tempCurrentHarmonic;
+        Harmonic currentHarmonic = new Harmonic(note, currentFraction);
+        currentHarmonic.noteVolume = noteVolume;
+
+        currentFraction = getNextHarmonic();
+        return currentHarmonic;
     }
 
-    private Harmonic getNextHarmonic() {
-        return new Harmonic(note, iterator.next());
+    private Fraction getNextHarmonic() {
+        return iterator.next();
     }
 
     public Harmonic peek(){
+        Harmonic currentHarmonic = new Harmonic(note, currentFraction);
         currentHarmonic.noteVolume = noteVolume;
         return currentHarmonic;
     }
