@@ -28,8 +28,8 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         this.noteEnvironment = noteEnvironment;
         this.harmonicCalculator = harmonicCalculator;
 
-        lowerBound = centerFrequency/octaveRange;
-        upperBound = centerFrequency*octaveRange;
+        lowerBound = centerFrequency/Math.pow(2, octaveRange/2);
+        upperBound = centerFrequency*Math.pow(2, octaveRange/2);
 
         double logLowerBound = Math.log(lowerBound);
         double logUpperBound = Math.log(upperBound);
