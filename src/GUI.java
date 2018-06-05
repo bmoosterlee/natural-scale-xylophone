@@ -2,9 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.LinkedList;
 
-public class GUI extends JPanel implements Runnable, MouseListener {
+public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private final Buckets harmonicsBuckets;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
@@ -23,6 +24,9 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
     public static final long FRAME_TIME = 1000000000 / 60;
     public long startTime;
+    public int mouseX;
+    boolean calculatedMouseFrequency;
+    public double mouseFrequency;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -44,6 +48,7 @@ public class GUI extends JPanel implements Runnable, MouseListener {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         frame.setContentPane(this);
         frame.addMouseListener(this);
+        frame.addMouseMotionListener(this);
 
         frame.pack();
 
@@ -70,6 +75,13 @@ public class GUI extends JPanel implements Runnable, MouseListener {
             int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             g.drawRect(x, HEIGHT-y, 1, y);
         }
+        if(!calculatedMouseFrequency){
+            mouseFrequency = getFrequency(mouseX);
+            calculatedMouseFrequency = true;
+        }
+        g.setColor(Color.green);
+        int x = (int) (Math.log(mouseFrequency) * logFrequencyMultiplier - logFrequencyAdditive);
+        g.drawRect(x, 0, 1, HEIGHT);
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
@@ -179,5 +191,16 @@ public class GUI extends JPanel implements Runnable, MouseListener {
     @Override
     public void mouseExited(MouseEvent e) {
 
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        mouseX = e.getX();
+        calculatedMouseFrequency = false;
     }
 }
