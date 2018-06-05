@@ -33,9 +33,10 @@ public class GUI extends JPanel implements Runnable, MouseListener {
 
         double logLowerBound = Math.log(lowerBound);
         double logUpperBound = Math.log(upperBound);
-        logFrequencyMultiplier = WIDTH / (logUpperBound - logLowerBound);
-        logFrequencyAdditive = logLowerBound * WIDTH / (logUpperBound - logLowerBound);
-        xMultiplier = (logUpperBound - logLowerBound) / WIDTH;
+        double logRange = logUpperBound - logLowerBound;
+        logFrequencyMultiplier = WIDTH / logRange;
+        logFrequencyAdditive = logLowerBound * WIDTH / logRange;
+        xMultiplier = logRange / WIDTH;
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
