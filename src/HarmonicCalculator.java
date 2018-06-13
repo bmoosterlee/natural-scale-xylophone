@@ -11,25 +11,8 @@ public class HarmonicCalculator {
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
-
         fractionCalculator = new FractionCalculator();
-
         harmonicHierarchy = new PriorityQueue<>();
-        noteEnvironment.addNoteObservable.addObserver((Observer<Note>) note -> {
-            synchronized(harmonicHierarchy) {
-                prioritizeNoteHarmonicCalculator(note);
-            }
-        });
-        noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
-            synchronized(harmonicHierarchy) {
-                for(NoteHarmonicCalculator calculator : harmonicHierarchy){
-                    if(calculator.getNote() == note){
-                        harmonicHierarchy.remove(calculator);
-                        break;
-                    }
-                }
-            }
-        });
     }
 
     private long getLastSampleCount() {
@@ -39,12 +22,12 @@ public class HarmonicCalculator {
     public Harmonic getNextHarmonic(long currentSampleCount) {
         Harmonic highestValueHarmonic;
         synchronized(harmonicHierarchy) {
-            if (harmonicHierarchy.isEmpty()) {
-                return null;
-            }
             if(currentSampleCount>lastSampleCount) {
                 lastSampleCount = currentSampleCount;
                 rebuildHarmonicHierarchy();
+            }
+            if (harmonicHierarchy.isEmpty()) {
+                return null;
             }
 
             NoteHarmonicCalculator highestValueHarmonicCalculator = harmonicHierarchy.poll();
@@ -56,10 +39,8 @@ public class HarmonicCalculator {
     }
 
     private void rebuildHarmonicHierarchy() {
-        LinkedList<Note> liveNotes = new LinkedList<>();
-        while(!harmonicHierarchy.isEmpty()){
-            liveNotes.add(harmonicHierarchy.poll().getNote());
-        }
+        harmonicHierarchy.clear();
+        LinkedList<Note> liveNotes = noteEnvironment.getLiveNotes();
         for(Note note : liveNotes) {
             prioritizeNoteHarmonicCalculator(note);
         }
