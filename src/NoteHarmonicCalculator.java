@@ -12,7 +12,7 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
         this.fractionCalculator = fractionCalculator;
         setIndex(0);
         setCurrentFraction(getNextHarmonic());
-        this.setNoteVolume(noteVolume);
+        setNoteVolume(noteVolume);
     }
 
     public Harmonic poll(){
