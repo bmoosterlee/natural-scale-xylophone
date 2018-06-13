@@ -3,7 +3,7 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
 
     private final FractionCalculator fractionCalculator;
     private final Note note;
-    private Fraction currentFraction;
+    private Fraction currentHarmonicAsFraction;
     private int index;
     private double noteVolume;
 
@@ -11,25 +11,25 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
         this.note = note;
         this.fractionCalculator = fractionCalculator;
         setIndex(0);
-        setCurrentFraction(getNextHarmonic());
+        setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
         setNoteVolume(noteVolume);
     }
 
     public Harmonic poll(){
-        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentFraction());
+        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
         currentHarmonic.noteVolume = getNoteVolume();
 
         setIndex(getIndex() + 1);
-        setCurrentFraction(getNextHarmonic());
+        setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
         return currentHarmonic;
     }
 
-    private Fraction getNextHarmonic() {
+    private Fraction getNextHarmonicAsFraction() {
         return fractionCalculator.getFraction(getIndex());
     }
 
     public Harmonic peek(){
-        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentFraction());
+        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
         currentHarmonic.noteVolume = getNoteVolume();
         return currentHarmonic;
     }
@@ -43,12 +43,12 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
         return note;
     }
 
-    public Fraction getCurrentFraction() {
-        return currentFraction;
+    public Fraction getCurrentHarmonicAsFraction() {
+        return currentHarmonicAsFraction;
     }
 
-    public void setCurrentFraction(Fraction currentFraction) {
-        this.currentFraction = currentFraction;
+    public void setCurrentHarmonicAsFraction(Fraction currentHarmonicAsFraction) {
+        this.currentHarmonicAsFraction = currentHarmonicAsFraction;
     }
 
     public int getIndex() {
