@@ -49,7 +49,7 @@ public class HarmonicCalculator {
                     liveNotes.add(noteHarmonicCalculators.poll().getNote());
                 }
                 for(Note note : liveNotes) {
-                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, currentSampleCount), fractionCalculator));
+                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, lastSampleCount), fractionCalculator));
                 }
             }
 
