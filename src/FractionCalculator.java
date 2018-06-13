@@ -48,8 +48,7 @@ public class FractionCalculator {
 
     public Fraction getFraction(int index) {
         if(index > getLastCalculatedIndex()){
-            Fraction newFraction = calculateNextFraction();
-            return newFraction;
+            return calculateNextFraction();
         }
         else{
             return getCalculatedFraction(index);
