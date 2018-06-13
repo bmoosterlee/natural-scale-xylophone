@@ -20,7 +20,7 @@ public class HarmonicCalculator {
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
             synchronized(noteHarmonicCalculators) {
                 for(NoteHarmonicCalculator calculator : noteHarmonicCalculators){
-                    if(calculator.note == note){
+                    if(calculator.getNote() == note){
                         noteHarmonicCalculators.remove(calculator);
                         break;
                     }
@@ -43,7 +43,7 @@ public class HarmonicCalculator {
                 lastSampleCount = currentSampleCount;
                 LinkedList<Note> liveNotes = new LinkedList<>();
                 while(!noteHarmonicCalculators.isEmpty()){
-                    liveNotes.add(noteHarmonicCalculators.poll().note);
+                    liveNotes.add(noteHarmonicCalculators.poll().getNote());
                 }
                 for(Note note : liveNotes) {
                     noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, currentSampleCount)));
