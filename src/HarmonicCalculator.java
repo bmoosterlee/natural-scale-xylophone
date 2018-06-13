@@ -17,7 +17,7 @@ public class HarmonicCalculator {
         noteHarmonicCalculators = new PriorityQueue<>();
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) note -> {
             synchronized(noteHarmonicCalculators) {
-                noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
+                prioritizeNoteHarmonicCalculator(note);
             }
         });
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
@@ -49,7 +49,7 @@ public class HarmonicCalculator {
                     liveNotes.add(noteHarmonicCalculators.poll().getNote());
                 }
                 for(Note note : liveNotes) {
-                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, lastSampleCount), fractionCalculator));
+                    prioritizeNoteHarmonicCalculator(note);
                 }
             }
 
@@ -59,6 +59,10 @@ public class HarmonicCalculator {
         }
 
         return highestValueHarmonic;
+    }
+
+    private void prioritizeNoteHarmonicCalculator(Note note) {
+        noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
     }
 
 }
