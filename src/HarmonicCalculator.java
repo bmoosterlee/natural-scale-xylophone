@@ -6,7 +6,7 @@ public class HarmonicCalculator {
     private final NoteEnvironment noteEnvironment;
     long lastSampleCount = -1;
 
-    PriorityQueue<NoteHarmonicCalculator> noteHarmonicCalculators;
+    PriorityQueue<NoteHarmonicCalculator> harmonicHierarchy;
     private final FractionCalculator fractionCalculator;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
@@ -14,17 +14,17 @@ public class HarmonicCalculator {
 
         fractionCalculator = new FractionCalculator();
 
-        noteHarmonicCalculators = new PriorityQueue<>();
+        harmonicHierarchy = new PriorityQueue<>();
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) note -> {
-            synchronized(noteHarmonicCalculators) {
+            synchronized(harmonicHierarchy) {
                 prioritizeNoteHarmonicCalculator(note);
             }
         });
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
-            synchronized(noteHarmonicCalculators) {
-                for(NoteHarmonicCalculator calculator : noteHarmonicCalculators){
+            synchronized(harmonicHierarchy) {
+                for(NoteHarmonicCalculator calculator : harmonicHierarchy){
                     if(calculator.getNote() == note){
-                        noteHarmonicCalculators.remove(calculator);
+                        harmonicHierarchy.remove(calculator);
                         break;
                     }
                 }
@@ -38,31 +38,35 @@ public class HarmonicCalculator {
 
     public Harmonic getNextHarmonic(long currentSampleCount) {
         Harmonic highestValueHarmonic;
-        synchronized(noteHarmonicCalculators) {
-            if (noteHarmonicCalculators.isEmpty()) {
+        synchronized(harmonicHierarchy) {
+            if (harmonicHierarchy.isEmpty()) {
                 return null;
             }
             if(currentSampleCount>lastSampleCount) {
                 lastSampleCount = currentSampleCount;
-                LinkedList<Note> liveNotes = new LinkedList<>();
-                while(!noteHarmonicCalculators.isEmpty()){
-                    liveNotes.add(noteHarmonicCalculators.poll().getNote());
-                }
-                for(Note note : liveNotes) {
-                    prioritizeNoteHarmonicCalculator(note);
-                }
+                rebuildHarmonicHierarchy();
             }
 
-            NoteHarmonicCalculator highestValueHarmonicCalculator = noteHarmonicCalculators.poll();
+            NoteHarmonicCalculator highestValueHarmonicCalculator = harmonicHierarchy.poll();
             highestValueHarmonic = highestValueHarmonicCalculator.poll();
-            noteHarmonicCalculators.add(highestValueHarmonicCalculator);
+            harmonicHierarchy.add(highestValueHarmonicCalculator);
         }
 
         return highestValueHarmonic;
     }
 
+    private void rebuildHarmonicHierarchy() {
+        LinkedList<Note> liveNotes = new LinkedList<>();
+        while(!harmonicHierarchy.isEmpty()){
+            liveNotes.add(harmonicHierarchy.poll().getNote());
+        }
+        for(Note note : liveNotes) {
+            prioritizeNoteHarmonicCalculator(note);
+        }
+    }
+
     private void prioritizeNoteHarmonicCalculator(Note note) {
-        noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
+        harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
     }
 
 }
