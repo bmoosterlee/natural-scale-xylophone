@@ -7,14 +7,17 @@ public class HarmonicCalculator {
     long lastSampleCount = -1;
 
     PriorityQueue<NoteHarmonicCalculator> noteHarmonicCalculators;
+    private final FractionCalculator fractionCalculator;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
 
+        fractionCalculator = new FractionCalculator();
+
         noteHarmonicCalculators = new PriorityQueue<>();
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) note -> {
             synchronized(noteHarmonicCalculators) {
-                noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount())));
+                noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
             }
         });
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) note -> {
@@ -46,7 +49,7 @@ public class HarmonicCalculator {
                     liveNotes.add(noteHarmonicCalculators.poll().getNote());
                 }
                 for(Note note : liveNotes) {
-                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, currentSampleCount)));
+                    noteHarmonicCalculators.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, currentSampleCount), fractionCalculator));
                 }
             }
 

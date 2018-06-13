@@ -2,14 +2,15 @@ import java.util.ArrayList;
 
 public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator>{
 
-    private final FractionCalculator fractionCalculator = new FractionCalculator();
+    private final FractionCalculator fractionCalculator;
     private Note note;
     private Fraction currentFraction;
     private int index;
     private double noteVolume;
 
-    public NoteHarmonicCalculator(Note note, double noteVolume){
+    public NoteHarmonicCalculator(Note note, double noteVolume, FractionCalculator fractionCalculator){
         this.setNote(note);
+        this.fractionCalculator = fractionCalculator;
         setIndex(0);
         setCurrentFraction(getNextHarmonic());
         this.setNoteVolume(noteVolume);
