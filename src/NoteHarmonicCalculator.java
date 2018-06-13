@@ -2,13 +2,13 @@
 public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator>{
 
     private final FractionCalculator fractionCalculator;
-    private Note note;
+    private final Note note;
     private Fraction currentFraction;
     private int index;
     private double noteVolume;
 
     public NoteHarmonicCalculator(Note note, double noteVolume, FractionCalculator fractionCalculator){
-        this.setNote(note);
+        this.note = note;
         this.fractionCalculator = fractionCalculator;
         setIndex(0);
         setCurrentFraction(getNextHarmonic());
@@ -41,10 +41,6 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
 
     public Note getNote() {
         return note;
-    }
-
-    public void setNote(Note note) {
-        this.note = note;
     }
 
     public Fraction getCurrentFraction() {
