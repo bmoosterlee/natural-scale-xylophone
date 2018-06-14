@@ -1,11 +1,11 @@
 import java.util.ArrayList;
 
-public class FractionCalculator {
+public class FractionMemoizer {
     private ArrayList<Fraction> calculatedFractions;
     private int lastCalculatedIndex;
     private RelativelyPrimeFractionIterator iterator;
 
-    public FractionCalculator() {
+    public FractionMemoizer() {
         setIterator(new RelativelyPrimeFractionIterator());
         setCalculatedFractions(new ArrayList<>());
         setLastCalculatedIndex(-1);

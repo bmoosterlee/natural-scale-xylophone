@@ -1,6 +1,6 @@
 public class MemoizedIterator {
 
-    final static FractionCalculator fractionCalculator = new FractionCalculator();
+    final static FractionMemoizer FRACTION_MEMOIZER = new FractionMemoizer();
     int index;
 
     Fraction next() {
@@ -9,7 +9,7 @@ public class MemoizedIterator {
         return nextHarmonicAsFraction;
     }
 
-    public FractionCalculator getFractionCalculator() {
-        return fractionCalculator;
+    public FractionMemoizer getFractionCalculator() {
+        return FRACTION_MEMOIZER;
     }
 }
