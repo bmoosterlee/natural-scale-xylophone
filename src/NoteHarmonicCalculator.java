@@ -5,14 +5,15 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
     private final Note note;
     private Fraction currentHarmonicAsFraction;
     private int index;
-    private double noteVolume;
+    private final double noteVolume;
 
     public NoteHarmonicCalculator(Note note, double noteVolume, FractionCalculator fractionCalculator){
         this.note = note;
         this.fractionCalculator = fractionCalculator;
+        this.noteVolume = noteVolume;
+        
         setIndex(0);
         setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
-        setNoteVolume(noteVolume);
     }
 
     public Harmonic poll(){
@@ -63,7 +64,4 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
         return noteVolume;
     }
 
-    public void setNoteVolume(double noteVolume) {
-        this.noteVolume = noteVolume;
-    }
 }
