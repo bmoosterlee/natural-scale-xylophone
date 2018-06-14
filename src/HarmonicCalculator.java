@@ -40,8 +40,7 @@ public class HarmonicCalculator {
 
     private void rebuildHarmonicHierarchy() {
         harmonicHierarchy.clear();
-        LinkedList<Note> liveNotes = noteEnvironment.getLiveNotes();
-        for(Note note : liveNotes) {
+        for(Note note : noteEnvironment.getLiveNotes()) {
             harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
         }
     }
