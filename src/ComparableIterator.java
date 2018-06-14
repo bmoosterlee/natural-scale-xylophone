@@ -1,29 +1,20 @@
 
 public class ComparableIterator implements Comparable<ComparableIterator>{
 
-    private final FractionCalculator fractionCalculator;
+    private final MemoizedIterator memoizedIterator;
     private Fraction currentHarmonicAsFraction;
-    private int index;
     private final double noteVolume;
 
-    public ComparableIterator(double noteVolume, FractionCalculator fractionCalculator){
-        this.fractionCalculator = fractionCalculator;
+    public ComparableIterator(double noteVolume){
+        memoizedIterator = new MemoizedIterator();
         this.noteVolume = noteVolume;
-
-        this.index = 0;
-        this.currentHarmonicAsFraction = getNextHarmonicAsFraction();
+        currentHarmonicAsFraction = memoizedIterator.next();
     }
 
     public Fraction poll(){
         Fraction currentHarmonicAsFraction = this.currentHarmonicAsFraction;
-
-        this.index = index + 1;
-        this.currentHarmonicAsFraction = getNextHarmonicAsFraction();
+        this.currentHarmonicAsFraction = memoizedIterator.next();
         return currentHarmonicAsFraction;
-    }
-
-    private Fraction getNextHarmonicAsFraction() {
-        return fractionCalculator.getFraction(index);
     }
 
     @Override
