@@ -2,27 +2,24 @@
 public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator>{
 
     private final FractionCalculator fractionCalculator;
-    private final Note note;
     private Fraction currentHarmonicAsFraction;
     private int index;
     private final double noteVolume;
 
-    public NoteHarmonicCalculator(Note note, double noteVolume, FractionCalculator fractionCalculator){
-        this.note = note;
+    public NoteHarmonicCalculator(double noteVolume, FractionCalculator fractionCalculator){
         this.fractionCalculator = fractionCalculator;
         this.noteVolume = noteVolume;
-        
+
         setIndex(0);
         setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
     }
 
-    public Harmonic poll(){
-        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
-        currentHarmonic.noteVolume = getNoteVolume();
+    public Fraction poll(){
+        Fraction currentHarmonicAsFraction = getCurrentHarmonicAsFraction();
 
         setIndex(getIndex() + 1);
         setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
-        return currentHarmonic;
+        return currentHarmonicAsFraction;
     }
 
     private Fraction getNextHarmonicAsFraction() {
@@ -31,16 +28,7 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
 
     @Override
     public int compareTo(NoteHarmonicCalculator o) {
-        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
-        currentHarmonic.noteVolume = getNoteVolume();
-
-        Harmonic otherCurrentHarmonic = new Harmonic(o.getNote(), o.getCurrentHarmonicAsFraction());
-        otherCurrentHarmonic.noteVolume = o.getNoteVolume();
-        return currentHarmonic.compareTo(otherCurrentHarmonic);
-    }
-
-    public Note getNote() {
-        return note;
+        return -Double.compare(Harmonic.getSonanceValue(getNoteVolume(), getCurrentHarmonicAsFraction()), Harmonic.getSonanceValue(o.getNoteVolume(), o.getCurrentHarmonicAsFraction()));
     }
 
     public Fraction getCurrentHarmonicAsFraction() {
