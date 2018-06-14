@@ -25,8 +25,7 @@ public class HarmonicCalculator {
 
         ComparableIterator highestValueComparableIterator = harmonicHierarchy.poll();
         Note highestValueNote = lookupTable.get(highestValueComparableIterator);
-        Harmonic highestValueHarmonic = new Harmonic(highestValueNote, highestValueComparableIterator.next());
-        highestValueHarmonic.noteVolume = volumeTable.get(highestValueNote);
+        Harmonic highestValueHarmonic = new Harmonic(highestValueNote, highestValueComparableIterator.next(), volumeTable.get(highestValueNote));
         harmonicHierarchy.add(highestValueComparableIterator);
 
         return highestValueHarmonic;
