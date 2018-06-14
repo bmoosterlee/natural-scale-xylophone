@@ -1,5 +1,6 @@
+import java.util.Iterator;
 
-public class ComparableIterator implements Comparable<ComparableIterator>{
+public class ComparableIterator implements Comparable<ComparableIterator>, Iterator<Fraction> {
 
     private final MemoizedIterator memoizedIterator;
     private Fraction currentHarmonicAsFraction;
@@ -11,7 +12,11 @@ public class ComparableIterator implements Comparable<ComparableIterator>{
         currentHarmonicAsFraction = memoizedIterator.next();
     }
 
-    public Fraction poll(){
+    public boolean hasNext(){
+        return true;
+    }
+
+    public Fraction next(){
         Fraction currentHarmonicAsFraction = this.currentHarmonicAsFraction;
         this.currentHarmonicAsFraction = memoizedIterator.next();
         return currentHarmonicAsFraction;
