@@ -19,6 +19,21 @@ public class HarmonicCalculator {
 
     public Harmonic getNextHarmonic(long currentSampleCount) {
         Harmonic highestValueHarmonic;
+        resetCheck(currentSampleCount);
+        if (harmonicHierarchy.isEmpty()) {
+            return null;
+        }
+
+        ComparableIterator highestValueHarmonicCalculator = harmonicHierarchy.poll();
+        Note highestValueNote = lookupTable.get(highestValueHarmonicCalculator);
+        highestValueHarmonic = new Harmonic(highestValueNote, highestValueHarmonicCalculator.next());
+        highestValueHarmonic.noteVolume = volumeTable.get(highestValueNote);
+        harmonicHierarchy.add(highestValueHarmonicCalculator);
+
+        return highestValueHarmonic;
+    }
+
+    private void resetCheck(long currentSampleCount) {
         if(currentSampleCount>lastSampleCount) {
             lastSampleCount = currentSampleCount;
             lookupTable = new HashMap<>();
@@ -32,17 +47,6 @@ public class HarmonicCalculator {
                 harmonicHierarchy.add(comparableIterator);
             }
         }
-        if (harmonicHierarchy.isEmpty()) {
-            return null;
-        }
-
-        ComparableIterator highestValueHarmonicCalculator = harmonicHierarchy.poll();
-        Note highestValueNote = lookupTable.get(highestValueHarmonicCalculator);
-        highestValueHarmonic = new Harmonic(highestValueNote, highestValueHarmonicCalculator.next());
-        highestValueHarmonic.noteVolume = volumeTable.get(highestValueNote);
-        harmonicHierarchy.add(highestValueHarmonicCalculator);
-
-        return highestValueHarmonic;
     }
 
 }
