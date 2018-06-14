@@ -21,19 +21,17 @@ public class HarmonicCalculator {
 
     public Harmonic getNextHarmonic(long currentSampleCount) {
         Harmonic highestValueHarmonic;
-        synchronized(harmonicHierarchy) {
-            if(currentSampleCount>lastSampleCount) {
-                lastSampleCount = currentSampleCount;
-                rebuildHarmonicHierarchy();
-            }
-            if (harmonicHierarchy.isEmpty()) {
-                return null;
-            }
-
-            NoteHarmonicCalculator highestValueHarmonicCalculator = harmonicHierarchy.poll();
-            highestValueHarmonic = highestValueHarmonicCalculator.poll();
-            harmonicHierarchy.add(highestValueHarmonicCalculator);
+        if(currentSampleCount>lastSampleCount) {
+            lastSampleCount = currentSampleCount;
+            rebuildHarmonicHierarchy();
         }
+        if (harmonicHierarchy.isEmpty()) {
+            return null;
+        }
+
+        NoteHarmonicCalculator highestValueHarmonicCalculator = harmonicHierarchy.poll();
+        highestValueHarmonic = highestValueHarmonicCalculator.poll();
+        harmonicHierarchy.add(highestValueHarmonicCalculator);
 
         return highestValueHarmonic;
     }
