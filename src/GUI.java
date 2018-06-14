@@ -124,8 +124,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("addHarmonicsToBuckets");
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
+        //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
+        //If we refactor this code, and it becomes uncertain, add a field which stores the last used
+        //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
+        harmonicCalculator.reset(sampleCountAtFrame);
         while (getTimeLeftInFrame(startTime) > 1) {
-            addToBucket(harmonicCalculator.getNextHarmonic(sampleCountAtFrame));
+            addToBucket(harmonicCalculator.getNextHarmonic());
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
