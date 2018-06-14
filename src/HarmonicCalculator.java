@@ -18,17 +18,19 @@ public class HarmonicCalculator {
 
 
 
+
     public Harmonic getNextHarmonic() {
-        if (harmonicHierarchy.isEmpty()) {
+        ComparableIterator highestValueComparableIterator = harmonicHierarchy.poll();
+        try {
+            Fraction nextHarmonicAsFraction = highestValueComparableIterator.next();
+            harmonicHierarchy.add(highestValueComparableIterator);
+
+            Note highestValueNote = lookupTable.get(highestValueComparableIterator);
+            return new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
+        }
+        catch(NullPointerException e){
             return null;
         }
-
-        ComparableIterator highestValueComparableIterator = harmonicHierarchy.poll();
-        Fraction nextHarmonicAsFraction = highestValueComparableIterator.next();
-        harmonicHierarchy.add(highestValueComparableIterator);
-
-        Note highestValueNote = lookupTable.get(highestValueComparableIterator);
-        return new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
     }
 
     public void reset(long currentSampleCount) {
