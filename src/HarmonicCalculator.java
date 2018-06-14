@@ -15,9 +15,6 @@ public class HarmonicCalculator {
         harmonicHierarchy = new PriorityQueue<>();
     }
 
-    private long getLastSampleCount() {
-        return lastSampleCount;
-    }
 
 
     public Harmonic getNextHarmonic(long currentSampleCount) {
@@ -28,7 +25,7 @@ public class HarmonicCalculator {
             volumeTable = new HashMap<>();
             harmonicHierarchy.clear();
             for(Note note : noteEnvironment.getLiveNotes()) {
-                double volume = noteEnvironment.getVolume(note, getLastSampleCount());
+                double volume = noteEnvironment.getVolume(note, lastSampleCount);
                 ComparableIterator comparableIterator = new ComparableIterator(volume);
                 lookupTable.put(comparableIterator, note);
                 volumeTable.put(note, volume);
