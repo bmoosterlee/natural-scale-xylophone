@@ -10,45 +10,25 @@ public class ComparableIterator implements Comparable<ComparableIterator>{
         this.fractionCalculator = fractionCalculator;
         this.noteVolume = noteVolume;
 
-        setIndex(0);
-        setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
+        this.index = 0;
+        this.currentHarmonicAsFraction = getNextHarmonicAsFraction();
     }
 
     public Fraction poll(){
-        Fraction currentHarmonicAsFraction = getCurrentHarmonicAsFraction();
+        Fraction currentHarmonicAsFraction = this.currentHarmonicAsFraction;
 
-        setIndex(getIndex() + 1);
-        setCurrentHarmonicAsFraction(getNextHarmonicAsFraction());
+        this.index = index + 1;
+        this.currentHarmonicAsFraction = getNextHarmonicAsFraction();
         return currentHarmonicAsFraction;
     }
 
     private Fraction getNextHarmonicAsFraction() {
-        return fractionCalculator.getFraction(getIndex());
+        return fractionCalculator.getFraction(index);
     }
 
     @Override
     public int compareTo(ComparableIterator o) {
-        return -Double.compare(Harmonic.getSonanceValue(getNoteVolume(), getCurrentHarmonicAsFraction()), Harmonic.getSonanceValue(o.getNoteVolume(), o.getCurrentHarmonicAsFraction()));
-    }
-
-    public Fraction getCurrentHarmonicAsFraction() {
-        return currentHarmonicAsFraction;
-    }
-
-    public void setCurrentHarmonicAsFraction(Fraction currentHarmonicAsFraction) {
-        this.currentHarmonicAsFraction = currentHarmonicAsFraction;
-    }
-
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public double getNoteVolume() {
-        return noteVolume;
+        return -Double.compare(Harmonic.getSonanceValue(noteVolume, currentHarmonicAsFraction), Harmonic.getSonanceValue(o.noteVolume, o.currentHarmonicAsFraction));
     }
 
 }
