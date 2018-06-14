@@ -2,7 +2,7 @@ import java.util.Iterator;
 
 public class MemoizedIterator implements Iterator<Fraction> {
 
-    final static FractionMemoizer FRACTION_MEMOIZER = new FractionMemoizer();
+    final static FractionMemoizer FRACTION_MEMOIZER = new FractionMemoizer(new RelativelyPrimeFractionIterator());
     int index;
 
     public boolean hasNext(){

@@ -1,12 +1,13 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class FractionMemoizer {
     private ArrayList<Fraction> calculatedFractions;
     private int lastCalculatedIndex;
-    private RelativelyPrimeFractionIterator iterator;
+    private final Iterator<Fraction> iterator;
 
-    public FractionMemoizer() {
-        setIterator(new RelativelyPrimeFractionIterator());
+    public FractionMemoizer(Iterator<Fraction> iterator) {
+        this.iterator = iterator;
         setCalculatedFractions(new ArrayList<>());
         setLastCalculatedIndex(-1);
     }
@@ -27,20 +28,12 @@ public class FractionMemoizer {
         this.lastCalculatedIndex = lastCalculatedIndex;
     }
 
-    public RelativelyPrimeFractionIterator getIterator() {
-        return iterator;
-    }
-
-    public void setIterator(RelativelyPrimeFractionIterator iterator) {
-        this.iterator = iterator;
-    }
-
     public Fraction getCalculatedFraction(int index){
         return getCalculatedFractions().get(index);
     }
 
     public Fraction calculateNextFraction() {
-        Fraction newFraction  = getIterator().next();
+        Fraction newFraction  = iterator.next();
         getCalculatedFractions().add(newFraction);
         setLastCalculatedIndex(getLastCalculatedIndex() + 1);
         return newFraction;
