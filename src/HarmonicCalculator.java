@@ -11,6 +11,8 @@ public class HarmonicCalculator {
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         this.noteEnvironment = noteEnvironment;
+        lookupTable = new HashMap<>();
+        volumeTable = new HashMap<>();
         harmonicHierarchy = new PriorityQueue<>();
     }
 
@@ -31,8 +33,8 @@ public class HarmonicCalculator {
     }
 
     public void reset(long currentSampleCount) {
-        lookupTable = new HashMap<>();
-        volumeTable = new HashMap<>();
+        lookupTable.clear();
+        volumeTable.clear();
         harmonicHierarchy.clear();
         for(Note note : noteEnvironment.getLiveNotes()) {
             double volume = noteEnvironment.getVolume(note, currentSampleCount);
