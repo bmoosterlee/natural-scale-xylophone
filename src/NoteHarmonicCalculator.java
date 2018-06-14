@@ -29,15 +29,14 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
         return fractionCalculator.getFraction(getIndex());
     }
 
-    public Harmonic peek(){
-        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
-        currentHarmonic.noteVolume = getNoteVolume();
-        return currentHarmonic;
-    }
-
     @Override
     public int compareTo(NoteHarmonicCalculator o) {
-        return peek().compareTo(o.peek());
+        Harmonic currentHarmonic = new Harmonic(getNote(), getCurrentHarmonicAsFraction());
+        currentHarmonic.noteVolume = getNoteVolume();
+
+        Harmonic otherCurrentHarmonic = new Harmonic(o.getNote(), o.getCurrentHarmonicAsFraction());
+        otherCurrentHarmonic.noteVolume = o.getNoteVolume();
+        return currentHarmonic.compareTo(otherCurrentHarmonic);
     }
 
     public Note getNote() {
