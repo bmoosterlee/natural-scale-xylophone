@@ -125,8 +125,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
         while (getTimeLeftInFrame(startTime) > 1) {
-            Harmonic harmonic = harmonicCalculator.getNextHarmonic(sampleCountAtFrame);
-            addToBucket(harmonic);
+            addToBucket(harmonicCalculator.getNextHarmonic(sampleCountAtFrame));
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
