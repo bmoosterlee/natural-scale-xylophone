@@ -42,12 +42,8 @@ public class HarmonicCalculator {
         harmonicHierarchy.clear();
         LinkedList<Note> liveNotes = noteEnvironment.getLiveNotes();
         for(Note note : liveNotes) {
-            prioritizeNoteHarmonicCalculator(note);
+            harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
         }
-    }
-
-    private void prioritizeNoteHarmonicCalculator(Note note) {
-        harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
     }
 
 }
