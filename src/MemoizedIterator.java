@@ -4,12 +4,9 @@ public class MemoizedIterator {
     int index;
 
     Fraction next() {
-        Fraction nextHarmonicAsFraction = getFractionCalculator().getFraction(index);
+        Fraction nextHarmonicAsFraction = FRACTION_MEMOIZER.getFraction(index);
         this.index = index + 1;
         return nextHarmonicAsFraction;
     }
 
-    public FractionMemoizer getFractionCalculator() {
-        return FRACTION_MEMOIZER;
-    }
 }
