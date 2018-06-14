@@ -23,7 +23,10 @@ public class HarmonicCalculator {
         Harmonic highestValueHarmonic;
         if(currentSampleCount>lastSampleCount) {
             lastSampleCount = currentSampleCount;
-            rebuildHarmonicHierarchy();
+            harmonicHierarchy.clear();
+            for(Note note : noteEnvironment.getLiveNotes()) {
+                harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
+            }
         }
         if (harmonicHierarchy.isEmpty()) {
             return null;
@@ -34,13 +37,6 @@ public class HarmonicCalculator {
         harmonicHierarchy.add(highestValueHarmonicCalculator);
 
         return highestValueHarmonic;
-    }
-
-    private void rebuildHarmonicHierarchy() {
-        harmonicHierarchy.clear();
-        for(Note note : noteEnvironment.getLiveNotes()) {
-            harmonicHierarchy.add(new NoteHarmonicCalculator(note, noteEnvironment.getVolume(note, getLastSampleCount()), fractionCalculator));
-        }
     }
 
 }
