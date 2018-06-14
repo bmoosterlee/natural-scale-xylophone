@@ -23,11 +23,11 @@ public class HarmonicCalculator {
             return null;
         }
 
-        ComparableIterator highestValueHarmonicCalculator = harmonicHierarchy.poll();
-        Note highestValueNote = lookupTable.get(highestValueHarmonicCalculator);
-        Harmonic highestValueHarmonic = new Harmonic(highestValueNote, highestValueHarmonicCalculator.next());
+        ComparableIterator highestValueComparableIterator = harmonicHierarchy.poll();
+        Note highestValueNote = lookupTable.get(highestValueComparableIterator);
+        Harmonic highestValueHarmonic = new Harmonic(highestValueNote, highestValueComparableIterator.next());
         highestValueHarmonic.noteVolume = volumeTable.get(highestValueNote);
-        harmonicHierarchy.add(highestValueHarmonicCalculator);
+        harmonicHierarchy.add(highestValueComparableIterator);
 
         return highestValueHarmonic;
     }
