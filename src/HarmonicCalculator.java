@@ -6,9 +6,9 @@ public class HarmonicCalculator {
     private final NoteEnvironment noteEnvironment;
     long lastSampleCount = -1;
 
-    PriorityQueue<NoteHarmonicCalculator> harmonicHierarchy;
+    PriorityQueue<ComparableIterator> harmonicHierarchy;
     private final FractionCalculator fractionCalculator;
-    private HashMap<NoteHarmonicCalculator, Note> lookupTable;
+    private HashMap<ComparableIterator, Note> lookupTable;
     private HashMap<Note, Double> volumeTable;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
@@ -31,17 +31,17 @@ public class HarmonicCalculator {
             harmonicHierarchy.clear();
             for(Note note : noteEnvironment.getLiveNotes()) {
                 double volume = noteEnvironment.getVolume(note, getLastSampleCount());
-                NoteHarmonicCalculator noteHarmonicCalculator = new NoteHarmonicCalculator(volume, fractionCalculator);
-                lookupTable.put(noteHarmonicCalculator, note);
+                ComparableIterator comparableIterator = new ComparableIterator(volume, fractionCalculator);
+                lookupTable.put(comparableIterator, note);
                 volumeTable.put(note, volume);
-                harmonicHierarchy.add(noteHarmonicCalculator);
+                harmonicHierarchy.add(comparableIterator);
             }
         }
         if (harmonicHierarchy.isEmpty()) {
             return null;
         }
 
-        NoteHarmonicCalculator highestValueHarmonicCalculator = harmonicHierarchy.poll();
+        ComparableIterator highestValueHarmonicCalculator = harmonicHierarchy.poll();
         Note highestValueNote = lookupTable.get(highestValueHarmonicCalculator);
         highestValueHarmonic = new Harmonic(highestValueNote, highestValueHarmonicCalculator.poll());
         highestValueHarmonic.noteVolume = volumeTable.get(highestValueNote);

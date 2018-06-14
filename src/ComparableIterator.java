@@ -1,12 +1,12 @@
 
-public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator>{
+public class ComparableIterator implements Comparable<ComparableIterator>{
 
     private final FractionCalculator fractionCalculator;
     private Fraction currentHarmonicAsFraction;
     private int index;
     private final double noteVolume;
 
-    public NoteHarmonicCalculator(double noteVolume, FractionCalculator fractionCalculator){
+    public ComparableIterator(double noteVolume, FractionCalculator fractionCalculator){
         this.fractionCalculator = fractionCalculator;
         this.noteVolume = noteVolume;
 
@@ -27,7 +27,7 @@ public class NoteHarmonicCalculator implements Comparable<NoteHarmonicCalculator
     }
 
     @Override
-    public int compareTo(NoteHarmonicCalculator o) {
+    public int compareTo(ComparableIterator o) {
         return -Double.compare(Harmonic.getSonanceValue(getNoteVolume(), getCurrentHarmonicAsFraction()), Harmonic.getSonanceValue(o.getNoteVolume(), o.getCurrentHarmonicAsFraction()));
     }
 
