@@ -63,6 +63,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         renderHarmonicsBuckets(g);
         renderNotes(g);
+        renderCursorLine(g);
     }
 
     private void renderNotes(Graphics g) {
@@ -75,6 +76,10 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             g.drawRect(x, HEIGHT-y, 1, y);
         }
+        PerformanceTracker.stopTracking(timeKeeper);
+    }
+
+    private void renderCursorLine(Graphics g) {
         if(!calculatedMouseFrequency){
             mouseFrequency = getFrequency(mouseX);
             calculatedMouseFrequency = true;
@@ -82,7 +87,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         g.setColor(Color.green);
         int x = (int) (Math.log(mouseFrequency) * logFrequencyMultiplier - logFrequencyAdditive);
         g.drawRect(x, 0, 1, HEIGHT);
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     public void start(){
