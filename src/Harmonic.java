@@ -18,7 +18,11 @@ public class Harmonic implements Comparable<Harmonic>{
         return noteVolume/sharedPeriod;
     }
 
-    private int calculateSharedPeriod(Fraction harmonicAsFraction) {
+    public static double getSonanceValue(double noteVolume, Fraction harmonic) {
+        return noteVolume/calculateSharedPeriod(harmonic);
+    }
+
+    private static int calculateSharedPeriod(Fraction harmonicAsFraction) {
         return Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
     }
 
