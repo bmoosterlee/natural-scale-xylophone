@@ -2,14 +2,14 @@ import java.util.Iterator;
 
 public class ComparableIterator implements Comparable<ComparableIterator>, Iterator<Fraction> {
 
-    private final MemoizedIterator memoizedIterator;
+    private final Iterator<Fraction> iterator;
     private Fraction currentHarmonicAsFraction;
     private final double noteVolume;
 
     public ComparableIterator(double noteVolume){
-        memoizedIterator = new MemoizedIterator();
+        iterator = new MemoizedIterator();
         this.noteVolume = noteVolume;
-        currentHarmonicAsFraction = memoizedIterator.next();
+        currentHarmonicAsFraction = iterator.next();
     }
 
     public boolean hasNext(){
@@ -18,7 +18,7 @@ public class ComparableIterator implements Comparable<ComparableIterator>, Itera
 
     public Fraction next(){
         Fraction currentHarmonicAsFraction = this.currentHarmonicAsFraction;
-        this.currentHarmonicAsFraction = memoizedIterator.next();
+        this.currentHarmonicAsFraction = iterator.next();
         return currentHarmonicAsFraction;
     }
 
