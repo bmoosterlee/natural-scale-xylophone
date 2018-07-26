@@ -17,7 +17,7 @@ public class Note {
     }
 
     public double getVolume(float sampleRate, long sampleCount){
-        return getVolumeAsymptotic(sampleRate, sampleCount, 0.8, 1.5);
+        return getVolumeAsymptotic(sampleRate, sampleCount, 0.25, 1.5);
     }
 
     public double getVolumeLinear(float sampleRate, long sampleCount, double noteLengthInSeconds) {
