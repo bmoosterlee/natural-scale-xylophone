@@ -1,6 +1,6 @@
 public class Envelope {
-    private long startingSampleCount;
     private float sampleRate;
+    private final long startingSampleCount;
 
     public Envelope(long startingSampleCount, float sampleRate) {
         this.startingSampleCount = startingSampleCount;
