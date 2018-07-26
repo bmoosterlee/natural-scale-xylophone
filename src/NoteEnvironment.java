@@ -138,8 +138,10 @@ public class NoteEnvironment implements Runnable{
         this.sourceDataLine = sourceDataLine;
     }
 
-    public synchronized HashSet<Note> getLiveNotes() {
-        return new HashSet<>(liveNotes);
+    public HashSet<Note> getLiveNotes() {
+        synchronized(liveNotes) {
+            return new HashSet<>(liveNotes);
+        }
     }
 
     public void addNote(double frequency, long startingSampleCount) {
