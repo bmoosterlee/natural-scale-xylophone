@@ -21,6 +21,7 @@ public class HarmonicBuffer {
         previousHighHarmonics.add(highestValueHarmonic);
         previousHighHarmonicNotes.put(highestValueHarmonic, highestValueNote);
         previousHighHarmonicsVolume.add(new Pair(highestValueHarmonic, newHarmonicVolume));
+
         if (!notesForPreviousHighHarmonics.containsKey(highestValueNote)) {
             HashSet<Harmonic> harmonicsForThisNote = new HashSet<>();
             harmonicsForThisNote.add(highestValueHarmonic);
@@ -43,5 +44,16 @@ public class HarmonicBuffer {
 
     Pair<Harmonic, Double> getHighestValueHarmonic() {
         return previousHighHarmonicsVolume.poll();
+    }
+
+    void calculateHarmonicVolumes(HashMap<Note, Double> volumeTable) {
+//            calculate harmonic volumes using note volumes
+//            store volumes in a pair with the harmonic in a priorityqueue
+        for(Harmonic harmonic : previousHighHarmonics) {
+            Note note = previousHighHarmonicNotes.get(harmonic);
+            previousHighHarmonicsVolume.add(
+                    new Pair(harmonic,
+                            harmonic.getVolume(volumeTable.get(note))));
+        }
     }
 }

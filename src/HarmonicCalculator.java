@@ -106,15 +106,9 @@ public class HarmonicCalculator {
                 iteratorHierarchy.add(comparableIterator);
             }
         }
+        harmonicBuffer.calculateHarmonicVolumes(volumeTable);
 
-//            calculate harmonic volumes using note volumes
-//            store volumes in a pair with the harmonic in a priorityqueue
-        for(Harmonic harmonic : harmonicBuffer.previousHighHarmonics) {
-            Note note = harmonicBuffer.previousHighHarmonicNotes.get(harmonic);
-            harmonicBuffer.previousHighHarmonicsVolume.add(
-                    new Pair(harmonic,
-                            harmonic.getVolume(volumeTable.get(note))));
-        }
+
     }
 
 }
