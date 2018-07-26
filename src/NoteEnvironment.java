@@ -2,6 +2,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class NoteEnvironment implements Runnable{
@@ -10,7 +11,7 @@ public class NoteEnvironment implements Runnable{
     private final int SAMPLE_RATE;
     private byte[] clipBuffer;
     private SourceDataLine sourceDataLine;
-    private LinkedList<Note> liveNotes;
+    private HashSet<Note> liveNotes;
     private long sampleCount;
     public Observable<Note> addNoteObservable;
     public Observable<Note> removeNoteObservable;
@@ -22,6 +23,8 @@ public class NoteEnvironment implements Runnable{
 
         addNoteObservable = new Observable<Note>();
         removeNoteObservable = new Observable<Note>();
+
+        liveNotes = new HashSet();
 
         initialize();
     }
@@ -78,7 +81,7 @@ public class NoteEnvironment implements Runnable{
 
     private byte calculateAmplitudeSum() {
         byte amplitudeSum = 0;
-        LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
+        HashSet<Note> currentLiveNotes = getLiveNotes();
 
         for (Note note : currentLiveNotes) {
             byte amplitude = getAmplitude(note);
@@ -88,10 +91,12 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void removeInaudibleNotes() {
-        LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
+        HashSet<Note> currentLiveNotes = getLiveNotes();
         for (Note note : currentLiveNotes) {
             if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
-                getLiveNotes().remove(note);
+                synchronized(liveNotes) {
+                    liveNotes.remove(note);
+                }
                 removeNoteObservable.notifyObservers(note);
             }
         }
@@ -109,8 +114,6 @@ public class NoteEnvironment implements Runnable{
             e.printStackTrace();
         }
         getSourceDataLine().start();
-
-        setLiveNotes(new LinkedList<Note>());
     }
 
     private byte getAmplitude(Note note) {
@@ -135,17 +138,15 @@ public class NoteEnvironment implements Runnable{
         this.sourceDataLine = sourceDataLine;
     }
 
-    public synchronized LinkedList<Note> getLiveNotes() {
-        return liveNotes;
-    }
-
-    private synchronized void setLiveNotes(LinkedList<Note> liveNotes) {
-        this.liveNotes = liveNotes;
+    public synchronized HashSet<Note> getLiveNotes() {
+        return new HashSet<>(liveNotes);
     }
 
     public void addNote(double frequency, long startingSampleCount) {
         Note note = new Note(frequency, startingSampleCount, SAMPLE_RATE);
-        getLiveNotes().add(note);
+        synchronized(liveNotes) {
+            liveNotes.add(note);
+        }
         addNoteObservable.notifyObservers(note);
     }
 
@@ -156,4 +157,5 @@ public class NoteEnvironment implements Runnable{
     public double getVolume(Note note, long sampleCount){
         return note.getVolume(sampleCount);
     }
+
 }
