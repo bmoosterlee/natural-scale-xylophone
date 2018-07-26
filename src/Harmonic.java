@@ -16,6 +16,10 @@ public class Harmonic implements Comparable<Harmonic>{
     }
 
     public double getHarmonicValue() {
+        return getVolume(noteVolume);
+    }
+
+    public double getVolume(double noteVolume) {
         return noteVolume/sharedPeriod;
     }
 
