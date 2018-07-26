@@ -4,7 +4,7 @@ public class ComparableIterator implements Comparable<ComparableIterator>, Itera
 
     private final Iterator<Fraction> iterator;
     private Fraction currentHarmonicAsFraction;
-    private final double noteVolume;
+    public double noteVolume;
 
     public ComparableIterator(double noteVolume){
         iterator = new MemoizedIterator();
