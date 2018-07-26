@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
@@ -69,7 +70,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     private void renderNotes(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderNotes");
-        LinkedList<Note> liveNotes = (LinkedList<Note>) noteEnvironment.getLiveNotes().clone();
+        HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
