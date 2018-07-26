@@ -88,7 +88,6 @@ public class HarmonicCalculator {
             for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
                 harmonicBuffer.previousHighHarmonics.remove(harmonic);
                 harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
-                harmonicBuffer.previousHighHarmonicsVolume.remove(harmonic);
             }
 
             harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
