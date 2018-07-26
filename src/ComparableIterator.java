@@ -24,7 +24,7 @@ public class ComparableIterator implements Comparable<ComparableIterator>, Itera
 
     @Override
     public int compareTo(ComparableIterator o) {
-        return -Double.compare(Harmonic.getSonanceValue(noteVolume, currentHarmonicAsFraction), Harmonic.getSonanceValue(o.noteVolume, o.currentHarmonicAsFraction));
+        return -Double.compare(Harmonic.getHarmonicValue(noteVolume, currentHarmonicAsFraction), Harmonic.getHarmonicValue(o.noteVolume, o.currentHarmonicAsFraction));
     }
 
 }

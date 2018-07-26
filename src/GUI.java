@@ -167,8 +167,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         if(x<0 || x>=WIDTH){
             return;
         }
-        double sonanceValue = harmonic.getSonanceValue();
-        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.01 * sonanceValue);
+        double harmonicValue = harmonic.getHarmonicValue();
+        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.01 * harmonicValue);
     }
 
     @Override

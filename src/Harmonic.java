@@ -12,14 +12,14 @@ public class Harmonic implements Comparable<Harmonic>{
 
     @Override
     public int compareTo(Harmonic o) {
-        return Double.compare(getSonanceValue(), o.getSonanceValue())*-1;
+        return Double.compare(getHarmonicValue(), o.getHarmonicValue())*-1;
     }
 
-    public double getSonanceValue() {
+    public double getHarmonicValue() {
         return noteVolume/sharedPeriod;
     }
 
-    public static double getSonanceValue(double noteVolume, Fraction harmonic) {
+    public static double getHarmonicValue(double noteVolume, Fraction harmonic) {
         return noteVolume/calculateSharedPeriod(harmonic);
     }
 
