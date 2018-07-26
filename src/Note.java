@@ -9,18 +9,21 @@ public class Note {
     }
 
     public double getAmplitude(long sampleCount) {
-        double volume = envelope.getVolume(sampleCount);
-        double timeDifference = envelope.getTimeDifference(sampleCount);
+        double volume = getEnvelope().getVolume(sampleCount);
+        double timeDifference = getEnvelope().getTimeDifference(sampleCount);
         double angle = timeDifference * getFrequency() * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
     public double getVolume(long sampleCount){
-        return envelope.getVolume(sampleCount);
+        return getEnvelope().getVolume(sampleCount);
     }
 
     public double getFrequency() {
         return frequency;
     }
 
+    public Envelope getEnvelope() {
+        return envelope;
+    }
 }
