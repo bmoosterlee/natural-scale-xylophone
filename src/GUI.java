@@ -132,8 +132,10 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         //If we refactor this code, and it becomes uncertain, add a field which stores the last used
         //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
         harmonicCalculator.reset(sampleCountAtFrame);
-        while (getTimeLeftInFrame(startTime) > 1) {
+        int counter = 0;
+        while (getTimeLeftInFrame(startTime) > 1 && counter<1000) {
             addToBucket(harmonicCalculator.getNextHarmonic());
+            counter++;
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
