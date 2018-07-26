@@ -149,10 +149,11 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
 
-        Buckets averagedBuckets = averageBuckets();
+//        Buckets renderBuckets = harmonicsBuckets;
+        Buckets renderBuckets = averageBuckets(harmonicsBuckets);
 
         for(int x = 0; x<WIDTH; x++) {
-            int y = (int)(averagedBuckets.getValue(x) * yScale + margin);
+            int y = (int)(renderBuckets.getValue(x) * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
             harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
         }
@@ -160,7 +161,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private Buckets averageBuckets() {
+    private Buckets averageBuckets(Buckets harmonicsBuckets) {
         Buckets averagedBuckets = new Buckets(WIDTH);
         for(int x = 0; x<WIDTH; x++) {
             averagedBuckets.fill(x, harmonicsBuckets.getValue(x));
