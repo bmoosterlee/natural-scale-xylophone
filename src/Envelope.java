@@ -1,14 +1,16 @@
 public class Envelope {
     private final long startingSampleCount;
     private final float sampleRate;
+    protected double amplitude;
 
     public Envelope(long startingSampleCount, float sampleRate) {
         this.startingSampleCount = startingSampleCount;
         this.sampleRate = sampleRate;
+        amplitude = 0.05;
     }
 
     public double getVolume(long sampleCount) {
-        return getVolumeAsymptotic(sampleCount, 0.25, 1.5);
+        return getVolumeAsymptotic(sampleCount, amplitude, 1.5);
     }
 
     double getVolumeLinear(long sampleCount, double noteLengthInSeconds) {
