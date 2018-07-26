@@ -1,10 +1,11 @@
+import javafx.util.Pair;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
-import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private final Buckets harmonicsBuckets;
@@ -136,14 +137,18 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         harmonicCalculator.reset(sampleCountAtFrame);
         int counter = 0;
         while (getTimeLeftInFrame(startTime) > 1 && counter<1000) {
-            addToBucket(getNextHarmonic());
+            Pair<Harmonic, Double> nextHarmonicVolumePair = getNextHarmonicVolumePair();
+            if(nextHarmonicVolumePair==null){
+                break;
+            }
+            addToBucket(nextHarmonicVolumePair.getKey(), nextHarmonicVolumePair.getValue());
             counter++;
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private Harmonic getNextHarmonic() {
-        return harmonicCalculator.getNextHarmonic();
+    private Pair<Harmonic, Double> getNextHarmonicVolumePair() {
+        return harmonicCalculator.getNextHarmonicVolumePair();
     }
     private void renderHarmonicsBuckets(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
@@ -190,7 +195,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    private void addToBucket(Harmonic harmonic) {
+    private void addToBucket(Harmonic harmonic, double harmonicVolume) {
         if(harmonic==null){
             return;
         }
@@ -199,8 +204,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         if(x<0 || x>=WIDTH){
             return;
         }
-        double harmonicValue = harmonic.getHarmonicValue();
-        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.01 * harmonicValue);
+        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.025 * harmonicVolume);
     }
 
     @Override
