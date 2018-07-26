@@ -19,8 +19,7 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Note testTone = new Note(gui.centerFrequency, noteEnvironment.getExpectedSampleCount());
-        noteEnvironment.addNote(testTone);
+        noteEnvironment.addNote(gui.centerFrequency, noteEnvironment.getExpectedSampleCount());
 
         try {
             Thread.sleep(500);

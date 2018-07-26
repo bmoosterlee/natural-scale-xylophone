@@ -1,58 +1,26 @@
 public class Note {
 
+    private final Envelope envelope;
     private double frequency;
-    private long startingSampleCount;
 
-    public Note(double frequency, long startingSampleCount){
+    public Note(double frequency, long startingSampleCount, float sampleRate){
         this.frequency = frequency;
-        this.startingSampleCount = startingSampleCount;
+        this.envelope = new Envelope(startingSampleCount, sampleRate);
     }
 
-    public double getAmplitude(float sampleRate, long sampleCount) {
-        double volume = getVolume(sampleRate, sampleCount);
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double timeDifference = sampleCountDifference / sampleRate;
+    public double getAmplitude(long sampleCount) {
+        double volume = envelope.getVolume(sampleCount);
+        double timeDifference = envelope.getTimeDifference(sampleCount);
         double angle = timeDifference * getFrequency() * 2.0 * Math.PI;
         return (Math.sin(angle) * volume);
     }
 
-    public double getVolume(float sampleRate, long sampleCount){
-        return getVolumeAsymptotic(sampleRate, sampleCount, 0.25, 1.5);
-    }
-
-    public double getVolumeLinear(float sampleRate, long sampleCount, double noteLengthInSeconds) {
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double timeDifference = sampleCountDifference / sampleRate;
-
-        if(timeDifference<0){
-            return 0;
-        }
-        if(timeDifference>=noteLengthInSeconds){
-            return 0;
-        }
-        else {
-            return 1.0 - timeDifference / noteLengthInSeconds;
-        }
-    }
-
-    public double getVolumeAsymptotic(float sampleRate, long sampleCount, double amplitude, double exponent) {
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double timeDifference = sampleCountDifference / sampleRate;
-
-        if(timeDifference<0){
-            return 0;
-        }
-        else {
-            return amplitude/(Math.pow(timeDifference, exponent)+1);
-        }
+    public double getVolume(long sampleCount){
+        return envelope.getVolume(sampleCount);
     }
 
     public double getFrequency() {
         return frequency;
-    }
-
-    public long getStartingSampleCount() {
-        return startingSampleCount;
     }
 
 }

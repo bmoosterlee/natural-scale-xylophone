@@ -90,7 +90,7 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes() {
         LinkedList<Note> currentLiveNotes = (LinkedList<Note>) getLiveNotes().clone();
         for (Note note : currentLiveNotes) {
-            if (note.getVolume(SAMPLE_RATE, sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
+            if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
                 getLiveNotes().remove(note);
                 removeNoteObservable.notifyObservers(note);
             }
@@ -115,7 +115,7 @@ public class NoteEnvironment implements Runnable{
 
     private byte getAmplitude(Note note) {
         int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
-        byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(SAMPLE_RATE, sampleCount) / 2);
+        byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(sampleCount) / 2);
         return amplitude;
     }
 
@@ -143,7 +143,8 @@ public class NoteEnvironment implements Runnable{
         this.liveNotes = liveNotes;
     }
 
-    public void addNote(Note note) {
+    public void addNote(double frequency, long startingSampleCount) {
+        Note note = new Note(frequency, startingSampleCount, SAMPLE_RATE);
         getLiveNotes().add(note);
         addNoteObservable.notifyObservers(note);
     }
@@ -153,6 +154,6 @@ public class NoteEnvironment implements Runnable{
     }
 
     public double getVolume(Note note, long sampleCount){
-        return note.getVolume(SAMPLE_RATE, sampleCount);
+        return note.getVolume(sampleCount);
     }
 }

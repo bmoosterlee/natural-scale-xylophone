@@ -208,7 +208,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     @Override
     public void mousePressed(MouseEvent e) {
-        noteEnvironment.addNote(new Note(getFrequency(e.getX()), noteEnvironment.getExpectedSampleCount()));
+        noteEnvironment.addNote(getFrequency(e.getX()), noteEnvironment.getExpectedSampleCount());
     }
 
     private double getFrequency(double x) {
