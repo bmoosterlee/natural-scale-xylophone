@@ -135,12 +135,15 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         harmonicCalculator.reset(sampleCountAtFrame);
         int counter = 0;
         while (getTimeLeftInFrame(startTime) > 1 && counter<1000) {
-            addToBucket(harmonicCalculator.getNextHarmonic());
+            addToBucket(getNextHarmonic());
             counter++;
         }
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
+    private Harmonic getNextHarmonic() {
+        return harmonicCalculator.getNextHarmonic();
+    }
     private void renderHarmonicsBuckets(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
