@@ -162,23 +162,23 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     private Buckets averageBuckets() {
         Buckets averagedBuckets = new Buckets(WIDTH);
         for(int x = 0; x<WIDTH; x++) {
-            AVERAGED_BUCKETS.fill(x, harmonicsBuckets.getValue(x));
+            averagedBuckets.fill(x, harmonicsBuckets.getValue(x));
 
             for(int i = 1; i< AVERAGING_WIDTH; i++) {
                 double value = harmonicsBuckets.getValue(x) * (AVERAGING_WIDTH - i) / AVERAGING_WIDTH;
                 try {
-                    AVERAGED_BUCKETS.fill(x - i, value);
+                    averagedBuckets.fill(x - i, value);
                 } catch (ArrayIndexOutOfBoundsException e) {
 
                 }
                 try {
-                    AVERAGED_BUCKETS.fill(x + i, value);
+                    averagedBuckets.fill(x + i, value);
                 } catch (ArrayIndexOutOfBoundsException e) {
 
                 }
             }
         }
-        return AVERAGED_BUCKETS;
+        return averagedBuckets;
     }
 
     private long getTimeLeftInFrame(long startTime) {
