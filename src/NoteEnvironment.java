@@ -21,8 +21,8 @@ public class NoteEnvironment implements Runnable{
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
 
-        addNoteObservable = new Observable<Note>();
-        removeNoteObservable = new Observable<Note>();
+        addNoteObservable = new Observable<>();
+        removeNoteObservable = new Observable<>();
 
         liveNotes = new HashSet();
 
