@@ -85,16 +85,16 @@ public class HarmonicCalculator {
 
         for(Note note : liveNotes) {
 //          calculate note volumes and pair them with their note
-            double volume = noteEnvironment.getVolume(note, currentSampleCount);
-            volumeTable.put(note, volume);
-
-            ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
-            iteratorHierarchy.clear();
-            for(ComparableIterator comparableIterator : iterators) {
-                comparableIterator.noteVolume = volume;
-                iteratorHierarchy.add(comparableIterator);
-            }
+            volumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
         }
+
+        ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
+        iteratorHierarchy.clear();
+        for(ComparableIterator comparableIterator : iterators) {
+            comparableIterator.noteVolume = volumeTable.get(lookupNotesFromIterators.get(comparableIterator));
+            iteratorHierarchy.add(comparableIterator);
+        }
+
         harmonicBuffer.calculateHarmonicVolumes(volumeTable);
 
 
