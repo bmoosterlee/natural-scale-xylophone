@@ -76,21 +76,11 @@ public class HarmonicCalculator {
 
 
         for(Note note : newNotes) {
-            double volume = noteEnvironment.getVolume(note, currentSampleCount);
-            ComparableIterator comparableIterator = new ComparableIterator(volume);
-            lookupNotesFromIterators.put(comparableIterator, note);
-//          calculate note volumes and pair them with their note
-            iteratorHierarchy.add(comparableIterator);
+            addNote(note);
         }
 
         for(Note note : deadNotes){
-//            remove dead notes here based on volume
-            for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
-                harmonicBuffer.previousHighHarmonics.remove(harmonic);
-                harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
-            }
-
-            harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
+            removeNote(note);
         }
 
         for(Note note : liveNotes) {
@@ -108,6 +98,23 @@ public class HarmonicCalculator {
         harmonicBuffer.calculateHarmonicVolumes(volumeTable);
 
 
+    }
+
+    private void removeNote(Note note) {
+        //            remove dead notes here based on volume
+        for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
+            harmonicBuffer.previousHighHarmonics.remove(harmonic);
+            harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
+        }
+
+        harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
+    }
+
+    private void addNote(Note note) {
+        ComparableIterator comparableIterator = new ComparableIterator(0);
+        lookupNotesFromIterators.put(comparableIterator, note);
+//          calculate note volumes and pair them with their note
+        iteratorHierarchy.add(comparableIterator);
     }
 
 }
