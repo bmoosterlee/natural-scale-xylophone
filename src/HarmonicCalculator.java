@@ -65,20 +65,15 @@ public class HarmonicCalculator {
     public void reset(long currentSampleCount) {
         harmonicBuffer.previousHighHarmonicsVolume.clear();
 
-        HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
-
-        volumeTable.clear();
-
-        for(Note note : liveNotes) {
 //          calculate note volumes and pair them with their note
-            volumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
-        }
-
         synchronized (iteratorHierarchy) {
             ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
             for (ComparableIterator comparableIterator : iterators) {
-                Double noteVolume = volumeTable.get(lookupNotesFromIterators.get(comparableIterator));
+                Note note = lookupNotesFromIterators.get(comparableIterator);
+                volumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
+
+                Double noteVolume = volumeTable.get(note);
                 if(noteVolume==null) {
                     lookupNotesFromIterators.remove(comparableIterator);
                 }
@@ -103,6 +98,7 @@ public class HarmonicCalculator {
             }
 
             harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
+            volumeTable.remove(note);
         }
     }
 
@@ -112,6 +108,7 @@ public class HarmonicCalculator {
             lookupNotesFromIterators.put(comparableIterator, note);
 //          calculate note volumes and pair them with their note
             iteratorHierarchy.add(comparableIterator);
+            volumeTable.put(note, 0.);
         }
     }
 
