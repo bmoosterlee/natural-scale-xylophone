@@ -16,6 +16,9 @@ public class HarmonicCalculator {
         lookupNotesFromIterators = new HashMap<>();
         volumeTable = new HashMap<>();
         iteratorHierarchy = new PriorityQueue<>();
+
+        noteEnvironment.addNoteObservable.addObserver((Observer<Note>) event -> addNote(event));
+        noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) event -> removeNote(event));
     }
 
     public Pair<Harmonic, Double> getNextHarmonicVolumePair() {
@@ -60,61 +63,56 @@ public class HarmonicCalculator {
     }
 
     public void reset(long currentSampleCount) {
-        lookupNotesFromIterators.clear();
-        volumeTable.clear();
-        iteratorHierarchy.clear();
         harmonicBuffer.previousHighHarmonicsVolume.clear();
 
-        HashSet<Note> encounteredNotes = new HashSet<>(harmonicBuffer.notesForPreviousHighHarmonics.keySet());
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        HashSet<Note> newNotes = (HashSet<Note>)(liveNotes.clone());
-        newNotes.removeAll(encounteredNotes);
-
-        HashSet<Note> deadNotes = (HashSet<Note>)(encounteredNotes.clone());
-        deadNotes.removeAll(liveNotes);
-
-
-        for(Note note : newNotes) {
-            addNote(note);
-        }
-
-        for(Note note : deadNotes){
-            removeNote(note);
-        }
+        volumeTable.clear();
 
         for(Note note : liveNotes) {
 //          calculate note volumes and pair them with their note
             volumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
         }
 
-        ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
-        iteratorHierarchy.clear();
-        for(ComparableIterator comparableIterator : iterators) {
-            comparableIterator.noteVolume = volumeTable.get(lookupNotesFromIterators.get(comparableIterator));
-            iteratorHierarchy.add(comparableIterator);
+        synchronized (iteratorHierarchy) {
+            ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
+            iteratorHierarchy.clear();
+            for (ComparableIterator comparableIterator : iterators) {
+                Double noteVolume = volumeTable.get(lookupNotesFromIterators.get(comparableIterator));
+                if(noteVolume==null) {
+                    lookupNotesFromIterators.remove(comparableIterator);
+                }
+                else{
+                    comparableIterator.noteVolume = noteVolume;
+                    iteratorHierarchy.add(comparableIterator);
+                }
+            }
         }
 
-        harmonicBuffer.calculateHarmonicVolumes(volumeTable);
-
-
+        synchronized(harmonicBuffer) {
+            harmonicBuffer.calculateHarmonicVolumes(volumeTable);
+        }
     }
 
     private void removeNote(Note note) {
-        //            remove dead notes here based on volume
-        for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
-            harmonicBuffer.previousHighHarmonics.remove(harmonic);
-            harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
-        }
+        synchronized(harmonicBuffer) {
+            //            remove dead notes here based on volume
+            for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
+                harmonicBuffer.previousHighHarmonics.remove(harmonic);
+                harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
+            }
 
-        harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
+            harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
+        }
     }
 
     private void addNote(Note note) {
-        ComparableIterator comparableIterator = new ComparableIterator(0);
-        lookupNotesFromIterators.put(comparableIterator, note);
+        synchronized(iteratorHierarchy) {
+            ComparableIterator comparableIterator = new ComparableIterator(0);
+            lookupNotesFromIterators.put(comparableIterator, note);
 //          calculate note volumes and pair them with their note
-        iteratorHierarchy.add(comparableIterator);
+            iteratorHierarchy.add(comparableIterator);
+        }
     }
 
 }
