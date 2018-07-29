@@ -63,17 +63,18 @@ public class HarmonicCalculator {
     }
 
     public void reset(long currentSampleCount) {
-        harmonicBuffer.previousHighHarmonicsVolume.clear();
+        HashMap<Note, Double> newVolumeTable = getVolumes(currentSampleCount);
+        synchronized(volumeTable){
+            volumeTable = newVolumeTable;
+        }
 
-//          calculate note volumes and pair them with their note
         synchronized (iteratorHierarchy) {
             ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
             for (ComparableIterator comparableIterator : iterators) {
                 Note note = lookupNotesFromIterators.get(comparableIterator);
-                volumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
 
-                Double noteVolume = volumeTable.get(note);
+                Double noteVolume = newVolumeTable.get(note);
                 if(noteVolume==null) {
                     lookupNotesFromIterators.remove(comparableIterator);
                 }
@@ -84,22 +85,23 @@ public class HarmonicCalculator {
             }
         }
 
-        synchronized(harmonicBuffer) {
-            harmonicBuffer.calculateHarmonicVolumes(volumeTable);
+        harmonicBuffer.rebuildPriorityQueue(volumeTable);
+    }
+
+    private HashMap<Note, Double> getVolumes(long currentSampleCount) {
+        HashMap<Note, Double> newVolumeTable = new HashMap<>();
+        synchronized (iteratorHierarchy) {
+            for (ComparableIterator comparableIterator : iteratorHierarchy) {
+                Note note = lookupNotesFromIterators.get(comparableIterator);
+                newVolumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
+            }
         }
+        return newVolumeTable;
     }
 
     private void removeNote(Note note) {
-        synchronized(harmonicBuffer) {
-            //            remove dead notes here based on volume
-            for (Harmonic harmonic : harmonicBuffer.notesForPreviousHighHarmonics.get(note)) {
-                harmonicBuffer.previousHighHarmonics.remove(harmonic);
-                harmonicBuffer.previousHighHarmonicNotes.remove(harmonic);
-            }
-
-            harmonicBuffer.notesForPreviousHighHarmonics.remove(note);
-            volumeTable.remove(note);
-        }
+        harmonicBuffer.removeNote(note);
+        volumeTable.remove(note);
     }
 
     private void addNote(Note note) {
@@ -109,6 +111,7 @@ public class HarmonicCalculator {
 //          calculate note volumes and pair them with their note
             iteratorHierarchy.add(comparableIterator);
             volumeTable.put(note, 0.);
+            harmonicBuffer.addNote(note);
         }
     }
 
