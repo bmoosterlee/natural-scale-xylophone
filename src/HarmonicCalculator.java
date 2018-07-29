@@ -63,10 +63,7 @@ public class HarmonicCalculator {
     }
 
     public void reset(long currentSampleCount) {
-        HashMap<Note, Double> newVolumeTable = getVolumes(currentSampleCount);
-        synchronized(volumeTable){
-            volumeTable = newVolumeTable;
-        }
+        volumeTable = getVolumes(currentSampleCount);
 
         synchronized (iteratorHierarchy) {
             ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
