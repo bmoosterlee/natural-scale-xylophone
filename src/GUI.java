@@ -124,7 +124,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         this.startTime = startTime;
         repaint();
-        addHarmonicsToBuckets(startTime);
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
@@ -149,6 +148,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     private void renderHarmonicsBuckets(Graphics g) {
+        addHarmonicsToBuckets(startTime);
+
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
 
