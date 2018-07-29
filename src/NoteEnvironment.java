@@ -156,8 +156,4 @@ public class NoteEnvironment implements Runnable{
         return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
 
-    public double getVolume(Note note, long sampleCount){
-        return note.getVolume(sampleCount);
-    }
-
 }

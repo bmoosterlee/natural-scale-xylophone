@@ -76,7 +76,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
             int x = (int) (Math.log(note.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
-            int y = (int)(noteEnvironment.getVolume(note, noteEnvironment.getExpectedSampleCount()) * yScale + margin);
+            int y = (int)(note.getVolume(noteEnvironment.getExpectedSampleCount()) * yScale + margin);
             g.drawRect(x, HEIGHT-y, 1, y);
         }
         PerformanceTracker.stopTracking(timeKeeper);
