@@ -6,33 +6,38 @@ public class HarmonicCalculator {
     
     private final HarmonicBuffer harmonicBuffer = new HarmonicBuffer();
 
-    PriorityQueue<ComparableIterator> iteratorHierarchy;
+    PriorityQueue<Pair<ComparableIterator, Double>> iteratorHierarchy;
     private HashMap<ComparableIterator, Note> lookupNotesFromIterators;
     private HashMap<Note, Double> volumeTable;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         lookupNotesFromIterators = new HashMap<>();
         volumeTable = new HashMap<>();
-        iteratorHierarchy = new PriorityQueue<>();
+        iteratorHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
+                Harmonic.getHarmonicValue(o1.getValue(), o1.getKey().currentHarmonicAsFraction),
+                Harmonic.getHarmonicValue(o2.getValue(), o2.getKey().currentHarmonicAsFraction))
+        );
 
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) event -> addNote(event));
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) event -> removeNote(event));
     }
 
-    private void addNewHarmonicsToBuffer() {
+    private void addNewHarmonicsToBuffer(HashMap<Note, Double> volumeTable) {
         double newHarmonicVolume;
         double highestPriorityHarmonicVolume;
         do {
-            newHarmonicVolume = getNewHarmonicVolume();
+            newHarmonicVolume = getNewHarmonicVolume(volumeTable);
             highestPriorityHarmonicVolume = harmonicBuffer.getHighestPriorityHarmonicVolume();
         } while(newHarmonicVolume > highestPriorityHarmonicVolume);
     }
 
-    private double getNewHarmonicVolume() {
+    private double getNewHarmonicVolume(HashMap<Note, Double> volumeTable) {
         try {
-            ComparableIterator highestValueComparableIterator = iteratorHierarchy.poll();
+            Pair<ComparableIterator, Double> highestValueIteratorPair = iteratorHierarchy.poll();
+            ComparableIterator highestValueComparableIterator = highestValueIteratorPair.getKey();
+            Double noteVolume = highestValueIteratorPair.getValue();
             Fraction nextHarmonicAsFraction = highestValueComparableIterator.next();
-            iteratorHierarchy.add(highestValueComparableIterator);
+            iteratorHierarchy.add(new Pair(highestValueComparableIterator, noteVolume));
 
             Note highestValueNote = lookupNotesFromIterators.get(highestValueComparableIterator);
             Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
@@ -49,23 +54,24 @@ public class HarmonicCalculator {
         }
     }
 
-    public LinkedList<Pair<Harmonic, Double>> getCurrentHarmonicHierarchy(long currentSampleCount) {
-        volumeTable = getVolumes(currentSampleCount);
+    public LinkedList<Pair<Harmonic, Double>> getCurrentHarmonicHierarchy(long currentSampleCount, HashSet<Note> liveNotes) {
+        HashMap<Note, Double> volumeTable = getVolumes(currentSampleCount, liveNotes);
 
-        rebuildIteratorHierarchy(volumeTable);
+        rebuildIteratorHierarchy(volumeTable, liveNotes);
 
         harmonicBuffer.rebuildHarmonicHierarchy(volumeTable);
 
-        addNewHarmonicsToBuffer();
+        addNewHarmonicsToBuffer(volumeTable);
 
         return harmonicBuffer.getHarmonicHierarchy();
     }
 
-    private void rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable) {
+    private void rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
         synchronized (iteratorHierarchy) {
-            ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
+            Pair<ComparableIterator, Double>[] iterators = iteratorHierarchy.toArray(new Pair[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
-            for (ComparableIterator comparableIterator : iterators) {
+            for (Pair<ComparableIterator, Double> comparableIteratorPair : iterators) {
+                ComparableIterator comparableIterator = comparableIteratorPair.getKey();
                 Note note = lookupNotesFromIterators.get(comparableIterator);
 
                 Double noteVolume = volumeTable.get(note);
@@ -73,20 +79,16 @@ public class HarmonicCalculator {
                     lookupNotesFromIterators.remove(comparableIterator);
                 }
                 else{
-                    comparableIterator.noteVolume = noteVolume;
-                    iteratorHierarchy.add(comparableIterator);
+                    iteratorHierarchy.add(new Pair(comparableIterator, noteVolume));
                 }
             }
         }
     }
 
-    private HashMap<Note, Double> getVolumes(long currentSampleCount) {
+    private HashMap<Note, Double> getVolumes(long currentSampleCount, HashSet<Note> liveNotes) {
         HashMap<Note, Double> newVolumeTable = new HashMap<>();
-        synchronized (iteratorHierarchy) {
-            for (ComparableIterator comparableIterator : iteratorHierarchy) {
-                Note note = lookupNotesFromIterators.get(comparableIterator);
-                newVolumeTable.put(note, note.getVolume(currentSampleCount));
-            }
+        for(Note note : liveNotes) {
+            newVolumeTable.put(note, note.getVolume(currentSampleCount));
         }
         return newVolumeTable;
     }
@@ -98,10 +100,10 @@ public class HarmonicCalculator {
 
     private void addNote(Note note) {
         synchronized(iteratorHierarchy) {
-            ComparableIterator comparableIterator = new ComparableIterator(0);
+            ComparableIterator comparableIterator = new ComparableIterator();
             lookupNotesFromIterators.put(comparableIterator, note);
 //          calculate note volumes and pair them with their note
-            iteratorHierarchy.add(comparableIterator);
+            iteratorHierarchy.add(new Pair(comparableIterator, 0.));
             volumeTable.put(note, 0.);
             harmonicBuffer.addNote(note);
         }
