@@ -7,11 +7,9 @@ public class HarmonicCalculator {
     private final HarmonicBuffer harmonicBuffer = new HarmonicBuffer();
 
     private HashMap<Note, MemoableIterator> iteratorTable;
-    private HashMap<Note, Double> volumeTable;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
         iteratorTable = new HashMap<>();
-        volumeTable = new HashMap<>();
 
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) event -> addNote(event));
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) event -> removeNote(event));
@@ -81,14 +79,12 @@ public class HarmonicCalculator {
 
     private void removeNote(Note note) {
         harmonicBuffer.removeNote(note);
-        volumeTable.remove(note);
     }
 
     private void addNote(Note note) {
         MemoableIterator MemoableIterator = new MemoableIterator();
         iteratorTable.put(note, MemoableIterator);
 //          calculate note volumes and pair them with their note
-        volumeTable.put(note, 0.);
         harmonicBuffer.addNote(note);
     }
 
