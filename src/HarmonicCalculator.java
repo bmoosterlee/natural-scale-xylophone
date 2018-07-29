@@ -19,15 +19,6 @@ public class HarmonicCalculator {
         noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) event -> removeNote(event));
     }
 
-    public Pair<Harmonic, Double> getNextHarmonicVolumePair() {
-        try {
-            return harmonicBuffer.getHighestValueHarmonic();
-        }
-        catch(NullPointerException e) {
-            return null;
-        }
-    }
-
     private void addNewHarmonicsToBuffer() {
         double newHarmonicVolume;
         double highestPriorityHarmonicVolume;

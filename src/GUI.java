@@ -148,9 +148,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private Pair<Harmonic, Double> getNextHarmonicVolumePair() {
-        return harmonicCalculator.getNextHarmonicVolumePair();
-    }
     private void renderHarmonicsBuckets(Graphics g) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
