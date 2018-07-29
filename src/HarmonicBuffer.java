@@ -3,15 +3,11 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class HarmonicBuffer {
-    HashSet<Harmonic> bufferedHarmonics;
-    HashMap<Harmonic, Note> noteTable;
     PriorityQueue<Harmonic> harmonicHierarchy;
     HashMap<Harmonic, Double> volumeTable;
     HashMap<Note, HashSet<Harmonic>> harmonicsTable;
 
     public HarmonicBuffer() {
-        bufferedHarmonics = new HashSet<>();
-        noteTable = new HashMap<>();
         volumeTable = new HashMap<>();
 
         harmonicsTable = new HashMap<>();
@@ -19,8 +15,6 @@ public class HarmonicBuffer {
 
     void addHarmonicToHarmonicBuffer(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic) {
         synchronized (this) {
-            bufferedHarmonics.add(highestValueHarmonic);
-            noteTable.put(highestValueHarmonic, highestValueNote);
             volumeTable.put(highestValueHarmonic, newHarmonicVolume);
             harmonicHierarchy.add(highestValueHarmonic);
 
@@ -67,15 +61,6 @@ public class HarmonicBuffer {
 
     void removeNote(Note note) {
         synchronized(this) {
-            //            remove dead notes here based on volume
-            HashSet<Harmonic> harmonics = harmonicsTable.get(note);
-            if(harmonics!=null) {
-                for (Harmonic harmonic : harmonics) {
-                    bufferedHarmonics.remove(harmonic);
-                    noteTable.remove(harmonic);
-                }
-            }
-
             harmonicsTable.remove(note);
         }
     }
