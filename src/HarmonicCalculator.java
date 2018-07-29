@@ -31,8 +31,6 @@ public class HarmonicCalculator {
             iteratorHierarchy.add(highestValueNote);
 
             Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
-
-//            compare this harmonic to the highest value harmonic from the previousHighHarmonicsVolume priorityqueue
             double newHarmonicVolume = highestValueHarmonic.getVolume(volumeTable.get(highestValueNote));
 
             harmonicBuffer.addHarmonicToHarmonicBuffer(newHarmonicVolume, highestValueNote, highestValueHarmonic);
