@@ -1,9 +1,6 @@
 import javafx.util.Pair;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class HarmonicBuffer {
     HashSet<Harmonic> previousHighHarmonics;
@@ -95,5 +92,9 @@ public class HarmonicBuffer {
         synchronized(notesForPreviousHighHarmonics) {
             notesForPreviousHighHarmonics.put(note, new HashSet<>());
         }
+    }
+
+    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchy() {
+        return new LinkedList<>(previousHighHarmonicsVolume);
     }
 }

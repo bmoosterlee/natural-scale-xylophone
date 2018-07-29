@@ -20,8 +20,6 @@ public class HarmonicCalculator {
     }
 
     public Pair<Harmonic, Double> getNextHarmonicVolumePair() {
-        addNewHarmonicsToBuffer();
-
         try {
             return harmonicBuffer.getHighestValueHarmonic();
         }
@@ -60,12 +58,16 @@ public class HarmonicCalculator {
         }
     }
 
-    public void reset(long currentSampleCount) {
+    public LinkedList<Pair<Harmonic, Double>> getCurrentHarmonicHierarchy(long currentSampleCount) {
         volumeTable = getVolumes(currentSampleCount);
 
         rebuildIteratorHierarchy(volumeTable);
 
         harmonicBuffer.rebuildHarmonicHierarchy(volumeTable);
+
+        addNewHarmonicsToBuffer();
+
+        return harmonicBuffer.getHarmonicHierarchy();
     }
 
     private void rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable) {

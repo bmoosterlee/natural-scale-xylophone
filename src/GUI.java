@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private final Buckets harmonicsBuckets;
@@ -134,10 +135,10 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
         //If we refactor this code, and it becomes uncertain, add a field which stores the last used
         //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
-        harmonicCalculator.reset(sampleCountAtFrame);
+        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getCurrentHarmonicHierarchy(sampleCountAtFrame);
         int counter = 0;
         while (getTimeLeftInFrame(startTime) > 1 && counter<1000) {
-            Pair<Harmonic, Double> nextHarmonicVolumePair = getNextHarmonicVolumePair();
+            Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchy.poll();
             if(nextHarmonicVolumePair==null){
                 break;
             }
