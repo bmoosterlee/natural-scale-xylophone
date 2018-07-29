@@ -20,4 +20,8 @@ public class MemoableIterator implements Iterator<Fraction> {
         return currentHarmonicAsFraction;
     }
 
+    public Fraction peek(){
+        return currentHarmonicAsFraction;
+    }
+
 }

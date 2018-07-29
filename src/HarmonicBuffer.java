@@ -31,19 +31,13 @@ public class HarmonicBuffer {
         }
     }
 
-    Double getHighestPriorityHarmonicVolume() {
-        Double highestPriorityHarmonicVolume;
-        Pair<Harmonic, Double> peek = previousHighHarmonicsVolume.peek();
-        if (peek == null) {
-            highestPriorityHarmonicVolume = 0.;
-        } else {
-            highestPriorityHarmonicVolume = peek.getValue();
+    double getHighestPriorityHarmonicVolume(int maxHarmonics) {
+        try {
+            return ((Pair<Harmonic, Double>) previousHighHarmonicsVolume.toArray(new Pair[previousHighHarmonicsVolume.size()])[maxHarmonics]).getValue();
         }
-        return highestPriorityHarmonicVolume;
-    }
-
-    Pair<Harmonic, Double> getHighestValueHarmonic() {
-        return previousHighHarmonicsVolume.poll();
+        catch(ArrayIndexOutOfBoundsException e){
+            return 0;
+        }
     }
 
     PriorityQueue<Pair<Harmonic, Double>> calculateHarmonicVolumes(HashMap<Note, Double> volumeTable) {
