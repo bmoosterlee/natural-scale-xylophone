@@ -5,13 +5,16 @@ import java.util.*;
 public class HarmonicBuffer {
     HashSet<Harmonic> previousHighHarmonics;
     HashMap<Harmonic, Note> previousHighHarmonicNotes;
-    PriorityQueue<Pair<Harmonic, Double>> previousHighHarmonicsVolume;
+    PriorityQueue<Harmonic> previousHighHarmonicsVolume;
+    HashMap<Harmonic, Double> volumeTable;
     HashMap<Note, HashSet<Harmonic>> notesForPreviousHighHarmonics;
 
     public HarmonicBuffer() {
         previousHighHarmonics = new HashSet<>();
         previousHighHarmonicNotes = new HashMap<>();
-        previousHighHarmonicsVolume = new PriorityQueue<>((o1, o2) -> -o1.getValue().compareTo(o2.getValue()));
+        volumeTable = new HashMap<>();
+
+        previousHighHarmonicsVolume = new PriorityQueue<>((o1, o2) -> -volumeTable.get(o1).compareTo(volumeTable.get(o2)));
         notesForPreviousHighHarmonics = new HashMap<>();
     }
 
@@ -19,7 +22,8 @@ public class HarmonicBuffer {
         synchronized (this) {
             previousHighHarmonics.add(highestValueHarmonic);
             previousHighHarmonicNotes.put(highestValueHarmonic, highestValueNote);
-            previousHighHarmonicsVolume.add(new Pair(highestValueHarmonic, newHarmonicVolume));
+            volumeTable.put(highestValueHarmonic, newHarmonicVolume);
+            previousHighHarmonicsVolume.add(highestValueHarmonic);
 
             if (!notesForPreviousHighHarmonics.containsKey(highestValueNote)) {
                 HashSet<Harmonic> harmonicsForThisNote = new HashSet<>();
@@ -33,27 +37,24 @@ public class HarmonicBuffer {
 
     double getHighestPriorityHarmonicVolume(int maxHarmonics) {
         try {
-            return ((Pair<Harmonic, Double>) previousHighHarmonicsVolume.toArray(new Pair[previousHighHarmonicsVolume.size()])[maxHarmonics]).getValue();
+            return volumeTable.get(previousHighHarmonicsVolume.toArray(new Harmonic[previousHighHarmonicsVolume.size()])[maxHarmonics]);
         }
         catch(ArrayIndexOutOfBoundsException e){
             return 0;
         }
     }
 
-    PriorityQueue<Pair<Harmonic, Double>> calculateHarmonicVolumes(HashMap<Note, Double> volumeTable) {
+    PriorityQueue<Harmonic> calculateHarmonicVolumes(HashMap<Note, Double> noteVolumeTable) {
 //            calculate harmonic volumes using note volumes
 //            store volumes in a pair with the harmonic in a priorityqueue
 
-        PriorityQueue<Pair<Harmonic, Double>> newHarmonicPriorityQueue = new PriorityQueue<>((o1, o2) -> -o1.getValue().compareTo(o2.getValue()));
+        PriorityQueue<Harmonic> newHarmonicPriorityQueue = new PriorityQueue<>((o1, o2) -> -volumeTable.get(o1).compareTo(volumeTable.get(o2)));
         synchronized (notesForPreviousHighHarmonics) {
-            for(Map.Entry<Note,Double> pair : new HashSet<>(volumeTable.entrySet())){
-                Note note = pair.getKey();
-                Double volume = pair.getValue();
-                HashSet<Harmonic> harmonics = notesForPreviousHighHarmonics.get(note);
+            for(Map.Entry<Note,Double> pair : new HashSet<>(noteVolumeTable.entrySet())){
+                HashSet<Harmonic> harmonics = notesForPreviousHighHarmonics.get(pair.getKey());
                 if(harmonics!=null) {
                     for (Harmonic harmonic : harmonics) {
-                        newHarmonicPriorityQueue.add(new Pair(harmonic,
-                                harmonic.getVolume(volume)));
+                        newHarmonicPriorityQueue.add(harmonic);
                     }
                 }
             }
@@ -89,6 +90,11 @@ public class HarmonicBuffer {
     }
 
     public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchy() {
-        return new LinkedList<>(previousHighHarmonicsVolume);
+        LinkedList<Harmonic> harmonicHierarchy = new LinkedList<>(previousHighHarmonicsVolume);
+        LinkedList<Pair<Harmonic, Double>> harmonicsWithVolumes = new LinkedList<>();
+        for(Harmonic harmonic : harmonicHierarchy){
+            harmonicsWithVolumes.addLast(new Pair(harmonic, volumeTable.get(harmonic)));
+        }
+        return harmonicsWithVolumes;
     }
 }
