@@ -65,19 +65,19 @@ public class HarmonicCalculator {
     public void reset(long currentSampleCount) {
         volumeTable = getVolumes(currentSampleCount);
 
-        rebuildIteratorHierarchy(currentSampleCount);
+        rebuildIteratorHierarchy(volumeTable);
 
         harmonicBuffer.rebuildHarmonicHierarchy(volumeTable);
     }
 
-    private void rebuildIteratorHierarchy(long currentSampleCount) {
+    private void rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable) {
         synchronized (iteratorHierarchy) {
             ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
             for (ComparableIterator comparableIterator : iterators) {
                 Note note = lookupNotesFromIterators.get(comparableIterator);
 
-                Double noteVolume = getVolumes(currentSampleCount).get(note);
+                Double noteVolume = volumeTable.get(note);
                 if(noteVolume==null) {
                     lookupNotesFromIterators.remove(comparableIterator);
                 }
