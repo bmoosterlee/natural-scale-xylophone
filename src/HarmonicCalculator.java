@@ -6,8 +6,8 @@ public class HarmonicCalculator {
     
     private final HarmonicBuffer harmonicBuffer = new HarmonicBuffer();
 
-    PriorityQueue<Pair<ComparableIterator, Double>> iteratorHierarchy;
-    private HashMap<ComparableIterator, Note> lookupNotesFromIterators;
+    PriorityQueue<Pair<MemoableIterator, Double>> iteratorHierarchy;
+    private HashMap<MemoableIterator, Note> lookupNotesFromIterators;
     private HashMap<Note, Double> volumeTable;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
@@ -33,13 +33,13 @@ public class HarmonicCalculator {
 
     private double getNewHarmonicVolume(HashMap<Note, Double> volumeTable) {
         try {
-            Pair<ComparableIterator, Double> highestValueIteratorPair = iteratorHierarchy.poll();
-            ComparableIterator highestValueComparableIterator = highestValueIteratorPair.getKey();
+            Pair<MemoableIterator, Double> highestValueIteratorPair = iteratorHierarchy.poll();
+            MemoableIterator highestValueMemoableIterator = highestValueIteratorPair.getKey();
             Double noteVolume = highestValueIteratorPair.getValue();
-            Fraction nextHarmonicAsFraction = highestValueComparableIterator.next();
-            iteratorHierarchy.add(new Pair(highestValueComparableIterator, noteVolume));
+            Fraction nextHarmonicAsFraction = highestValueMemoableIterator.next();
+            iteratorHierarchy.add(new Pair(highestValueMemoableIterator, noteVolume));
 
-            Note highestValueNote = lookupNotesFromIterators.get(highestValueComparableIterator);
+            Note highestValueNote = lookupNotesFromIterators.get(highestValueMemoableIterator);
             Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
 
 //            compare this harmonic to the highest value harmonic from the previousHighHarmonicsVolume priorityqueue
@@ -68,18 +68,18 @@ public class HarmonicCalculator {
 
     private void rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
         synchronized (iteratorHierarchy) {
-            Pair<ComparableIterator, Double>[] iterators = iteratorHierarchy.toArray(new Pair[iteratorHierarchy.size()]);
+            Pair<MemoableIterator, Double>[] iterators = iteratorHierarchy.toArray(new Pair[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
-            for (Pair<ComparableIterator, Double> comparableIteratorPair : iterators) {
-                ComparableIterator comparableIterator = comparableIteratorPair.getKey();
-                Note note = lookupNotesFromIterators.get(comparableIterator);
+            for (Pair<MemoableIterator, Double> comparableIteratorPair : iterators) {
+                MemoableIterator MemoableIterator = comparableIteratorPair.getKey();
+                Note note = lookupNotesFromIterators.get(MemoableIterator);
 
                 Double noteVolume = volumeTable.get(note);
                 if(noteVolume==null) {
-                    lookupNotesFromIterators.remove(comparableIterator);
+                    lookupNotesFromIterators.remove(MemoableIterator);
                 }
                 else{
-                    iteratorHierarchy.add(new Pair(comparableIterator, noteVolume));
+                    iteratorHierarchy.add(new Pair(MemoableIterator, noteVolume));
                 }
             }
         }
@@ -100,10 +100,10 @@ public class HarmonicCalculator {
 
     private void addNote(Note note) {
         synchronized(iteratorHierarchy) {
-            ComparableIterator comparableIterator = new ComparableIterator();
-            lookupNotesFromIterators.put(comparableIterator, note);
+            MemoableIterator MemoableIterator = new MemoableIterator();
+            lookupNotesFromIterators.put(MemoableIterator, note);
 //          calculate note volumes and pair them with their note
-            iteratorHierarchy.add(new Pair(comparableIterator, 0.));
+            iteratorHierarchy.add(new Pair(MemoableIterator, 0.));
             volumeTable.put(note, 0.);
             harmonicBuffer.addNote(note);
         }
