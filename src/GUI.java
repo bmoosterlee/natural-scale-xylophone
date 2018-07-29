@@ -65,14 +65,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        renderHarmonicsBuckets(g);
-        renderNotes(g);
+        HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
+        renderHarmonicsBuckets(g, liveNotes);
+        renderNotes(g, liveNotes);
         renderCursorLine(g);
     }
 
-    private void renderNotes(Graphics g) {
+    private void renderNotes(Graphics g, HashSet<Note> liveNotes) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderNotes");
-        HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
         g.setColor(Color.blue);
         for(Note note : liveNotes) {
@@ -127,14 +127,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void addHarmonicsToBuckets(long startTime) {
+    private void addHarmonicsToBuckets(long startTime, HashSet<Note> liveNotes) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("addHarmonicsToBuckets");
         long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
 
         //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
         //If we refactor this code, and it becomes uncertain, add a field which stores the last used
         //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
-        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getCurrentHarmonicHierarchy(sampleCountAtFrame);
+        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getCurrentHarmonicHierarchy(sampleCountAtFrame, liveNotes);
         int counter = 0;
         while (getTimeLeftInFrame(startTime) > 1 && counter<1000) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchy.poll();
@@ -147,8 +147,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void renderHarmonicsBuckets(Graphics g) {
-        addHarmonicsToBuckets(startTime);
+    private void renderHarmonicsBuckets(Graphics g, HashSet<Note> liveNotes) {
+        addHarmonicsToBuckets(startTime, liveNotes);
 
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
