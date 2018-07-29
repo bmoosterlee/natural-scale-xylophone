@@ -14,7 +14,6 @@ public class HarmonicBuffer {
         previousHighHarmonicNotes = new HashMap<>();
         volumeTable = new HashMap<>();
 
-        previousHighHarmonicsVolume = new PriorityQueue<>((o1, o2) -> -volumeTable.get(o1).compareTo(volumeTable.get(o2)));
         notesForPreviousHighHarmonics = new HashMap<>();
     }
 
@@ -63,9 +62,7 @@ public class HarmonicBuffer {
     }
 
     void rebuildHarmonicHierarchy(HashMap<Note, Double> volumeTable) {
-        synchronized(previousHighHarmonicsVolume) {
-            previousHighHarmonicsVolume = calculateHarmonicVolumes(volumeTable);
-        }
+        previousHighHarmonicsVolume = calculateHarmonicVolumes(volumeTable);
     }
 
     void removeNote(Note note) {
