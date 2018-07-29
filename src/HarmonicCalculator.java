@@ -67,7 +67,7 @@ public class HarmonicCalculator {
 
         rebuildIteratorHierarchy(currentSampleCount);
 
-        harmonicBuffer.rebuildPriorityQueue(volumeTable);
+        harmonicBuffer.rebuildHarmonicHierarchy(volumeTable);
     }
 
     private void rebuildIteratorHierarchy(long currentSampleCount) {

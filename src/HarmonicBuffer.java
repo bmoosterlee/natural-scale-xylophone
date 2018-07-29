@@ -70,7 +70,7 @@ public class HarmonicBuffer {
         return newHarmonicPriorityQueue;
     }
 
-    void rebuildPriorityQueue(HashMap<Note, Double> volumeTable) {
+    void rebuildHarmonicHierarchy(HashMap<Note, Double> volumeTable) {
         synchronized(previousHighHarmonicsVolume) {
             previousHighHarmonicsVolume = calculateHarmonicVolumes(volumeTable);
         }
