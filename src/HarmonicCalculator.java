@@ -27,10 +27,7 @@ public class HarmonicCalculator {
     private double getNewHarmonicVolume(HashMap<Note, Double> volumeTable, PriorityQueue<Note> iteratorHierarchy) {
         try {
             Note highestValueNote = iteratorHierarchy.poll();
-
-            MemoableIterator highestValueMemoableIterator = iteratorTable.get(highestValueNote);
-            Fraction nextHarmonicAsFraction = highestValueMemoableIterator.next();
-
+            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueNote).next();
             iteratorHierarchy.add(highestValueNote);
 
             Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction, volumeTable.get(highestValueNote));
