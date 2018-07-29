@@ -3,8 +3,7 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class HarmonicCalculator {
-
-    private final NoteEnvironment noteEnvironment;
+    
     private final HarmonicBuffer harmonicBuffer = new HarmonicBuffer();
 
     PriorityQueue<ComparableIterator> iteratorHierarchy;
@@ -12,7 +11,6 @@ public class HarmonicCalculator {
     private HashMap<Note, Double> volumeTable;
 
     public HarmonicCalculator(NoteEnvironment noteEnvironment){
-        this.noteEnvironment = noteEnvironment;
         lookupNotesFromIterators = new HashMap<>();
         volumeTable = new HashMap<>();
         iteratorHierarchy = new PriorityQueue<>();
@@ -94,7 +92,7 @@ public class HarmonicCalculator {
         synchronized (iteratorHierarchy) {
             for (ComparableIterator comparableIterator : iteratorHierarchy) {
                 Note note = lookupNotesFromIterators.get(comparableIterator);
-                newVolumeTable.put(note, noteEnvironment.getVolume(note, currentSampleCount));
+                newVolumeTable.put(note, note.getVolume(currentSampleCount));
             }
         }
         return newVolumeTable;
