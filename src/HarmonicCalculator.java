@@ -65,13 +65,19 @@ public class HarmonicCalculator {
     public void reset(long currentSampleCount) {
         volumeTable = getVolumes(currentSampleCount);
 
+        rebuildIteratorHierarchy(currentSampleCount);
+
+        harmonicBuffer.rebuildPriorityQueue(volumeTable);
+    }
+
+    private void rebuildIteratorHierarchy(long currentSampleCount) {
         synchronized (iteratorHierarchy) {
             ComparableIterator[] iterators = iteratorHierarchy.toArray(new ComparableIterator[iteratorHierarchy.size()]);
             iteratorHierarchy.clear();
             for (ComparableIterator comparableIterator : iterators) {
                 Note note = lookupNotesFromIterators.get(comparableIterator);
 
-                Double noteVolume = newVolumeTable.get(note);
+                Double noteVolume = getVolumes(currentSampleCount).get(note);
                 if(noteVolume==null) {
                     lookupNotesFromIterators.remove(comparableIterator);
                 }
@@ -81,8 +87,6 @@ public class HarmonicCalculator {
                 }
             }
         }
-
-        harmonicBuffer.rebuildPriorityQueue(volumeTable);
     }
 
     private HashMap<Note, Double> getVolumes(long currentSampleCount) {
