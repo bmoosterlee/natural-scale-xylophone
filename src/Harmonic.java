@@ -1,22 +1,11 @@
-public class Harmonic implements Comparable<Harmonic>{
+public class Harmonic {
 
     final int sharedPeriod;
     final double frequency;
-    final double noteVolume;
 
-    public Harmonic(Note tonic, Fraction harmonicAsFraction, double noteVolume){
+    public Harmonic(Note tonic, Fraction harmonicAsFraction){
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
         frequency = calculateFrequency(tonic, harmonicAsFraction);
-        this.noteVolume = noteVolume;
-    }
-
-    @Override
-    public int compareTo(Harmonic o) {
-        return Double.compare(getHarmonicValue(), o.getHarmonicValue())*-1;
-    }
-
-    public double getHarmonicValue() {
-        return getVolume(noteVolume);
     }
 
     public double getVolume(double noteVolume) {
