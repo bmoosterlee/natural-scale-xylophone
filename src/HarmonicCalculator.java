@@ -42,7 +42,7 @@ public class HarmonicCalculator {
             Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction);
             double newHarmonicVolume = highestValueHarmonic.getVolume(volumeTable.get(highestValueNote));
 
-            harmonicBuffer.addHarmonicToHarmonicBuffer(newHarmonicVolume, highestValueNote, highestValueHarmonic, bufferSnapshot);
+            harmonicBuffer.addHarmonic(newHarmonicVolume, highestValueNote, highestValueHarmonic, bufferSnapshot);
         }
         catch(NullPointerException e){
         }
@@ -53,7 +53,7 @@ public class HarmonicCalculator {
 
         PriorityQueue<Note> iteratorHierarchy = rebuildIteratorHierarchy(volumeTable, liveNotes);
 
-        BufferSnapshot bufferSnapshot = harmonicBuffer.rebuildHarmonicHierarchy(volumeTable);
+        BufferSnapshot bufferSnapshot = harmonicBuffer.getBufferSnapshot(volumeTable);
 
         addNewHarmonicsToBuffer(volumeTable, iteratorHierarchy, bufferSnapshot, maxHarmonics);
 

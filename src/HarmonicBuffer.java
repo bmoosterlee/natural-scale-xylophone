@@ -7,7 +7,7 @@ public class HarmonicBuffer {
         harmonicsTable = new HashMap<>();
     }
 
-    void addHarmonicToHarmonicBuffer(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic, BufferSnapshot bufferSnapshot) {
+    void addHarmonic(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic, BufferSnapshot bufferSnapshot) {
         bufferSnapshot.addHarmonic(newHarmonicVolume, highestValueHarmonic);
 
         synchronized(harmonicsTable) {
@@ -15,15 +15,15 @@ public class HarmonicBuffer {
         }
     }
 
-    BufferSnapshot rebuildHarmonicHierarchy(HashMap<Note, Double> noteVolumeTable) {
+    BufferSnapshot getBufferSnapshot(HashMap<Note, Double> noteVolumeTable) {
         synchronized(harmonicsTable) {
-            harmonicsTable = updateHarmonicsTable(noteVolumeTable.keySet());
+            harmonicsTable = getNewHarmonicsTable(noteVolumeTable.keySet());
         }
 
         return new BufferSnapshot(harmonicsTable, noteVolumeTable);
     }
 
-    private HashMap<Note, HashSet<Harmonic>> updateHarmonicsTable(Set<Note> liveNotes) {
+    private HashMap<Note, HashSet<Harmonic>> getNewHarmonicsTable(Set<Note> liveNotes) {
         HashMap<Note, HashSet<Harmonic>> newHarmonicsTable = new HashMap<>();
         for (Note note : liveNotes) {
             if(harmonicsTable.containsKey(note)) {
