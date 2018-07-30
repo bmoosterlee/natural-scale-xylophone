@@ -15,7 +15,7 @@ public class HarmonicCalculator {
     }
 
     private void addNewHarmonicsToBuffer(HashMap<Note, Double> volumeTable, PriorityQueue<Note> iteratorHierarchy, BufferSnapshot bufferSnapshot, int maxHarmonics) {
-        while(getNewHarmonicVolume(volumeTable, iteratorHierarchy) > bufferSnapshot.getHighestPriorityHarmonicVolume(maxHarmonics)) {
+        while(getNewHarmonicVolume(volumeTable, iteratorHierarchy) > bufferSnapshot.getHarmonicVolume(maxHarmonics)) {
             addNewHarmonic(volumeTable, iteratorHierarchy, bufferSnapshot);
         }
     }
