@@ -35,7 +35,7 @@ public class HarmonicBuffer {
         }
     }
 
-    PriorityQueue<Harmonic> calculateHarmonicVolumes(HashMap<Note, Double> noteVolumeTable) {
+    PriorityQueue<Harmonic> buildHarmonicHierarchy(HashMap<Note, Double> noteVolumeTable) {
 //            calculate harmonic volumes using note volumes
 //            store volumes in a pair with the harmonic in a priorityqueue
 
@@ -55,7 +55,7 @@ public class HarmonicBuffer {
         synchronized(harmonicsTable) {
             harmonicsTable = updateHarmonicsTable(volumeTable.keySet());
         }
-        harmonicHierarchy = calculateHarmonicVolumes(volumeTable);
+        harmonicHierarchy = buildHarmonicHierarchy(volumeTable);
     }
 
     private HashMap<Note, HashSet<Harmonic>> updateHarmonicsTable(Set<Note> liveNotes) {
