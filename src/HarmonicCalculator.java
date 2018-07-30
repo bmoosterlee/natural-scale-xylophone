@@ -12,7 +12,6 @@ public class HarmonicCalculator {
         iteratorTable = new HashMap<>();
 
         noteEnvironment.addNoteObservable.addObserver((Observer<Note>) event -> addNote(event));
-        noteEnvironment.removeNoteObservable.addObserver((Observer<Note>) event -> removeNote(event));
     }
 
     private void addNewHarmonicsToBuffer(HashMap<Note, Double> volumeTable, PriorityQueue<Note> iteratorHierarchy, int maxHarmonics) {
@@ -79,15 +78,9 @@ public class HarmonicCalculator {
         return newVolumeTable;
     }
 
-    private void removeNote(Note note) {
-        harmonicBuffer.removeNote(note);
-    }
-
     private void addNote(Note note) {
         MemoableIterator MemoableIterator = new MemoableIterator();
         iteratorTable.put(note, MemoableIterator);
-//          calculate note volumes and pair them with their note
-        harmonicBuffer.addNote(note);
     }
 
 }

@@ -14,17 +14,15 @@ public class HarmonicBuffer {
     }
 
     void addHarmonicToHarmonicBuffer(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic) {
-        synchronized (this) {
+        synchronized (volumeTable) {
             volumeTable.put(highestValueHarmonic, newHarmonicVolume);
+        }
+        synchronized (harmonicHierarchy) {
             harmonicHierarchy.add(highestValueHarmonic);
+        }
 
-            if (!harmonicsTable.containsKey(highestValueNote)) {
-                HashSet<Harmonic> harmonicsForThisNote = new HashSet<>();
-                harmonicsForThisNote.add(highestValueHarmonic);
-                harmonicsTable.put(highestValueNote, harmonicsForThisNote);
-            } else {
-                harmonicsTable.get(highestValueNote).add(highestValueHarmonic);
-            }
+        synchronized(harmonicsTable) {
+            harmonicsTable.get(highestValueNote).add(highestValueHarmonic);
         }
     }
 
@@ -45,10 +43,8 @@ public class HarmonicBuffer {
         synchronized (harmonicsTable) {
             for(Map.Entry<Note,Double> pair : new HashSet<>(noteVolumeTable.entrySet())){
                 HashSet<Harmonic> harmonics = harmonicsTable.get(pair.getKey());
-                if(harmonics!=null) {
-                    for (Harmonic harmonic : harmonics) {
-                        newHarmonicPriorityQueue.add(harmonic);
-                    }
+                for (Harmonic harmonic : harmonics) {
+                    newHarmonicPriorityQueue.add(harmonic);
                 }
             }
         }
@@ -56,19 +52,23 @@ public class HarmonicBuffer {
     }
 
     void rebuildHarmonicHierarchy(HashMap<Note, Double> volumeTable) {
+        synchronized(harmonicsTable) {
+            harmonicsTable = updateHarmonicsTable(volumeTable.keySet());
+        }
         harmonicHierarchy = calculateHarmonicVolumes(volumeTable);
     }
 
-    void removeNote(Note note) {
-        synchronized(this) {
-            harmonicsTable.remove(note);
+    private HashMap<Note, HashSet<Harmonic>> updateHarmonicsTable(Set<Note> liveNotes) {
+        HashMap<Note, HashSet<Harmonic>> newHarmonicsTable = new HashMap<>();
+        for (Note note : liveNotes) {
+            if(harmonicsTable.containsKey(note)) {
+                newHarmonicsTable.put(note, harmonicsTable.get(note));
+            }
+            else{
+                newHarmonicsTable.put(note, new HashSet<>());
+            }
         }
-    }
-
-    void addNote(Note note) {
-        synchronized(harmonicsTable) {
-            harmonicsTable.put(note, new HashSet<>());
-        }
+        return newHarmonicsTable;
     }
 
     public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchy() {
