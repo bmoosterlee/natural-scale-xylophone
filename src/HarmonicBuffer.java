@@ -4,18 +4,15 @@ import java.util.*;
 
 public class HarmonicBuffer {
     PriorityQueue<Harmonic> harmonicHierarchy;
-    HashMap<Harmonic, Double> volumeTable;
     HashMap<Note, HashSet<Harmonic>> harmonicsTable;
 
     public HarmonicBuffer() {
-        volumeTable = new HashMap<>();
-
         harmonicsTable = new HashMap<>();
     }
 
-    void addHarmonicToHarmonicBuffer(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic) {
-        synchronized (volumeTable) {
-            volumeTable.put(highestValueHarmonic, newHarmonicVolume);
+    void addHarmonicToHarmonicBuffer(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic, HashMap<Harmonic, Double> harmonicVolumeTable) {
+        synchronized (harmonicVolumeTable) {
+            harmonicVolumeTable.put(highestValueHarmonic, newHarmonicVolume);
         }
         synchronized (harmonicHierarchy) {
             harmonicHierarchy.add(highestValueHarmonic);
@@ -26,20 +23,21 @@ public class HarmonicBuffer {
         }
     }
 
-    double getHighestPriorityHarmonicVolume(int maxHarmonics) {
+    double getHighestPriorityHarmonicVolume(int maxHarmonics, HashMap<Harmonic, Double> harmonicVolumeTable) {
         try {
-            return volumeTable.get(harmonicHierarchy.toArray(new Harmonic[harmonicHierarchy.size()])[maxHarmonics]);
+            return harmonicVolumeTable.get(harmonicHierarchy.toArray(new Harmonic[harmonicHierarchy.size()])[maxHarmonics]);
         }
         catch(ArrayIndexOutOfBoundsException e){
             return 0;
         }
     }
 
-    PriorityQueue<Harmonic> buildHarmonicHierarchy(HashMap<Note, Double> noteVolumeTable) {
+    PriorityQueue<Harmonic> buildHarmonicHierarchy(HashMap<Note, Double> noteVolumeTable, HashMap<Harmonic, Double> harmonicVolumeTable) {
 //            calculate harmonic volumes using note volumes
 //            store volumes in a pair with the harmonic in a priorityqueue
 
-        PriorityQueue<Harmonic> newHarmonicPriorityQueue = new PriorityQueue<>((o1, o2) -> -volumeTable.get(o1).compareTo(volumeTable.get(o2)));
+        PriorityQueue<Harmonic> newHarmonicPriorityQueue = new PriorityQueue<>(
+                (o1, o2) -> -harmonicVolumeTable.get(o1).compareTo(harmonicVolumeTable.get(o2)));
         synchronized (harmonicsTable) {
             for(Map.Entry<Note,Double> pair : new HashSet<>(noteVolumeTable.entrySet())){
                 HashSet<Harmonic> harmonics = harmonicsTable.get(pair.getKey());
@@ -51,11 +49,27 @@ public class HarmonicBuffer {
         return newHarmonicPriorityQueue;
     }
 
-    void rebuildHarmonicHierarchy(HashMap<Note, Double> volumeTable) {
+    HashMap<Harmonic, Double> rebuildHarmonicHierarchy(HashMap<Note, Double> noteVolumeTable) {
         synchronized(harmonicsTable) {
-            harmonicsTable = updateHarmonicsTable(volumeTable.keySet());
+            harmonicsTable = updateHarmonicsTable(noteVolumeTable.keySet());
         }
-        harmonicHierarchy = buildHarmonicHierarchy(volumeTable);
+        HashMap<Harmonic, Double> harmonicVolumeTable = calculateHarmonicVolumes(noteVolumeTable);
+        harmonicHierarchy = buildHarmonicHierarchy(noteVolumeTable, harmonicVolumeTable);
+
+        return harmonicVolumeTable;
+    }
+
+    private HashMap<Harmonic, Double> calculateHarmonicVolumes(HashMap<Note, Double> noteVolumeTable) {
+        HashMap<Harmonic, Double> newHarmonicVolumeTable = new HashMap<>();
+        synchronized (harmonicsTable) {
+            for(Map.Entry<Note,Double> pair : new HashSet<>(noteVolumeTable.entrySet())){
+                HashSet<Harmonic> harmonics = harmonicsTable.get(pair.getKey());
+                for (Harmonic harmonic : harmonics) {
+                    newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(noteVolumeTable.get(pair.getKey())));
+                }
+            }
+        }
+        return newHarmonicVolumeTable;
     }
 
     private HashMap<Note, HashSet<Harmonic>> updateHarmonicsTable(Set<Note> liveNotes) {
@@ -71,11 +85,11 @@ public class HarmonicBuffer {
         return newHarmonicsTable;
     }
 
-    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchy() {
+    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchy(HashMap<Harmonic, Double> harmonicVolumeTable) {
         LinkedList<Harmonic> harmonicHierarchy = new LinkedList<>(this.harmonicHierarchy);
         LinkedList<Pair<Harmonic, Double>> harmonicsWithVolumes = new LinkedList<>();
         for(Harmonic harmonic : harmonicHierarchy){
-            harmonicsWithVolumes.addLast(new Pair(harmonic, volumeTable.get(harmonic)));
+            harmonicsWithVolumes.addLast(new Pair(harmonic, harmonicVolumeTable.get(harmonic)));
         }
         return harmonicsWithVolumes;
     }
