@@ -13,18 +13,20 @@ public class HarmonicCalculator {
     }
 
     public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
+        synchronized (iteratorTable) {
             HashMap<Note, MemoableIterator> newIteratorTable = getNewIteratorTable(iteratorTable, liveNotes);
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, newIteratorTable);
 
-        synchronized(harmonicsTable) {
             harmonicsTable = getNewHarmonicsTable(harmonicsTable, liveNotes);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
+
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
+
             iteratorTable = newIteratorTable;
+
             return bufferSnapshot.getHarmonicHierarchyAsList();
         }
     }
-
 
     private void addNewHarmonicsToBuffer(CalculatorSnapshot calculatorSnapshot, BufferSnapshot bufferSnapshot, int maxHarmonics) {
         while(getNewHarmonicVolume(calculatorSnapshot) > bufferSnapshot.getHarmonicVolume(maxHarmonics)) {
