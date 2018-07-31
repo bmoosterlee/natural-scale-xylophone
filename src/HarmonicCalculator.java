@@ -75,8 +75,8 @@ public class HarmonicCalculator {
 
     private PriorityQueue<Note> buildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
         PriorityQueue<Note> iteratorHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
-                Harmonic.getHarmonicValue(volumeTable.get(o1), iteratorTable.get(o1).currentHarmonicAsFraction),
-                Harmonic.getHarmonicValue(volumeTable.get(o2), iteratorTable.get(o2).currentHarmonicAsFraction))
+                Harmonic.getHarmonicValue(volumeTable.get(o1), iteratorTable.get(o1).peek()),
+                Harmonic.getHarmonicValue(volumeTable.get(o2), iteratorTable.get(o2).peek()))
         );
         iteratorHierarchy.addAll(liveNotes);
 
