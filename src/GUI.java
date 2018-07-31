@@ -66,13 +66,16 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         super.paintComponent(g);
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
-        decayHarmonicBuckets();
-        renderHarmonicsBuckets(g, liveNotes);
+
+        decayHarmonicsBuckets();
+        addHarmonicsToBuckets(startTime, liveNotes);
+        renderHarmonicsBuckets(g, averageBuckets(harmonicsBuckets));
+
         renderNotes(g, liveNotes);
         renderCursorLine(g);
     }
 
-    private void decayHarmonicBuckets() {
+    private void decayHarmonicsBuckets() {
         for(int x = 0; x<WIDTH; x++) {
             harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
         }
@@ -153,14 +156,9 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void renderHarmonicsBuckets(Graphics g, HashSet<Note> liveNotes) {
-        addHarmonicsToBuckets(startTime, liveNotes);
-
+    private void renderHarmonicsBuckets(Graphics g, Buckets renderBuckets) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
-
-//        Buckets renderBuckets = harmonicsBuckets;
-        Buckets renderBuckets = averageBuckets(harmonicsBuckets);
 
         for(int x = 0; x<WIDTH; x++) {
             int y = (int) (renderBuckets.getValue(x) * yScale + margin);
