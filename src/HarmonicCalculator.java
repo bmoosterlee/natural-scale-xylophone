@@ -12,7 +12,7 @@ public class HarmonicCalculator {
         harmonicsTable = new HashMap<>();
     }
 
-    HashMap<Note, HashSet<Harmonic>> getNewHarmonicsTable(Set<Note> liveNotes, HashMap<Note, HashSet<Harmonic>> harmonicsTable) {
+    HashMap<Note, HashSet<Harmonic>> getNewHarmonicsTable(HashMap<Note, HashSet<Harmonic>> harmonicsTable, Set<Note> liveNotes) {
         HashMap<Note, HashSet<Harmonic>> newHarmonicsTable = new HashMap<>();
         for (Note note : liveNotes) {
             if(harmonicsTable.containsKey(note)) {
@@ -53,7 +53,7 @@ public class HarmonicCalculator {
             double newHarmonicVolume = highestValueHarmonic.getVolume(calculatorSnapshot.getVolumeTable().get(highestValueNote));
 
             harmonicsTable.get(highestValueNote).add(highestValueHarmonic);
-            bufferSnapshot.addHarmonic(newHarmonicVolume, highestValueHarmonic);
+            bufferSnapshot.addHarmonic(highestValueHarmonic, newHarmonicVolume);
         }
         catch(NullPointerException e){
         }
@@ -64,7 +64,7 @@ public class HarmonicCalculator {
         CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, iteratorTable);
 
         synchronized(harmonicsTable) {
-            harmonicsTable = getNewHarmonicsTable(liveNotes, harmonicsTable);
+            harmonicsTable = getNewHarmonicsTable(harmonicsTable, liveNotes);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
             return bufferSnapshot.getHarmonicHierarchyAsList();

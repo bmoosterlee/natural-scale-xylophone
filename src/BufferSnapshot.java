@@ -45,7 +45,7 @@ public class BufferSnapshot {
         return harmonicHierarchy;
     }
 
-    public void addHarmonic(double newHarmonicVolume, Harmonic highestValueHarmonic) {
+    public void addHarmonic(Harmonic highestValueHarmonic, double newHarmonicVolume) {
         synchronized (getHarmonicVolumeTable()) {
             getHarmonicVolumeTable().put(highestValueHarmonic, newHarmonicVolume);
         }
