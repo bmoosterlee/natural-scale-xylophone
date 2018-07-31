@@ -1,23 +1,20 @@
+import javafx.util.Builder;
 import javafx.util.Pair;
 
 import java.util.*;
 
 public class HarmonicCalculator {
 
-    private HashMap<Note, MemoableIterator> iteratorTable;
-    HashMap<Note, HashSet<Harmonic>> harmonicsTable;
+    private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(() -> new MemoableIterator());
+    private CurrentTable<HashSet<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
 
-    public HarmonicCalculator(){
-        iteratorTable = new HashMap<>();
-        harmonicsTable = new HashMap<>();
-    }
 
     public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
         synchronized (iteratorTable) {
-            HashMap<Note, MemoableIterator> newIteratorTable = getNewIteratorTable(iteratorTable, liveNotes);
+            CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveNotes);
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, newIteratorTable);
 
-            harmonicsTable = getNewHarmonicsTable(harmonicsTable, liveNotes);
+            harmonicsTable = harmonicsTable.getNewTable(liveNotes);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
 
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
@@ -60,32 +57,6 @@ public class HarmonicCalculator {
         }
         catch(NullPointerException e){
         }
-    }
-
-    HashMap<Note, HashSet<Harmonic>> getNewHarmonicsTable(HashMap<Note, HashSet<Harmonic>> harmonicsTable, Set<Note> liveNotes) {
-        HashMap<Note, HashSet<Harmonic>> newHarmonicsTable = new HashMap<>();
-        for (Note note : liveNotes) {
-            if(harmonicsTable.containsKey(note)) {
-                newHarmonicsTable.put(note, harmonicsTable.get(note));
-            }
-            else{
-                newHarmonicsTable.put(note, new HashSet<>());
-            }
-        }
-        return newHarmonicsTable;
-    }
-
-    private HashMap<Note, MemoableIterator> getNewIteratorTable(HashMap<Note, MemoableIterator> iteratorTable, HashSet<Note> liveNotes) {
-        HashMap<Note, MemoableIterator> newIteratorTable = new HashMap<>();
-        for (Note note : liveNotes) {
-            if(iteratorTable.containsKey(note)) {
-                newIteratorTable.put(note, iteratorTable.get(note));
-            }
-            else{
-                newIteratorTable.put(note, new MemoableIterator());
-            }
-        }
-        return newIteratorTable;
     }
 
 }
