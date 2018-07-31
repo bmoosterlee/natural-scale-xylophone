@@ -134,7 +134,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
         //If we refactor this code, and it becomes uncertain, add a field which stores the last used
         //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
-        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getCurrentHarmonicHierarchy(sampleCountAtFrame, liveNotes, 1000);
+        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getHarmonicHierarchyAsList(sampleCountAtFrame, liveNotes, 1000);
         while (getTimeLeftInFrame(startTime) > 1) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchy.poll();
             if(nextHarmonicVolumePair==null){

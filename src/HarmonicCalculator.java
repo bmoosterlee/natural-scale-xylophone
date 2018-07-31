@@ -46,12 +46,12 @@ public class HarmonicCalculator {
         }
     }
 
-    public LinkedList<Pair<Harmonic, Double>> getCurrentHarmonicHierarchy(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
+    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
         iteratorTable = getNewIteratorTable(liveNotes);
 
-        HashMap<Note, Double> volumeTable = getVolumes(currentSampleCount, liveNotes);
+        HashMap<Note, Double> volumeTable = getNoteVolumes(currentSampleCount, liveNotes);
 
-        PriorityQueue<Note> iteratorHierarchy = rebuildIteratorHierarchy(volumeTable, liveNotes);
+        PriorityQueue<Note> iteratorHierarchy = buildIteratorHierarchy(volumeTable, liveNotes);
 
         BufferSnapshot bufferSnapshot = harmonicBuffer.getBufferSnapshot(volumeTable);
 
@@ -73,7 +73,7 @@ public class HarmonicCalculator {
         return newIteratorTable;
     }
 
-    private PriorityQueue<Note> rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
+    private PriorityQueue<Note> buildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
         PriorityQueue<Note> iteratorHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
                 Harmonic.getHarmonicValue(volumeTable.get(o1), iteratorTable.get(o1).currentHarmonicAsFraction),
                 Harmonic.getHarmonicValue(volumeTable.get(o2), iteratorTable.get(o2).currentHarmonicAsFraction))
@@ -83,7 +83,7 @@ public class HarmonicCalculator {
         return iteratorHierarchy;
     }
 
-    private HashMap<Note, Double> getVolumes(long currentSampleCount, HashSet<Note> liveNotes) {
+    private HashMap<Note, Double> getNoteVolumes(long currentSampleCount, HashSet<Note> liveNotes) {
         HashMap<Note, Double> newVolumeTable = new HashMap<>();
         for(Note note : liveNotes) {
             newVolumeTable.put(note, note.getVolume(currentSampleCount));
