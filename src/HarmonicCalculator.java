@@ -13,13 +13,14 @@ public class HarmonicCalculator {
     }
 
     public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
-        iteratorTable = getNewIteratorTable(liveNotes);
-        CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, iteratorTable);
+            HashMap<Note, MemoableIterator> newIteratorTable = getNewIteratorTable(iteratorTable, liveNotes);
+            CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, newIteratorTable);
 
         synchronized(harmonicsTable) {
             harmonicsTable = getNewHarmonicsTable(harmonicsTable, liveNotes);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
+            iteratorTable = newIteratorTable;
             return bufferSnapshot.getHarmonicHierarchyAsList();
         }
     }
@@ -72,7 +73,7 @@ public class HarmonicCalculator {
         return newHarmonicsTable;
     }
 
-    private HashMap<Note, MemoableIterator> getNewIteratorTable(HashSet<Note> liveNotes) {
+    private HashMap<Note, MemoableIterator> getNewIteratorTable(HashMap<Note, MemoableIterator> iteratorTable, HashSet<Note> liveNotes) {
         HashMap<Note, MemoableIterator> newIteratorTable = new HashMap<>();
         for (Note note : liveNotes) {
             if(iteratorTable.containsKey(note)) {
