@@ -7,7 +7,7 @@ public class HarmonicBuffer {
         harmonicsTable = new HashMap<>();
     }
 
-    void addHarmonic(double newHarmonicVolume, Note highestValueNote, Harmonic highestValueHarmonic, BufferSnapshot bufferSnapshot) {
+    void addHarmonic(Note highestValueNote, Harmonic highestValueHarmonic, double newHarmonicVolume, BufferSnapshot bufferSnapshot) {
         bufferSnapshot.addHarmonic(newHarmonicVolume, highestValueHarmonic);
 
         synchronized(harmonicsTable) {
