@@ -66,9 +66,16 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         super.paintComponent(g);
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
+        decayHarmonicBuckets();
         renderHarmonicsBuckets(g, liveNotes);
         renderNotes(g, liveNotes);
         renderCursorLine(g);
+    }
+
+    private void decayHarmonicBuckets() {
+        for(int x = 0; x<WIDTH; x++) {
+            harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
+        }
     }
 
     private void renderNotes(Graphics g, HashSet<Note> liveNotes) {
@@ -134,7 +141,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
         //If we refactor this code, and it becomes uncertain, add a field which stores the last used
         //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
-        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy = harmonicCalculator.getHarmonicHierarchyAsList(sampleCountAtFrame, liveNotes, 1000);
+        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy =
+                harmonicCalculator.getHarmonicHierarchyAsList(sampleCountAtFrame, liveNotes, 1000);
         while (getTimeLeftInFrame(startTime) > 1) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchy.poll();
             if(nextHarmonicVolumePair==null){
@@ -155,9 +163,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         Buckets renderBuckets = averageBuckets(harmonicsBuckets);
 
         for(int x = 0; x<WIDTH; x++) {
-            int y = (int)(renderBuckets.getValue(x) * yScale + margin);
+            int y = (int) (renderBuckets.getValue(x) * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
-            harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
         }
 
         PerformanceTracker.stopTracking(timeKeeper);
