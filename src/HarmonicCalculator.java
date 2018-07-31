@@ -23,8 +23,7 @@ public class HarmonicCalculator {
             Note highestValueNote = iteratorHierarchy.peek();
             Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueNote).peek();
 
-            Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction);
-            return highestValueHarmonic.getVolume(volumeTable.get(highestValueNote));
+            return Harmonic.getHarmonicValue(volumeTable.get(highestValueNote), nextHarmonicAsFraction);
         }
         catch(NullPointerException e){
             return 0.;
