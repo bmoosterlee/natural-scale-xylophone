@@ -8,7 +8,7 @@ public class Main {
         new PerformanceTracker();
         PerformanceTracker.start();
         NoteEnvironment noteEnvironment = new NoteEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(noteEnvironment);
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(noteEnvironment, harmonicCalculator);
 
         noteEnvironment.start();

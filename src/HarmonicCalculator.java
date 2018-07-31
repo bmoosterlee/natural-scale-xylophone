@@ -8,10 +8,8 @@ public class HarmonicCalculator {
 
     private HashMap<Note, MemoableIterator> iteratorTable;
 
-    public HarmonicCalculator(NoteEnvironment noteEnvironment){
+    public HarmonicCalculator(){
         iteratorTable = new HashMap<>();
-
-        noteEnvironment.addNoteObservable.addObserver((Observer<Note>) event -> addNote(event));
     }
 
     private void addNewHarmonicsToBuffer(HashMap<Note, Double> volumeTable, PriorityQueue<Note> iteratorHierarchy, BufferSnapshot bufferSnapshot, int maxHarmonics) {
@@ -49,6 +47,8 @@ public class HarmonicCalculator {
     }
 
     public LinkedList<Pair<Harmonic, Double>> getCurrentHarmonicHierarchy(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
+        iteratorTable = getNewIteratorTable(liveNotes);
+
         HashMap<Note, Double> volumeTable = getVolumes(currentSampleCount, liveNotes);
 
         PriorityQueue<Note> iteratorHierarchy = rebuildIteratorHierarchy(volumeTable, liveNotes);
@@ -58,6 +58,19 @@ public class HarmonicCalculator {
         addNewHarmonicsToBuffer(volumeTable, iteratorHierarchy, bufferSnapshot, maxHarmonics);
 
         return bufferSnapshot.getHarmonicHierarchyAsList();
+    }
+
+    private HashMap<Note, MemoableIterator> getNewIteratorTable(HashSet<Note> liveNotes) {
+        HashMap<Note, MemoableIterator> newIteratorTable = new HashMap<>();
+        for (Note note : liveNotes) {
+            if(iteratorTable.containsKey(note)) {
+                newIteratorTable.put(note, iteratorTable.get(note));
+            }
+            else{
+                newIteratorTable.put(note, new MemoableIterator());
+            }
+        }
+        return newIteratorTable;
     }
 
     private PriorityQueue<Note> rebuildIteratorHierarchy(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
@@ -76,11 +89,6 @@ public class HarmonicCalculator {
             newVolumeTable.put(note, note.getVolume(currentSampleCount));
         }
         return newVolumeTable;
-    }
-
-    private void addNote(Note note) {
-        MemoableIterator MemoableIterator = new MemoableIterator();
-        iteratorTable.put(note, MemoableIterator);
     }
 
 }
