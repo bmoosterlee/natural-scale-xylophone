@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
-    private final Buckets harmonicsBuckets;
+    private Buckets harmonicsBuckets;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -67,18 +67,41 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        decayHarmonicsBuckets();
-        addHarmonicsToBuckets(startTime, liveNotes);
-        renderHarmonicsBuckets(g, averageBuckets(harmonicsBuckets));
+        Buckets newHarmonicsBuckets = decayHarmonicsBuckets(harmonicsBuckets);
+
+        LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
+                harmonicCalculator.getHarmonicHierarchyAsList(noteEnvironment.getExpectedSampleCount(), liveNotes, 1000);
+
+        while (getTimeLeftInFrame(startTime) > 1) {
+            Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyAsList.poll();
+            if(nextHarmonicVolumePair==null){
+                break;
+            }
+
+            Buckets nextHarmonicsBuckets = createBuckets(nextHarmonicVolumePair, newHarmonicsBuckets.getLength());
+            Buckets averagedBuckets = averageBuckets(nextHarmonicsBuckets);
+            newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets);
+        }
+
+        harmonicsBuckets = newHarmonicsBuckets;
+        renderHarmonicsBuckets(g, harmonicsBuckets);
 
         renderNotes(g, liveNotes);
         renderCursorLine(g);
     }
 
-    private void decayHarmonicsBuckets() {
-        for(int x = 0; x<WIDTH; x++) {
-            harmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
+    private Buckets createBuckets(Pair<Harmonic, Double> pair, int length) {
+        Buckets buckets = new Buckets(length);
+        addToBucket(buckets, pair.getKey(), pair.getValue());
+        return buckets;
+    }
+
+    private static Buckets decayHarmonicsBuckets(Buckets harmonicsBuckets) {
+        Buckets newHarmonicsBuckets = new Buckets(harmonicsBuckets.getLength());
+        for(int x = 0; x<harmonicsBuckets.getLength(); x++) {
+            newHarmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
         }
+        return newHarmonicsBuckets;
     }
 
     private void renderNotes(Graphics g, HashSet<Note> liveNotes) {
@@ -137,35 +160,13 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void addHarmonicsToBuckets(long startTime, HashSet<Note> liveNotes) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("addHarmonicsToBuckets");
-        long sampleCountAtFrame = noteEnvironment.getExpectedSampleCount();
-
-        //We assume the sampleCountAtFrame is larger than the previous round of addHarmonicsToBuckets.
-        //If we refactor this code, and it becomes uncertain, add a field which stores the last used
-        //sampleCountAtFrame, and only resets when the new one is higher. We also overwrite the sampleCountAtFrame
-        LinkedList<Pair<Harmonic, Double>> harmonicHierarchy =
-                harmonicCalculator.getHarmonicHierarchyAsList(sampleCountAtFrame, liveNotes, 1000);
-        while (getTimeLeftInFrame(startTime) > 1) {
-            Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchy.poll();
-            if(nextHarmonicVolumePair==null){
-                break;
-            }
-            addToBucket(nextHarmonicVolumePair.getKey(), nextHarmonicVolumePair.getValue());
-        }
-        PerformanceTracker.stopTracking(timeKeeper);
-    }
-
     private void renderHarmonicsBuckets(Graphics g, Buckets renderBuckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderHarmonicsBuckets");
         g.setColor(Color.gray);
 
-        for(int x = 0; x<WIDTH; x++) {
+        for(int x = 0; x<renderBuckets.getLength(); x++) {
             int y = (int) (renderBuckets.getValue(x) * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
-
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private Buckets averageBuckets(Buckets harmonicsBuckets) {
@@ -197,7 +198,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    private void addToBucket(Harmonic harmonic, double harmonicVolume) {
+    private void addToBucket(Buckets harmonicsBuckets, Harmonic harmonic, double harmonicVolume) {
         if(harmonic==null){
             return;
         }

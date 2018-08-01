@@ -23,4 +23,16 @@ public class Buckets {
     double getValue(int i) {
         return bucketsData[i];
     }
+
+    public Buckets add(Buckets buckets) {
+        Buckets newBuckets = new Buckets(bucketsData.length);
+        for(int i = 0; i< bucketsData.length; i++){
+            newBuckets.put(i, getValue(i) + buckets.getValue(i));
+        }
+        return newBuckets;
+    }
+
+    public int getLength() {
+        return bucketsData.length;
+    }
 }
