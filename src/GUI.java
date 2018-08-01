@@ -67,14 +67,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        updateHarmonicsBuckets(liveNotes);
+        harmonicsBuckets = getNewHarmonicsBuckets(liveNotes);
         renderHarmonicsBuckets(g, harmonicsBuckets);
 
         renderNotes(g, liveNotes);
         renderCursorLine(g);
     }
 
-    private void updateHarmonicsBuckets(HashSet<Note> liveNotes) {
+    private Buckets getNewHarmonicsBuckets(HashSet<Note> liveNotes) {
         Buckets newHarmonicsBuckets = decayHarmonicsBuckets(harmonicsBuckets);
 
         LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
@@ -91,7 +91,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets);
         }
 
-        harmonicsBuckets = newHarmonicsBuckets;
+        return newHarmonicsBuckets;
     }
 
     private Buckets createBuckets(Pair<Harmonic, Double> pair, int length) {
