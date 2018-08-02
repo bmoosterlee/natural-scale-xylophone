@@ -281,4 +281,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void setHarmonicsBuckets(Buckets harmonicsBuckets) {
         this.harmonicsBuckets = harmonicsBuckets;
     }
+
+    public Buckets getNoteBuckets() {
+        return noteBuckets;
+    }
+
+    public void setNoteBuckets(Buckets noteBuckets) {
+        this.noteBuckets = noteBuckets;
+    }
 }
