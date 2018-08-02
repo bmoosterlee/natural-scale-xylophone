@@ -19,7 +19,7 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        noteEnvironment.addNote(gui.centerFrequency, noteEnvironment.getExpectedSampleCount());
+        noteEnvironment.addNote(gui.centerFrequency);
 
         try {
             Thread.sleep(500);
