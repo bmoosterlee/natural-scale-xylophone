@@ -5,10 +5,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
+    private Buckets noteBuckets;
     private Buckets harmonicsBuckets;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
@@ -58,6 +60,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         frame.setVisible(true);
 
+        noteBuckets = new Buckets(WIDTH);
         harmonicsBuckets = new Buckets(WIDTH);
     }
 
@@ -67,18 +70,37 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        harmonicsBuckets = getNewHarmonicsBuckets(liveNotes);
+        HashMap<Note, Double> volumeTable = NoteEnvironment.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
+
+        noteBuckets = getNewNoteBuckets(noteBuckets, liveNotes, volumeTable);
+        renderNoteBuckets(g, noteBuckets);
+
+        /*todo move to storing the buckets over frames and decaying them visually over time. Take the average of the
+         when we want the current harmonic value we take the average of these*/
+        harmonicsBuckets = getNewHarmonicsBuckets(harmonicsBuckets, liveNotes, volumeTable);
         renderHarmonicsBuckets(g, harmonicsBuckets);
 
-        renderNotes(g, liveNotes);
         renderCursorLine(g);
     }
 
-    private Buckets getNewHarmonicsBuckets(HashSet<Note> liveNotes) {
+    private Buckets getNewNoteBuckets(Buckets noteBuckets, HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
+        Buckets newNoteBuckets = new Buckets(noteBuckets.getLength());
+        for(Note note : liveNotes){
+            int x = getX(note.getFrequency());
+            if(x<0 || x>=WIDTH){
+                continue;
+            }
+            newNoteBuckets.fill(x, volumeTable.get(note));
+        }
+        return newNoteBuckets;
+    }
+
+    //todo rename harmonicsBuckets to harmonicBuckets
+    private Buckets getNewHarmonicsBuckets(Buckets harmonicsBuckets, HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
         Buckets newHarmonicsBuckets = decayHarmonicsBuckets(harmonicsBuckets);
 
         LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
-                harmonicCalculator.getHarmonicHierarchyAsList(noteEnvironment.getExpectedSampleCount(), liveNotes, 1000);
+                harmonicCalculator.getHarmonicHierarchyAsList(liveNotes, 1000, volumeTable);
 
         while (getTimeLeftInFrame(startTime) > 1) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyAsList.poll();
@@ -96,7 +118,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     private Buckets createBuckets(Pair<Harmonic, Double> pair, int length) {
         Buckets buckets = new Buckets(length);
-        addToBucket(buckets, pair.getKey(), pair.getValue());
+        addToBucket(buckets, pair.getKey().getFrequency(), pair.getValue());
         return buckets;
     }
 
@@ -108,16 +130,17 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return newHarmonicsBuckets;
     }
 
-    private void renderNotes(Graphics g, HashSet<Note> liveNotes) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("renderNotes");
-
+    private void renderNoteBuckets(Graphics g, Buckets buckets) {
         g.setColor(Color.blue);
-        for(Note note : liveNotes) {
-            int x = (int) (Math.log(note.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
-            int y = (int)(note.getVolume(noteEnvironment.getExpectedSampleCount()) * yScale + margin);
-            g.drawRect(x, HEIGHT-y, 1, y);
+
+        renderBuckets(g, buckets);
+    }
+
+    private void renderBuckets(Graphics g, Buckets buckets) {
+        for(int x = 0; x<buckets.getLength(); x++) {
+            int y = (int) (buckets.getValue(x) * yScale + margin);
+            g.drawRect(x, HEIGHT - y, 1, y);
         }
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderCursorLine(Graphics g) {
@@ -126,7 +149,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             calculatedMouseFrequency = true;
         }
         g.setColor(Color.green);
-        int x = (int) (Math.log(mouseFrequency) * logFrequencyMultiplier - logFrequencyAdditive);
+        int x = getX(mouseFrequency);
         g.drawRect(x, 0, 1, HEIGHT);
     }
 
@@ -164,13 +187,10 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void renderHarmonicsBuckets(Graphics g, Buckets renderBuckets) {
+    private void renderHarmonicsBuckets(Graphics g, Buckets buckets) {
         g.setColor(Color.gray);
 
-        for(int x = 0; x<renderBuckets.getLength(); x++) {
-            int y = (int) (renderBuckets.getValue(x) * yScale + margin);
-            g.drawRect(x, HEIGHT - y, 1, y);
-        }
+        renderBuckets(g, buckets);
     }
 
     private Buckets averageBuckets(Buckets harmonicsBuckets) {
@@ -202,16 +222,16 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    private void addToBucket(Buckets harmonicsBuckets, Harmonic harmonic, double harmonicVolume) {
-        if(harmonic==null){
-            return;
-        }
-
-        int x = (int) (Math.log(harmonic.getFrequency()) * logFrequencyMultiplier - logFrequencyAdditive);
+    private void addToBucket(Buckets buckets, double frequency, double value) {
+        int x = getX(frequency);
         if(x<0 || x>=WIDTH){
             return;
         }
-        harmonicsBuckets.put(x, harmonicsBuckets.getValue(x) + 0.025 * harmonicVolume);
+        buckets.put(x, buckets.getValue(x) + 0.025 * value);
+    }
+
+    private int getX(double frequency) {
+        return (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
     }
 
     @Override
@@ -252,5 +272,13 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void mouseMoved(MouseEvent e) {
         mouseX = e.getX();
         calculatedMouseFrequency = false;
+    }
+
+    public Buckets getHarmonicsBuckets() {
+        return harmonicsBuckets;
+    }
+
+    public void setHarmonicsBuckets(Buckets harmonicsBuckets) {
+        this.harmonicsBuckets = harmonicsBuckets;
     }
 }

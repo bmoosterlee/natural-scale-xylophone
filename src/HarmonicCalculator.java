@@ -1,4 +1,3 @@
-import javafx.util.Builder;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -9,10 +8,10 @@ public class HarmonicCalculator {
     private CurrentTable<HashSet<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
 
 
-    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(long currentSampleCount, HashSet<Note> liveNotes, int maxHarmonics) {
+    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList(HashSet<Note> liveNotes, int maxHarmonics, HashMap<Note, Double> volumeTable) {
         synchronized (iteratorTable) {
             CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveNotes);
-            CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(currentSampleCount, liveNotes, newIteratorTable);
+            CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveNotes, newIteratorTable, volumeTable);
 
             harmonicsTable = harmonicsTable.getNewTable(liveNotes);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());

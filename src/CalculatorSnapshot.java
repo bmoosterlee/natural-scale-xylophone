@@ -4,17 +4,9 @@ public class CalculatorSnapshot {
     private HashMap<Note, Double> volumeTable;
     private PriorityQueue<Note> iteratorHierarchy;
 
-    public CalculatorSnapshot(long currentSampleCount, Set<Note> liveNotes, HashMap<Note, MemoableIterator> iteratorTable) {
-        this.volumeTable = getNoteVolumes(currentSampleCount, liveNotes);
-        this.iteratorHierarchy = buildIteratorHierarchy(volumeTable, liveNotes, iteratorTable);
-    }
-
-    HashMap<Note, Double> getNoteVolumes(long currentSampleCount, Set<Note> liveNotes) {
-        HashMap<Note, Double> newVolumeTable = new HashMap<>();
-        for(Note note : liveNotes) {
-            newVolumeTable.put(note, note.getVolume(currentSampleCount));
-        }
-        return newVolumeTable;
+    public CalculatorSnapshot(Set<Note> liveNotes, HashMap<Note, MemoableIterator> iteratorTable, HashMap<Note, Double> volumeTable) {
+        this.volumeTable = volumeTable;
+        this.iteratorHierarchy = buildIteratorHierarchy(this.volumeTable, liveNotes, iteratorTable);
     }
 
     PriorityQueue<Note> buildIteratorHierarchy(HashMap<Note, Double> volumeTable, Set<Note> liveNotes, HashMap<Note, MemoableIterator> iteratorTable) {

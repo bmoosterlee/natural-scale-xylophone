@@ -2,8 +2,10 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class NoteEnvironment implements Runnable{
 
@@ -27,6 +29,14 @@ public class NoteEnvironment implements Runnable{
         liveNotes = new HashSet();
 
         initialize();
+    }
+
+    static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
+        HashMap<Note, Double> newVolumeTable = new HashMap<>();
+        for(Note note : liveNotes) {
+            newVolumeTable.put(note, note.getVolume(currentSampleCount));
+        }
+        return newVolumeTable;
     }
 
     public void start(){
