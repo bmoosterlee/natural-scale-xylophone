@@ -244,7 +244,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         noteEnvironment.addNote(getFrequency(e.getX()), noteEnvironment.getExpectedSampleCount());
     }
 
-    private double getFrequency(double x) {
+    double getFrequency(double x) {
         return Math.exp(x * xMultiplier) * lowerBound;
     }
 
