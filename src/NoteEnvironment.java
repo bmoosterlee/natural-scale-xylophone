@@ -16,11 +16,13 @@ public class NoteEnvironment implements Runnable{
     private HashSet<Note> liveNotes;
     private long sampleCount;
     private long timeZero;
+    private double marginalSampleSize;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
 
+        marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
         liveNotes = new HashSet();
 
@@ -97,12 +99,14 @@ public class NoteEnvironment implements Runnable{
 
     private void removeInaudibleNotes() {
         HashSet<Note> currentLiveNotes = getLiveNotes();
+        HashSet<Note> notesToBeRemoved = new HashSet<>();
         for (Note note : currentLiveNotes) {
-            if (note.getVolume(sampleCount) < 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS)) {
-                synchronized(liveNotes) {
-                    liveNotes.remove(note);
-                }
+            if (note.getVolume(calculatedSamples) < marginalSampleSize) {
+                notesToBeRemoved.add(note);
             }
+        }
+        synchronized (liveNotes){
+            liveNotes.removeAll(notesToBeRemoved);
         }
     }
 
