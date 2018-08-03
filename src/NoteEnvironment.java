@@ -86,14 +86,13 @@ public class NoteEnvironment implements Runnable{
     }
 
     private byte calculateAmplitudeSum() {
-        byte amplitudeSum = 0;
         HashSet<Note> currentLiveNotes = getLiveNotes();
 
+        int amplitudeSum = 0;
         for (Note note : currentLiveNotes) {
-            byte amplitude = getAmplitude(note);
-            amplitudeSum = (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum + amplitude));
+            amplitudeSum += getAmplitude(note);
         }
-        return amplitudeSum;
+        return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
     }
 
     private void removeInaudibleNotes() {
