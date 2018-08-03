@@ -161,7 +161,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     @Override
     public void run() {
         while(true) {
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI loop");
             long startTime = System.nanoTime();
             tick(startTime);
 
@@ -175,16 +174,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
                 }
             }
             PerformanceTracker.stopTracking(sleepTimeKeeper);
-
-            PerformanceTracker.stopTracking(timeKeeper);
         }
     }
 
     private void tick(long startTime) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("GUI tick");
         this.startTime = startTime;
         repaint();
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderHarmonicsBuckets(Graphics g, Buckets buckets) {
