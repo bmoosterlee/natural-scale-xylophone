@@ -15,16 +15,12 @@ public class NoteEnvironment implements Runnable{
     private SourceDataLine sourceDataLine;
     private HashSet<Note> liveNotes;
     private long sampleCount;
-    public Observable<Note> addNoteObservable;
-    public Observable<Note> removeNoteObservable;
     private long timeZero;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
 
-        addNoteObservable = new Observable<>();
-        removeNoteObservable = new Observable<>();
 
         liveNotes = new HashSet();
 
@@ -107,7 +103,6 @@ public class NoteEnvironment implements Runnable{
                 synchronized(liveNotes) {
                     liveNotes.remove(note);
                 }
-                removeNoteObservable.notifyObservers(note);
             }
         }
     }
@@ -159,7 +154,6 @@ public class NoteEnvironment implements Runnable{
         synchronized(liveNotes) {
             liveNotes.add(note);
         }
-        addNoteObservable.notifyObservers(note);
     }
 
     public long getExpectedSampleCount() {
