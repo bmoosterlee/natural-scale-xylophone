@@ -11,7 +11,6 @@ public class NoteEnvironment implements Runnable{
 
     private final int SAMPLE_SIZE_IN_BITS;
     private final int SAMPLE_RATE;
-    private byte[] clipBuffer;
     private SourceDataLine sourceDataLine;
     private HashSet<Note> liveNotes;
     private long sampleCount;
@@ -82,9 +81,9 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         removeInaudibleNotes();
-        clipBuffer[0] = calculateAmplitudeSum();
-        getSourceDataLine().write(getClipBuffer(), 0, 1);
         sampleCount++;
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum()};
+        getSourceDataLine().write(clipBuffer, 0, 1);
     }
 
     private byte calculateAmplitudeSum() {
@@ -111,8 +110,6 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void initialize() {
-        setClipBuffer(new byte[1]);
-
         AudioFormat af = new AudioFormat((float) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false);
         setSourceDataLine(null);
         try {
@@ -128,14 +125,7 @@ public class NoteEnvironment implements Runnable{
         int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(sampleCount) / 2);
         return amplitude;
-    }
 
-    private byte[] getClipBuffer() {
-        return clipBuffer;
-    }
-
-    private void setClipBuffer(byte[] clipBuffer) {
-        this.clipBuffer = clipBuffer;
     }
 
     private SourceDataLine getSourceDataLine() {
