@@ -60,35 +60,45 @@ public class NoteEnvironment implements Runnable{
         long sampleBacklog = 0;
 
         while(true) {
+            long startTime = System.nanoTime();
+
             while(sampleBacklog>0) {
-                TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment tick");
                 tick();
-                PerformanceTracker.stopTracking(timeKeeper);
                 sampleBacklog--;
             }
 
             long expectedSampleCount = getExpectedSampleCount();
-            long waitTime = (long) ((-sampleBacklog)*frameTime);
             sampleBacklog = expectedSampleCount + sampleLookahead - calculatedSamples;
 
-            long waitTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
-            int waitTimeNanos = (int) (frameTime*sampleLookahead)%1000;
-            if(waitTime>0){
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment sleep");
+
+            long timeLeftInFrame = getTimeLeftInFrame(startTime);
+
+            if(timeLeftInFrame>0){
                 try {
-                    Thread.sleep(waitTimeMillis,waitTimeNanos);
+                    Thread.sleep(timeLeftInFrame);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+            PerformanceTracker.stopTracking(sleepTimeKeeper);
         }
 //        close();
     }
 
     private void tick() {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
         removeInaudibleNotes();
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        TimeKeeper amplitudeTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum()};
+        PerformanceTracker.stopTracking(amplitudeTimeKeeper);
+
+        TimeKeeper bufferTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
         getSourceDataLine().write(clipBuffer, 0, 1);
         calculatedSamples++;
+        PerformanceTracker.stopTracking(bufferTimeKeeper);
     }
 
     private byte calculateAmplitudeSum() {
@@ -157,5 +167,13 @@ public class NoteEnvironment implements Runnable{
 
     public void addNote(double frequency) {
         addNote(frequency, getExpectedSampleCount());
+    }
+
+    private long getTimeLeftInFrame(long startTime) {
+        long currentTime;
+        currentTime = System.nanoTime();
+        long timePassed = (currentTime - startTime);
+
+        return (long) ((frameTime*sampleLookahead - timePassed)/ 1000000);
     }
 }
