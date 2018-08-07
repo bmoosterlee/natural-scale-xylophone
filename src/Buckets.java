@@ -17,6 +17,14 @@ public class Buckets {
         }
     }
 
+    public Buckets(Pair<Integer, Double> bucketEntry, int length) {
+        this(length);
+        int x = bucketEntry.getKey();
+        if (x >= 0 && x < getLength()) {
+            put(x, bucketEntry.getValue());
+        }
+    }
+
     void clear() {
         for(int i = 0; i< getLength(); i++){
             bucketsData[i] = 0.;

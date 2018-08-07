@@ -107,7 +107,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
                 break;
             }
 
-            Buckets nextHarmonicsBuckets = createBuckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
+            Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
             Buckets averagedBuckets = nextHarmonicsBuckets.averageBuckets(10);
             newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets.multiply(0.025));
         }
@@ -117,15 +117,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     private Pair<Integer, Double> getBucketEntry(Pair<Harmonic, Double> nextHarmonicVolumePair) {
         return new Pair<>(getX(nextHarmonicVolumePair.getKey().getFrequency()), nextHarmonicVolumePair.getValue());
-    }
-
-    private Buckets createBuckets(Pair<Integer, Double> bucketEntry, int length) {
-        Buckets buckets = new Buckets(length);
-        int x = bucketEntry.getKey();
-        if (x >= 0 && x < buckets.getLength()) {
-            buckets.put(x, bucketEntry.getValue());
-        }
-        return buckets;
     }
 
     private static Buckets decayHarmonicsBuckets(Buckets harmonicsBuckets) {
