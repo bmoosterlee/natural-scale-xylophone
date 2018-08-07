@@ -25,9 +25,7 @@ public class Buckets {
     public Buckets(Pair<Integer, Double> bucketEntry, int length) {
         this(length);
         int x = bucketEntry.getKey();
-        if (x >= 0 && x < getLength()) {
-            put(x, bucketEntry.getValue());
-        }
+        put(x, bucketEntry.getValue());
     }
 
     void fill(int x, double value) {
@@ -35,7 +33,12 @@ public class Buckets {
     }
 
     void put(int x, double value) {
-        bucketsData[x] = value;
+        try {
+            bucketsData[x] = value;
+        }
+        catch(ArrayIndexOutOfBoundsException e){
+
+        }
     }
 
     double getValue(int i) {
