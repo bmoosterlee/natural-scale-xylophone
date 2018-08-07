@@ -12,7 +12,7 @@ public class BucketHistory {
         multiplier = 1. / size;
     }
 
-    Buckets getNewBuckets(Buckets newBuckets) {
+    void addNewBuckets(Buckets newBuckets) {
         if (harmonicsBucketsHistory.size() >= size) {
             synchronized (harmonicsBucketsHistory) {
                 harmonicsBucketsHistory.removeFirst();
@@ -22,7 +22,6 @@ public class BucketHistory {
         synchronized (harmonicsBucketsHistory) {
             harmonicsBucketsHistory.addLast(multiply);
         }
-        return getTimeAveragedBuckets(newBuckets.getLength());
     }
 
     Buckets getTimeAveragedBuckets(int length) {
