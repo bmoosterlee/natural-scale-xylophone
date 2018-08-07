@@ -4,6 +4,7 @@ public class BucketHistory {
     LinkedList<Buckets> harmonicsBucketsHistory;
     private int size;
     private double multiplier;
+    private Buckets buckets;
 
     public BucketHistory(int size) {
         harmonicsBucketsHistory = new LinkedList<>();
@@ -13,9 +14,14 @@ public class BucketHistory {
 
     Buckets getNewBuckets(Buckets newBuckets) {
         if (harmonicsBucketsHistory.size() >= size) {
-            harmonicsBucketsHistory.removeFirst();
+            synchronized (harmonicsBucketsHistory) {
+                harmonicsBucketsHistory.removeFirst();
+            }
         }
-        harmonicsBucketsHistory.addLast(newBuckets.multiply(multiplier));
+        Buckets multiply = newBuckets.multiply(multiplier);
+        synchronized (harmonicsBucketsHistory) {
+            harmonicsBucketsHistory.addLast(multiply);
+        }
         return getTimeAveragedBuckets(newBuckets.getLength());
     }
 
@@ -24,9 +30,12 @@ public class BucketHistory {
         if (harmonicsBucketsHistory.isEmpty()) {
             return timeAveragedBuckets;
         }
-        for (Buckets buckets : harmonicsBucketsHistory) {
-            timeAveragedBuckets = timeAveragedBuckets.add(buckets);
+        synchronized (harmonicsBucketsHistory) {
+            for (Buckets buckets : harmonicsBucketsHistory) {
+                timeAveragedBuckets = timeAveragedBuckets.add(buckets);
+            }
         }
         return timeAveragedBuckets;
     }
+
 }
