@@ -108,8 +108,9 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             }
 
             Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
-            Buckets averagedBuckets = nextHarmonicsBuckets.averageBuckets(10);
-            newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets.multiply(0.025));
+            nextHarmonicsBuckets = nextHarmonicsBuckets.averageBuckets(10);
+            nextHarmonicsBuckets = nextHarmonicsBuckets.multiply(0.025);
+            newHarmonicsBuckets = newHarmonicsBuckets.add(nextHarmonicsBuckets);
         }
 
         return newHarmonicsBuckets;
