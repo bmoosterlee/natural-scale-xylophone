@@ -15,13 +15,20 @@ public class NoteEnvironment implements Runnable{
     private HashSet<Note> liveNotes;
     private long calculatedSamples;
     private long timeZero;
+    private int sampleSize;
     private double marginalSampleSize;
+    private double frameTime;
+    private int sampleLookahead;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
 
+        sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
+
+        frameTime = 1000000./SAMPLE_RATE;
+        sampleLookahead = SAMPLE_RATE/10;
 
         liveNotes = new HashSet();
 
@@ -50,8 +57,6 @@ public class NoteEnvironment implements Runnable{
     public void run() {
         calculatedSamples = 0l;
         timeZero = System.nanoTime();
-        double frameTime = 1000000000./SAMPLE_RATE;
-        int sampleLookahead = SAMPLE_RATE/100;
         long sampleBacklog = 0;
 
         while(true) {
@@ -122,7 +127,6 @@ public class NoteEnvironment implements Runnable{
     }
 
     private byte getAmplitude(Note note) {
-        int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         return (byte) Math.floor(sampleSize * note.getAmplitude(calculatedSamples) / 2);
     }
 
