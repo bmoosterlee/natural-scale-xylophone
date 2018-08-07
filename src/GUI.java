@@ -109,7 +109,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
             Buckets nextHarmonicsBuckets = createBuckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
             Buckets averagedBuckets = nextHarmonicsBuckets.averageBuckets(10);
-            newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets);
+            newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets.multiply(0.025));
         }
 
         return newHarmonicsBuckets;
@@ -123,7 +123,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         Buckets buckets = new Buckets(length);
         int x = bucketEntry.getKey();
         if (x >= 0 && x < buckets.getLength()) {
-            buckets.put(x,  0.025 * bucketEntry.getValue());
+            buckets.put(x, bucketEntry.getValue());
         }
         return buckets;
     }

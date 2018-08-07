@@ -93,4 +93,12 @@ public class Buckets {
         }
         return averagedBuckets;
     }
+
+    public Buckets multiply(double v) {
+        Buckets multipliedBuckets = new Buckets(getLength());
+        for(int x = 0; x< getLength(); x++) {
+            multipliedBuckets.put(x, v * getValue(x));
+        }
+        return multipliedBuckets;
+    }
 }
