@@ -2,10 +2,12 @@ public class Envelope {
     private final long startingSampleCount;
     private final float sampleRate;
     protected double amplitude = 0.05;
+    private float startingTime;
 
     public Envelope(long startingSampleCount, float sampleRate) {
         this.startingSampleCount = startingSampleCount;
         this.sampleRate = sampleRate;
+        startingTime = getStartingSampleCount() / getSampleRate();
     }
 
     public double getVolume(long sampleCount) {
@@ -14,8 +16,7 @@ public class Envelope {
     }
 
     double getVolumeLinear(long sampleCount, double amplitude, double noteLengthInSeconds) {
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double timeDifference = sampleCountDifference / getSampleRate();
+        double timeDifference = getTimeDifference(sampleCount);
 
         if (timeDifference < 0) {
             return 0;
@@ -28,8 +29,7 @@ public class Envelope {
     }
 
     double getVolumeAsymptotic(long sampleCount, double amplitude, double exponent) {
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        double timeDifference = sampleCountDifference / getSampleRate();
+        double timeDifference = getTimeDifference(sampleCount);
 
         if (timeDifference < 0) {
             return 0;
@@ -43,8 +43,7 @@ public class Envelope {
     }
 
     double getTimeDifference(long sampleCount) {
-        long sampleCountDifference = sampleCount - getStartingSampleCount();
-        return sampleCountDifference / getSampleRate();
+        return sampleCount / getSampleRate() - startingTime;
     }
 
     public float getSampleRate() {
