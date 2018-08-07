@@ -32,7 +32,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public int mouseX;
     boolean calculatedMouseFrequency;
     public double mouseFrequency;
-    public final int AVERAGING_WIDTH = 10;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -109,7 +108,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             }
 
             Buckets nextHarmonicsBuckets = createBuckets(nextHarmonicVolumePair, newHarmonicsBuckets.getLength());
-            Buckets averagedBuckets = averageBuckets(nextHarmonicsBuckets);
+            Buckets averagedBuckets = nextHarmonicsBuckets.averageBuckets(10);
             newHarmonicsBuckets = newHarmonicsBuckets.add(averagedBuckets);
         }
 
@@ -186,28 +185,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         g.setColor(Color.gray);
 
         renderBuckets(g, buckets);
-    }
-
-    private Buckets averageBuckets(Buckets harmonicsBuckets) {
-        Buckets averagedBuckets = new Buckets(WIDTH);
-        for(int x = 0; x<WIDTH; x++) {
-            averagedBuckets.fill(x, harmonicsBuckets.getValue(x));
-
-            for(int i = 1; i< AVERAGING_WIDTH; i++) {
-                double value = harmonicsBuckets.getValue(x) * (AVERAGING_WIDTH - i) / AVERAGING_WIDTH;
-                try {
-                    averagedBuckets.fill(x - i, value);
-                } catch (ArrayIndexOutOfBoundsException e) {
-
-                }
-                try {
-                    averagedBuckets.fill(x + i, value);
-                } catch (ArrayIndexOutOfBoundsException e) {
-
-                }
-            }
-        }
-        return averagedBuckets;
     }
 
     private long getTimeLeftInFrame(long startTime) {

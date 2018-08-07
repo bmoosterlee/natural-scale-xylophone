@@ -71,4 +71,26 @@ public class Buckets {
         }
         return maxima;
     }
+
+    Buckets averageBuckets(int averagingWidth) {
+        Buckets averagedBuckets = new Buckets(getLength());
+        for(int x = 0; x< getLength(); x++) {
+            averagedBuckets.fill(x, getValue(x));
+
+            for(int i = 1; i< averagingWidth; i++) {
+                double value = getValue(x) * (averagingWidth - i) / averagingWidth;
+                try {
+                    averagedBuckets.fill(x - i, value);
+                } catch (ArrayIndexOutOfBoundsException e) {
+
+                }
+                try {
+                    averagedBuckets.fill(x + i, value);
+                } catch (ArrayIndexOutOfBoundsException e) {
+
+                }
+            }
+        }
+        return averagedBuckets;
+    }
 }
