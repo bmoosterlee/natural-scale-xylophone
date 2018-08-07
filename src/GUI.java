@@ -121,7 +121,10 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     private Buckets createBuckets(Pair<Integer, Double> bucketEntry, int length) {
         Buckets buckets = new Buckets(length);
-        addToBucket(buckets, pair.getKey().getFrequency(), pair.getValue());
+        int x = bucketEntry.getKey();
+        if (x >= 0 && x < buckets.getLength()) {
+            buckets.put(x,  0.025 * bucketEntry.getValue());
+        }
         return buckets;
     }
 
@@ -196,14 +199,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         currentTime = System.nanoTime();
         long timePassed = (currentTime - startTime);
         return (FRAME_TIME - timePassed)/ 1000000;
-    }
-
-    private void addToBucket(Buckets buckets, double frequency, double value) {
-        int x = getX(frequency);
-        if(x<0 || x>=WIDTH){
-            return;
-        }
-        buckets.put(x, buckets.getValue(x) + 0.025 * value);
     }
 
     private int getX(double frequency) {
