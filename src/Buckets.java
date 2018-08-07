@@ -1,6 +1,7 @@
 import javafx.util.Pair;
 
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Buckets {
     final private double[] bucketsData;
@@ -46,14 +47,28 @@ public class Buckets {
         return bucketsData.length;
     }
 
-    public Pair<Integer, Double>[] sortBuckets() {
-        Pair<Integer, Double>[] bucketPairs = new Pair[getLength()];
-        for(int i = 0; i< getLength(); i++){
-            bucketPairs[i] = new Pair(i, getValue(i));
+    public Set<Pair<Integer, Double>> findMaxima() {
+        Set<Pair<Integer, Double>> maxima = new HashSet<>();
+        for(int x = 0; x<getLength(); x++){
+            double left = 0.;
+            try{
+                left = getValue(x-1);
+            }
+            catch(ArrayIndexOutOfBoundsException e){
+
+            }
+            double center = getValue(x);
+            double right = 0.;
+            try{
+                right = getValue(x+1);
+            }
+            catch(ArrayIndexOutOfBoundsException e){
+
+            }
+            if(center>left && center>right){
+                maxima.add(new Pair<>(x, center));
+            }
         }
-        Arrays.sort(bucketPairs, (Pair<Integer, Double> o1, Pair<Integer, Double> o2) -> {
-            return -Double.compare(o1.getValue(), o2.getValue());
-        });
-        return bucketPairs;
+        return maxima;
     }
 }
