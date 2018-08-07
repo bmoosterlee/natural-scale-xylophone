@@ -33,7 +33,7 @@ public class Buckets {
     }
 
     void fill(int x, double value) {
-        bucketsData[x]+=value;
+        put(x, getValue(x) + value);
     }
 
     void put(int x, double value) {
