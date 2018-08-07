@@ -109,4 +109,20 @@ public class Buckets {
         }
         return multipliedBuckets;
     }
+
+    public Buckets multiply(Buckets otherBuckets) {
+        Buckets multipliedBuckets = new Buckets(getLength());
+        for(int x = 0; x< getLength(); x++) {
+            multipliedBuckets.put(x, getValue(x) * otherBuckets.getValue(x));
+        }
+        return multipliedBuckets;
+    }
+
+    public Buckets add(double v) {
+        Buckets newBuckets = new Buckets(getLength());
+        for(int x = 0; x< getLength(); x++) {
+            newBuckets.put(x, getValue(x) + v);
+        }
+        return newBuckets;
+    }
 }
