@@ -12,7 +12,6 @@ import java.util.LinkedList;
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private Buckets noteBuckets;
     final BucketHistory bucketHistory = new BucketHistory(100);
-    private Buckets harmonicsBuckets;
     NoteEnvironment noteEnvironment;
     HarmonicCalculator harmonicCalculator;
 
@@ -61,7 +60,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         frame.setVisible(true);
 
         noteBuckets = new Buckets(WIDTH);
-        harmonicsBuckets = new Buckets(WIDTH);
     }
 
     @Override
@@ -75,7 +73,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         noteBuckets = getNewNoteBuckets(noteBuckets, liveNotes, volumeTable);
         renderNoteBuckets(g, noteBuckets);
 
-        harmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
+        Buckets harmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         renderHarmonicsBuckets(g, harmonicsBuckets);
 
         renderCursorLine(g);
@@ -224,14 +222,6 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void mouseMoved(MouseEvent e) {
         mouseX = e.getX();
         calculatedMouseFrequency = false;
-    }
-
-    public Buckets getHarmonicsBuckets() {
-        return harmonicsBuckets;
-    }
-
-    public void setHarmonicsBuckets(Buckets harmonicsBuckets) {
-        this.harmonicsBuckets = harmonicsBuckets;
     }
 
     public Buckets getNoteBuckets() {
