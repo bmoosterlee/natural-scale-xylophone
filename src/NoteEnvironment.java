@@ -86,21 +86,26 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void tick() {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getLiveNotes");
         HashSet<Note> liveNotes = getLiveNotes();
-        HashMap<Note, Double> volumeTable = getVolumeTable(liveNotes);
+        PerformanceTracker.stopTracking(timeKeeper);
 
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getVolumeTable");
+        HashMap<Note, Double> volumeTable = getVolumeTable(liveNotes);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
         removeInaudibleNotes(volumeTable, liveNotes);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        TimeKeeper amplitudeTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(volumeTable, liveNotes)};
-        PerformanceTracker.stopTracking(amplitudeTimeKeeper);
+        PerformanceTracker.stopTracking(timeKeeper);
 
-        TimeKeeper bufferTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
         getSourceDataLine().write(clipBuffer, 0, 1);
         calculatedSamples++;
-        PerformanceTracker.stopTracking(bufferTimeKeeper);
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private byte calculateAmplitudeSum(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
