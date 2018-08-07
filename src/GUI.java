@@ -7,6 +7,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
@@ -123,8 +124,11 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     private void renderBuckets(Graphics g, Buckets buckets) {
-        for(int x = 0; x<buckets.getLength(); x++) {
-            int y = (int) (buckets.getValue(x) * yScale + margin);
+        Iterator<Pair<Integer, Double>> iterator = buckets.iterator();
+        while(iterator.hasNext()) {
+            Pair<Integer, Double> pair = iterator.next();
+            int x = pair.getKey();
+            int y = (int) (pair.getValue() * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
     }

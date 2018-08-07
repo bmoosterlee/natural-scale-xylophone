@@ -1,6 +1,7 @@
 import javafx.util.Pair;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class Buckets {
@@ -124,5 +125,23 @@ public class Buckets {
             newBuckets.put(x, getValue(x) + v);
         }
         return newBuckets;
+    }
+
+    public Iterator<Pair<Integer, Double>> iterator() {
+        return new Iterator<Pair<Integer, Double>>() {
+            int counter = 0;
+
+            @Override
+            public boolean hasNext() {
+                return counter<bucketsData.length;
+            }
+
+            @Override
+            public Pair<Integer, Double> next() {
+                Pair<Integer, Double> pair = new Pair<>(counter, bucketsData[counter]);
+                counter++;
+                return pair;
+            }
+        };
     }
 }
