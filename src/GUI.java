@@ -70,7 +70,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashMap<Note, Double> volumeTable = NoteEnvironment.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
 
-        noteBuckets = getNewNoteBuckets(noteBuckets, liveNotes, volumeTable);
+        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable, WIDTH);
         renderNoteBuckets(g, noteBuckets);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
@@ -80,8 +80,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         renderCursorLine(g);
     }
 
-    private Buckets getNewNoteBuckets(Buckets noteBuckets, HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
-        Buckets newNoteBuckets = new Buckets(noteBuckets.getLength());
+    private Buckets getNewNoteBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable, int length) {
+        Buckets newNoteBuckets = new Buckets(length);
         for(Note note : liveNotes){
             int x = getX(note.getFrequency());
             if(x<0 || x>=WIDTH){
