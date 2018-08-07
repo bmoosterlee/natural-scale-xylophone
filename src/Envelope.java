@@ -9,10 +9,11 @@ public class Envelope {
     }
 
     public double getVolume(long sampleCount) {
-        return getVolumeAsymptotic(sampleCount, amplitude, 1.5);
+        // return getVolumeAsymptotic(sampleCount, amplitude, 1.5);
+        return getVolumeLinear(sampleCount, amplitude, 50.0);
     }
 
-    double getVolumeLinear(long sampleCount, double noteLengthInSeconds) {
+    double getVolumeLinear(long sampleCount, double amplitude, double noteLengthInSeconds) {
         long sampleCountDifference = sampleCount - getStartingSampleCount();
         double timeDifference = sampleCountDifference / getSampleRate();
 
@@ -22,7 +23,7 @@ public class Envelope {
         if (timeDifference >= noteLengthInSeconds) {
             return 0;
         } else {
-            return 1.0 - timeDifference / noteLengthInSeconds;
+            return amplitude - timeDifference / noteLengthInSeconds;
         }
     }
 
