@@ -44,12 +44,21 @@ public class Buckets {
 
     public Buckets add(Buckets otherBuckets) {
         Buckets newBuckets = new Buckets(getLength());
-        Iterator<Pair<Integer, Double>> iterator = otherBuckets.iterator();
+
+        Iterator<Pair<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Pair<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            newBuckets.put(x, getValue(x) + value);
+            newBuckets.put(x, value);
+        }
+
+        iterator = otherBuckets.iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            newBuckets.put(x, newBuckets.getValue(x) + value);
         }
         return newBuckets;
     }
