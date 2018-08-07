@@ -10,8 +10,7 @@ public class Note {
         this.frequencyPi = getFrequency() * 2.0 * Math.PI;
     }
 
-    public double getAmplitude(long sampleCount) {
-        double volume = getEnvelope().getVolume(sampleCount);
+    public double getAmplitude(long sampleCount, double volume) {
         double timeDifference = getEnvelope().getTimeDifference(sampleCount);
         double angle = timeDifference * frequencyPi;
         return (Math.sin(angle) * volume);

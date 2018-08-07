@@ -86,12 +86,15 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void tick() {
+        HashSet<Note> liveNotes = getLiveNotes();
+        HashMap<Note, Double> volumeTable = getVolumeTable(liveNotes);
+
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
-        removeInaudibleNotes();
+        removeInaudibleNotes(volumeTable, liveNotes);
         PerformanceTracker.stopTracking(timeKeeper);
 
         TimeKeeper amplitudeTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
-        byte[] clipBuffer = new byte[]{calculateAmplitudeSum()};
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(volumeTable, liveNotes)};
         PerformanceTracker.stopTracking(amplitudeTimeKeeper);
 
         TimeKeeper bufferTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
@@ -100,27 +103,33 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(bufferTimeKeeper);
     }
 
-    private byte calculateAmplitudeSum() {
-        HashSet<Note> currentLiveNotes = getLiveNotes();
-
+    private byte calculateAmplitudeSum(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
         int amplitudeSum = 0;
         for (Note note : currentLiveNotes) {
-            amplitudeSum += getAmplitude(note);
+            amplitudeSum += getAmplitude(note, volumeTable.get(note));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
     }
 
-    private void removeInaudibleNotes() {
-        HashSet<Note> currentLiveNotes = getLiveNotes();
+    private void removeInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
+
         HashSet<Note> notesToBeRemoved = new HashSet<>();
         for (Note note : currentLiveNotes) {
-            if (note.getVolume(calculatedSamples) < marginalSampleSize) {
+            if (volumeTable.get(note) < marginalSampleSize) {
                 notesToBeRemoved.add(note);
             }
         }
         synchronized (liveNotes){
             liveNotes.removeAll(notesToBeRemoved);
         }
+    }
+
+    private HashMap<Note, Double> getVolumeTable(HashSet<Note> currentLiveNotes) {
+        HashMap<Note, Double> volumeTable = new HashMap<>();
+        for (Note note : currentLiveNotes) {
+            volumeTable.put(note, note.getVolume(calculatedSamples));
+        }
+        return volumeTable;
     }
 
     private void initialize() {
@@ -135,8 +144,8 @@ public class NoteEnvironment implements Runnable{
         getSourceDataLine().start();
     }
 
-    private byte getAmplitude(Note note) {
-        return (byte) Math.floor(sampleSize * note.getAmplitude(calculatedSamples) / 2);
+    private byte getAmplitude(Note note, double volume) {
+        return (byte) Math.floor(sampleSize * note.getAmplitude(calculatedSamples, volume) / 2);
     }
 
     private SourceDataLine getSourceDataLine() {
