@@ -77,9 +77,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         noteBuckets = getNewNoteBuckets(noteBuckets, liveNotes, volumeTable);
         renderNoteBuckets(g, noteBuckets);
-
-        /*todo move to storing the buckets over frames and decaying them visually over time. Take the average of the
-         when we want the current harmonic value we take the average of these*/
+        
         harmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         renderHarmonicsBuckets(g, harmonicsBuckets);
 
