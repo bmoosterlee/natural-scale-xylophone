@@ -13,8 +13,12 @@ public class Buckets {
 
     public Buckets(Buckets buckets) {
         this(buckets.getLength());
-        for(int i = 0; i< getLength(); i++){
-            put(i, buckets.getValue(i));
+        Iterator<Pair<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            put(x, value);
         }
     }
 
@@ -23,12 +27,6 @@ public class Buckets {
         int x = bucketEntry.getKey();
         if (x >= 0 && x < getLength()) {
             put(x, bucketEntry.getValue());
-        }
-    }
-
-    void clear() {
-        for(int i = 0; i< getLength(); i++){
-            bucketsData[i] = 0.;
         }
     }
 
@@ -46,8 +44,12 @@ public class Buckets {
 
     public Buckets add(Buckets otherBuckets) {
         Buckets newBuckets = new Buckets(getLength());
-        for(int i = 0; i< getLength(); i++){
-            newBuckets.put(i, getValue(i) + otherBuckets.getValue(i));
+        Iterator<Pair<Integer, Double>> iterator = otherBuckets.iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            newBuckets.put(x, getValue(x) + value);
         }
         return newBuckets;
     }
@@ -58,7 +60,11 @@ public class Buckets {
 
     public Set<Pair<Integer, Double>> findMaxima() {
         Set<Pair<Integer, Double>> maxima = new HashSet<>();
-        for(int x = 0; x<getLength(); x++){
+        Iterator<Pair<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double center = pair.getValue();
             double left = 0.;
             try{
                 left = getValue(x-1);
@@ -66,7 +72,6 @@ public class Buckets {
             catch(ArrayIndexOutOfBoundsException e){
 
             }
-            double center = getValue(x);
             double right = 0.;
             try{
                 right = getValue(x+1);
@@ -83,18 +88,23 @@ public class Buckets {
 
     Buckets averageBuckets(int averagingWidth) {
         Buckets averagedBuckets = new Buckets(getLength());
-        for(int x = 0; x< getLength(); x++) {
-            averagedBuckets.fill(x, getValue(x));
+        Iterator<Pair<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+
+            averagedBuckets.fill(x, value);
 
             for(int i = 1; i< averagingWidth; i++) {
-                double value = getValue(x) * (averagingWidth - i) / averagingWidth;
+                double residue = value * (averagingWidth - i) / averagingWidth;
                 try {
-                    averagedBuckets.fill(x - i, value);
+                    averagedBuckets.fill(x - i, residue);
                 } catch (ArrayIndexOutOfBoundsException e) {
 
                 }
                 try {
-                    averagedBuckets.fill(x + i, value);
+                    averagedBuckets.fill(x + i, residue);
                 } catch (ArrayIndexOutOfBoundsException e) {
 
                 }
@@ -105,26 +115,14 @@ public class Buckets {
 
     public Buckets multiply(double v) {
         Buckets multipliedBuckets = new Buckets(getLength());
-        for(int x = 0; x< getLength(); x++) {
-            multipliedBuckets.put(x, v * getValue(x));
+        Iterator<Pair<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Pair<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            multipliedBuckets.put(x, v * value);
         }
         return multipliedBuckets;
-    }
-
-    public Buckets multiply(Buckets otherBuckets) {
-        Buckets multipliedBuckets = new Buckets(getLength());
-        for(int x = 0; x< getLength(); x++) {
-            multipliedBuckets.put(x, getValue(x) * otherBuckets.getValue(x));
-        }
-        return multipliedBuckets;
-    }
-
-    public Buckets add(double v) {
-        Buckets newBuckets = new Buckets(getLength());
-        for(int x = 0; x< getLength(); x++) {
-            newBuckets.put(x, getValue(x) + v);
-        }
-        return newBuckets;
     }
 
     public Iterator<Pair<Integer, Double>> iterator() {
