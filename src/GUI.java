@@ -33,6 +33,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     boolean calculatedMouseFrequency;
     public double mouseFrequency;
 
+    LinkedList<Buckets> harmonicsBucketsHistory;
+
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
         this.harmonicCalculator = harmonicCalculator;
@@ -61,6 +63,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         noteBuckets = new Buckets(WIDTH);
         harmonicsBuckets = new Buckets(WIDTH);
+
+        harmonicsBucketsHistory = new LinkedList<>();
     }
 
     @Override
@@ -76,7 +80,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         /*todo move to storing the buckets over frames and decaying them visually over time. Take the average of the
          when we want the current harmonic value we take the average of these*/
-        harmonicsBuckets = getNewHarmonicsBuckets(harmonicsBuckets, liveNotes, volumeTable);
+        harmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         renderHarmonicsBuckets(g, harmonicsBuckets);
 
         renderCursorLine(g);
@@ -95,12 +99,15 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     //todo rename harmonicsBuckets to harmonicBuckets
-    private Buckets getNewHarmonicsBuckets(Buckets harmonicsBuckets, HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
-        Buckets newHarmonicsBuckets = decayHarmonicsBuckets(harmonicsBuckets);
+    private Buckets getNewHarmonicsBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
+        if(harmonicsBucketsHistory.size()>=100) {
+            harmonicsBucketsHistory.removeFirst();
+        }
 
         LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
                 harmonicCalculator.getHarmonicHierarchyAsList(liveNotes, 1000, volumeTable);
 
+        Buckets newHarmonicsBuckets = new Buckets(WIDTH);
         while (getTimeLeftInFrame(startTime) > 1) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyAsList.poll();
             if(nextHarmonicVolumePair==null){
@@ -109,23 +116,27 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
             Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
             nextHarmonicsBuckets = nextHarmonicsBuckets.averageBuckets(10);
-            nextHarmonicsBuckets = nextHarmonicsBuckets.multiply(0.025);
+            nextHarmonicsBuckets = nextHarmonicsBuckets.multiply(1./2.);
             newHarmonicsBuckets = newHarmonicsBuckets.add(nextHarmonicsBuckets);
         }
 
-        return newHarmonicsBuckets;
+        harmonicsBucketsHistory.addLast(newHarmonicsBuckets);
+        return getTimeAveragedBuckets(WIDTH);
+    }
+
+    private Buckets getTimeAveragedBuckets(int length) {
+        Buckets timeAveragedBuckets = new Buckets(length);
+        if(harmonicsBucketsHistory.isEmpty()){
+            return timeAveragedBuckets;
+        }
+        for(Buckets buckets : harmonicsBucketsHistory){
+            timeAveragedBuckets = timeAveragedBuckets.add(buckets);
+        }
+        return timeAveragedBuckets.multiply(1./harmonicsBucketsHistory.size());
     }
 
     private Pair<Integer, Double> getBucketEntry(Pair<Harmonic, Double> nextHarmonicVolumePair) {
         return new Pair<>(getX(nextHarmonicVolumePair.getKey().getFrequency()), nextHarmonicVolumePair.getValue());
-    }
-
-    private static Buckets decayHarmonicsBuckets(Buckets harmonicsBuckets) {
-        Buckets newHarmonicsBuckets = new Buckets(harmonicsBuckets.getLength());
-        for(int x = 0; x<harmonicsBuckets.getLength(); x++) {
-            newHarmonicsBuckets.put(x, 0.95 * harmonicsBuckets.getValue(x));
-        }
-        return newHarmonicsBuckets;
     }
 
     private void renderNoteBuckets(Graphics g, Buckets buckets) {
