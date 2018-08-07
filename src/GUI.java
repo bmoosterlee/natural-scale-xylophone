@@ -5,10 +5,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private Buckets noteBuckets;
@@ -71,12 +68,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashMap<Note, Double> volumeTable = NoteEnvironment.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
 
-        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable, WIDTH);
-        renderNoteBuckets(g, noteBuckets);
-
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
         renderHarmonicsBuckets(g, bucketHistory.getTimeAveragedBuckets(WIDTH));
+
+        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable, WIDTH);
+        renderNoteBuckets(g, noteBuckets);
 
         renderCursorLine(g);
     }
@@ -106,7 +103,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             }
 
             Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
-            nextHarmonicsBuckets = nextHarmonicsBuckets.averageBuckets(10);
+            nextHarmonicsBuckets = nextHarmonicsBuckets.averageBuckets(10).clip(0, WIDTH);
             newHarmonicsBuckets = newHarmonicsBuckets.add(nextHarmonicsBuckets);
         }
 
@@ -124,9 +121,9 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     private void renderBuckets(Graphics g, Buckets buckets) {
-        Iterator<Pair<Integer, Double>> iterator = buckets.iterator();
+        Iterator<Map.Entry<Integer, Double>> iterator = buckets.iterator();
         while(iterator.hasNext()) {
-            Pair<Integer, Double> pair = iterator.next();
+            Map.Entry<Integer, Double> pair = iterator.next();
             int x = pair.getKey();
             int y = (int) (pair.getValue() * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
