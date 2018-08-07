@@ -43,10 +43,10 @@ public class Buckets {
         return bucketsData[i];
     }
 
-    public Buckets add(Buckets buckets) {
+    public Buckets add(Buckets otherBuckets) {
         Buckets newBuckets = new Buckets(getLength());
         for(int i = 0; i< getLength(); i++){
-            newBuckets.put(i, getValue(i) + buckets.getValue(i));
+            newBuckets.put(i, getValue(i) + otherBuckets.getValue(i));
         }
         return newBuckets;
     }
