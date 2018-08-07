@@ -13,7 +13,7 @@ public class NoteEnvironment implements Runnable{
     private final int SAMPLE_RATE;
     private SourceDataLine sourceDataLine;
     private HashSet<Note> liveNotes;
-    private long sampleCount;
+    private long calculatedSamples;
     private long timeZero;
     private double marginalSampleSize;
 
@@ -48,7 +48,7 @@ public class NoteEnvironment implements Runnable{
 
     @Override
     public void run() {
-        sampleCount = 0l;
+        calculatedSamples = 0l;
         timeZero = System.nanoTime();
         double frameTime = 1000000000./SAMPLE_RATE;
         int sampleLookahead = SAMPLE_RATE/100;
@@ -63,8 +63,8 @@ public class NoteEnvironment implements Runnable{
             }
 
             long expectedSampleCount = getExpectedSampleCount();
-            sampleBacklog = expectedSampleCount+sampleLookahead- sampleCount;
             long waitTime = (long) ((-sampleBacklog)*frameTime);
+            sampleBacklog = expectedSampleCount + sampleLookahead - calculatedSamples;
 
             long waitTimeMillis = (long)(frameTime*sampleLookahead)/1000000;
             int waitTimeNanos = (int) (frameTime*sampleLookahead)%1000;
@@ -81,9 +81,9 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         removeInaudibleNotes();
-        sampleCount++;
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum()};
         getSourceDataLine().write(clipBuffer, 0, 1);
+        calculatedSamples++;
     }
 
     private byte calculateAmplitudeSum() {
@@ -123,9 +123,7 @@ public class NoteEnvironment implements Runnable{
 
     private byte getAmplitude(Note note) {
         int sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
-        byte amplitude = (byte) Math.floor(sampleSize * note.getAmplitude(sampleCount) / 2);
-        return amplitude;
-
+        return (byte) Math.floor(sampleSize * note.getAmplitude(calculatedSamples) / 2);
     }
 
     private SourceDataLine getSourceDataLine() {
