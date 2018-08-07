@@ -1,12 +1,11 @@
 public class Envelope {
     private final long startingSampleCount;
     private final float sampleRate;
-    protected double amplitude;
+    protected double amplitude = 0.05;
 
     public Envelope(long startingSampleCount, float sampleRate) {
         this.startingSampleCount = startingSampleCount;
         this.sampleRate = sampleRate;
-        amplitude = 0.05;
     }
 
     public double getVolume(long sampleCount) {
