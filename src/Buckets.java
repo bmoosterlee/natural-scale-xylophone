@@ -5,13 +5,13 @@ import java.util.*;
 public class Buckets {
     final private HashMap<Integer, Double> bucketsData;
 
-    public Buckets(int width) {
+    public Buckets() {
         bucketsData = new HashMap<>();
     }
 
     public Buckets(Buckets buckets) {
-        this(buckets.getLength());
-        Iterator<Map.Entry<Integer, Double>> iterator = iterator();
+        this();
+        Iterator<Map.Entry<Integer, Double>> iterator = buckets.iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
@@ -20,8 +20,8 @@ public class Buckets {
         }
     }
 
-    public Buckets(Pair<Integer, Double> bucketEntry, int length) {
-        this(length);
+    public Buckets(Pair<Integer, Double> bucketEntry) {
+        this();
         int x = bucketEntry.getKey();
         put(x, bucketEntry.getValue());
     }
@@ -44,7 +44,7 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
-        Buckets newBuckets = new Buckets(getLength());
+        Buckets newBuckets = new Buckets();
 
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
@@ -97,7 +97,7 @@ public class Buckets {
     }
 
     Buckets averageBuckets(int averagingWidth) {
-        Buckets averagedBuckets = new Buckets(getLength());
+        Buckets averagedBuckets = new Buckets();
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
@@ -124,7 +124,7 @@ public class Buckets {
     }
 
     public Buckets multiply(double v) {
-        Buckets multipliedBuckets = new Buckets(getLength());
+        Buckets multipliedBuckets = new Buckets();
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
@@ -140,7 +140,7 @@ public class Buckets {
     }
 
     public Buckets clip(int start, int end) {
-        Buckets newBuckets = new Buckets(getLength());
+        Buckets newBuckets = new Buckets();
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()) {
             Map.Entry<Integer, Double> pair = iterator.next();

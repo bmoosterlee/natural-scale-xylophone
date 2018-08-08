@@ -57,7 +57,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         frame.setVisible(true);
 
-        noteBuckets = new Buckets(WIDTH);
+        noteBuckets = new Buckets();
     }
 
     @Override
@@ -70,16 +70,16 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
-        renderHarmonicsBuckets(g, bucketHistory.getTimeAveragedBuckets(WIDTH));
+        renderHarmonicsBuckets(g, bucketHistory.getTimeAveragedBuckets());
 
-        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable, WIDTH);
+        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable);
         renderNoteBuckets(g, noteBuckets);
 
         renderCursorLine(g);
     }
 
-    private Buckets getNewNoteBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable, int length) {
-        Buckets newNoteBuckets = new Buckets(length);
+    private Buckets getNewNoteBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
+        Buckets newNoteBuckets = new Buckets();
         for(Note note : liveNotes){
             int x = getX(note.getFrequency());
             if(x<0 || x>=WIDTH){
@@ -95,14 +95,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
                 harmonicCalculator.getHarmonicHierarchyAsList(liveNotes, 1000, volumeTable);
 
-        Buckets newHarmonicsBuckets = new Buckets(WIDTH);
+        Buckets newHarmonicsBuckets = new Buckets();
         while (getTimeLeftInFrame(startTime) > 1) {
             Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyAsList.poll();
             if(nextHarmonicVolumePair==null){
                 break;
             }
 
-            Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair), newHarmonicsBuckets.getLength());
+            Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair));
             nextHarmonicsBuckets = nextHarmonicsBuckets.averageBuckets(10).clip(0, WIDTH);
             newHarmonicsBuckets = newHarmonicsBuckets.add(nextHarmonicsBuckets);
         }

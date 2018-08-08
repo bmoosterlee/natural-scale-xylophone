@@ -24,8 +24,8 @@ public class BucketHistory {
         }
     }
 
-    Buckets getTimeAveragedBuckets(int length) {
-        Buckets timeAveragedBuckets = new Buckets(length);
+    Buckets getTimeAveragedBuckets() {
+        Buckets timeAveragedBuckets = new Buckets();
         if (harmonicsBucketsHistory.isEmpty()) {
             return timeAveragedBuckets;
         }
