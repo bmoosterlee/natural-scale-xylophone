@@ -4,7 +4,6 @@ public class BucketHistory {
     LinkedList<Buckets> harmonicsBucketsHistory;
     private int size;
     private double multiplier;
-    private Buckets buckets;
 
     public BucketHistory(int size) {
         harmonicsBucketsHistory = new LinkedList<>();
