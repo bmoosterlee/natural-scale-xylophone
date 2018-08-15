@@ -98,8 +98,9 @@ public class NoteEnvironment implements Runnable{
         HashMap<Note, Double> volumeTable = getVolumeTable(liveNotes);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
-        removeInaudibleNotes(volumeTable, liveNotes);
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getInaudibleNotes");
+        HashSet<Note> inaudibleNotes = getInaudibleNotes(volumeTable, liveNotes);
+        removeInaudibleNotes(inaudibleNotes);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
@@ -112,6 +113,12 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
+    private void removeInaudibleNotes(HashSet<Note> inaudibleNotes) {
+        synchronized (liveNotes){
+            liveNotes.removeAll(inaudibleNotes);
+        }
+    }
+
     private byte calculateAmplitudeSum(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
         int amplitudeSum = 0;
         for (Note note : currentLiveNotes) {
@@ -120,17 +127,14 @@ public class NoteEnvironment implements Runnable{
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
     }
 
-    private void removeInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
-
+    private HashSet<Note> getInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
         HashSet<Note> notesToBeRemoved = new HashSet<>();
-        for (Note note : currentLiveNotes) {
+        for (Note note : liveNotes) {
             if (volumeTable.get(note) < marginalSampleSize) {
                 notesToBeRemoved.add(note);
             }
         }
-        synchronized (liveNotes){
-            liveNotes.removeAll(notesToBeRemoved);
-        }
+        return notesToBeRemoved;
     }
 
     private HashMap<Note, Double> getVolumeTable(HashSet<Note> currentLiveNotes) {
