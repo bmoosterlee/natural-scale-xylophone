@@ -66,7 +66,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        HashMap<Note, Double> volumeTable = NoteEnvironment.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
+        HashMap<Note, Double> volumeTable = noteEnvironment.getVolumeTable(liveNotes);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
@@ -193,7 +193,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     @Override
     public void mousePressed(MouseEvent e) {
-        noteEnvironment.addNote(getFrequency(e.getX()), noteEnvironment.getExpectedSampleCount());
+        noteEnvironment.addNote(getFrequency(e.getX()));
     }
 
     double getFrequency(double x) {

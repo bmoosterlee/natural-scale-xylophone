@@ -34,7 +34,7 @@ public class NoteEnvironment implements Runnable{
         initialize();
     }
 
-    static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
+    private static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
         HashMap<Note, Double> newVolumeTable = new HashMap<>();
         for(Note note : liveNotes) {
             newVolumeTable.put(note, note.getVolume(currentSampleCount));
@@ -42,7 +42,11 @@ public class NoteEnvironment implements Runnable{
         return newVolumeTable;
     }
 
-    public void start(){
+    public HashMap<Note, Double> getVolumeTable(Set<Note> liveNotes) {
+        return getVolumeTable(getExpectedSampleCount(), liveNotes);
+    }
+
+        public void start(){
         Thread thread = new Thread(this);
         thread.start();
     }
@@ -167,14 +171,14 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    public void addNote(double frequency, long startingSampleCount) {
+    private void addNote(double frequency, long startingSampleCount) {
         Note note = new Note(frequency, startingSampleCount, SAMPLE_RATE);
         synchronized(liveNotes) {
             liveNotes.add(note);
         }
     }
 
-    public long getExpectedSampleCount() {
+    private long getExpectedSampleCount() {
         return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
 
