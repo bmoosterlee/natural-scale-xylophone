@@ -175,11 +175,8 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private void addNote(double frequency, long startingSampleCount) {
-        Note note = new Note(frequency, startingSampleCount, SAMPLE_RATE);
-        synchronized(liveNotes) {
-            liveNotes.add(note);
-        }
+    private Note createNote(double frequency) {
+        return new Note(frequency, getExpectedSampleCount(), SAMPLE_RATE);
     }
 
     private long getExpectedSampleCount() {
@@ -187,7 +184,10 @@ public class NoteEnvironment implements Runnable{
     }
 
     public void addNote(double frequency) {
-        addNote(frequency, getExpectedSampleCount());
+        Note note = createNote(frequency);
+        synchronized(liveNotes) {
+            liveNotes.add(note);
+        }
     }
 
     private long getTimeLeftInFrame(long startTime) {
