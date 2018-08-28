@@ -10,8 +10,8 @@ public class NoteEnvironment implements Runnable{
 
     private final int SAMPLE_SIZE_IN_BITS;
     private final int SAMPLE_RATE;
+    final NoteManager noteManager = new NoteManager(this);
     private SourceDataLine sourceDataLine;
-    private HashSet<Note> liveNotes;
     private long calculatedSamples;
     private long timeZero;
     private int sampleSize;
@@ -29,12 +29,10 @@ public class NoteEnvironment implements Runnable{
         frameTime = 1000000./SAMPLE_RATE;
         sampleLookahead = SAMPLE_RATE/10;
 
-        liveNotes = new HashSet();
-
         initialize();
     }
 
-    private static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
+    static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
         HashMap<Note, Double> newVolumeTable = new HashMap<>();
         for(Note note : liveNotes) {
             newVolumeTable.put(note, note.getVolume(currentSampleCount));
@@ -42,11 +40,7 @@ public class NoteEnvironment implements Runnable{
         return newVolumeTable;
     }
 
-    public HashMap<Note, Double> getVolumeTable(Set<Note> liveNotes) {
-        return getVolumeTable(getExpectedSampleCount(), liveNotes);
-    }
-
-        public void start(){
+    public void start(){
         Thread thread = new Thread(this);
         thread.start();
     }
@@ -91,7 +85,7 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getLiveNotes");
-        HashSet<Note> liveNotes = getLiveNotes();
+        HashSet<Note> liveNotes = noteManager.getLiveNotes();
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getVolumeTable");
@@ -99,8 +93,8 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getInaudibleNotes");
-        HashSet<Note> inaudibleNotes = getInaudibleNotes(volumeTable, liveNotes);
-        removeInaudibleNotes(inaudibleNotes);
+        HashSet<Note> inaudibleNotes = noteManager.getInaudibleNotes(volumeTable, liveNotes);
+        noteManager.removeInaudibleNotes(inaudibleNotes);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
@@ -114,9 +108,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void removeInaudibleNotes(HashSet<Note> inaudibleNotes) {
-        synchronized (liveNotes){
-            liveNotes.removeAll(inaudibleNotes);
-        }
+        noteManager.removeInaudibleNotes(inaudibleNotes);
     }
 
     private byte calculateAmplitudeSum(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
@@ -128,13 +120,11 @@ public class NoteEnvironment implements Runnable{
     }
 
     private HashSet<Note> getInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
-        HashSet<Note> notesToBeRemoved = new HashSet<>();
-        for (Note note : liveNotes) {
-            if (volumeTable.get(note) < marginalSampleSize) {
-                notesToBeRemoved.add(note);
-            }
-        }
-        return notesToBeRemoved;
+        return noteManager.getInaudibleNotes(volumeTable, liveNotes);
+    }
+
+    boolean isAudible(Double volume) {
+        return volume >= marginalSampleSize;
     }
 
     private HashMap<Note, Double> getVolumeTable(HashSet<Note> currentLiveNotes) {
@@ -170,24 +160,19 @@ public class NoteEnvironment implements Runnable{
     }
 
     public HashSet<Note> getLiveNotes() {
-        synchronized(liveNotes) {
-            return new HashSet<>(liveNotes);
-        }
+        return noteManager.getLiveNotes();
     }
 
-    private Note createNote(double frequency) {
+    Note createNote(double frequency) {
         return new Note(frequency, getExpectedSampleCount(), SAMPLE_RATE);
     }
 
-    private long getExpectedSampleCount() {
+    long getExpectedSampleCount() {
         return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
     }
 
     public void addNote(double frequency) {
-        Note note = createNote(frequency);
-        synchronized(liveNotes) {
-            liveNotes.add(note);
-        }
+        noteManager.addNote(frequency);
     }
 
     private long getTimeLeftInFrame(long startTime) {

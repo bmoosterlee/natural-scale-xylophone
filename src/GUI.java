@@ -66,7 +66,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
         HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
 
-        HashMap<Note, Double> volumeTable = noteEnvironment.getVolumeTable(liveNotes);
+        HashMap<Note, Double> volumeTable = noteEnvironment.noteManager.getVolumeTable(liveNotes);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
