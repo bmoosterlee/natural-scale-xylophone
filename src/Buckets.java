@@ -161,4 +161,62 @@ public class Buckets {
         }
         return newBuckets;
     }
+
+    public Buckets clip(int max) {
+        Buckets newBuckets = new Buckets();
+        Iterator<Map.Entry<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()) {
+            Map.Entry<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            newBuckets.put(x, Math.min(max, value));
+        }
+        return newBuckets;
+    }
+
+    public Buckets subtract(Buckets buckets) {
+        return add(buckets.multiply(-1));
+    }
+
+    public Buckets add(double a) {
+        Buckets addedBuckets = new Buckets();
+        Iterator<Map.Entry<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Map.Entry<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            addedBuckets.put(x, a + value);
+        }
+        return addedBuckets;
+    }
+
+    public Buckets divide(Buckets otherBuckets) {
+        return multiply(otherBuckets.reciprocal());
+    }
+
+    private Buckets reciprocal() {
+        Buckets dividedBuckets = new Buckets();
+        Iterator<Map.Entry<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Map.Entry<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            dividedBuckets.put(x, 1. / value);
+        }
+        return dividedBuckets;
+    }
+
+    public Buckets multiply(Buckets otherBuckets) {
+        Buckets newBuckets = new Buckets();
+
+        Iterator<Map.Entry<Integer, Double>> iterator = iterator();
+        while(iterator.hasNext()){
+            Map.Entry<Integer, Double> pair = iterator.next();
+            Integer x = pair.getKey();
+            Double value = pair.getValue();
+            Double value2 = otherBuckets.getValue(x);
+            newBuckets.put(x, value * value2);
+        }
+        return newBuckets;
+    }
 }
