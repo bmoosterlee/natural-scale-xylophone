@@ -26,6 +26,14 @@ public class Buckets {
         put(x, bucketEntry.getValue());
     }
 
+    public Buckets(Set<Pair<Integer, Double>> pairs) {
+        this();
+        for(Pair<Integer, Double> pair : pairs){
+            int x = pair.getKey();
+            put(x, pair.getValue());
+        }
+    }
+
     void fill(int x, double value) {
         put(x, getValue(x) + value);
     }
