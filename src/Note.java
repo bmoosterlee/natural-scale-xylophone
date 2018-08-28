@@ -3,17 +3,15 @@ public class Note {
     private final Envelope envelope;
     private final double frequency;
     private final double frequencyPi;
-    private final double startingTimeAngleComponent;
 
     public Note(double frequency, long startingSampleCount, float sampleRate){
         envelope = new Envelope(startingSampleCount, sampleRate);
         this.frequency = frequency;
         frequencyPi = getFrequency() * 2.0 * Math.PI;
-        startingTimeAngleComponent = getEnvelope().getStartingTime() * frequencyPi;
     }
 
     public double getAmplitude(long sampleCount, double volume) {
-        double angle = getEnvelope().getTimeAsDouble(sampleCount) * frequencyPi - startingTimeAngleComponent;
+        double angle = getEnvelope().getTimeAsDouble(sampleCount) * frequencyPi;
         return (Math.sin(angle) * volume);
     }
 
