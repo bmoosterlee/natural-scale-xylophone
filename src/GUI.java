@@ -182,7 +182,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    private int getX(double frequency) {
+    int getX(double frequency) {
         return (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
     }
 
