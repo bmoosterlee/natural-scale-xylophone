@@ -46,7 +46,7 @@ public class NoteManager {
     }
 
     public void addNote(double frequency) {
-        Pair<Note, Envelope> pair = noteEnvironment.createNote(frequency);
+        Pair<Note, Envelope> pair = noteEnvironment.createNote();
         Note note = pair.getKey();
         Envelope envelope = pair.getValue();
 
@@ -58,7 +58,7 @@ public class NoteManager {
         }
 
         synchronized (frequencySnapshot) {
-            frequencySnapshot = frequencySnapshot.addNote(note);
+            frequencySnapshot = frequencySnapshot.addNote(note, frequency);
         }
     }
 
@@ -70,8 +70,8 @@ public class NoteManager {
         }
     }
 
-    Set<Pair<Double, Double>> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
-        Set<Pair<Double, Double>> frequencyVolumes = new HashSet<>();
+    Map<Double, Double> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
+        Map<Double, Double> frequencyVolumes = new HashMap<>();
 
         Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -87,7 +87,7 @@ public class NoteManager {
                     continue;
                 }
             }
-            frequencyVolumes.add(new Pair<>(frequency, volume));
+            frequencyVolumes.put(frequency, volume);
         }
         return frequencyVolumes;
     }

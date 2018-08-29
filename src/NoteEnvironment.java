@@ -106,8 +106,9 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
-        Set<Pair<Double, Double>> frequencyVolumes = noteManager.getFrequencyVolumeTable(frequencySnapshot.frequencyNoteTable, volumeTable);
-        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, frequencyVolumes, frequencySnapshot.frequencyAngleComponents)};
+        Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
+        Map<Double, Double> frequencyVolumes = noteManager.getFrequencyVolumeTable(frequencySnapshot.frequencyNoteTable, volumeTable);
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, liveFrequencies, frequencyVolumes, frequencySnapshot.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
@@ -123,10 +124,11 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private byte calculateAmplitudeSum(long calculatedSamples, Set<Pair<Double, Double>> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
+    //todo remove the hash word
+    private byte calculateAmplitudeSum(long calculatedSamples, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
         int amplitudeSum = 0;
-        for(Pair<Double, Double> pair : frequencyVolumes){
-            amplitudeSum += getAmplitude(calculatedSamples, pair.getValue(), frequenciesAngleComponents.get(pair.getKey()));
+        for(Double frequency : liveFrequencies){
+            amplitudeSum += getAmplitude(calculatedSamples, frequencyVolumes.get(frequency), frequenciesAngleComponents.get(frequency));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
     }
@@ -161,8 +163,8 @@ public class NoteEnvironment implements Runnable{
         this.sourceDataLine = sourceDataLine;
     }
 
-    Pair<Note, Envelope> createNote(double frequency) {
-        return new Pair<>(new Note(frequency), new Envelope(getExpectedSampleCount(), sampleRate));
+    Pair<Note, Envelope> createNote() {
+        return new Pair<>(new Note(), new Envelope(getExpectedSampleCount(), sampleRate));
     }
 
     long getExpectedSampleCount() {

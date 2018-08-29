@@ -1,18 +1,24 @@
 import java.util.*;
 
 public class FrequencySnapshot {
+    final Set<Double> liveFrequencies;
     final HashMap<Double, Double> frequencyAngleComponents;
     final Map<Double, Set<Note>> frequencyNoteTable;
     final Map<Note, Double> noteFrequencyTable;
 
     public FrequencySnapshot() {
+        liveFrequencies = new HashSet<>();
         frequencyAngleComponents = new HashMap<>();
         frequencyNoteTable = new HashMap<>();
         noteFrequencyTable = new HashMap<>();
     }
 
     public FrequencySnapshot(FrequencySnapshot frequencySnapshot) {
+        liveFrequencies = frequencySnapshot.getLiveFrequencies();
         frequencyAngleComponents = frequencySnapshot.getFrequencyAngleComponents();
+        if(liveFrequencies.size()!=frequencyAngleComponents.size()){
+            liveFrequencies.size();
+        }
         frequencyNoteTable = frequencySnapshot.getFrequencyNoteTable();
         noteFrequencyTable = frequencySnapshot.getNoteFrequencyTable();
     }
@@ -25,15 +31,11 @@ public class FrequencySnapshot {
 
             frequencySnapshot.noteFrequencyTable.remove(note);
             Set<Note> noteSet = frequencySnapshot.frequencyNoteTable.get(frequency);
-            try {
-                noteSet.remove(note);
-                if (noteSet.isEmpty()) {
-                    frequencySnapshot.frequencyNoteTable.remove(frequency);
-                    frequencySnapshot.frequencyAngleComponents.remove(frequency);
-                }
-            }
-            catch(NullPointerException e){
-
+            noteSet.remove(note);
+            if (noteSet.isEmpty()) {
+                frequencySnapshot.liveFrequencies.remove(frequency);
+                frequencySnapshot.frequencyNoteTable.remove(frequency);
+                frequencySnapshot.frequencyAngleComponents.remove(frequency);
             }
 
         }
@@ -41,11 +43,12 @@ public class FrequencySnapshot {
         return frequencySnapshot;
     }
 
-    FrequencySnapshot addNote(Note note) {
+    FrequencySnapshot addNote(Note note, Double frequency) {
         FrequencySnapshot frequencySnapshot = new FrequencySnapshot(this);
 
-        double frequency = note.getFrequency();
         Set<Note> noteSet;
+
+        frequencySnapshot.liveFrequencies.add(frequency);
 
         if (!frequencySnapshot.frequencyNoteTable.containsKey(note)) {
             frequencySnapshot.frequencyAngleComponents.put(frequency, frequency * 2.0 * Math.PI);
@@ -83,5 +86,9 @@ public class FrequencySnapshot {
 
     public Map<Note,Double> getNoteFrequencyTable() {
         return new HashMap<>(noteFrequencyTable);
+    }
+
+    public Set<Double> getLiveFrequencies(){
+        return new HashSet<>(liveFrequencies);
     }
 }

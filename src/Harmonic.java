@@ -3,7 +3,7 @@ public class Harmonic {
     final int sharedPeriod;
     final double frequency;
 
-    public Harmonic(Note tonic, Fraction harmonicAsFraction){
+    public Harmonic(Double tonic, Fraction harmonicAsFraction){
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
         frequency = calculateFrequency(tonic, harmonicAsFraction);
     }
@@ -20,8 +20,8 @@ public class Harmonic {
         return Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
     }
 
-    private double calculateFrequency(Note tonic, Fraction harmonicAsFraction) {
-        return tonic.getFrequency()*(double)harmonicAsFraction.numerator/(double)harmonicAsFraction.denominator;
+    private double calculateFrequency(Double tonic, Fraction harmonicAsFraction) {
+        return tonic*(double)harmonicAsFraction.numerator/(double)harmonicAsFraction.denominator;
     }
 
     public double getFrequency(){

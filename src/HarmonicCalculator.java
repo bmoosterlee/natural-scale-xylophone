@@ -5,15 +5,15 @@ import java.util.*;
 public class HarmonicCalculator {
 
     private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(() -> new MemoableIterator());
-    private CurrentTable<HashSet<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
+    private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
 
 
-    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Note> liveNotes, int maxHarmonics, Map<Note, Double> volumeTable) {
+    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, int maxHarmonics) {
         synchronized (iteratorTable) {
-            CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveNotes);
-            CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveNotes, newIteratorTable, volumeTable);
+            CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
+            CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
 
-            harmonicsTable = harmonicsTable.getNewTable(liveNotes);
+            harmonicsTable = harmonicsTable.getNewTable(liveFrequencies);
             BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
 
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
@@ -32,10 +32,10 @@ public class HarmonicCalculator {
 
     private double getNewHarmonicVolume(CalculatorSnapshot calculatorSnapshot) {
         try {
-            Note highestValueNote = calculatorSnapshot.getIteratorHierarchy().peek();
-            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueNote).peek();
+            Double highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().peek();
+            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueFrequency).peek();
 
-            return Harmonic.getHarmonicValue(calculatorSnapshot.getVolumeTable().get(highestValueNote), nextHarmonicAsFraction);
+            return Harmonic.getHarmonicValue(calculatorSnapshot.getVolumeTable().get(highestValueFrequency), nextHarmonicAsFraction);
         }
         catch(NullPointerException e){
             return 0.;
@@ -44,14 +44,14 @@ public class HarmonicCalculator {
 
     private void addNewHarmonic(CalculatorSnapshot calculatorSnapshot, BufferSnapshot bufferSnapshot) {
         try {
-            Note highestValueNote = calculatorSnapshot.getIteratorHierarchy().poll();
-            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueNote).next();
-            calculatorSnapshot.getIteratorHierarchy().add(highestValueNote);
+            Double highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().poll();
+            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueFrequency).next();
+            calculatorSnapshot.getIteratorHierarchy().add(highestValueFrequency);
 
-            Harmonic highestValueHarmonic = new Harmonic(highestValueNote, nextHarmonicAsFraction);
-            double newHarmonicVolume = highestValueHarmonic.getVolume(calculatorSnapshot.getVolumeTable().get(highestValueNote));
+            Harmonic highestValueHarmonic = new Harmonic(highestValueFrequency, nextHarmonicAsFraction);
+            double newHarmonicVolume = highestValueHarmonic.getVolume(calculatorSnapshot.getVolumeTable().get(highestValueFrequency));
 
-            harmonicsTable.get(highestValueNote).add(highestValueHarmonic);
+            harmonicsTable.get(highestValueFrequency).add(highestValueHarmonic);
             bufferSnapshot.addHarmonic(highestValueHarmonic, newHarmonicVolume);
         }
         catch(NullPointerException e){

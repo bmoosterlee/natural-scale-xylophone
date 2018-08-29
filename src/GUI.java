@@ -70,35 +70,39 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
         HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
+        FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
+        Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
+        Map<Double, Set<Note>> frequencyNoteTable = frequencySnapshot.frequencyNoteTable;
 
         Map<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes, envelopes);
+        Map<Double, Double> frequencyVolumeTable = noteManager.getFrequencyVolumeTable(frequencyNoteTable, volumeTable);
 
-        Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
+        Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveFrequencies, frequencyVolumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
         renderHarmonicsBuckets(g, bucketHistory.getTimeAveragedBuckets().averageBuckets(10));
 
-        noteBuckets = getNewNoteBuckets(liveNotes, volumeTable);
+        noteBuckets = getNewNoteBuckets(liveFrequencies, frequencyVolumeTable);
         renderNoteBuckets(g, noteBuckets);
 
         renderCursorLine(g);
     }
 
-    private Buckets getNewNoteBuckets(Set<Note> liveNotes, Map<Note, Double> volumeTable) {
+    private Buckets getNewNoteBuckets(Set<Double> liveFrequencies, Map<Double, Double> volumeTable) {
         Set<Pair<Integer, Double>> noteVolumes = new HashSet<>();
-        for(Note note : liveNotes){
-            int x = getX(note.getFrequency());
+        for(Double frequency : liveFrequencies){
+            int x = getX(frequency);
             if(x<0 || x>=WIDTH){
                 continue;
             }
-            noteVolumes.add(new Pair(x, volumeTable.get(note)));
+            noteVolumes.add(new Pair(x, volumeTable.get(frequency)));
         }
         return new Buckets(noteVolumes);
     }
 
     //todo rename harmonicsBuckets to harmonicBuckets
-    private Buckets getNewHarmonicsBuckets(Set<Note> liveNotes, Map<Note, Double> volumeTable) {
+    private Buckets getNewHarmonicsBuckets(Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable) {
         Iterator<Pair<Harmonic, Double>> harmonicHierarchyIterator =
-                harmonicCalculator.getHarmonicHierarchyIterator(liveNotes, 1000, volumeTable);
+                harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 1000);
 
         Set<Pair<Integer, Double>> newPairs = new HashSet<>();
         while (getTimeLeftInFrame(startTime) > 1 && harmonicHierarchyIterator.hasNext()) {
