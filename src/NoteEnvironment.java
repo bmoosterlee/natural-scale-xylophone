@@ -19,7 +19,7 @@ public class NoteEnvironment implements Runnable{
     private double frameTime;
     private int sampleLookahead;
 
-    public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
+    NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.SAMPLE_RATE = SAMPLE_RATE;
 
@@ -52,7 +52,7 @@ public class NoteEnvironment implements Runnable{
 
     @Override
     public void run() {
-        calculatedSamples = 0l;
+        calculatedSamples = 0L;
         timeZero = System.nanoTime();
         long sampleBacklog = 0;
 
@@ -107,20 +107,12 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    private void removeInaudibleNotes(HashSet<Note> inaudibleNotes) {
-        noteManager.removeInaudibleNotes(inaudibleNotes);
-    }
-
     private byte calculateAmplitudeSum(HashMap<Note, Double> volumeTable, HashSet<Note> currentLiveNotes) {
         int amplitudeSum = 0;
         for (Note note : currentLiveNotes) {
             amplitudeSum += getAmplitude(note, volumeTable.get(note));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
-    }
-
-    private HashSet<Note> getInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
-        return noteManager.getInaudibleNotes(volumeTable, liveNotes);
     }
 
     boolean isAudible(Double volume) {
