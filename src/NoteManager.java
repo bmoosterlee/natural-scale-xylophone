@@ -1,40 +1,38 @@
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class NoteManager {
     private final NoteEnvironment noteEnvironment;
-    HashSet<Note> liveNotes;
+    private FrequencySnapshot frequencySnapshot;
+    private HashSet<Note> liveNotes;
 
     public NoteManager(NoteEnvironment noteEnvironment) {
         this.noteEnvironment = noteEnvironment;
 
         liveNotes = new HashSet();
+        frequencySnapshot =  new FrequencySnapshot();
     }
 
-    public HashMap<Note, Double> getVolumeTable(Set<Note> liveNotes) {
-        return NoteEnvironment.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
+    static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
+        HashMap<Note, Double> newVolumeTable = new HashMap<>();
+        for(Note note : liveNotes) {
+            newVolumeTable.put(note, note.getVolume(currentSampleCount));
+        }
+        return newVolumeTable;
     }
 
-    void removeInaudibleNotes(HashSet<Note> inaudibleNotes) {
+    void removeInaudibleNotes(Set<Note> inaudibleNotes) {
         synchronized (liveNotes) {
             liveNotes.removeAll(inaudibleNotes);
         }
-    }
 
-    HashSet<Note> getInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
-        HashSet<Note> notesToBeRemoved = new HashSet<Note>();
-        for (Note note : liveNotes) {
-            if (!noteEnvironment.isAudible(volumeTable.get(note))) {
-                notesToBeRemoved.add(note);
-            }
+        synchronized (frequencySnapshot) {
+            frequencySnapshot = frequencySnapshot.removeInaudibleNotes(inaudibleNotes);
         }
-        return notesToBeRemoved;
     }
 
     public HashSet<Note> getLiveNotes() {
         synchronized (liveNotes) {
-            return new HashSet<Note>(liveNotes);
+            return new HashSet<>(liveNotes);
         }
     }
 
@@ -43,5 +41,13 @@ public class NoteManager {
         synchronized (liveNotes) {
             liveNotes.add(note);
         }
+
+        synchronized (frequencySnapshot) {
+            frequencySnapshot = frequencySnapshot.addNote(note);
+        }
+    }
+
+    public NoteSnapshot getSnapshot() {
+            return new NoteSnapshot(getLiveNotes(), new FrequencySnapshot(frequencySnapshot));
     }
 }

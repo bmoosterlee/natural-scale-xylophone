@@ -11,6 +11,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     private Buckets noteBuckets;
     final BucketHistory bucketHistory = new BucketHistory(100);
     NoteEnvironment noteEnvironment;
+    private NoteManager noteManager;
     HarmonicCalculator harmonicCalculator;
 
     public static final int WIDTH = 800*2;
@@ -33,6 +34,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
+        noteManager = noteEnvironment.noteManager;
         this.harmonicCalculator = harmonicCalculator;
 
         lowerBound = centerFrequency/Math.pow(2, octaveRange/2);
@@ -64,9 +66,9 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        HashSet<Note> liveNotes = noteEnvironment.getLiveNotes();
+        HashSet<Note> liveNotes = noteManager.getLiveNotes();
 
-        HashMap<Note, Double> volumeTable = noteEnvironment.noteManager.getVolumeTable(liveNotes);
+        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
@@ -188,7 +190,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     @Override
     public void mousePressed(MouseEvent e) {
-        noteEnvironment.addNote(getFrequency(e.getX()));
+        noteManager.addNote(getFrequency(e.getX()));
     }
 
     double getFrequency(double x) {
