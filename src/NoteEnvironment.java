@@ -29,7 +29,7 @@ public class NoteEnvironment implements Runnable{
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
         frameTime = 1000000./SAMPLE_RATE;
-        sampleLookahead = SAMPLE_RATE/10;
+        sampleLookahead = SAMPLE_RATE/100;
 
         initialize();
     }
@@ -53,6 +53,7 @@ public class NoteEnvironment implements Runnable{
         while(true) {
             long startTime = System.nanoTime();
 
+            TimeKeeper removeInaudibleNotes = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
             try {
                 while (getExpectedSampleCount() >= futureInaudibleNotes.peekFirst().getKey()) {
                     noteManager.removeInaudibleNotes(futureInaudibleNotes.pollFirst().getValue());
@@ -61,6 +62,7 @@ public class NoteEnvironment implements Runnable{
             catch(NullPointerException e){
 
             }
+            PerformanceTracker.stopTracking(removeInaudibleNotes);
 
             while(sampleBacklog>0) {
                 tick();
@@ -99,7 +101,9 @@ public class NoteEnvironment implements Runnable{
         HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(calculatedSamples, liveNotes, envelopes);
         PerformanceTracker.stopTracking(timeKeeper);
 
+        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment findInaudibleNotes");
         removeInaudibleNotes(liveNotes, volumeTable);
+        PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
         Set<Pair<Double, Double>> frequencyVolumes = getFrequencyVolumes(volumeTable, frequencySnapshot.frequencyNoteTable);
@@ -113,12 +117,10 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void removeInaudibleNotes(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
-        TimeKeeper removeInaudibleNotesTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment getInaudibleNotes");
         Set<Note> inaudibleNotes = getInaudibleNotes(volumeTable, liveNotes);
         if(!inaudibleNotes.isEmpty()) {
             futureInaudibleNotes.add(new Pair<>(calculatedSamples, inaudibleNotes));
         }
-        PerformanceTracker.stopTracking(removeInaudibleNotesTimeKeeper);
     }
 
     private byte calculateAmplitudeSum(long calculatedSamples, Set<Pair<Double, Double>> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
