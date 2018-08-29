@@ -70,4 +70,25 @@ public class NoteManager {
         }
     }
 
+    Set<Pair<Double, Double>> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, HashMap<Note, Double> volumeTable) {
+        Set<Pair<Double, Double>> frequencyVolumes = new HashSet<>();
+
+        Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Double, Set<Note>> entry = iterator.next();
+            Double frequency = entry.getKey();
+            Double volume = 0.;
+            Iterator<Note> noteIterator = entry.getValue().iterator();
+            while (noteIterator.hasNext()) {
+                Note note = noteIterator.next();
+                try {
+                    volume += volumeTable.get(note);
+                } catch (NullPointerException e) {
+                    continue;
+                }
+            }
+            frequencyVolumes.add(new Pair<>(frequency, volume));
+        }
+        return frequencyVolumes;
+    }
 }

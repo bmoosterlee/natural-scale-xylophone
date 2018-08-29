@@ -106,7 +106,7 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
-        Set<Pair<Double, Double>> frequencyVolumes = getFrequencyVolumes(volumeTable, frequencySnapshot.frequencyNoteTable);
+        Set<Pair<Double, Double>> frequencyVolumes = noteManager.getFrequencyVolumeTable(frequencySnapshot.frequencyNoteTable, volumeTable);
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, frequencyVolumes, frequencySnapshot.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
@@ -129,28 +129,6 @@ public class NoteEnvironment implements Runnable{
             amplitudeSum += getAmplitude(calculatedSamples, pair.getValue(), frequenciesAngleComponents.get(pair.getKey()));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
-    }
-
-    private Set<Pair<Double, Double>> getFrequencyVolumes(HashMap<Note, Double> volumeTable, Map<Double, Set<Note>> frequencyNoteTable) {
-        Set<Pair<Double, Double>> frequencyVolumes = new HashSet<>();
-
-        Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Double, Set<Note>> entry = iterator.next();
-            Double frequency = entry.getKey();
-            Double volume = 0.;
-            Iterator<Note> noteIterator = entry.getValue().iterator();
-            while (noteIterator.hasNext()) {
-                Note note = noteIterator.next();
-                try {
-                    volume += volumeTable.get(note);
-                } catch (NullPointerException e) {
-                    continue;
-                }
-            }
-            frequencyVolumes.add(new Pair<>(frequency, volume));
-        }
-        return frequencyVolumes;
     }
 
     boolean isAudible(Double volume) {
