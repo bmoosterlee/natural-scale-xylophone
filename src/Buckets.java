@@ -9,36 +9,22 @@ public class Buckets {
         bucketsData = new HashMap<>();
     }
 
-    public Buckets(Buckets buckets) {
-        this();
-        Iterator<Map.Entry<Integer, Double>> iterator = buckets.iterator();
-        while(iterator.hasNext()){
-            Map.Entry<Integer, Double> pair = iterator.next();
-            Integer x = pair.getKey();
-            Double value = pair.getValue();
-            put(x, value);
-        }
-    }
-
     public Buckets(Pair<Integer, Double> bucketEntry) {
         this();
-        int x = bucketEntry.getKey();
-        put(x, bucketEntry.getValue());
+        Integer x = bucketEntry.getKey();
+        Double value = bucketEntry.getValue();
+        put(x, value);
     }
 
     public Buckets(Set<Pair<Integer, Double>> pairs) {
         this();
         for(Pair<Integer, Double> pair : pairs){
-            int x = pair.getKey();
-            put(x, pair.getValue());
+            Integer x = pair.getKey();
+            put(x, getValue(x) + pair.getValue());
         }
     }
 
-    void fill(int x, double value) {
-        put(x, getValue(x) + value);
-    }
-
-    void put(int x, double value) {
+    private void put(int x, double value) {
         bucketsData.put(x, value);
     }
 
@@ -52,14 +38,14 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
-        Buckets newBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
 
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            newBuckets.put(x, value);
+            newPairs.add(new Pair(x, value));
         }
 
         iterator = otherBuckets.iterator();
@@ -67,36 +53,23 @@ public class Buckets {
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            newBuckets.put(x, newBuckets.getValue(x) + value);
+            newPairs.add(new Pair(x, value));
         }
-        return newBuckets;
-    }
-
-    public int getLength() {
-        return 0;
+        return new Buckets(newPairs);
     }
 
     public Set<Pair<Integer, Double>> findMaxima() {
         Set<Pair<Integer, Double>> maxima = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
+
             Double center = pair.getValue();
-            double left = 0.;
-            try{
-                left = getValue(x-1);
-            }
-            catch(ArrayIndexOutOfBoundsException e){
+            Double left = getValue(x-1);
+            Double right = getValue(x+1);
 
-            }
-            double right = 0.;
-            try{
-                right = getValue(x+1);
-            }
-            catch(ArrayIndexOutOfBoundsException e){
-
-            }
             if(center>left && center>right){
                 maxima.add(new Pair<>(x, center));
             }
@@ -105,42 +78,36 @@ public class Buckets {
     }
 
     Buckets averageBuckets(int averagingWidth) {
-        Buckets averagedBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
 
-            averagedBuckets.fill(x, value);
+            newPairs.add(new Pair(x, value));
 
             for(int i = 1; i< averagingWidth; i++) {
                 double residue = value * (averagingWidth - i) / averagingWidth;
-                try {
-                    averagedBuckets.fill(x - i, residue);
-                } catch (ArrayIndexOutOfBoundsException e) {
-
-                }
-                try {
-                    averagedBuckets.fill(x + i, residue);
-                } catch (ArrayIndexOutOfBoundsException e) {
-
-                }
+                newPairs.add(new Pair(x - i, residue));
+                newPairs.add(new Pair(x + i, residue));
             }
         }
-        return averagedBuckets;
+        return new Buckets(newPairs);
     }
 
     public Buckets multiply(double v) {
-        Buckets multipliedBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            multipliedBuckets.put(x, v * value);
+            newPairs.add(new Pair(x, v * value));
         }
-        return multipliedBuckets;
+        return new Buckets(newPairs);
     }
 
     public Iterator<Map.Entry<Integer, Double>> iterator() {
@@ -148,30 +115,32 @@ public class Buckets {
     }
 
     public Buckets clip(int start, int end) {
-        Buckets newBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()) {
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             if (x < start || x >= end) {
-                break;
+                continue;
             }
             Double value = pair.getValue();
-            newBuckets.put(x, value);
+            newPairs.add(new Pair(x, value));
         }
-        return newBuckets;
+        return new Buckets(newPairs);
     }
 
     public Buckets clip(int max) {
-        Buckets newBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()) {
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            newBuckets.put(x, Math.min(max, value));
+            newPairs.add(new Pair(x, Math.min(max, value)));
         }
-        return newBuckets;
+        return new Buckets(newPairs);
     }
 
     public Buckets subtract(Buckets buckets) {
@@ -179,15 +148,16 @@ public class Buckets {
     }
 
     public Buckets add(double a) {
-        Buckets addedBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            addedBuckets.put(x, a + value);
+            newPairs.add(new Pair(x, a + value));
         }
-        return addedBuckets;
+        return new Buckets(newPairs);
     }
 
     public Buckets divide(Buckets otherBuckets) {
@@ -195,19 +165,20 @@ public class Buckets {
     }
 
     private Buckets reciprocal() {
-        Buckets dividedBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
-            dividedBuckets.put(x, 1. / value);
+            newPairs.add(new Pair(x, 1. / value));
         }
-        return dividedBuckets;
+        return new Buckets(newPairs);
     }
 
     public Buckets multiply(Buckets otherBuckets) {
-        Buckets newBuckets = new Buckets();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
 
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();
         while(iterator.hasNext()){
@@ -215,8 +186,8 @@ public class Buckets {
             Integer x = pair.getKey();
             Double value = pair.getValue();
             Double value2 = otherBuckets.getValue(x);
-            newBuckets.put(x, value * value2);
+            newPairs.add(new Pair(x, value * value2));
         }
-        return newBuckets;
+        return new Buckets(newPairs);
     }
 }

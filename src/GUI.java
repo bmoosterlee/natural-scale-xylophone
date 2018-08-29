@@ -79,15 +79,15 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     private Buckets getNewNoteBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
-        Buckets newNoteBuckets = new Buckets();
+        Set<Pair<Integer, Double>> noteVolumes = new HashSet<>();
         for(Note note : liveNotes){
             int x = getX(note.getFrequency());
             if(x<0 || x>=WIDTH){
                 continue;
             }
-            newNoteBuckets.fill(x, volumeTable.get(note));
+            noteVolumes.add(new Pair(x, volumeTable.get(note)));
         }
-        return newNoteBuckets;
+        return new Buckets(noteVolumes);
     }
 
     //todo rename harmonicsBuckets to harmonicBuckets
