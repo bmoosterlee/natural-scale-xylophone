@@ -92,26 +92,21 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
 
     //todo rename harmonicsBuckets to harmonicBuckets
     private Buckets getNewHarmonicsBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
-        LinkedList<Pair<Harmonic, Double>> harmonicHierarchyAsList =
-                harmonicCalculator.getHarmonicHierarchyAsList(liveNotes, 1000, volumeTable);
+        Iterator<Pair<Harmonic, Double>> harmonicHierarchyIterator =
+                harmonicCalculator.getHarmonicHierarchyIterator(liveNotes, 1000, volumeTable);
 
-        Buckets newHarmonicsBuckets = new Buckets();
-        while (getTimeLeftInFrame(startTime) > 1) {
-            Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyAsList.poll();
+        Set<Pair<Integer, Double>> newPairs = new HashSet<>();
+        while (getTimeLeftInFrame(startTime) > 1 && harmonicHierarchyIterator.hasNext()) {
+            Pair<Harmonic, Double> nextHarmonicVolumePair = harmonicHierarchyIterator.next();
             if(nextHarmonicVolumePair==null){
                 break;
             }
 
-            Buckets nextHarmonicsBuckets = new Buckets(getBucketEntry(nextHarmonicVolumePair));
-            nextHarmonicsBuckets = nextHarmonicsBuckets.clip(0, WIDTH);
-            newHarmonicsBuckets = newHarmonicsBuckets.add(nextHarmonicsBuckets);
+            newPairs.add(new Pair<>(getX(nextHarmonicVolumePair.getKey().getFrequency()),
+                                    nextHarmonicVolumePair.getValue()));
         }
 
-        return newHarmonicsBuckets;
-    }
-
-    private Pair<Integer, Double> getBucketEntry(Pair<Harmonic, Double> nextHarmonicVolumePair) {
-        return new Pair<>(getX(nextHarmonicVolumePair.getKey().getFrequency()), nextHarmonicVolumePair.getValue());
+        return new Buckets(newPairs).clip(0, WIDTH);
     }
 
     private void renderNoteBuckets(Graphics g, Buckets buckets) {
