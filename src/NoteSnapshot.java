@@ -1,11 +1,17 @@
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class NoteSnapshot {
-    final HashSet<Note> liveNotes;
-    final FrequencySnapshot frequencySnapshot;
+    HashSet<Note> liveNotes;
+    HashMap<Note, Envelope> envelopes;
 
-    public NoteSnapshot(HashSet<Note> liveNotes, FrequencySnapshot frequencySnapshot) {
-        this.liveNotes = liveNotes;
-        this.frequencySnapshot = frequencySnapshot;
+    public NoteSnapshot() {
+        liveNotes = new HashSet();
+        envelopes = new HashMap<>();
+    }
+
+    public NoteSnapshot(NoteSnapshot noteSnapshot) {
+        liveNotes = new HashSet<>(noteSnapshot.liveNotes);
+        envelopes = new HashMap<>(noteSnapshot.envelopes);
     }
 }

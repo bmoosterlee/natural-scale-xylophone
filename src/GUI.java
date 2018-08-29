@@ -66,9 +66,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        HashSet<Note> liveNotes = noteManager.getLiveNotes();
+        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
+        NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
+        HashSet<Note> liveNotes = noteSnapshot.liveNotes;
+        HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
 
-        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes);
+        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes, envelopes);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);

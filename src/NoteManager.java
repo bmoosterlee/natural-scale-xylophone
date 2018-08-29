@@ -1,28 +1,43 @@
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class NoteManager {
     private final NoteEnvironment noteEnvironment;
+    private NoteSnapshot noteSnapshot;
     private FrequencySnapshot frequencySnapshot;
-    private HashSet<Note> liveNotes;
 
     public NoteManager(NoteEnvironment noteEnvironment) {
         this.noteEnvironment = noteEnvironment;
 
-        liveNotes = new HashSet();
+        noteSnapshot = new NoteSnapshot();
         frequencySnapshot =  new FrequencySnapshot();
     }
 
-    static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
+    HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes, HashMap<Note, Envelope> envelopes) {
         HashMap<Note, Double> volumeTable = new HashMap<>();
         for(Note note : liveNotes) {
-            volumeTable.put(note, note.getVolume(currentSampleCount));
+            double volume;
+            try {
+                volume = envelopes.get(note).getVolume(currentSampleCount);
+            }
+            catch(NullPointerException e){
+                volume = 0.0;
+            }
+            volumeTable.put(note, volume);
         }
         return volumeTable;
     }
 
     void removeInaudibleNotes(Set<Note> inaudibleNotes) {
-        synchronized (liveNotes) {
-            liveNotes.removeAll(inaudibleNotes);
+        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot);
+        synchronized (noteSnapshot) {
+            newNoteSnapshot.liveNotes.removeAll(inaudibleNotes);
+            Iterator<Note> iterator = inaudibleNotes.iterator();
+            while (iterator.hasNext()) {
+                newNoteSnapshot.envelopes.remove(iterator.next());
+            }
+            noteSnapshot = newNoteSnapshot;
         }
 
         synchronized (frequencySnapshot) {
@@ -30,16 +45,16 @@ public class NoteManager {
         }
     }
 
-    public HashSet<Note> getLiveNotes() {
-        synchronized (liveNotes) {
-            return new HashSet<>(liveNotes);
-        }
-    }
-
     public void addNote(double frequency) {
-        Note note = noteEnvironment.createNote(frequency);
-        synchronized (liveNotes) {
-            liveNotes.add(note);
+        Pair<Note, Envelope> pair = noteEnvironment.createNote(frequency);
+        Note note = pair.getKey();
+        Envelope envelope = pair.getValue();
+
+        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot);
+        synchronized (noteSnapshot) {
+            newNoteSnapshot.liveNotes.add(note);
+            newNoteSnapshot.envelopes.put(note, envelope);
+            noteSnapshot = newNoteSnapshot;
         }
 
         synchronized (frequencySnapshot) {
@@ -47,7 +62,12 @@ public class NoteManager {
         }
     }
 
-    public NoteSnapshot getSnapshot() {
-            return new NoteSnapshot(getLiveNotes(), new FrequencySnapshot(frequencySnapshot));
+    public NoteFrequencySnapshot getSnapshot() {
+        synchronized (noteSnapshot) {
+            synchronized (frequencySnapshot) {
+                return new NoteFrequencySnapshot(new NoteSnapshot(noteSnapshot), new FrequencySnapshot(frequencySnapshot));
+            }
+        }
     }
+
 }

@@ -88,13 +88,15 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getLiveNotes");
-        NoteSnapshot noteSnapshot = noteManager.getSnapshot();
+        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
+        NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
-        FrequencySnapshot frequencySnapshot = noteSnapshot.frequencySnapshot;
+        HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
+        FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getVolumeTable");
-        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(calculatedSamples, liveNotes);
+        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(calculatedSamples, liveNotes, envelopes);
         PerformanceTracker.stopTracking(timeKeeper);
 
         removeInaudibleNotes(liveNotes, volumeTable);
@@ -179,8 +181,8 @@ public class NoteEnvironment implements Runnable{
         this.sourceDataLine = sourceDataLine;
     }
 
-    Note createNote(double frequency) {
-        return new Note(frequency, getExpectedSampleCount(), sampleRate);
+    Pair<Note, Envelope> createNote(double frequency) {
+        return new Pair<>(new Note(frequency), new Envelope(getExpectedSampleCount(), sampleRate));
     }
 
     long getExpectedSampleCount() {
