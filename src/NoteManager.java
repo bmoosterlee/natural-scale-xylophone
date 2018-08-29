@@ -13,11 +13,11 @@ public class NoteManager {
     }
 
     static HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes) {
-        HashMap<Note, Double> newVolumeTable = new HashMap<>();
+        HashMap<Note, Double> volumeTable = new HashMap<>();
         for(Note note : liveNotes) {
-            newVolumeTable.put(note, note.getVolume(currentSampleCount));
+            volumeTable.put(note, note.getVolume(currentSampleCount));
         }
-        return newVolumeTable;
+        return volumeTable;
     }
 
     void removeInaudibleNotes(Set<Note> inaudibleNotes) {
