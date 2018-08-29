@@ -1,13 +1,13 @@
 public class Envelope {
     private final long startingSampleCount;
-    private final float sampleRate;
+    private final SampleRate sampleRate;
     protected double amplitude = 0.05;
     private double startingTime;
 
-    public Envelope(long startingSampleCount, float sampleRate) {
+    public Envelope(long startingSampleCount, SampleRate sampleRate) {
         this.startingSampleCount = startingSampleCount;
         this.sampleRate = sampleRate;
-        startingTime = getTimeAsDouble(getStartingSampleCount());
+        startingTime = sampleRate.asTime(getStartingSampleCount());
     }
 
     public double getVolume(long sampleCount) {
@@ -50,22 +50,7 @@ public class Envelope {
     }
 
     double getTimeDifference(long sampleCount) {
-        return getTimeAsDouble(sampleCount) - startingTime;
+        return sampleRate.asTime(sampleCount) - startingTime;
     }
 
-    double getTimeAsDouble(long sampleCount) {
-        return sampleCount / getSampleRate();
-    }
-
-    public float getSampleRate() {
-        return sampleRate;
-    }
-
-    public double getStartingTime() {
-        return startingTime;
-    }
-
-    public void setStartingTime(float startingTime) {
-        this.startingTime = startingTime;
-    }
 }

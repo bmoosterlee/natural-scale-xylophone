@@ -9,8 +9,8 @@ import java.util.Set;
 public class NoteEnvironment implements Runnable{
 
     private final int SAMPLE_SIZE_IN_BITS;
-    private final int SAMPLE_RATE;
-    final NoteManager noteManager = new NoteManager(this);
+    private final SampleRate sampleRate;
+    final NoteManager noteManager;
     private SourceDataLine sourceDataLine;
     private long calculatedSamples;
     private long timeZero;
@@ -21,7 +21,8 @@ public class NoteEnvironment implements Runnable{
 
     NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
-        this.SAMPLE_RATE = SAMPLE_RATE;
+        sampleRate = new SampleRate(SAMPLE_RATE);
+        noteManager = new NoteManager(this);
 
         sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
@@ -128,7 +129,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void initialize() {
-        AudioFormat af = new AudioFormat((float) SAMPLE_RATE, SAMPLE_SIZE_IN_BITS, 1, true, false);
+        AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
         setSourceDataLine(null);
         try {
             setSourceDataLine(AudioSystem.getSourceDataLine(af));
@@ -156,11 +157,11 @@ public class NoteEnvironment implements Runnable{
     }
 
     Note createNote(double frequency) {
-        return new Note(frequency, getExpectedSampleCount(), SAMPLE_RATE);
+        return new Note(frequency, getExpectedSampleCount(), sampleRate);
     }
 
     long getExpectedSampleCount() {
-        return (long)((System.nanoTime()- timeZero) / 1000000000. * SAMPLE_RATE);
+        return sampleRate.asSampleCount((System.nanoTime()- timeZero) / 1000000000.);
     }
 
     public void addNote(double frequency) {
