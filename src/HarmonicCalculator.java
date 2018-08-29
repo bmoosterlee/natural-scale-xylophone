@@ -8,7 +8,7 @@ public class HarmonicCalculator {
     private CurrentTable<HashSet<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
 
 
-    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(HashSet<Note> liveNotes, int maxHarmonics, HashMap<Note, Double> volumeTable) {
+    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Note> liveNotes, int maxHarmonics, Map<Note, Double> volumeTable) {
         synchronized (iteratorTable) {
             CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveNotes);
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveNotes, newIteratorTable, volumeTable);

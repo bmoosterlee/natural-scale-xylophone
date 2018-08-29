@@ -70,7 +70,7 @@ public class NoteManager {
         }
     }
 
-    Set<Pair<Double, Double>> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, HashMap<Note, Double> volumeTable) {
+    Set<Pair<Double, Double>> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
         Set<Pair<Double, Double>> frequencyVolumes = new HashSet<>();
 
         Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();

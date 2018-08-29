@@ -71,7 +71,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
         HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
 
-        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes, envelopes);
+        Map<Note, Double> volumeTable = noteManager.getVolumeTable(noteEnvironment.getExpectedSampleCount(), liveNotes, envelopes);
 
         Buckets newHarmonicsBuckets = getNewHarmonicsBuckets(liveNotes, volumeTable);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
@@ -83,7 +83,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         renderCursorLine(g);
     }
 
-    private Buckets getNewNoteBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
+    private Buckets getNewNoteBuckets(Set<Note> liveNotes, Map<Note, Double> volumeTable) {
         Set<Pair<Integer, Double>> noteVolumes = new HashSet<>();
         for(Note note : liveNotes){
             int x = getX(note.getFrequency());
@@ -96,7 +96,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     //todo rename harmonicsBuckets to harmonicBuckets
-    private Buckets getNewHarmonicsBuckets(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
+    private Buckets getNewHarmonicsBuckets(Set<Note> liveNotes, Map<Note, Double> volumeTable) {
         Iterator<Pair<Harmonic, Double>> harmonicHierarchyIterator =
                 harmonicCalculator.getHarmonicHierarchyIterator(liveNotes, 1000, volumeTable);
 

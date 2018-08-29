@@ -2,6 +2,7 @@ import javafx.util.Builder;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 public class CurrentTable<T> extends HashMap<Note, T> {
     private Builder<T> builder;
@@ -10,7 +11,7 @@ public class CurrentTable<T> extends HashMap<Note, T> {
         this.builder = builder;
     }
 
-    CurrentTable<T> getNewTable(HashSet<Note> liveNotes) {
+    CurrentTable<T> getNewTable(Set<Note> liveNotes) {
         CurrentTable<T> newCurrentTable = new CurrentTable<>(builder);
         for (Note note : liveNotes) {
             if (containsKey(note)) {
