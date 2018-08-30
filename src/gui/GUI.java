@@ -51,11 +51,11 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.setupUpdate(getNoteEnvironment().getExpectedSampleCount());
+        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getNoteEnvironment().getExpectedSampleCount());
         while (getTimeLeftInFrame(getStartTime()) > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
-        spectrumSnapshot = spectrumSnapshotBuilder.finishUpdate();
+        spectrumSnapshot = spectrumSnapshotBuilder.finish();
 
         renderHarmonicsBuckets(g, spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
         renderNoteBuckets(g, spectrumSnapshot.noteBuckets);

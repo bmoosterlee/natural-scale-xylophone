@@ -35,7 +35,7 @@ public class SpectrumWindow {
         xMultiplier = logRange / gui.GUI.WIDTH;
     }
 
-    SpectrumSnapshotBuilder setupUpdate(long sampleCount) {
+    SpectrumSnapshotBuilder createBuilder(long sampleCount) {
         return new SpectrumSnapshotBuilder(sampleCount, this);
     }
 

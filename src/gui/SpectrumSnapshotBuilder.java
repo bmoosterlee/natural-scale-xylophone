@@ -47,7 +47,7 @@ public class SpectrumSnapshotBuilder {
         return false;
     }
 
-    public SpectrumSnapshot finishUpdate() {
+    public SpectrumSnapshot finish() {
         Buckets newHarmonicsBuckets = new Buckets(newPairs).clip(0, GUI.WIDTH);
         spectrumWindow.getBucketHistory().addNewBuckets(newHarmonicsBuckets);
         return new SpectrumSnapshot(sampleCount, noteBuckets, spectrumWindow.getBucketHistory().getTimeAveragedBuckets());
