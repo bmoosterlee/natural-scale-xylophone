@@ -1,7 +1,8 @@
+package harmonics;
+
 import javafx.util.Builder;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 public class CurrentTable<T> extends HashMap<Double, T> {

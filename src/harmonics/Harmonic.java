@@ -1,3 +1,5 @@
+package harmonics;
+
 public class Harmonic {
 
     final int sharedPeriod;

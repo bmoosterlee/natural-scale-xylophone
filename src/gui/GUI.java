@@ -1,4 +1,10 @@
+package gui;
+
+import harmonics.Harmonic;
+import harmonics.HarmonicCalculator;
 import javafx.util.Pair;
+import main.*;
+import notes.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +15,7 @@ import java.util.*;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     private Buckets noteBuckets;
-    final BucketHistory bucketHistory = new BucketHistory(100);
+    public final BucketHistory bucketHistory = new BucketHistory(50);
     NoteEnvironment noteEnvironment;
     private NoteManager noteManager;
     HarmonicCalculator harmonicCalculator;
@@ -18,7 +24,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public static final int HEIGHT = 600;
     public static final double yScale = HEIGHT * 0.95;
     public static final double margin = HEIGHT * 0.05;
-    final double centerFrequency = 2 * 261.63;
+    public final double centerFrequency = 2 * 261.63;
     final double octaveRange = 3.;
     final double lowerBound;
     final double upperBound;
@@ -155,7 +161,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
             long startTime = System.nanoTime();
             tick(startTime);
 
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("GUI sleep");
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("gui.GUI sleep");
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
             if (timeLeftInFrame > 0) {
                 try {
@@ -186,7 +192,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    int getX(double frequency) {
+    public int getX(double frequency) {
         return (int) (Math.log(frequency) * logFrequencyMultiplier - logFrequencyAdditive);
     }
 
@@ -200,7 +206,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         noteManager.addNote(getFrequency(e.getX()));
     }
 
-    double getFrequency(double x) {
+    public double getFrequency(double x) {
         return Math.exp(x * xMultiplier) * lowerBound;
     }
 

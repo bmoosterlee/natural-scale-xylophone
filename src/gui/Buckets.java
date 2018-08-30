@@ -1,3 +1,5 @@
+package gui;
+
 import javafx.util.Pair;
 
 import java.util.*;
@@ -77,7 +79,7 @@ public class Buckets {
         return maxima;
     }
 
-    Buckets averageBuckets(int averagingWidth) {
+    public Buckets averageBuckets(int averagingWidth) {
         Set<Pair<Integer, Double>> newPairs = new HashSet<>();
 
         Iterator<Map.Entry<Integer, Double>> iterator = iterator();

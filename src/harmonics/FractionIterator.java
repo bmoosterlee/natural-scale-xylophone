@@ -1,3 +1,5 @@
+package harmonics;
+
 import java.util.Iterator;
 
 public class FractionIterator implements Iterator<Fraction> {

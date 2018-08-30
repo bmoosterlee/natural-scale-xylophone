@@ -1,3 +1,7 @@
+package notes;
+
+import main.SampleRate;
+
 public class Envelope {
     private final SampleRate sampleRate;
     protected double amplitude = 0.05;

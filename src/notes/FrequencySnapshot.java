@@ -1,9 +1,11 @@
+package notes;
+
 import java.util.*;
 
 public class FrequencySnapshot {
-    final Set<Double> liveFrequencies;
+    public final Set<Double> liveFrequencies;
     final HashMap<Double, Double> frequencyAngleComponents;
-    final Map<Double, Set<Note>> frequencyNoteTable;
+    public final Map<Double, Set<Note>> frequencyNoteTable;
     final Map<Note, Double> noteFrequencyTable;
 
     public FrequencySnapshot() {

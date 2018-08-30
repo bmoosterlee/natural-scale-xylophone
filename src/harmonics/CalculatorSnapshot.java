@@ -1,4 +1,4 @@
-import javafx.util.Pair;
+package harmonics;
 
 import java.util.*;
 

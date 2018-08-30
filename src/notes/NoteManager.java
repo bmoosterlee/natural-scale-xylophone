@@ -1,3 +1,5 @@
+package notes;
+
 import javafx.util.Pair;
 
 import java.util.*;
@@ -14,7 +16,7 @@ public class NoteManager {
         frequencySnapshot =  new FrequencySnapshot();
     }
 
-    HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes, HashMap<Note, Envelope> envelopes) {
+    public HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes, HashMap<Note, Envelope> envelopes) {
         HashMap<Note, Double> volumeTable = new HashMap<>();
         for(Note note : liveNotes) {
             double volume;
@@ -70,7 +72,7 @@ public class NoteManager {
         }
     }
 
-    Map<Double, Double> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
+    public Map<Double, Double> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
         Map<Double, Double> frequencyVolumes = new HashMap<>();
 
         Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();

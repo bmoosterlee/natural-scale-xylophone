@@ -1,4 +1,9 @@
+package notes;
+
 import javafx.util.Pair;
+import main.PerformanceTracker;
+import main.SampleRate;
+import main.TimeKeeper;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -10,7 +15,7 @@ public class NoteEnvironment implements Runnable{
 
     private final int SAMPLE_SIZE_IN_BITS;
     private final SampleRate sampleRate;
-    final NoteManager noteManager;
+    public final NoteManager noteManager;
     private SourceDataLine sourceDataLine;
     private long calculatedSamples;
     private long timeZero;
@@ -20,7 +25,7 @@ public class NoteEnvironment implements Runnable{
     private int sampleLookahead;
     LinkedList<Pair<Long, Set<Note>>> futureInaudibleNotes = new LinkedList<>();
 
-    NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
+    public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         sampleRate = new SampleRate(SAMPLE_RATE);
         noteManager = new NoteManager(this);
@@ -53,7 +58,7 @@ public class NoteEnvironment implements Runnable{
         while(true) {
             long startTime = System.nanoTime();
 
-            TimeKeeper removeInaudibleNotes = PerformanceTracker.startTracking("NoteEnvironment removeInaudibleNotes");
+            TimeKeeper removeInaudibleNotes = PerformanceTracker.startTracking("notes.NoteEnvironment removeInaudibleNotes");
             try {
                 while (getExpectedSampleCount() >= futureInaudibleNotes.peekFirst().getKey()) {
                     noteManager.removeInaudibleNotes(futureInaudibleNotes.pollFirst().getValue());
@@ -72,7 +77,7 @@ public class NoteEnvironment implements Runnable{
             long expectedSampleCount = getExpectedSampleCount();
             sampleBacklog = expectedSampleCount + sampleLookahead - calculatedSamples;
 
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("NoteEnvironment sleep");
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment sleep");
 
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
 
@@ -89,7 +94,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     private void tick() {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getLiveNotes");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment getLiveNotes");
         NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
         NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
@@ -97,21 +102,21 @@ public class NoteEnvironment implements Runnable{
         FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment getVolumeTable");
+        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment getVolumeTable");
         HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(calculatedSamples, liveNotes, envelopes);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment findInaudibleNotes");
+        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment findInaudibleNotes");
         removeInaudibleNotes(liveNotes, volumeTable);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment calculateAmplitudes");
+        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment calculateAmplitudes");
         Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
         Map<Double, Double> frequencyVolumes = noteManager.getFrequencyVolumeTable(frequencySnapshot.frequencyNoteTable, volumeTable);
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, liveFrequencies, frequencyVolumes, frequencySnapshot.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("NoteEnvironment writeToBuffer");
+        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment writeToBuffer");
         getSourceDataLine().write(clipBuffer, 0, 1);
         calculatedSamples++;
         PerformanceTracker.stopTracking(timeKeeper);
@@ -167,7 +172,7 @@ public class NoteEnvironment implements Runnable{
         return new Pair<>(new Note(), new Envelope(getExpectedSampleCount(), sampleRate));
     }
 
-    long getExpectedSampleCount() {
+    public long getExpectedSampleCount() {
         return sampleRate.asSampleCount((System.nanoTime()- timeZero) / 1000000000.);
     }
 

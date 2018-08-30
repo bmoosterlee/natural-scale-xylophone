@@ -1,9 +1,11 @@
+package notes;
+
 import java.util.HashMap;
 import java.util.HashSet;
 
 public class NoteSnapshot {
-    HashSet<Note> liveNotes;
-    HashMap<Note, Envelope> envelopes;
+    public HashSet<Note> liveNotes;
+    public HashMap<Note, Envelope> envelopes;
 
     public NoteSnapshot() {
         liveNotes = new HashSet();

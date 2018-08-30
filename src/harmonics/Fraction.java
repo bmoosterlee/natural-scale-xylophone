@@ -1,3 +1,5 @@
+package harmonics;
+
 public class Fraction {
 
     final int numerator;

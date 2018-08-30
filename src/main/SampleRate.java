@@ -1,11 +1,13 @@
+package main;
+
 public class SampleRate {
-    final int sampleRate;
+    public final int sampleRate;
 
     public SampleRate(int sampleRate) {
         this.sampleRate = sampleRate;
     }
 
-    double asTime(long sampleCount) {
+    public double asTime(long sampleCount) {
         return (double)sampleCount / sampleRate;
     }
 

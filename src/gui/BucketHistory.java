@@ -1,3 +1,5 @@
+package gui;
+
 import java.util.LinkedList;
 
 public class BucketHistory {
@@ -11,7 +13,7 @@ public class BucketHistory {
         multiplier = 1. / size;
     }
 
-    void addNewBuckets(Buckets newBuckets) {
+    public void addNewBuckets(Buckets newBuckets) {
         if (harmonicsBucketsHistory.size() >= size) {
             synchronized (harmonicsBucketsHistory) {
                 harmonicsBucketsHistory.removeFirst();
@@ -23,7 +25,7 @@ public class BucketHistory {
         }
     }
 
-    Buckets getTimeAveragedBuckets() {
+    public Buckets getTimeAveragedBuckets() {
         Buckets timeAveragedBuckets = new Buckets();
         if (harmonicsBucketsHistory.isEmpty()) {
             return timeAveragedBuckets;

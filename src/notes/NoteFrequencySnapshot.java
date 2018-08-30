@@ -1,9 +1,8 @@
-import java.util.HashMap;
-import java.util.HashSet;
+package notes;
 
 public class NoteFrequencySnapshot {
-    final NoteSnapshot noteSnapshot;
-    final FrequencySnapshot frequencySnapshot;
+    public final NoteSnapshot noteSnapshot;
+    public final FrequencySnapshot frequencySnapshot;
 
     public NoteFrequencySnapshot(NoteSnapshot noteSnapshot, FrequencySnapshot frequencySnapshot) {
         this.noteSnapshot = noteSnapshot;
