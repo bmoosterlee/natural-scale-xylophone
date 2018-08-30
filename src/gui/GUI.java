@@ -13,6 +13,7 @@ import java.util.*;
 
 public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
     public final SpectrumWindow spectrumWindow;
+    public SpectrumSnapshot spectrumSnapshot;
 
     NoteEnvironment noteEnvironment;
     private NoteManager noteManager;
@@ -50,14 +51,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        spectrumWindow.setupUpdate(getNoteEnvironment().getExpectedSampleCount());
+        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.setupUpdate(getNoteEnvironment().getExpectedSampleCount());
         while (getTimeLeftInFrame(getStartTime()) > 1) {
-            if (spectrumWindow.update()) break;
+            if (spectrumSnapshotBuilder.update()) break;
         }
-        spectrumWindow.finishUpdate();
+        spectrumSnapshot = spectrumSnapshotBuilder.finishUpdate();
 
-        renderHarmonicsBuckets(g, spectrumWindow.spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
-        renderNoteBuckets(g, spectrumWindow.getNoteBuckets());
+        renderHarmonicsBuckets(g, spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
+        renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
 
         renderCursorLine(g);
     }
@@ -174,16 +175,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         calculatedMouseFrequency = false;
     }
 
-    public Buckets getNoteBuckets() {
-        return spectrumWindow.getNoteBuckets();
-    }
-
     public NoteEnvironment getNoteEnvironment() {
         return noteEnvironment;
-    }
-
-    public NoteManager getNoteManager() {
-        return noteManager;
     }
 
     public long getStartTime() {

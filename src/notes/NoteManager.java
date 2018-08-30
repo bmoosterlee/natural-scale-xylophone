@@ -11,28 +11,12 @@ public class NoteManager {
 
     public NoteManager(NoteEnvironment noteEnvironment) {
         this.noteEnvironment = noteEnvironment;
-
-        noteSnapshot = new NoteSnapshot();
-        frequencySnapshot =  new FrequencySnapshot();
-    }
-
-    public HashMap<Note, Double> getVolumeTable(long currentSampleCount, Set<Note> liveNotes, HashMap<Note, Envelope> envelopes) {
-        HashMap<Note, Double> volumeTable = new HashMap<>();
-        for(Note note : liveNotes) {
-            double volume;
-            try {
-                volume = envelopes.get(note).getVolume(currentSampleCount);
-            }
-            catch(NullPointerException e){
-                volume = 0.0;
-            }
-            volumeTable.put(note, volume);
-        }
-        return volumeTable;
+        noteSnapshot = new NoteSnapshot(0L);
+        frequencySnapshot = new FrequencySnapshot(0);
     }
 
     void removeInaudibleNotes(Set<Note> inaudibleNotes) {
-        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot);
+        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot.sampleCount, noteSnapshot);
         synchronized (noteSnapshot) {
             newNoteSnapshot.liveNotes.removeAll(inaudibleNotes);
             Iterator<Note> iterator = inaudibleNotes.iterator();
@@ -52,7 +36,7 @@ public class NoteManager {
         Note note = pair.getKey();
         Envelope envelope = pair.getValue();
 
-        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot);
+        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot.sampleCount, noteSnapshot);
         synchronized (noteSnapshot) {
             newNoteSnapshot.liveNotes.add(note);
             newNoteSnapshot.envelopes.put(note, envelope);
@@ -64,33 +48,12 @@ public class NoteManager {
         }
     }
 
-    public NoteFrequencySnapshot getSnapshot() {
+    public NoteFrequencySnapshot getSnapshot(long sampleCount) {
         synchronized (noteSnapshot) {
             synchronized (frequencySnapshot) {
-                return new NoteFrequencySnapshot(new NoteSnapshot(noteSnapshot), new FrequencySnapshot(frequencySnapshot));
+                return new NoteFrequencySnapshot(sampleCount, new NoteSnapshot(sampleCount, noteSnapshot), new FrequencySnapshot(sampleCount, frequencySnapshot));
             }
         }
     }
 
-    public Map<Double, Double> getFrequencyVolumeTable(Map<Double, Set<Note>> frequencyNoteTable, Map<Note, Double> volumeTable) {
-        Map<Double, Double> frequencyVolumes = new HashMap<>();
-
-        Iterator<Map.Entry<Double, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Double, Set<Note>> entry = iterator.next();
-            Double frequency = entry.getKey();
-            Double volume = 0.;
-            Iterator<Note> noteIterator = entry.getValue().iterator();
-            while (noteIterator.hasNext()) {
-                Note note = noteIterator.next();
-                try {
-                    volume += volumeTable.get(note);
-                } catch (NullPointerException e) {
-                    continue;
-                }
-            }
-            frequencyVolumes.put(frequency, volume);
-        }
-        return frequencyVolumes;
-    }
 }

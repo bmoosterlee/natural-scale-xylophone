@@ -95,7 +95,7 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment getLiveNotes");
-        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
+        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot(calculatedSamples);
         NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
         HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
@@ -103,7 +103,7 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment getVolumeTable");
-        HashMap<Note, Double> volumeTable = noteManager.getVolumeTable(calculatedSamples, liveNotes, envelopes);
+        HashMap<Note, Double> volumeTable = noteSnapshot.getVolumeTable();
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment findInaudibleNotes");
@@ -112,8 +112,8 @@ public class NoteEnvironment implements Runnable{
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment calculateAmplitudes");
         Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
-        Map<Double, Double> frequencyVolumes = noteManager.getFrequencyVolumeTable(frequencySnapshot.frequencyNoteTable, volumeTable);
-        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, liveFrequencies, frequencyVolumes, frequencySnapshot.frequencyAngleComponents)};
+        Map<Double, Double> frequencyVolumeTable = noteFrequencySnapshot.getFrequencyVolumeTable();
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, liveFrequencies, frequencyVolumeTable, frequencySnapshot.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment writeToBuffer");
@@ -131,11 +131,11 @@ public class NoteEnvironment implements Runnable{
 
     //todo remove the hash word
     private byte calculateAmplitudeSum(long calculatedSamples, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
-        int amplitudeSum = 0;
+        double amplitudeSum = 0;
         for(Double frequency : liveFrequencies){
             amplitudeSum += getAmplitude(calculatedSamples, frequencyVolumes.get(frequency), frequenciesAngleComponents.get(frequency));
         }
-        return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, amplitudeSum));
+        return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
 
     boolean isAudible(Double volume) {
@@ -154,10 +154,9 @@ public class NoteEnvironment implements Runnable{
         getSourceDataLine().start();
     }
 
-    private byte getAmplitude(long calculatedSamples, double volume, double frequencyAngleComponent) {
+    private double getAmplitude(long calculatedSamples, double volume, double frequencyAngleComponent) {
         double angle = sampleRate.asTime(calculatedSamples) * frequencyAngleComponent;
-        double amplitude = (Math.sin(angle) * volume);
-        return (byte) Math.floor(sampleSize * amplitude / 2);
+        return (Math.sin(angle) * volume);
     }
 
     private SourceDataLine getSourceDataLine() {
