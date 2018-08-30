@@ -12,8 +12,7 @@ public class SpectrumWindow {
     private NoteManager noteManager;
     HarmonicCalculator harmonicCalculator;
 
-    Buckets noteBuckets;
-    public final BucketHistory bucketHistory = new BucketHistory(100);
+    private final BucketHistory bucketHistory = new BucketHistory(100);
     public final double centerFrequency = 2 * 261.63;
     double octaveRange = 3.;
     public double lowerBound;
@@ -21,6 +20,8 @@ public class SpectrumWindow {
     double logFrequencyMultiplier;
     double logFrequencyAdditive;
     double xMultiplier;
+
+    private Buckets noteBuckets;
     private Iterator<Pair<Harmonic, Double>> harmonicHierarchyIterator;
     private Set<Pair<Integer, Double>> newPairs;
 
@@ -37,8 +38,6 @@ public class SpectrumWindow {
         logFrequencyMultiplier = gui.GUI.WIDTH / logRange;
         logFrequencyAdditive = logLowerBound * gui.GUI.WIDTH / logRange;
         xMultiplier = logRange / gui.GUI.WIDTH;
-
-        noteBuckets = new Buckets();
     }
 
     boolean update() {
@@ -62,6 +61,7 @@ public class SpectrumWindow {
     void finishUpdate() {
         Buckets newHarmonicsBuckets = new Buckets(newPairs).clip(0, gui.GUI.WIDTH);
         bucketHistory.addNewBuckets(newHarmonicsBuckets);
+        spectrumSnapshot = new SpectrumSnapshot(noteBuckets, bucketHistory.getTimeAveragedBuckets());
     }
 
     void setupUpdate(long frameStartTime) {
@@ -75,21 +75,33 @@ public class SpectrumWindow {
 
         Map<Note, Double> volumeTable = noteManager.getVolumeTable(frameStartTime, liveNotes, envelopes);
         Map<Double, Double> frequencyVolumeTable = noteManager.getFrequencyVolumeTable(frequencyNoteTable, volumeTable);
+        Set<Double> clippedFrequencies = clip(liveFrequencies);
 
         noteBuckets = getNewNoteBuckets(liveFrequencies, frequencyVolumeTable);
-
-        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 1000);
+        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 1000);
         newPairs = new HashSet<>();
     }
 
-    Buckets getNewNoteBuckets(Set<Double> liveFrequencies, Map<Double, Double> volumeTable) {
-        Set<Pair<Integer, Double>> noteVolumes = new HashSet<Pair<Integer, Double>>();
+    private Set<Double> clip(Set<Double> liveFrequencies) {
+        Set<Double> clippedFrequencies = new HashSet<>();
         for (Double frequency : liveFrequencies) {
             int x = getX(frequency);
             if (x < 0 || x >= gui.GUI.WIDTH) {
                 continue;
             }
-            noteVolumes.add(new Pair(x, volumeTable.get(frequency)));
+            clippedFrequencies.add(frequency);
+        }
+        return clippedFrequencies;
+    }
+
+    Buckets getNewNoteBuckets(Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable) {
+        Set<Pair<Integer, Double>> noteVolumes = new HashSet<>();
+        for (Double frequency : liveFrequencies) {
+            int x = getX(frequency);
+            if (x < 0 || x >= gui.GUI.WIDTH) {
+                continue;
+            }
+            noteVolumes.add(new Pair<>(x, frequencyVolumeTable.get(frequency)));
         }
         return new Buckets(noteVolumes);
     }
@@ -103,11 +115,7 @@ public class SpectrumWindow {
     }
 
     public Buckets getNoteBuckets() {
-        return noteBuckets;
-    }
-
-    public BucketHistory getBucketHistory() {
-        return bucketHistory;
+        return spectrumSnapshot.getNoteBuckets();
     }
 
     public double getCenterFrequency() {

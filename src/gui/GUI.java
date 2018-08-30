@@ -56,7 +56,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         }
         spectrumWindow.finishUpdate();
 
-        renderHarmonicsBuckets(g, spectrumWindow.getBucketHistory().getTimeAveragedBuckets().averageBuckets(10));
+        renderHarmonicsBuckets(g, spectrumWindow.spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
         renderNoteBuckets(g, spectrumWindow.getNoteBuckets());
 
         renderCursorLine(g);
