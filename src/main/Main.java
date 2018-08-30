@@ -28,7 +28,7 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        noteEnvironment.noteManager.addNote(gui.centerFrequency);
+        noteEnvironment.noteManager.addNote(gui.spectrumWindow.getCenterFrequency());
 
         try {
             Thread.sleep(500);
