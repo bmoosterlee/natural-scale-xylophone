@@ -24,6 +24,7 @@ public class NoteEnvironment implements Runnable{
     private double frameTime;
     private int sampleLookahead;
     LinkedList<Pair<Long, Set<Note>>> futureInaudibleNotes = new LinkedList<>();
+    Long nextInaudibleNoteClearing;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
@@ -55,16 +56,22 @@ public class NoteEnvironment implements Runnable{
         timeZero = System.nanoTime();
         long sampleBacklog = 0;
 
+        nextInaudibleNoteClearing = 0L;
+
         while(true) {
             long startTime = System.nanoTime();
 
             TimeKeeper removeInaudibleNotes = PerformanceTracker.startTracking("notes.NoteEnvironment removeInaudibleNotes");
             try {
-                while (getExpectedSampleCount() >= futureInaudibleNotes.peekFirst().getKey()) {
+                while (getExpectedSampleCount() >= nextInaudibleNoteClearing) {
                     noteManager.removeInaudibleNotes(futureInaudibleNotes.pollFirst().getValue());
+                    nextInaudibleNoteClearing = futureInaudibleNotes.peekFirst().getKey();
                 }
             }
             catch(NullPointerException e){
+
+            }
+            catch(NoSuchElementException e){
 
             }
             PerformanceTracker.stopTracking(removeInaudibleNotes);
@@ -125,7 +132,14 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
         Set<Note> inaudibleNotes = getInaudibleNotes(volumeTable, liveNotes);
         if(!inaudibleNotes.isEmpty()) {
+            boolean hasInaudibleNotes = true;
+            if(futureInaudibleNotes.isEmpty()){
+                hasInaudibleNotes = false;
+            }
             futureInaudibleNotes.add(new Pair<>(calculatedSamples, inaudibleNotes));
+            if(!hasInaudibleNotes) {
+                nextInaudibleNoteClearing = calculatedSamples;
+            }
         }
     }
 
