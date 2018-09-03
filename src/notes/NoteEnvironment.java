@@ -83,6 +83,7 @@ public class NoteEnvironment implements Runnable{
 
             long expectedSampleCount = getExpectedSampleCount();
             sampleBacklog = expectedSampleCount + sampleLookahead - calculatedSamples;
+            sampleBacklog = Math.min(sampleBacklog, sampleRate.sampleRate);
 
             TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment sleep");
 
