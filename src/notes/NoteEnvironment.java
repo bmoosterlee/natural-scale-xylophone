@@ -146,7 +146,6 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    //todo remove the hash word
     private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, HashMap<Double, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
         for(Double frequency : liveFrequencies){
