@@ -52,7 +52,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         super.paintComponent(g);
 
         SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getNoteEnvironment().getExpectedSampleCount());
-        while (getTimeLeftInFrame(getStartTime()) > 1) {
+        while (getTimeLeftInFrame(startTime) > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
         spectrumSnapshot = spectrumSnapshotBuilder.finish();
@@ -178,7 +178,4 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return noteEnvironment;
     }
 
-    public long getStartTime() {
-        return startTime;
-    }
 }
