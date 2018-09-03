@@ -106,7 +106,6 @@ public class NoteEnvironment implements Runnable{
         NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot(calculatedSamples);
         NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
         HashSet<Note> liveNotes = noteSnapshot.liveNotes;
-        HashMap<Note, Envelope> envelopes = noteSnapshot.envelopes;
         FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
         PerformanceTracker.stopTracking(timeKeeper);
 
@@ -115,13 +114,15 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment findInaudibleNotes");
-        removeInaudibleNotes(liveNotes, volumeTable);
+        removeInaudibleNotes(liveNotes,
+                             volumeTable);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment calculateAmplitudes");
-        Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
-        Map<Double, Double> frequencyVolumeTable = noteFrequencySnapshot.getFrequencyVolumeTable();
-        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples, liveFrequencies, frequencyVolumeTable, frequencySnapshot.frequencyAngleComponents)};
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(sampleRate.asTime(calculatedSamples),
+                                                             frequencySnapshot.liveFrequencies,
+                                                             noteFrequencySnapshot.getFrequencyVolumeTable(volumeTable),
+                                                             frequencySnapshot.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment writeToBuffer");
@@ -145,10 +146,10 @@ public class NoteEnvironment implements Runnable{
     }
 
     //todo remove the hash word
-    private byte calculateAmplitudeSum(long calculatedSamples, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
+    private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
         for(Double frequency : liveFrequencies){
-            amplitudeSum += getAmplitude(calculatedSamples, frequencyVolumes.get(frequency), frequenciesAngleComponents.get(frequency));
+            amplitudeSum += getAmplitude(time, frequencyVolumes.get(frequency), frequenciesAngleComponents.get(frequency));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
@@ -169,8 +170,8 @@ public class NoteEnvironment implements Runnable{
         getSourceDataLine().start();
     }
 
-    private double getAmplitude(long calculatedSamples, double volume, double frequencyAngleComponent) {
-        double angle = sampleRate.asTime(calculatedSamples) * frequencyAngleComponent;
+    private double getAmplitude(double time, double volume, double frequencyAngleComponent) {
+        double angle = time * frequencyAngleComponent;
         return (Math.sin(angle) * volume);
     }
 

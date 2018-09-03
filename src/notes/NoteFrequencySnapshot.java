@@ -17,7 +17,10 @@ public class NoteFrequencySnapshot {
     }
 
     public Map<Double, Double> getFrequencyVolumeTable() {
-        Map<Note, Double> volumeTable = noteSnapshot.getVolumeTable();
+        return getFrequencyVolumeTable(noteSnapshot.getVolumeTable());
+    }
+
+    public Map<Double, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
         return frequencySnapshot.getFrequencyVolumeTable(volumeTable);
     }
 }
