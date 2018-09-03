@@ -97,8 +97,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     @Override
     public void run() {
         while(true) {
-            long startTime = System.nanoTime();
-            tick(startTime);
+            startTime = System.nanoTime();
+            tick();
 
             TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("gui.GUI sleep");
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
@@ -113,8 +113,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         }
     }
 
-    private void tick(long startTime) {
-        this.startTime = startTime;
+    private void tick() {
         repaint();
     }
 
