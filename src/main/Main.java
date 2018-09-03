@@ -17,11 +17,9 @@ public class Main {
         NoteEnvironment noteEnvironment = new NoteEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(noteEnvironment, harmonicCalculator);
-        Pianola pianola = new Pianola(noteEnvironment, gui);
 
         noteEnvironment.start();
         gui.start();
-        pianola.start();
 
         try {
             Thread.sleep(1000);
