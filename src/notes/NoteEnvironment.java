@@ -147,10 +147,10 @@ public class NoteEnvironment implements Runnable{
     }
 
     //todo remove the hash word
-    private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumes, HashMap<Double, Double> frequenciesAngleComponents) {
+    private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, HashMap<Double, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
         for(Double frequency : liveFrequencies){
-            amplitudeSum += getAmplitude(time, frequencyVolumes.get(frequency), frequenciesAngleComponents.get(frequency));
+            amplitudeSum += getAmplitude(time, frequencyVolumeTable.get(frequency), frequenciesAngleComponents.get(frequency));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
