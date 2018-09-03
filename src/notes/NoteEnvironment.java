@@ -184,7 +184,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     Pair<Note, Envelope> createNote() {
-        return new Pair<>(new Note(), new Envelope(getExpectedSampleCount(), sampleRate));
+        return new Pair<>(new Note(), new MemoizedLinearEnvelope(getExpectedSampleCount(), sampleRate, 0.2, 0.5));
     }
 
     public long getExpectedSampleCount() {
