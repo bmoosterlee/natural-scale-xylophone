@@ -127,7 +127,7 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
-        getSourceDataLine().write(clipBuffer, 0, 1);
+        sourceDataLine.write(clipBuffer, 0, 1);
         calculatedSamples++;
         PerformanceTracker.stopTracking(timeKeeper);
     }
@@ -161,27 +161,19 @@ public class NoteEnvironment implements Runnable{
 
     private void initialize() {
         AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
-        setSourceDataLine(null);
+        sourceDataLine = null;
         try {
-            setSourceDataLine(AudioSystem.getSourceDataLine(af));
-            getSourceDataLine().open();
+            sourceDataLine = AudioSystem.getSourceDataLine(af);
+            sourceDataLine.open();
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
-        getSourceDataLine().start();
+        sourceDataLine.start();
     }
 
     private double getAmplitude(double time, double volume, double frequencyAngleComponent) {
         double angle = time * frequencyAngleComponent;
         return (Math.sin(angle) * volume);
-    }
-
-    private SourceDataLine getSourceDataLine() {
-        return sourceDataLine;
-    }
-
-    private void setSourceDataLine(SourceDataLine sourceDataLine) {
-        this.sourceDataLine = sourceDataLine;
     }
 
     Pair<Note, Envelope> createNote() {
