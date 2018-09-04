@@ -27,7 +27,7 @@ public class SpectrumSnapshotBuilder {
         Set<Double> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
 
         noteBuckets = getNewNoteBuckets(clippedFrequencies, frequencyVolumeTable);
-        harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 1000);
+        harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 100);
         newPairs = new HashSet<>();
     }
 
