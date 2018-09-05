@@ -4,35 +4,20 @@ import main.SampleRate;
 
 public abstract class Envelope {
     protected final SampleRate sampleRate;
-    protected double amplitude;
     protected final long startingSampleCount;
 
-    public Envelope(long startingSampleCount, SampleRate sampleRate){
+    public Envelope(long startingSampleCount, SampleRate sampleRate, EnvelopeFunction envelopeFunction) {
         this.sampleRate = sampleRate;
         this.startingSampleCount = startingSampleCount;
-    }
-
-    public Envelope(long startingSampleCount, SampleRate sampleRate, double amplitude) {
-        this(startingSampleCount, sampleRate);
-        this.amplitude = amplitude;
+        this.envelopeFunction = envelopeFunction;
     }
 
     public double getVolume(long startingSampleCount, long sampleCount) {
-        if (sampleCount < startingSampleCount) {
-            return 0;
-        }
-
-        return getVolume(getTimeDifference(startingSampleCount, sampleCount));
+        return envelopeFunction.getVolume(getTimeDifference(startingSampleCount, sampleCount));
     }
 
     public double getVolume(long sampleCount) {
         return getVolume(startingSampleCount, sampleCount);
-    }
-
-    protected abstract double getVolume(double timeDifference);
-
-    double getVolumeAsymptotic(double amplitude, double multiplier, double timeDifference) {
-        return amplitude / (timeDifference *multiplier + 1);
     }
 
     double getTimeDifference(long startingSampleCount, long sampleCount) {

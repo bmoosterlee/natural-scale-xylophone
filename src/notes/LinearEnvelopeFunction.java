@@ -2,16 +2,16 @@ package notes;
 
 import main.SampleRate;
 
-public class LinearEnvelope extends Envelope{
+public class LinearEnvelopeFunction extends EnvelopeFunction{
     double lengthInSeconds;
     
-    public LinearEnvelope(long startingSampleCount, SampleRate sampleRate, double amplitude, double lengthInSeconds) {
-        super(startingSampleCount, sampleRate, amplitude);
+    public LinearEnvelopeFunction(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
+        super(sampleRate, amplitude);
         this.lengthInSeconds = lengthInSeconds;
     }
 
     @Override
-    public double getVolume(double timeDifference) {
+    protected double getVolume2(double timeDifference) {
         if (timeDifference >= lengthInSeconds) {
             return 0.;
         } else {

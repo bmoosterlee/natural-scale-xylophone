@@ -2,11 +2,11 @@ package notes;
 
 import main.SampleRate;
 
-public class PrecalculatedLinearEnvelope extends LinearEnvelope{
+public class PrecalculatedLinearEnvelopeFunction extends LinearEnvelopeFunction {
     Double[] volumes;
 
-    public PrecalculatedLinearEnvelope(long startingSampleCount, SampleRate sampleRate, double amplitude, double lengthInSeconds) {
-        super(startingSampleCount, sampleRate, amplitude, lengthInSeconds);
+    public PrecalculatedLinearEnvelopeFunction(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
+        super(sampleRate, amplitude, lengthInSeconds);
 
         int totalSamples = (int) (sampleRate.sampleRate * lengthInSeconds);
         volumes = new Double[totalSamples];

@@ -5,16 +5,16 @@ import main.SampleRate;
 import java.util.HashMap;
 
 public class EnvelopeMemoizer {
-    HashMap<SampleRate, HashMap<Double, HashMap<Double, Envelope>>> calculatedEnvelopes;
+    HashMap<SampleRate, HashMap<Double, HashMap<Double, EnvelopeFunction>>> calculatedEnvelopes;
 
     public EnvelopeMemoizer(){
         calculatedEnvelopes = new HashMap<>();
     }
 
-    public Envelope get(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
-        HashMap<Double, HashMap<Double, Envelope>> sampleRateMap = calculatedEnvelopes.get(sampleRate);
+    public EnvelopeFunction get(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
+        HashMap<Double, HashMap<Double, EnvelopeFunction>> sampleRateMap = calculatedEnvelopes.get(sampleRate);
 
-        HashMap<Double, Envelope> amplitudeMap;
+        HashMap<Double, EnvelopeFunction> amplitudeMap;
         try {
             amplitudeMap = sampleRateMap.get(amplitude);
         }
@@ -25,12 +25,12 @@ public class EnvelopeMemoizer {
             calculatedEnvelopes.put(sampleRate, sampleRateMap);
         }
 
-        Envelope envelope = amplitudeMap.get(lengthInSeconds);
-        if(envelope==null){
-            envelope = new PrecalculatedLinearEnvelope(0, sampleRate, amplitude, lengthInSeconds);
-            amplitudeMap.put(lengthInSeconds, envelope);
+        EnvelopeFunction envelopeFunction = amplitudeMap.get(lengthInSeconds);
+        if(envelopeFunction==null){
+            envelopeFunction = new PrecalculatedLinearEnvelopeFunction(sampleRate, amplitude, lengthInSeconds);
+            amplitudeMap.put(lengthInSeconds, envelopeFunction);
         }
-        return envelope;
+        return envelopeFunction;
     }
 
 }
