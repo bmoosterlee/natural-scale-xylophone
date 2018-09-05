@@ -11,18 +11,15 @@ public class NoteManager {
 
     public NoteManager(NoteEnvironment noteEnvironment) {
         this.noteEnvironment = noteEnvironment;
-        noteSnapshot = new NoteSnapshot(0L);
-        frequencySnapshot = new FrequencySnapshot(0);
+        noteSnapshot = new NoteSnapshot();
+        frequencySnapshot = new FrequencySnapshot();
     }
 
     void removeInaudibleNotes(Set<Note> inaudibleNotes) {
-        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot.sampleCount, noteSnapshot);
         synchronized (noteSnapshot) {
-            newNoteSnapshot.liveNotes.removeAll(inaudibleNotes);
-            Iterator<Note> iterator = inaudibleNotes.iterator();
-            while (iterator.hasNext()) {
-                newNoteSnapshot.envelopes.remove(iterator.next());
-            }
+            HashSet<Note> liveNotes = new HashSet<>(noteSnapshot.liveNotes);
+            liveNotes.removeAll(inaudibleNotes);
+            NoteSnapshot newNoteSnapshot = new NoteSnapshot(liveNotes);
             noteSnapshot = newNoteSnapshot;
         }
 
@@ -32,26 +29,23 @@ public class NoteManager {
     }
 
     public void addNote(double frequency) {
-        Pair<Note, Envelope> pair = noteEnvironment.createNote();
-        Note note = pair.getKey();
-        Envelope envelope = pair.getValue();
+        Note note = noteEnvironment.createNote(frequency);
 
-        NoteSnapshot newNoteSnapshot = new NoteSnapshot(noteSnapshot.sampleCount, noteSnapshot);
         synchronized (noteSnapshot) {
-            newNoteSnapshot.liveNotes.add(note);
-            newNoteSnapshot.envelopes.put(note, envelope);
-            noteSnapshot = newNoteSnapshot;
+            HashSet<Note> liveNotes = new HashSet<>(noteSnapshot.liveNotes);
+            liveNotes.add(note);
+            noteSnapshot = new NoteSnapshot(liveNotes);
         }
 
         synchronized (frequencySnapshot) {
-            frequencySnapshot = frequencySnapshot.addNote(note, frequency);
+            frequencySnapshot = frequencySnapshot.addNote(note);
         }
     }
 
-    public NoteFrequencySnapshot getSnapshot(long sampleCount) {
+    public NoteFrequencySnapshot getSnapshot() {
         synchronized (noteSnapshot) {
             synchronized (frequencySnapshot) {
-                return new NoteFrequencySnapshot(sampleCount, new NoteSnapshot(sampleCount, noteSnapshot), new FrequencySnapshot(sampleCount, frequencySnapshot));
+                return new NoteFrequencySnapshot(noteSnapshot, new FrequencySnapshot(frequencySnapshot));
             }
         }
     }

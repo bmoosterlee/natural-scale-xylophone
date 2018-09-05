@@ -10,7 +10,7 @@ public class SpectrumWindow {
     public HarmonicCalculator harmonicCalculator;
 
 
-    private final BucketHistory bucketHistory = new BucketHistory(100);
+    private final BucketHistory bucketHistory = new BucketHistory(300);
     public final double centerFrequency = 2 * 261.63;
     double octaveRange = 3.;
     public double lowerBound;

@@ -104,18 +104,17 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getLiveNotes");
-        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot(calculatedSamples);
+        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
         NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
-        HashSet<Note> liveNotes = noteSnapshot.liveNotes;
         FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getVolumeTable");
-        HashMap<Note, Double> volumeTable = noteSnapshot.getVolumeTable();
+        HashMap<Note, Double> volumeTable = noteSnapshot.getVolumeTable(calculatedSamples);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick findInaudibleNotes");
-        removeInaudibleNotes(liveNotes,
+        removeInaudibleNotes(noteSnapshot.liveNotes,
                              volumeTable);
         PerformanceTracker.stopTracking(timeKeeper);
 
@@ -149,7 +148,9 @@ public class NoteEnvironment implements Runnable{
     private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, HashMap<Double, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
         for(Double frequency : liveFrequencies){
-            amplitudeSum += getAmplitude(time, frequencyVolumeTable.get(frequency), frequenciesAngleComponents.get(frequency));
+            amplitudeSum += getAmplitude(time,
+                                         frequencyVolumeTable.get(frequency),
+                                         frequenciesAngleComponents.get(frequency));
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
@@ -175,8 +176,8 @@ public class NoteEnvironment implements Runnable{
         return (Math.sin(angle) * volume);
     }
 
-    Pair<Note, Envelope> createNote() {
-        return new Pair<>(new Note(), new MemoizedLinearEnvelope(getExpectedSampleCount(), sampleRate, 0.2, 0.5));
+    Note createNote(double frequency) {
+        return new Note(frequency, new MemoizedLinearEnvelope(getExpectedSampleCount(), sampleRate, 0.05, 0.25));
     }
 
     public long getExpectedSampleCount() {

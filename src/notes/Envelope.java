@@ -5,7 +5,7 @@ import main.SampleRate;
 public abstract class Envelope {
     protected final SampleRate sampleRate;
     protected double amplitude;
-    protected long startingSampleCount;
+    protected final long startingSampleCount;
 
     public Envelope(long startingSampleCount, SampleRate sampleRate){
         this.sampleRate = sampleRate;
