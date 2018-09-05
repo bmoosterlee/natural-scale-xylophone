@@ -17,14 +17,14 @@ public class NoteEnvironment implements Runnable{
     private final SampleRate sampleRate;
     public final NoteManager noteManager;
     private SourceDataLine sourceDataLine;
-    private long calculatedSamples;
+    private long calculatedSamples = 0L;
     private long timeZero;
     private int sampleSize;
     private double marginalSampleSize;
     private long frameTime;
     private int sampleLookahead;
     LinkedList<Pair<Long, Set<Note>>> futureInaudibleNotes = new LinkedList<>();
-    Long nextInaudibleNoteClearing;
+    Long nextInaudibleNoteClearing = 0L;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
@@ -52,11 +52,8 @@ public class NoteEnvironment implements Runnable{
 
     @Override
     public void run() {
-        calculatedSamples = 0L;
         timeZero = System.nanoTime();
-        long sampleBacklog = 0;
-
-        nextInaudibleNoteClearing = 0L;
+        long sampleBacklog;
 
         while(true) {
             long startTime = System.nanoTime();
@@ -77,14 +74,13 @@ public class NoteEnvironment implements Runnable{
             PerformanceTracker.stopTracking(removeInaudibleNotesTimeKeeper);
 
             TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick");
+            sampleBacklog = getExpectedSampleCount() + sampleLookahead - calculatedSamples;
+            sampleBacklog = Math.min(sampleBacklog, sampleRate.sampleRate);
+
             while(sampleBacklog>0) {
                 tick();
                 sampleBacklog--;
             }
-
-            long expectedSampleCount = getExpectedSampleCount();
-            sampleBacklog = expectedSampleCount + sampleLookahead - calculatedSamples;
-            sampleBacklog = Math.min(sampleBacklog, sampleRate.sampleRate);
             PerformanceTracker.stopTracking(tickTimeKeeper);
 
             TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment sleep");
