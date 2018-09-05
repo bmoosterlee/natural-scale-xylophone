@@ -9,7 +9,6 @@ public class SpectrumWindow {
     public NoteManager noteManager;
     public HarmonicCalculator harmonicCalculator;
 
-    public SpectrumSnapshotBuilder spectrumSnapshotBuilder;
 
     private final BucketHistory bucketHistory = new BucketHistory(100);
     public final double centerFrequency = 2 * 261.63;

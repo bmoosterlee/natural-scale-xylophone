@@ -14,14 +14,11 @@ public class BucketHistory {
     }
 
     public void addNewBuckets(Buckets newBuckets) {
-        if (harmonicsBucketsHistory.size() >= size) {
-            synchronized (harmonicsBucketsHistory) {
+        synchronized (harmonicsBucketsHistory) {
+            if (harmonicsBucketsHistory.size() >= size) {
                 harmonicsBucketsHistory.removeFirst();
             }
-        }
-        Buckets multiply = newBuckets.multiply(multiplier);
-        synchronized (harmonicsBucketsHistory) {
-            harmonicsBucketsHistory.addLast(multiply);
+            harmonicsBucketsHistory.addLast(newBuckets.multiply(multiplier));
         }
     }
 
