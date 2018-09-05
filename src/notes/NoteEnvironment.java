@@ -21,7 +21,7 @@ public class NoteEnvironment implements Runnable{
     private long timeZero;
     private int sampleSize;
     private double marginalSampleSize;
-    private double frameTime;
+    private long frameTime;
     private int sampleLookahead;
     LinkedList<Pair<Long, Set<Note>>> futureInaudibleNotes = new LinkedList<>();
     Long nextInaudibleNoteClearing;
@@ -34,7 +34,7 @@ public class NoteEnvironment implements Runnable{
         sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
-        frameTime = 1000000./SAMPLE_RATE;
+        frameTime = 1000000000 / SAMPLE_RATE;
         sampleLookahead = SAMPLE_RATE/100;
 
         initialize();
@@ -188,8 +188,7 @@ public class NoteEnvironment implements Runnable{
         long currentTime;
         currentTime = System.nanoTime();
         long timePassed = (currentTime - startTime);
-
-        return (long) ((frameTime*sampleLookahead - timePassed)/ 1000000);
+        return (frameTime - timePassed)/ 1000000;
     }
 
     HashSet<Note> getInaudibleNotes(HashMap<Note, Double> volumeTable, HashSet<Note> liveNotes) {
