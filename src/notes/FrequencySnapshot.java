@@ -46,13 +46,18 @@ public class FrequencySnapshot {
 
     FrequencySnapshot removeInaudibleNotes(Set<Note> inaudibleNotes) {
         FrequencySnapshot frequencySnapshot = new FrequencySnapshot(this);
+        Set<Double> touchedFrequencies = new HashSet<>();
 
         for (Note note : inaudibleNotes) {
             Double frequency = note.frequency;
 
             Set<Note> noteSet = frequencySnapshot.frequencyNoteTable.get(frequency);
             noteSet.remove(note);
-            if (noteSet.isEmpty()) {
+            touchedFrequencies.add(frequency);
+        }
+
+        for(Double frequency : touchedFrequencies){
+            if (frequencySnapshot.frequencyNoteTable.get(frequency).isEmpty()) {
                 frequencySnapshot.liveFrequencies.remove(frequency);
                 frequencySnapshot.frequencyNoteTable.remove(frequency);
                 frequencySnapshot.frequencyAngleComponents.remove(frequency);
