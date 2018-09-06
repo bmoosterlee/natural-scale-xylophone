@@ -1,4 +1,4 @@
-package notes;
+package notes.envelope.functions;
 
 import main.SampleRate;
 

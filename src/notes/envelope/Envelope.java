@@ -1,6 +1,7 @@
-package notes;
+package notes.envelope;
 
 import main.SampleRate;
+import notes.envelope.functions.EnvelopeFunction;
 
 public abstract class Envelope {
     protected final SampleRate sampleRate;

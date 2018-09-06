@@ -1,11 +1,11 @@
-package notes;
+package notes.envelope.functions;
 
 import main.SampleRate;
 
-public class PrecalculatedLinearEnvelopeFunction extends LinearEnvelopeFunction {
+public class PrecalculatedLinearFunction extends LinearFunction {
     Double[] volumes;
 
-    public PrecalculatedLinearEnvelopeFunction(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
+    public PrecalculatedLinearFunction(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
         super(sampleRate, amplitude, lengthInSeconds);
 
         int totalSamples = (int) (sampleRate.sampleRate * lengthInSeconds);

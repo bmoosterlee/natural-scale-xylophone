@@ -4,6 +4,8 @@ import javafx.util.Pair;
 import main.PerformanceTracker;
 import main.SampleRate;
 import main.TimeKeeper;
+import notes.envelope.SimpleDeterministicEnvelope;
+import notes.envelope.functions.LinearFunctionMemoizer;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -173,7 +175,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     Note createNote(double frequency) {
-        return new Note(frequency, new MemoizedLinearEnvelope(getExpectedSampleCount(), sampleRate, 0.05, 0.25));
+        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.25)));
     }
 
     public long getExpectedSampleCount() {

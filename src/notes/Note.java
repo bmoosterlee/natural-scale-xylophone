@@ -1,5 +1,7 @@
 package notes;
 
+import notes.envelope.Envelope;
+
 public class Note {
     final double frequency;
     final Envelope envelope;
