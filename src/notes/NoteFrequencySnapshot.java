@@ -11,11 +11,11 @@ public class NoteFrequencySnapshot {
         this.frequencySnapshot = frequencySnapshot;
     }
 
-    public Map<Double, Double> getFrequencyVolumeTable(long sampleCount) {
+    public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount) {
         return getFrequencyVolumeTable(noteSnapshot.getVolumeTable(sampleCount));
     }
 
-    public Map<Double, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
+    public Map<Frequency, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
         return frequencySnapshot.getFrequencyVolumeTable(volumeTable);
     }
 }

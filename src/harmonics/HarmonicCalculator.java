@@ -1,6 +1,7 @@
 package harmonics;
 
 import javafx.util.Pair;
+import notes.Frequency;
 
 import java.util.*;
 
@@ -10,7 +11,7 @@ public class HarmonicCalculator {
     private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
 
 
-    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, int maxHarmonics) {
+    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, int maxHarmonics) {
         synchronized (iteratorTable) {
             CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
@@ -34,7 +35,7 @@ public class HarmonicCalculator {
 
     private double getNewHarmonicVolume(CalculatorSnapshot calculatorSnapshot) {
         try {
-            Double highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().peek();
+            Frequency highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().peek();
             Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueFrequency).peek();
 
             return Harmonic.getHarmonicValue(calculatorSnapshot.getVolumeTable().get(highestValueFrequency), nextHarmonicAsFraction);
@@ -46,7 +47,7 @@ public class HarmonicCalculator {
 
     private void addNewHarmonic(CalculatorSnapshot calculatorSnapshot, BufferSnapshot bufferSnapshot) {
         try {
-            Double highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().poll();
+            Frequency highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().poll();
             Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueFrequency).next();
             calculatorSnapshot.getIteratorHierarchy().add(highestValueFrequency);
 

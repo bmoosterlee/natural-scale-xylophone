@@ -28,7 +28,7 @@ public class NoteManager {
         }
     }
 
-    public void addNote(double frequency) {
+    public void addNote(Frequency frequency) {
         Note note = noteEnvironment.createNote(frequency);
 
         synchronized (noteSnapshot) {

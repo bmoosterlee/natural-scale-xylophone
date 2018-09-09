@@ -1,6 +1,7 @@
 package harmonics;
 
 import javafx.util.Pair;
+import notes.Frequency;
 
 import java.util.*;
 
@@ -8,8 +9,8 @@ public class BufferSnapshot {
     private final Map<Harmonic, Double> harmonicVolumeTable;
     private final PriorityQueue<Harmonic> harmonicHierarchy;
 
-    public BufferSnapshot(Map<Double, Set<Harmonic>> harmonicsTable, Map<Double, Double> noteVolumeTable) {
-        harmonicVolumeTable = calculateHarmonicVolumes(harmonicsTable, noteVolumeTable);
+    public BufferSnapshot(Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> volumeTable) {
+        harmonicVolumeTable = calculateHarmonicVolumes(harmonicsTable, volumeTable);
         harmonicHierarchy = buildHarmonicHierarchy(harmonicVolumeTable);
     }
 
@@ -26,10 +27,10 @@ public class BufferSnapshot {
     }
 
     private Map<Harmonic, Double> calculateHarmonicVolumes(
-            Map<Double, Set<Harmonic>> harmonicsTable, Map<Double, Double> frequencyVolumeTable) {
+            Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> frequencyVolumeTable) {
         Map<Harmonic, Double> newHarmonicVolumeTable = new HashMap<>();
         synchronized (harmonicsTable) {
-            for(Map.Entry<Double, Double> pair : new HashSet<>(frequencyVolumeTable.entrySet())){
+            for(Map.Entry<Frequency, Double> pair : new HashSet<>(frequencyVolumeTable.entrySet())){
                 Set<Harmonic> harmonics = harmonicsTable.get(pair.getKey());
                 for (Harmonic harmonic : harmonics) {
                     newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(pair.getValue()));

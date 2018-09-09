@@ -143,9 +143,9 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private byte calculateAmplitudeSum(double time, Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable, HashMap<Double, Double> frequenciesAngleComponents) {
+    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, HashMap<Frequency, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
-        for(Double frequency : liveFrequencies){
+        for(Frequency frequency : liveFrequencies){
             amplitudeSum += getAmplitude(time,
                                          frequencyVolumeTable.get(frequency),
                                          frequenciesAngleComponents.get(frequency));
@@ -174,8 +174,8 @@ public class NoteEnvironment implements Runnable{
         return (Math.sin(angle) * volume);
     }
 
-    Note createNote(double frequency) {
-        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.25)));
+    Note createNote(Frequency frequency) {
+        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.5)));
     }
 
     public long getExpectedSampleCount() {

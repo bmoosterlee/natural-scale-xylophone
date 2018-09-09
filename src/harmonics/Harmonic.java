@@ -1,11 +1,13 @@
 package harmonics;
 
+import notes.Frequency;
+
 public class Harmonic {
 
     final int sharedPeriod;
-    final double frequency;
+    final Frequency frequency;
 
-    public Harmonic(Double tonic, Fraction harmonicAsFraction){
+    public Harmonic(Frequency tonic, Fraction harmonicAsFraction){
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
         frequency = calculateFrequency(tonic, harmonicAsFraction);
     }
@@ -22,11 +24,11 @@ public class Harmonic {
         return Math.max(harmonicAsFraction.numerator, harmonicAsFraction.denominator);
     }
 
-    private double calculateFrequency(Double tonic, Fraction harmonicAsFraction) {
-        return tonic*(double)harmonicAsFraction.numerator/(double)harmonicAsFraction.denominator;
+    private Frequency calculateFrequency(Frequency tonic, Fraction harmonicAsFraction) {
+        return tonic.multiplyBy((double)harmonicAsFraction.numerator).divideBy((double)harmonicAsFraction.denominator);
     }
 
-    public double getFrequency(){
+    public Frequency getFrequency(){
         return frequency;
     }
 }

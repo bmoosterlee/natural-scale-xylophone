@@ -2,6 +2,7 @@ package gui;
 
 import harmonics.Harmonic;
 import javafx.util.Pair;
+import notes.Frequency;
 import notes.FrequencySnapshot;
 import notes.NoteFrequencySnapshot;
 
@@ -21,10 +22,10 @@ public class SpectrumSnapshotBuilder {
 
         NoteFrequencySnapshot noteFrequencySnapshot = spectrumWindow.noteManager.getSnapshot();
         FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
-        Set<Double> liveFrequencies = frequencySnapshot.liveFrequencies;
+        Set<Frequency> liveFrequencies = frequencySnapshot.liveFrequencies;
 
-        Map<Double, Double> frequencyVolumeTable = noteFrequencySnapshot.getFrequencyVolumeTable(sampleCount);
-        Set<Double> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
+        Map<Frequency, Double> frequencyVolumeTable = noteFrequencySnapshot.getFrequencyVolumeTable(sampleCount);
+        Set<Frequency> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
 
         noteBuckets = getNewNoteBuckets(clippedFrequencies, frequencyVolumeTable);
         harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 100);
@@ -53,9 +54,9 @@ public class SpectrumSnapshotBuilder {
         return new SpectrumSnapshot(sampleCount, noteBuckets, spectrumWindow.getBucketHistory().getTimeAveragedBuckets());
     }
 
-    public Buckets getNewNoteBuckets(Set<Double> liveFrequencies, Map<Double, Double> frequencyVolumeTable) {
+    public Buckets getNewNoteBuckets(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable) {
         Set<Pair<Integer, Double>> noteVolumes = new HashSet<>();
-        for (Double frequency : liveFrequencies) {
+        for (Frequency frequency : liveFrequencies) {
             int x = spectrumWindow.getX(frequency);
             if (x < 0 || x >= GUI.WIDTH) {
                 continue;

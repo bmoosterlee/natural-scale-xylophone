@@ -27,7 +27,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public long startTime;
     public int mouseX;
     boolean calculatedMouseFrequency;
-    public double mouseFrequency;
+    public Frequency mouseFrequency;
 
     public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
         this.noteEnvironment = noteEnvironment;
@@ -130,7 +130,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         return (FRAME_TIME - timePassed)/ 1000000;
     }
 
-    public int getX(double frequency) {
+    public int getX(Frequency frequency) {
         return spectrumWindow.getX(frequency);
     }
 
@@ -144,7 +144,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         noteManager.addNote(spectrumWindow.getFrequency(e.getX()));
     }
 
-    public double getFrequency(double x) {
+    public Frequency getFrequency(double x) {
         return spectrumWindow.getFrequency(x);
     }
 

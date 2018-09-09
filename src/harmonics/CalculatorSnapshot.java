@@ -1,19 +1,21 @@
 package harmonics;
 
+import notes.Frequency;
+
 import java.util.*;
 
 public class CalculatorSnapshot {
     //todo change fields to final
-    private Map<Double, Double> volumeTable;
-    private PriorityQueue<Double> iteratorHierarchy;
+    private Map<Frequency, Double> volumeTable;
+    private PriorityQueue<Frequency> iteratorHierarchy;
 
-    public CalculatorSnapshot(Set<Double> liveNotes, Map<Double, MemoableIterator> iteratorTable, Map<Double, Double> volumeTable) {
+    public CalculatorSnapshot(Set<Frequency> liveFrequencies, Map<Frequency, MemoableIterator> iteratorTable, Map<Frequency, Double> volumeTable) {
         this.volumeTable = volumeTable;
-        this.iteratorHierarchy = buildIteratorHierarchy(this.volumeTable, liveNotes, iteratorTable);
+        this.iteratorHierarchy = buildIteratorHierarchy(this.volumeTable, liveFrequencies, iteratorTable);
     }
 
-    PriorityQueue<Double> buildIteratorHierarchy(Map<Double, Double> volumeTable, Set<Double> liveFrequencies, Map<Double, MemoableIterator> iteratorTable) {
-        PriorityQueue<Double> iteratorHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
+    PriorityQueue<Frequency> buildIteratorHierarchy(Map<Frequency, Double> volumeTable, Set<Frequency> liveFrequencies, Map<Frequency, MemoableIterator> iteratorTable) {
+        PriorityQueue<Frequency> iteratorHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
                 Harmonic.getHarmonicValue(volumeTable.get(o1), iteratorTable.get(o1).peek()),
                 Harmonic.getHarmonicValue(volumeTable.get(o2), iteratorTable.get(o2).peek()))
         );
@@ -22,19 +24,12 @@ public class CalculatorSnapshot {
         return iteratorHierarchy;
     }
 
-    public Map<Double, Double> getVolumeTable() {
+    public Map<Frequency, Double> getVolumeTable() {
         return volumeTable;
     }
 
-    public void setVolumeTable(HashMap<Double, Double> volumeTable) {
-        this.volumeTable = volumeTable;
-    }
-
-    public PriorityQueue<Double> getIteratorHierarchy() {
+    public PriorityQueue<Frequency> getIteratorHierarchy() {
         return iteratorHierarchy;
     }
 
-    public void setIteratorHierarchy(PriorityQueue<Double> iteratorHierarchy) {
-        this.iteratorHierarchy = iteratorHierarchy;
-    }
 }
