@@ -6,6 +6,7 @@ import main.SampleRate;
 import main.TimeKeeper;
 import notes.Frequency;
 import notes.Note;
+import notes.Wave;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.LinearFunctionMemoizer;
 
@@ -121,7 +122,7 @@ public class NoteEnvironment implements Runnable{
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(sampleRate.asTime(calculatedSamples),
                                                              frequencyState.frequencies,
                                                              frequencyState.getFrequencyVolumeTable(volumeTable),
-                                                             frequencyState)};
+                                                             frequencyState.waveState.frequencyWaveTable)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
@@ -144,10 +145,10 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, FrequencyState frequencyState) {
+    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, Map<Frequency, Wave> frequencyWaveTable) {
         double amplitudeSum = 0;
         for(Frequency frequency : liveFrequencies){
-            amplitudeSum += frequencyVolumeTable.get(frequency) * frequencyState.getAmplitude(time, frequency);
+            amplitudeSum += frequencyVolumeTable.get(frequency) * frequencyWaveTable.get(frequency).getAmplitude(time);
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }

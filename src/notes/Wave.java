@@ -13,7 +13,8 @@ public class Wave {
         return frequency;
     }
 
-    public double getFrequencyAngleComponent() {
-        return frequencyAngleComponent;
+    public double getAmplitude(double time) {
+        double angle = time * frequencyAngleComponent;
+        return Math.sin(angle);
     }
 }

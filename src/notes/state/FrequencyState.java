@@ -22,12 +22,6 @@ public class FrequencyState {
         this.waveState = waveState;
     }
 
-    double getAmplitude(double time, Frequency frequency) {
-        double frequencyAngleComponent = waveState.frequencyWaveTable.get(frequency).getFrequencyAngleComponent();
-        double angle = time * frequencyAngleComponent;
-        return Math.sin(angle);
-    }
-
     public Map<Frequency, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
         Map<Frequency, Double> frequencyVolumes = new HashMap<>();
 
