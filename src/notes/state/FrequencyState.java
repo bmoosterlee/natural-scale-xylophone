@@ -1,22 +1,31 @@
-package notes;
+package notes.state;
+
+import notes.Frequency;
+import notes.Note;
 
 import java.util.*;
 
 public class FrequencyState {
     public final Set<Frequency> frequencies;
-    final HashMap<Frequency, Double> frequencyAngleComponents;
     public final Map<Frequency, Set<Note>> frequencyNoteTable;
+    public final WaveState waveState;
 
     public FrequencyState() {
         frequencies = new HashSet<>();
-        frequencyAngleComponents = new HashMap<>();
         frequencyNoteTable = new HashMap<>();
+        waveState = new WaveState();
     }
 
-    public FrequencyState(FrequencyState frequencies) {
-        this.frequencies = frequencies.getFrequencies();
-        frequencyAngleComponents = frequencies.getFrequencyAngleComponents();
-        frequencyNoteTable = frequencies.getFrequencyNoteTable();
+    public FrequencyState(Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable, WaveState waveState) {
+        this.frequencies = frequencies;
+        this.frequencyNoteTable = frequencyNoteTable;
+        this.waveState = waveState;
+    }
+
+    double getAmplitude(double time, Frequency frequency) {
+        double frequencyAngleComponent = waveState.frequencyWaveTable.get(frequency).getFrequencyAngleComponent();
+        double angle = time * frequencyAngleComponent;
+        return Math.sin(angle);
     }
 
     public Map<Frequency, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
@@ -42,50 +51,63 @@ public class FrequencyState {
     }
 
     FrequencyState removeInaudibleNotes(Set<Note> inaudibleNotes) {
-        FrequencyState frequencyState = new FrequencyState(this);
+        if(inaudibleNotes.isEmpty()){
+            return this;
+        }
+
+        Set<Frequency> newFrequencies = frequencies;
+        Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
+        WaveState newWaveState = waveState;
+
         Set<Frequency> touchedFrequencies = new HashSet<>();
 
         for (Note note : inaudibleNotes) {
-            Frequency frequency = note.frequency;
+            Frequency frequency = note.getFrequency();
 
-            Set<Note> noteSet = frequencyState.frequencyNoteTable.get(frequency);
-            noteSet.remove(note);
+            newFrequencyNoteTable.get(frequency).remove(note);
             touchedFrequencies.add(frequency);
         }
 
-        for(Frequency frequency : touchedFrequencies){
-            if (frequencyState.frequencyNoteTable.get(frequency).isEmpty()) {
-                frequencyState.frequencies.remove(frequency);
-                frequencyState.frequencyNoteTable.remove(frequency);
-                frequencyState.frequencyAngleComponents.remove(frequency);
-            }
+        if(!touchedFrequencies.isEmpty()) {
+            newFrequencies = new HashSet<>(frequencies);
 
+            for (Frequency frequency : touchedFrequencies) {
+                if (newFrequencyNoteTable.get(frequency).isEmpty()) {
+                    newFrequencies.remove(frequency);
+                    newFrequencyNoteTable.remove(frequency);
+                    newWaveState = newWaveState.remove(frequency);
+                }
+            }
         }
 
-        return frequencyState;
+        return new FrequencyState(newFrequencies, newFrequencyNoteTable, newWaveState);
     }
 
     FrequencyState addNote(Note note) {
-        FrequencyState frequencyState = new FrequencyState(this);
+        Frequency frequency = note.getFrequency();
 
-        Frequency frequency = note.frequency;
+        Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
+        Set<Frequency> newFrequencies = frequencies;
+        WaveState newWaveState = waveState;
+
         Set<Note> noteSet;
 
-        frequencyState.frequencies.add(frequency);
+        if (!newFrequencyNoteTable.containsKey(frequency)) {
+            newFrequencies = new HashSet<>(frequencies);
+            newFrequencies.add(frequency);
+            newWaveState = newWaveState.add(frequency);
 
-        if (!frequencyState.frequencyNoteTable.containsKey(note)) {
-            frequencyState.frequencyAngleComponents.put(frequency, frequency.getValue() * 2.0 * Math.PI);
             noteSet = new HashSet<>();
-            frequencyState.frequencyNoteTable.put(frequency, noteSet);
+            newFrequencyNoteTable.put(frequency, noteSet);
         } else {
-            noteSet = frequencyState.frequencyNoteTable.get(frequency);
+            noteSet = newFrequencyNoteTable.get(frequency);
         }
         noteSet.add(note);
 
-        return frequencyState;
+        return new FrequencyState(newFrequencies, newFrequencyNoteTable, newWaveState);
     }
 
-    Map<Frequency, Set<Note>> getFrequencyNoteTable() {
+    Map<Frequency, Set<Note>> copyFrequencyNoteTable() {
         //todo if we want the list to be immutable, we could calculate the death time of each note, and create a
         //todo new version of the object at each death time.
         //todo by using zipper like structures, we can only update a particular note list.
@@ -100,10 +122,6 @@ public class FrequencyState {
         }
 
         return frequencyNoteTableCopy;
-    }
-
-    public HashMap<Frequency, Double> getFrequencyAngleComponents() {
-        return new HashMap<>(frequencyAngleComponents);
     }
 
     public Set<Frequency> getFrequencies(){

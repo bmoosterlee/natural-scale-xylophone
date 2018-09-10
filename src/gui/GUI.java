@@ -3,6 +3,8 @@ package gui;
 import harmonics.HarmonicCalculator;
 import main.*;
 import notes.*;
+import notes.state.NoteEnvironment;
+import notes.state.NoteManager;
 
 import javax.swing.*;
 import java.awt.*;

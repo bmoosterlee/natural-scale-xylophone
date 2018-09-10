@@ -3,9 +3,8 @@ package gui;
 import harmonics.Harmonic;
 import javafx.util.Pair;
 import notes.Frequency;
-import notes.FrequencyState;
-import notes.NoteFrequencySnapshot;
-import notes.NoteState;
+import notes.state.FrequencyState;
+import notes.state.NoteState;
 
 import java.util.*;
 

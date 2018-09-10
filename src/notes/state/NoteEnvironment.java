@@ -1,9 +1,11 @@
-package notes;
+package notes.state;
 
 import javafx.util.Pair;
 import main.PerformanceTracker;
 import main.SampleRate;
 import main.TimeKeeper;
+import notes.Frequency;
+import notes.Note;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.LinearFunctionMemoizer;
 
@@ -119,7 +121,7 @@ public class NoteEnvironment implements Runnable{
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(sampleRate.asTime(calculatedSamples),
                                                              frequencyState.frequencies,
                                                              frequencyState.getFrequencyVolumeTable(volumeTable),
-                                                             frequencyState.frequencyAngleComponents)};
+                                                             frequencyState)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
@@ -142,12 +144,10 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, HashMap<Frequency, Double> frequenciesAngleComponents) {
+    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, FrequencyState frequencyState) {
         double amplitudeSum = 0;
         for(Frequency frequency : liveFrequencies){
-            amplitudeSum += getAmplitude(time % frequency.getValue(),
-                                         frequencyVolumeTable.get(frequency),
-                                         frequenciesAngleComponents.get(frequency));
+            amplitudeSum += frequencyVolumeTable.get(frequency) * frequencyState.getAmplitude(time, frequency);
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
@@ -166,11 +166,6 @@ public class NoteEnvironment implements Runnable{
             e.printStackTrace();
         }
         sourceDataLine.start();
-    }
-
-    private double getAmplitude(double time, double volume, double frequencyAngleComponent) {
-        double angle = time * frequencyAngleComponent;
-        return (Math.sin(angle) * volume);
     }
 
     Note createNote(Frequency frequency) {

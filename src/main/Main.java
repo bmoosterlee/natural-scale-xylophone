@@ -2,7 +2,7 @@ package main;
 
 import gui.GUI;
 import harmonics.HarmonicCalculator;
-import notes.NoteEnvironment;
+import notes.state.NoteEnvironment;
 import pianola.Pianola;
 
 public class Main {

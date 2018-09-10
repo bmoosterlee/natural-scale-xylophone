@@ -4,6 +4,7 @@ import main.SampleRate;
 import notes.envelope.functions.EnvelopeFunction;
 
 public abstract class Envelope {
+    private final EnvelopeFunction envelopeFunction;
     protected final SampleRate sampleRate;
     protected final long startingSampleCount;
 

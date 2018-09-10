@@ -1,13 +1,14 @@
-package notes;
+package notes.state;
+
+import notes.Note;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class NoteState {
     public final HashSet<Note> notes;
-    public FrequencyState frequencyState;
+    public final FrequencyState frequencyState;
 
     public NoteState(){
         notes = new HashSet<>();
@@ -20,17 +21,15 @@ public class NoteState {
     }
 
     public NoteState addNote(Note note) {
-        HashSet<Note> liveNotes = new HashSet<>(this.notes);
-        liveNotes.add(note);
-        FrequencyState frequencyState = this.frequencyState.addNote(note);
-        return new NoteState(liveNotes, frequencyState);
+        HashSet<Note> newLiveNotes = new HashSet<>(notes);
+        newLiveNotes.add(note);
+        return new NoteState(newLiveNotes, frequencyState.addNote(note));
     }
 
     public NoteState removeInaudibleNotes(Set<Note> inaudibleNotes) {
-        HashSet<Note> liveNotes = new HashSet<>(this.notes);
-        liveNotes.removeAll(inaudibleNotes);
-        FrequencyState frequencyState = this.frequencyState.removeInaudibleNotes(inaudibleNotes);
-        return new NoteState(liveNotes, frequencyState);
+        HashSet<Note> newLiveNotes = new HashSet<>(notes);
+        newLiveNotes.removeAll(inaudibleNotes);
+        return new NoteState(newLiveNotes, frequencyState.removeInaudibleNotes(inaudibleNotes));
     }
 
     public HashMap<Note, Double> getVolumeTable(long sampleCount) {
@@ -42,7 +41,7 @@ public class NoteState {
         for(Note note : notes) {
             double volume;
             try {
-                volume = note.envelope.getVolume(sampleCount);
+                volume = note.getEnvelope().getVolume(sampleCount);
             }
             catch(NullPointerException e){
                 volume = 0.0;

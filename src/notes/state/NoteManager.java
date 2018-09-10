@@ -1,4 +1,7 @@
-package notes;
+package notes.state;
+
+import notes.Frequency;
+import notes.Note;
 
 import java.util.*;
 
