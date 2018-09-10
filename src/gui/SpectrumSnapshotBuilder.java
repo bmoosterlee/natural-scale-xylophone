@@ -3,8 +3,9 @@ package gui;
 import harmonics.Harmonic;
 import javafx.util.Pair;
 import notes.Frequency;
-import notes.FrequencySnapshot;
+import notes.FrequencyState;
 import notes.NoteFrequencySnapshot;
+import notes.NoteState;
 
 import java.util.*;
 
@@ -20,11 +21,11 @@ public class SpectrumSnapshotBuilder {
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        NoteFrequencySnapshot noteFrequencySnapshot = spectrumWindow.noteManager.getSnapshot();
-        FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
-        Set<Frequency> liveFrequencies = frequencySnapshot.liveFrequencies;
+        NoteState noteState = spectrumWindow.noteManager.getSnapshot();
+        FrequencyState frequencyState = noteState.frequencyState;
+        Set<Frequency> liveFrequencies = frequencyState.frequencies;
 
-        Map<Frequency, Double> frequencyVolumeTable = noteFrequencySnapshot.getFrequencyVolumeTable(sampleCount);
+        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount, noteState);
         Set<Frequency> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
 
         noteBuckets = getNewNoteBuckets(clippedFrequencies, frequencyVolumeTable);

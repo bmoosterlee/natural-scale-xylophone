@@ -102,25 +102,24 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getLiveNotes");
-        NoteFrequencySnapshot noteFrequencySnapshot = noteManager.getSnapshot();
-        NoteSnapshot noteSnapshot = noteFrequencySnapshot.noteSnapshot;
-        FrequencySnapshot frequencySnapshot = noteFrequencySnapshot.frequencySnapshot;
+        NoteState noteState = noteManager.getSnapshot();
+        FrequencyState frequencyState = noteState.frequencyState;
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getVolumeTable");
-        HashMap<Note, Double> volumeTable = noteSnapshot.getVolumeTable(calculatedSamples);
+        HashMap<Note, Double> volumeTable = noteState.getVolumeTable(calculatedSamples);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick findInaudibleNotes");
-        removeInaudibleNotes(noteSnapshot.liveNotes,
+        removeInaudibleNotes(noteState.notes,
                              volumeTable);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick calculateAmplitudes");
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(sampleRate.asTime(calculatedSamples),
-                                                             frequencySnapshot.liveFrequencies,
-                                                             noteFrequencySnapshot.getFrequencyVolumeTable(volumeTable),
-                                                             frequencySnapshot.frequencyAngleComponents)};
+                                                             frequencyState.frequencies,
+                                                             frequencyState.getFrequencyVolumeTable(volumeTable),
+                                                             frequencyState.frequencyAngleComponents)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
@@ -146,7 +145,7 @@ public class NoteEnvironment implements Runnable{
     private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, HashMap<Frequency, Double> frequenciesAngleComponents) {
         double amplitudeSum = 0;
         for(Frequency frequency : liveFrequencies){
-            amplitudeSum += getAmplitude(time,
+            amplitudeSum += getAmplitude(time % frequency.getValue(),
                                          frequencyVolumeTable.get(frequency),
                                          frequenciesAngleComponents.get(frequency));
         }
