@@ -2,6 +2,7 @@ package notes;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 public class NoteSnapshot {
     public final HashSet<Note> liveNotes;
@@ -10,13 +11,22 @@ public class NoteSnapshot {
         liveNotes = new HashSet<>();
     }
 
-    public NoteSnapshot(NoteSnapshot noteSnapshot) {
-        liveNotes = new HashSet<>(noteSnapshot.liveNotes);
-    }
-
     public NoteSnapshot(HashSet<Note> liveNotes) {
         this.liveNotes = liveNotes;
     }
+
+    public NoteSnapshot addNote(Note note) {
+        HashSet<Note> liveNotes = new HashSet<>(this.liveNotes);
+        liveNotes.add(note);
+        return new NoteSnapshot(liveNotes);
+    }
+
+    public NoteSnapshot removeInaudibleNotes(Set<Note> inaudibleNotes) {
+        HashSet<Note> liveNotes = new HashSet<>(this.liveNotes);
+        liveNotes.removeAll(inaudibleNotes);
+        return new NoteSnapshot(liveNotes);
+    }
+
 
     public HashMap<Note, Double> getVolumeTable(long sampleCount) {
         HashMap<Note, Double> volumeTable = new HashMap<>();

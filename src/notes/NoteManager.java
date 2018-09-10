@@ -18,11 +18,7 @@ public class NoteManager {
     void removeInaudibleNotes(Set<Note> inaudibleNotes) {
         synchronized (noteSnapshot) {
             synchronized (frequencySnapshot) {
-                HashSet<Note> liveNotes = new HashSet<>(noteSnapshot.liveNotes);
-                liveNotes.removeAll(inaudibleNotes);
-                NoteSnapshot newNoteSnapshot = new NoteSnapshot(liveNotes);
-                noteSnapshot = newNoteSnapshot;
-
+                noteSnapshot = noteSnapshot.removeInaudibleNotes(inaudibleNotes);
                 frequencySnapshot = frequencySnapshot.removeInaudibleNotes(inaudibleNotes);
             }
         }
@@ -33,10 +29,7 @@ public class NoteManager {
 
         synchronized (noteSnapshot) {
             synchronized (frequencySnapshot) {
-                HashSet<Note> liveNotes = new HashSet<>(noteSnapshot.liveNotes);
-                liveNotes.add(note);
-                noteSnapshot = new NoteSnapshot(liveNotes);
-
+                noteSnapshot = noteSnapshot.addNote(note);
                 frequencySnapshot = frequencySnapshot.addNote(note);
             }
         }
