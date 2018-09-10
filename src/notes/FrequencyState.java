@@ -16,9 +16,6 @@ public class FrequencyState {
     public FrequencyState(FrequencyState frequencies) {
         this.frequencies = frequencies.getFrequencies();
         frequencyAngleComponents = frequencies.getFrequencyAngleComponents();
-        if(this.frequencies.size()!=frequencyAngleComponents.size()){
-            this.frequencies.size();
-        }
         frequencyNoteTable = frequencies.getFrequencyNoteTable();
     }
 
