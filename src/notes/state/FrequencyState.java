@@ -1,5 +1,6 @@
 package notes.state;
 
+import main.SampleRate;
 import notes.Frequency;
 import notes.Note;
 
@@ -8,18 +9,15 @@ import java.util.*;
 public class FrequencyState {
     public final Set<Frequency> frequencies;
     public final Map<Frequency, Set<Note>> frequencyNoteTable;
-    public final WaveState waveState;
 
     public FrequencyState() {
         frequencies = new HashSet<>();
         frequencyNoteTable = new HashMap<>();
-        waveState = new WaveState();
     }
 
-    public FrequencyState(Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable, WaveState waveState) {
+    public FrequencyState(Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable) {
         this.frequencies = frequencies;
         this.frequencyNoteTable = frequencyNoteTable;
-        this.waveState = waveState;
     }
 
     public Map<Frequency, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
@@ -44,14 +42,13 @@ public class FrequencyState {
         return frequencyVolumes;
     }
 
-    FrequencyState removeInaudibleNotes(Set<Note> inaudibleNotes) {
+    FrequencyState removeNotes(Set<Note> inaudibleNotes) {
         if(inaudibleNotes.isEmpty()){
             return this;
         }
 
         Set<Frequency> newFrequencies = frequencies;
         Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
-        WaveState newWaveState = waveState;
 
         Set<Frequency> touchedFrequencies = new HashSet<>();
 
@@ -69,12 +66,11 @@ public class FrequencyState {
                 if (newFrequencyNoteTable.get(frequency).isEmpty()) {
                     newFrequencies.remove(frequency);
                     newFrequencyNoteTable.remove(frequency);
-                    newWaveState = newWaveState.remove(frequency);
                 }
             }
         }
 
-        return new FrequencyState(newFrequencies, newFrequencyNoteTable, newWaveState);
+        return new FrequencyState(newFrequencies, newFrequencyNoteTable);
     }
 
     FrequencyState addNote(Note note) {
@@ -82,14 +78,12 @@ public class FrequencyState {
 
         Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
         Set<Frequency> newFrequencies = frequencies;
-        WaveState newWaveState = waveState;
 
         Set<Note> noteSet;
 
         if (!newFrequencyNoteTable.containsKey(frequency)) {
             newFrequencies = new HashSet<>(frequencies);
             newFrequencies.add(frequency);
-            newWaveState = newWaveState.add(frequency);
 
             noteSet = new HashSet<>();
             newFrequencyNoteTable.put(frequency, noteSet);
@@ -98,7 +92,7 @@ public class FrequencyState {
         }
         noteSet.add(note);
 
-        return new FrequencyState(newFrequencies, newFrequencyNoteTable, newWaveState);
+        return new FrequencyState(newFrequencies, newFrequencyNoteTable);
     }
 
     Map<Frequency, Set<Note>> copyFrequencyNoteTable() {

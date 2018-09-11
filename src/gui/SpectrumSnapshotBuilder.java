@@ -4,6 +4,7 @@ import harmonics.Harmonic;
 import javafx.util.Pair;
 import notes.Frequency;
 import notes.state.FrequencyState;
+import notes.state.NoteSnapshot;
 import notes.state.NoteState;
 
 import java.util.*;
@@ -20,8 +21,9 @@ public class SpectrumSnapshotBuilder {
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        NoteState noteState = spectrumWindow.noteManager.getSnapshot();
-        FrequencyState frequencyState = noteState.frequencyState;
+        NoteSnapshot noteSnapshot = spectrumWindow.noteManager.getSnapshot();
+        NoteState noteState = noteSnapshot.noteState;
+        FrequencyState frequencyState = noteSnapshot.frequencyState;
         Set<Frequency> liveFrequencies = frequencyState.frequencies;
 
         Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount, noteState);

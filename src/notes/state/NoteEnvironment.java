@@ -34,7 +34,7 @@ public class NoteEnvironment implements Runnable{
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         sampleRate = new SampleRate(SAMPLE_RATE);
-        noteManager = new NoteManager(this);
+        noteManager = new NoteManager(this, sampleRate);
 
         sampleSize = (int)(Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
@@ -105,8 +105,10 @@ public class NoteEnvironment implements Runnable{
 
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getLiveNotes");
-        NoteState noteState = noteManager.getSnapshot();
-        FrequencyState frequencyState = noteState.frequencyState;
+        NoteSnapshot noteSnapshot = noteManager.getSnapshot();
+        NoteState noteState = noteSnapshot.noteState;
+        FrequencyState frequencyState = noteSnapshot.frequencyState;
+        WaveState waveState = noteSnapshot.waveState;
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getVolumeTable");
@@ -119,10 +121,10 @@ public class NoteEnvironment implements Runnable{
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick calculateAmplitudes");
-        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(sampleRate.asTime(calculatedSamples),
+        byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples,
                                                              frequencyState.frequencies,
                                                              frequencyState.getFrequencyVolumeTable(volumeTable),
-                                                             frequencyState.waveState.frequencyWaveTable)};
+                                                             waveState.frequencyWaveTable)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
@@ -145,10 +147,19 @@ public class NoteEnvironment implements Runnable{
         }
     }
 
-    private byte calculateAmplitudeSum(double time, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, Map<Frequency, Wave> frequencyWaveTable) {
+    private byte calculateAmplitudeSum(long sampleCount, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, Map<Frequency, Wave> frequencyWaveTable) {
         double amplitudeSum = 0;
         for(Frequency frequency : liveFrequencies){
-            amplitudeSum += frequencyVolumeTable.get(frequency) * frequencyWaveTable.get(frequency).getAmplitude(time);
+            Double volume = frequencyVolumeTable.get(frequency);
+            Wave wave = frequencyWaveTable.get(frequency);
+            double amplitude = 0.;
+            try {
+                amplitude = wave.getAmplitude(sampleCount);
+            }
+            catch(NullPointerException e){
+
+            }
+            amplitudeSum += volume * amplitude;
         }
         return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitudeSum / 2)));
     }
@@ -170,7 +181,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     Note createNote(Frequency frequency) {
-        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.5)));
+        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.4)));
     }
 
     public long getExpectedSampleCount() {

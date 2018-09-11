@@ -1,5 +1,6 @@
 package notes.state;
 
+import main.SampleRate;
 import notes.Note;
 
 import java.util.HashMap;
@@ -8,28 +9,25 @@ import java.util.Set;
 
 public class NoteState {
     public final HashSet<Note> notes;
-    public final FrequencyState frequencyState;
 
     public NoteState(){
         notes = new HashSet<>();
-        frequencyState = new FrequencyState();
     }
 
-    public NoteState(HashSet<Note> notes, FrequencyState frequencyState) {
+    public NoteState(HashSet<Note> notes) {
         this.notes = notes;
-        this.frequencyState = frequencyState;
     }
 
     public NoteState addNote(Note note) {
         HashSet<Note> newLiveNotes = new HashSet<>(notes);
         newLiveNotes.add(note);
-        return new NoteState(newLiveNotes, frequencyState.addNote(note));
+        return new NoteState(newLiveNotes);
     }
 
-    public NoteState removeInaudibleNotes(Set<Note> inaudibleNotes) {
+    public NoteState removeNotes(Set<Note> inaudibleNotes) {
         HashSet<Note> newLiveNotes = new HashSet<>(notes);
         newLiveNotes.removeAll(inaudibleNotes);
-        return new NoteState(newLiveNotes, frequencyState.removeInaudibleNotes(inaudibleNotes));
+        return new NoteState(newLiveNotes);
     }
 
     public HashMap<Note, Double> getVolumeTable(long sampleCount) {
