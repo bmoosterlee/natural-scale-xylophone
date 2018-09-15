@@ -3,8 +3,11 @@ package notes.envelope;
 import main.SampleRate;
 import notes.envelope.functions.EnvelopeFunction;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 public abstract class Envelope {
-    private final EnvelopeFunction envelopeFunction;
+    protected final EnvelopeFunction envelopeFunction;
     protected final SampleRate sampleRate;
     protected final long startingSampleCount;
 
@@ -14,8 +17,12 @@ public abstract class Envelope {
         this.envelopeFunction = envelopeFunction;
     }
 
-    public double getVolume(long startingSampleCount, long sampleCount) {
-        return envelopeFunction.getVolume(getTimeDifference(startingSampleCount, sampleCount));
+    protected double getVolume(long startingSampleCount, long sampleCount) {
+        if (sampleCount < startingSampleCount) {
+            return 0.;
+        } else {
+            return envelopeFunction.getVolume(getTimeDifference(startingSampleCount, sampleCount));
+        }
     }
 
     public double getVolume(long sampleCount) {
@@ -30,4 +37,11 @@ public abstract class Envelope {
         return getTimeDifference(startingSampleCount, sampleCount);
     }
 
+    public Envelope add(Envelope envelope) {
+        return new CompositeEnvelope(Arrays.asList(new Envelope[]{this, envelope}));
+    }
+
+    public Envelope add(CompositeEnvelope envelope) {
+        return envelope.add(this);
+    }
 }

@@ -8,6 +8,7 @@ import notes.Frequency;
 import notes.Note;
 import notes.Wave;
 import notes.envelope.SimpleDeterministicEnvelope;
+import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
 
 import javax.sound.sampled.AudioFormat;
@@ -30,6 +31,7 @@ public class NoteEnvironment implements Runnable{
     private int sampleLookahead;
     LinkedList<Pair<Long, Set<Note>>> futureInaudibleNotes = new LinkedList<>();
     Long nextInaudibleNoteClearing = 0L;
+    private final DeterministicFunction envelopeFunction;
 
     public NoteEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE){
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
@@ -41,6 +43,8 @@ public class NoteEnvironment implements Runnable{
 
         frameTime = 1000000000 / SAMPLE_RATE;
         sampleLookahead = SAMPLE_RATE/100;
+
+        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.4);
 
         initialize();
     }
@@ -63,20 +67,6 @@ public class NoteEnvironment implements Runnable{
         while(true) {
             long startTime = System.nanoTime();
 
-            TimeKeeper removeInaudibleNotesTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment removeInaudibleNotes");
-            try {
-                while (getExpectedSampleCount() >= nextInaudibleNoteClearing) {
-                    noteManager.removeInaudibleNotes(futureInaudibleNotes.pollFirst().getValue());
-                    nextInaudibleNoteClearing = futureInaudibleNotes.peekFirst().getKey();
-                }
-            }
-            catch(NullPointerException e){
-
-            }
-            catch(NoSuchElementException e){
-
-            }
-            PerformanceTracker.stopTracking(removeInaudibleNotesTimeKeeper);
 
             TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick");
             sampleBacklog = getExpectedSampleCount() + sampleLookahead - calculatedSamples;
@@ -103,6 +93,23 @@ public class NoteEnvironment implements Runnable{
 //        close();
     }
 
+    private void removeInaudibleNotes() {
+        try {
+            while (getExpectedSampleCount() >= nextInaudibleNoteClearing) {
+                for(Note note : futureInaudibleNotes.pollFirst().getValue()){
+                    noteManager.removeNote(note);
+                }
+                nextInaudibleNoteClearing = futureInaudibleNotes.peekFirst().getKey();
+            }
+        }
+        catch(NullPointerException e){
+
+        }
+        catch(NoSuchElementException e){
+
+        }
+    }
+
     private void tick() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getLiveNotes");
         NoteSnapshot noteSnapshot = noteManager.getSnapshot();
@@ -122,9 +129,9 @@ public class NoteEnvironment implements Runnable{
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick calculateAmplitudes");
         byte[] clipBuffer = new byte[]{calculateAmplitudeSum(calculatedSamples,
-                                                             frequencyState.frequencies,
-                                                             frequencyState.getFrequencyVolumeTable(volumeTable),
-                                                             waveState.frequencyWaveTable)};
+                                                             frequencyState.getFrequencies(),
+                                                             frequencyState,
+                                                             waveState)};
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
@@ -136,25 +143,19 @@ public class NoteEnvironment implements Runnable{
     private void removeInaudibleNotes(HashSet<Note> liveNotes, HashMap<Note, Double> volumeTable) {
         Set<Note> inaudibleNotes = getInaudibleNotes(volumeTable, liveNotes);
         if(!inaudibleNotes.isEmpty()) {
-            boolean hasInaudibleNotes = true;
-            if(futureInaudibleNotes.isEmpty()){
-                hasInaudibleNotes = false;
-            }
-            futureInaudibleNotes.add(new Pair<>(calculatedSamples, inaudibleNotes));
-            if(!hasInaudibleNotes) {
-                nextInaudibleNoteClearing = calculatedSamples;
+            for(Note note : inaudibleNotes){
+                noteManager.removeNote(note);
             }
         }
     }
 
-    private byte calculateAmplitudeSum(long sampleCount, Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, Map<Frequency, Wave> frequencyWaveTable) {
+    private byte calculateAmplitudeSum(long sampleCount, Set<Frequency> liveFrequencies, FrequencyState frequencyState, WaveState waveState) {
         double amplitudeSum = 0;
         for(Frequency frequency : liveFrequencies){
-            Double volume = frequencyVolumeTable.get(frequency);
-            Wave wave = frequencyWaveTable.get(frequency);
+            Double volume = frequencyState.getVolume(frequency, sampleCount);
             double amplitude = 0.;
             try {
-                amplitude = wave.getAmplitude(sampleCount);
+                amplitude = waveState.getWave(frequency).getAmplitude(sampleCount);
             }
             catch(NullPointerException e){
 
@@ -181,7 +182,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     Note createNote(Frequency frequency) {
-        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.4)));
+        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, envelopeFunction));
     }
 
     public long getExpectedSampleCount() {

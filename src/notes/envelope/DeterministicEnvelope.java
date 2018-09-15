@@ -10,4 +10,14 @@ public class DeterministicEnvelope extends Envelope {
         super(startingSampleCount, sampleRate, deterministicFunction);
         endingSampleCount = startingSampleCount+sampleRate.asSampleCount(deterministicFunction.totalTime);
     }
+
+    protected double getVolume(long startingSampleCount, long sampleCount) {
+        if(sampleCount<startingSampleCount || sampleCount>endingSampleCount){
+            return 0.;
+        }
+        else {
+            return envelopeFunction.getVolume(getTimeDifference(startingSampleCount, sampleCount));
+        }
+    }
+
 }

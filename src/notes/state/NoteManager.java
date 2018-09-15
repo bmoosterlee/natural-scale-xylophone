@@ -15,15 +15,15 @@ public class NoteManager {
     public NoteManager(NoteEnvironment noteEnvironment, SampleRate sampleRate) {
         this.noteEnvironment = noteEnvironment;
         noteState = new NoteState();
-        frequencyState = new FrequencyState();
+        frequencyState = new SimpleFrequencyState();
         waveState = new WaveState(sampleRate);
     }
 
-    void removeInaudibleNotes(Set<Note> inaudibleNotes) {
+    void removeNote(Note note) {
         synchronized (noteState) {
-            noteState = noteState.removeNotes(inaudibleNotes);
-            frequencyState = frequencyState.removeNotes(inaudibleNotes);
-            waveState = waveState.update(frequencyState.frequencies);
+            noteState = noteState.removeNote(note);
+            frequencyState = frequencyState.removeNote(note);
+            waveState = waveState.update(frequencyState.getFrequencies());
         }
     }
 
@@ -33,7 +33,7 @@ public class NoteManager {
         synchronized (noteState) {
             noteState = noteState.addNote(note);
             frequencyState = frequencyState.addNote(note);
-            waveState = waveState.update(frequencyState.frequencies);
+            waveState = waveState.update(frequencyState.getFrequencies());
         }
     }
 

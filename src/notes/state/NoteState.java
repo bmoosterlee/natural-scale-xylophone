@@ -24,9 +24,9 @@ public class NoteState {
         return new NoteState(newLiveNotes);
     }
 
-    public NoteState removeNotes(Set<Note> inaudibleNotes) {
+    public NoteState removeNote(Note note) {
         HashSet<Note> newLiveNotes = new HashSet<>(notes);
-        newLiveNotes.removeAll(inaudibleNotes);
+        newLiveNotes.remove(note);
         return new NoteState(newLiveNotes);
     }
 
