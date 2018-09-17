@@ -7,6 +7,7 @@ import main.TimeKeeper;
 import notes.Frequency;
 import notes.Note;
 import notes.Wave;
+import notes.envelope.PrecalculatedEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
@@ -182,7 +183,7 @@ public class NoteEnvironment implements Runnable{
     }
 
     Note createNote(Frequency frequency) {
-        return new Note(frequency, new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, envelopeFunction));
+        return new Note(frequency, new PrecalculatedEnvelope(new SimpleDeterministicEnvelope(getExpectedSampleCount(), sampleRate, envelopeFunction)));
     }
 
     public long getExpectedSampleCount() {
