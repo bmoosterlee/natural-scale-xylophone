@@ -6,15 +6,18 @@ import notes.Note;
 import java.util.*;
 
 public class SimpleFrequencyState implements FrequencyState {
+    public final Set<Note> notes;
     public final Set<Frequency> frequencies;
     public final Map<Frequency, Set<Note>> frequencyNoteTable;
 
     public SimpleFrequencyState() {
+        notes = new HashSet<>();
         frequencies = new HashSet<>();
         frequencyNoteTable = new HashMap<>();
     }
 
-    public SimpleFrequencyState(Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable) {
+    public SimpleFrequencyState(Set<Note> notes, Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable) {
+        this.notes = notes;
         this.frequencies = frequencies;
         this.frequencyNoteTable = frequencyNoteTable;
     }
@@ -55,34 +58,41 @@ public class SimpleFrequencyState implements FrequencyState {
         return volume;
     }
 
-    public Map<Frequency, Double> getFrequencyVolumeTable(Map<Note, Double> volumeTable) {
-        Map<Frequency, Double> frequencyVolumes = new HashMap<>();
+    @Override
+    public FrequencyState update(Set<Note> notes) {
+        FrequencyState newFrequencyState = this;
 
-        Iterator<Map.Entry<Frequency, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Frequency, Set<Note>> entry = iterator.next();
-            Frequency frequency = entry.getKey();
-            Double volume = 0.;
-            Iterator<Note> noteIterator = entry.getValue().iterator();
-            while (noteIterator.hasNext()) {
-                Note note = noteIterator.next();
-                try {
-                    volume += volumeTable.get(note);
-                } catch (NullPointerException e) {
-                    continue;
-                }
+        Set<Note> removedNotes = new HashSet<>(this.notes);
+        removedNotes.removeAll(new HashSet<>(notes));
+
+        Set<Note> addedNotes = new HashSet<>(notes);
+        addedNotes.removeAll(new HashSet<>(this.notes));
+
+        if(!removedNotes.isEmpty()) {
+            Iterator<Note> iterator = removedNotes.iterator();
+            while (iterator.hasNext()) {
+                newFrequencyState = newFrequencyState.removeNote(iterator.next());
             }
-            frequencyVolumes.put(frequency, volume);
         }
-        return frequencyVolumes;
+
+        if(!addedNotes.isEmpty()) {
+            Iterator<Note> iterator = addedNotes.iterator();
+            while (iterator.hasNext()) {
+                newFrequencyState = newFrequencyState.addNote(iterator.next());
+            }
+        }
+
+        return newFrequencyState;
     }
 
     public SimpleFrequencyState removeNote(Note note) {
         Frequency frequency = note.getFrequency();
 
+        Set<Note> newNotes = new HashSet<>(notes);
         Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
         Set<Frequency> newFrequencies = new HashSet<>(frequencies);
 
+        newNotes.remove(note);
         Set<Note> notes = newFrequencyNoteTable.get(frequency);
         try {
             notes.remove(note);
@@ -96,13 +106,16 @@ public class SimpleFrequencyState implements FrequencyState {
             
         }
 
-        return new SimpleFrequencyState(newFrequencies, newFrequencyNoteTable);
+        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
     }
 
     public SimpleFrequencyState removeNotes(Set<Note> notes) {
-        if(notes.isEmpty()){
+        if (notes.isEmpty()) {
             return this;
         }
+
+        Set<Note> newNotes = new HashSet<>(notes);
+        newNotes.removeAll(notes);
 
         Set<Frequency> newFrequencies = frequencies;
         Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
@@ -116,7 +129,7 @@ public class SimpleFrequencyState implements FrequencyState {
             touchedFrequencies.add(frequency);
         }
 
-        if(!touchedFrequencies.isEmpty()) {
+        if (!touchedFrequencies.isEmpty()) {
             newFrequencies = new HashSet<>(frequencies);
 
             for (Frequency frequency : touchedFrequencies) {
@@ -127,15 +140,22 @@ public class SimpleFrequencyState implements FrequencyState {
             }
         }
 
-        return new SimpleFrequencyState(newFrequencies, newFrequencyNoteTable);
+        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
+    }
+
+    @Override
+    public FrequencyState update(long sampleCount) {
+        return this;
     }
 
     public SimpleFrequencyState addNote(Note note) {
         Frequency frequency = note.getFrequency();
 
+        Set<Note> newNotes = new HashSet<>(notes);
         Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
         Set<Frequency> newFrequencies = frequencies;
 
+        newNotes.add(note);
         Set<Note> noteSet;
 
         if (!newFrequencyNoteTable.containsKey(frequency)) {
@@ -149,7 +169,7 @@ public class SimpleFrequencyState implements FrequencyState {
         }
         noteSet.add(note);
 
-        return new SimpleFrequencyState(newFrequencies, newFrequencyNoteTable);
+        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
     }
 
     Map<Frequency, Set<Note>> copyFrequencyNoteTable() {
@@ -171,10 +191,6 @@ public class SimpleFrequencyState implements FrequencyState {
 
     public Set<Frequency> getFrequencies(){
         return new HashSet<>(frequencies);
-    }
-
-    public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount, NoteState noteState) {
-        return getFrequencyVolumeTable(noteState.getVolumeTable(sampleCount));
     }
 
 }

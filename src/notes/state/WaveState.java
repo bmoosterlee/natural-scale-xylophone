@@ -46,13 +46,13 @@ public class WaveState {
         return new WaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
     }
 
-    public WaveState update(Set<Frequency> updatedFrequencies) {
+    public WaveState update(Set<Frequency> frequencies) {
         WaveState newWaveState = this;
 
         Set<Frequency> removedFrequencies = new HashSet<>(this.frequencies);
-        removedFrequencies.removeAll(new HashSet<>(updatedFrequencies));
+        removedFrequencies.removeAll(new HashSet<>(frequencies));
 
-        Set<Frequency> addedFrequencies = new HashSet<>(updatedFrequencies);
+        Set<Frequency> addedFrequencies = new HashSet<>(frequencies);
         addedFrequencies.removeAll(new HashSet<>(this.frequencies));
 
         if(!removedFrequencies.isEmpty()) {
@@ -74,5 +74,13 @@ public class WaveState {
 
     public Wave getWave(Frequency frequency) {
         return frequencyWaveTable.get(frequency);
+    }
+
+    public WaveState update(long sampleCount) {
+        return this;
+    }
+
+    public double getAmplitude(Frequency frequency, long sampleCount) {
+        return getWave(frequency).getAmplitude(sampleCount);
     }
 }

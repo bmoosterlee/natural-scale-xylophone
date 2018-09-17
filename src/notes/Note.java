@@ -18,4 +18,8 @@ public class Note {
     public Envelope getEnvelope() {
         return envelope;
     }
+
+    public boolean isDead(long sampleCount) {
+        return getEnvelope().isDead(sampleCount);
+    }
 }
