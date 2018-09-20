@@ -3,7 +3,7 @@ package main;
 import gui.GUI;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
-import notes.state.NoteEnvironment;
+import notes.state.SampleTicker;
 import notes.state.NoteManager;
 import notes.state.SoundEnvironment;
 import pianola.Pianola;
@@ -12,20 +12,25 @@ public class Main {
 
     public static void main(String[] args){
 
+        /*todo move towards threads started for each frame which can quit at any moment, so that when time in the frame
+        runs out, we can move on to the next frame without losing all our progress from this frame. One way to do it
+        could be to stream pipeline each unit, and check after each unit whether we have time left.
+            Another could be that we stream pipeline each unit, store the results persistently, and kill the thread when
+        time runs out.*/
         int SAMPLE_SIZE_IN_BITS = 8;
         int SAMPLE_RATE = 44100;
 
         new PerformanceTracker();
         PerformanceTracker.start();
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
-        NoteEnvironment noteEnvironment = new NoteEnvironment(soundEnvironment);
-        NoteManager noteManager = new NoteManager(noteEnvironment, soundEnvironment.getSampleRate());
+        SampleTicker sampleTicker = new SampleTicker(soundEnvironment);
+        NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, noteManager);
-        noteEnvironment.tickObservers.add(amplitudeCalculator);
+        sampleTicker.tickObservers.add(amplitudeCalculator);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(noteEnvironment, harmonicCalculator, noteManager);
+        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
-        noteEnvironment.start();
+        sampleTicker.start();
         gui.start();
 
         try {

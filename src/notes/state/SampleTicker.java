@@ -6,7 +6,7 @@ import main.TimeKeeper;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class NoteEnvironment implements Runnable{
+public class SampleTicker implements Runnable{
 
     private final SoundEnvironment soundEnvironment;
     private long calculatedSamples = 0L;
@@ -15,7 +15,7 @@ public class NoteEnvironment implements Runnable{
     private int sampleLookahead;
     public Collection<Observer<Long>> tickObservers;
 
-    public NoteEnvironment(SoundEnvironment soundEnvironment){
+    public SampleTicker(SoundEnvironment soundEnvironment){
         this.soundEnvironment = soundEnvironment;
         tickObservers = new HashSet<>();
 
@@ -36,7 +36,7 @@ public class NoteEnvironment implements Runnable{
         while(true) {
             long startTime = System.nanoTime();
 
-            TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick");
+            TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("SampleTicker tick");
             sampleBacklog = getExpectedSampleCount() + sampleLookahead - calculatedSamples;
             sampleBacklog = Math.min(sampleBacklog, soundEnvironment.getSampleRate().sampleRate);
 
@@ -49,7 +49,7 @@ public class NoteEnvironment implements Runnable{
             }
             PerformanceTracker.stopTracking(tickTimeKeeper);
 
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment sleep");
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("SampleTicker sleep");
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
 
             if(timeLeftInFrame>0){

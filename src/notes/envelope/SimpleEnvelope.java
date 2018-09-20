@@ -2,7 +2,6 @@ package notes.envelope;
 
 import main.SampleRate;
 import notes.envelope.functions.EnvelopeFunction;
-import notes.state.NoteEnvironment;
 import notes.state.SoundEnvironment;
 
 import java.util.Arrays;

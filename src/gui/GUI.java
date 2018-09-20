@@ -3,7 +3,7 @@ package gui;
 import harmonics.HarmonicCalculator;
 import main.*;
 import notes.*;
-import notes.state.NoteEnvironment;
+import notes.state.SampleTicker;
 import notes.state.NoteManager;
 
 import javax.swing.*;
@@ -17,7 +17,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public final SpectrumWindow spectrumWindow;
     public SpectrumSnapshot spectrumSnapshot;
 
-    NoteEnvironment noteEnvironment;
+    SampleTicker sampleTicker;
     private NoteManager noteManager;
 
     public static final int WIDTH = 800*2;
@@ -31,8 +31,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     boolean calculatedMouseFrequency;
     public Frequency mouseFrequency;
 
-    public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator, NoteManager noteManager){
-        this.noteEnvironment = noteEnvironment;
+    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager){
+        this.sampleTicker = sampleTicker;
         this.noteManager = noteManager;
 
         spectrumWindow = new SpectrumWindow(noteManager, harmonicCalculator);
@@ -53,7 +53,7 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getNoteEnvironment().getExpectedSampleCount());
+        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedSampleCount());
         while (getTimeLeftInFrame(startTime) > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
@@ -176,8 +176,8 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         calculatedMouseFrequency = false;
     }
 
-    public NoteEnvironment getNoteEnvironment() {
-        return noteEnvironment;
+    public SampleTicker getSampleTicker() {
+        return sampleTicker;
     }
 
 }

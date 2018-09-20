@@ -10,15 +10,15 @@ import notes.envelope.functions.LinearFunctionMemoizer;
 
 public class NoteManager {
     //todo move frequencyState elsewhere.
-    private final NoteEnvironment noteEnvironment;
+    private final SampleTicker sampleTicker;
     private NoteState noteState;
     private FrequencyState frequencyState;
     private WaveState waveState;
     DeterministicFunction envelopeFunction;
     private SampleRate sampleRate;
 
-    public NoteManager(NoteEnvironment noteEnvironment, SampleRate sampleRate) {
-        this.noteEnvironment = noteEnvironment;
+    public NoteManager(SampleTicker sampleTicker, SampleRate sampleRate) {
+        this.sampleTicker = sampleTicker;
         this.sampleRate = sampleRate;
         noteState = new NoteState();
         // frequencyState = new SimpleFrequencyState();
@@ -29,7 +29,7 @@ public class NoteManager {
 
     public void addNote(Frequency frequency) {
         Note note = new Note(frequency, new PrecalculatedEnvelope(
-                new SimpleDeterministicEnvelope(noteEnvironment.getExpectedSampleCount(),
+                new SimpleDeterministicEnvelope(sampleTicker.getExpectedSampleCount(),
                                                 sampleRate,
                                                 envelopeFunction)));
 

@@ -16,19 +16,19 @@ public class AmplitudeCalculator implements Observer<Long> {
     }
 
     public void tick(long sampleCount) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick getLiveNotes");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getLiveNotes");
         NoteSnapshot noteSnapshot = noteManager.getSnapshot(sampleCount);
         FrequencyState frequencyState = noteSnapshot.frequencyState;
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick calculateAmplitudes");
+        timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
         double amplitude = calculateAmplitude(sampleCount,
                                               frequencyState.getFrequencies(),
                                               frequencyState,
                                               noteSnapshot.waveState);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("notes.NoteEnvironment tick writeToBuffer");
+        timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
         soundEnvironment.writeToBuffer(amplitude);
         PerformanceTracker.stopTracking(timeKeeper);
     }
