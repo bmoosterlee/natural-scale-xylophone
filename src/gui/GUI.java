@@ -31,9 +31,9 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     boolean calculatedMouseFrequency;
     public Frequency mouseFrequency;
 
-    public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator){
+    public GUI(NoteEnvironment noteEnvironment, HarmonicCalculator harmonicCalculator, NoteManager noteManager){
         this.noteEnvironment = noteEnvironment;
-        noteManager = noteEnvironment.noteManager;
+        this.noteManager = noteManager;
 
         spectrumWindow = new SpectrumWindow(noteManager, harmonicCalculator);
 

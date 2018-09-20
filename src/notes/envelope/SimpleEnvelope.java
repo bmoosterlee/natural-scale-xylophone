@@ -3,6 +3,7 @@ package notes.envelope;
 import main.SampleRate;
 import notes.envelope.functions.EnvelopeFunction;
 import notes.state.NoteEnvironment;
+import notes.state.SoundEnvironment;
 
 import java.util.Arrays;
 
@@ -10,13 +11,13 @@ public class SimpleEnvelope implements Envelope {
     private final EnvelopeFunction envelopeFunction;
     private final SampleRate sampleRate;
     private final long startingSampleCount;
-    private final NoteEnvironment noteEnvironment;
+    private final SoundEnvironment soundEnvironment;
 
-    public SimpleEnvelope(long startingSampleCount, SampleRate sampleRate, EnvelopeFunction envelopeFunction, NoteEnvironment noteEnvironment) {
+    public SimpleEnvelope(long startingSampleCount, SampleRate sampleRate, EnvelopeFunction envelopeFunction, SoundEnvironment soundEnvironment) {
         this.sampleRate = sampleRate;
         this.startingSampleCount = startingSampleCount;
         this.envelopeFunction = envelopeFunction;
-        this.noteEnvironment = noteEnvironment;
+        this.soundEnvironment = soundEnvironment;
     }
 
     protected double getVolume(long startingSampleCount, long sampleCount) {
@@ -55,7 +56,7 @@ public class SimpleEnvelope implements Envelope {
 
     @Override
     public boolean isDead(long sampleCount) {
-        return !noteEnvironment.isAudible(getVolume(sampleCount));
+        return !soundEnvironment.isAudible(getVolume(sampleCount));
     }
 
     public Envelope add(CompositeEnvelope envelope) {
