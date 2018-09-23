@@ -29,7 +29,7 @@ public class NoteManager {
 
     public void addNote(Frequency frequency) {
         Note note = new Note(frequency, new PrecalculatedEnvelope(
-                new SimpleDeterministicEnvelope(sampleTicker.getExpectedSampleCount(),
+                new SimpleDeterministicEnvelope(sampleTicker.getExpectedTickCount(),
                                                 sampleRate,
                                                 envelopeFunction)));
 

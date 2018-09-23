@@ -1,27 +1,21 @@
 package notes.state;
 
 import main.PerformanceTracker;
+import main.SampleRate;
 import main.TimeKeeper;
 
-import java.util.Collection;
-import java.util.HashSet;
+public class SampleTicker extends Ticker{
 
-public class SampleTicker implements Runnable{
+    private final int tickLookahead;
+    private int maxBacklog;
+    private final SampleRate sampleRate;
 
-    private final SoundEnvironment soundEnvironment;
-    private long calculatedSamples = 0L;
-    private long timeZero;
-    private long frameTime;
-    private int sampleLookahead;
-    public Collection<Observer<Long>> tickObservers;
+    public SampleTicker(SampleRate sampleRate){
+        super(1000000000 / sampleRate.sampleRate);
+        this.sampleRate = sampleRate;
 
-    public SampleTicker(SoundEnvironment soundEnvironment){
-        this.soundEnvironment = soundEnvironment;
-        tickObservers = new HashSet<>();
-
-        int sampleRate = soundEnvironment.getSampleRate().sampleRate;
-        frameTime = 1000000000 / sampleRate;
-        sampleLookahead = sampleRate/100;
+        tickLookahead = sampleRate.sampleRate /1000;
+        maxBacklog = sampleRate.sampleRate;
     }
 
     public void start(){
@@ -29,53 +23,19 @@ public class SampleTicker implements Runnable{
     }
 
     @Override
-    public void run() {
-        timeZero = System.nanoTime();
-        long sampleBacklog;
+    protected void tick() {
+        long sampleBacklog = getExpectedTickCount() + tickLookahead - calculatedTicks;
+        sampleBacklog = Math.min(sampleBacklog, maxBacklog);
 
-        while(true) {
-            long startTime = System.nanoTime();
-
-            TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("SampleTicker tick");
-            sampleBacklog = getExpectedSampleCount() + sampleLookahead - calculatedSamples;
-            sampleBacklog = Math.min(sampleBacklog, soundEnvironment.getSampleRate().sampleRate);
-
-            while(sampleBacklog>0) {
-                for(Observer observer : tickObservers) {
-                    observer.notify(calculatedSamples);
-                }
-                calculatedSamples++;
-                sampleBacklog--;
-            }
-            PerformanceTracker.stopTracking(tickTimeKeeper);
-
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("SampleTicker sleep");
-            long timeLeftInFrame = getTimeLeftInFrame(startTime);
-
-            if(timeLeftInFrame>0){
-                try {
-                    Thread.sleep(timeLeftInFrame);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            PerformanceTracker.stopTracking(sleepTimeKeeper);
+        //todo create Milisecond datatype, nanoseconds datatype, doubleTime datatype, and a sampleCount datatype
+        while(sampleBacklog>0) {
+            super.tick();
+            sampleBacklog--;
         }
-//        close();
     }
 
-    public long getExpectedSampleCount() {
-        return soundEnvironment.getSampleRate().asSampleCount((System.nanoTime()- timeZero) / 1000000000.);
+    public long getExpectedTickCount() {
+        return sampleRate.asSampleCount((System.nanoTime()- timeZero) / 1000000000.);
     }
 
-    private long getTimeLeftInFrame(long startTime) {
-        long currentTime;
-        currentTime = System.nanoTime();
-        long timePassed = (currentTime - startTime);
-        return (frameTime - timePassed)/ 1000000;
-    }
-
-    public long getCalculatedSamples() {
-        return calculatedSamples;
-    }
 }

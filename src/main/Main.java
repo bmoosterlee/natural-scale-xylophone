@@ -18,15 +18,15 @@ public class Main {
             Another could be that we stream pipeline each unit, store the results persistently, and kill the thread when
         time runs out.*/
         int SAMPLE_SIZE_IN_BITS = 8;
-        int SAMPLE_RATE = 44100;
+        int SAMPLE_RATE = 44100/2;
 
         new PerformanceTracker();
         PerformanceTracker.start();
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
-        SampleTicker sampleTicker = new SampleTicker(soundEnvironment);
+        SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
         NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, noteManager);
-        sampleTicker.tickObservers.add(amplitudeCalculator);
+        sampleTicker.getTickObservable().add(amplitudeCalculator);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
