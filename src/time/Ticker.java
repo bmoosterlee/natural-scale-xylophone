@@ -23,8 +23,7 @@ public class Ticker implements Runnable{
 
         while(true) {
             TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
-
-            //todo create Milisecond datatype, nanoseconds datatype, doubleTime datatype, and a sampleCount datatype
+            
             tick();
 
             long timeLeftInFrame = getTimeLeftInFrame(startTime).toMilliSeconds().getValue();
