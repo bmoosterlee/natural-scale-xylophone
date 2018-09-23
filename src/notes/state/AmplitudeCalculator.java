@@ -2,8 +2,8 @@ package notes.state;
 
 import frequency.FrequencyState;
 import main.Observer;
-import main.PerformanceTracker;
-import main.TimeKeeper;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 import frequency.Frequency;
 import sound.SoundEnvironment;
 import wave.WaveState;

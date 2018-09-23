@@ -1,4 +1,6 @@
-package main;
+package time;
+
+import main.Observable;
 
 public class Ticker implements Runnable{
 

@@ -1,4 +1,4 @@
-package main;
+package time;
 
 public class TimeKeeper {
 

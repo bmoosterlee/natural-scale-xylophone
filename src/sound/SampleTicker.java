@@ -1,6 +1,6 @@
 package sound;
 
-import main.Ticker;
+import time.Ticker;
 
 public class SampleTicker extends Ticker {
 

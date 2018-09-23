@@ -5,7 +5,7 @@ import harmonics.HarmonicCalculator;
 import main.Observer;
 import sound.SampleTicker;
 import notes.state.NoteManager;
-import main.Ticker;
+import time.Ticker;
 
 import javax.swing.*;
 import java.awt.*;

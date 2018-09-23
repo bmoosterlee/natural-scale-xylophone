@@ -6,6 +6,7 @@ import notes.state.AmplitudeCalculator;
 import sound.SampleTicker;
 import notes.state.NoteManager;
 import sound.SoundEnvironment;
+import time.PerformanceTracker;
 
 public class Main {
 
