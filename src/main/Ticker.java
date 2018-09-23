@@ -22,15 +22,10 @@ public class Ticker implements Runnable{
         while(true) {
             long startTime = System.nanoTime();
 
-            TimeKeeper tickTimeKeeper = PerformanceTracker.startTracking("Ticker tick");
-
             //todo create Milisecond datatype, nanoseconds datatype, doubleTime datatype, and a sampleCount datatype
             tick();
-            PerformanceTracker.stopTracking(tickTimeKeeper);
 
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("Ticker sleep");
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
-
             if(timeLeftInFrame>0){
                 try {
                     Thread.sleep(timeLeftInFrame);
@@ -38,7 +33,6 @@ public class Ticker implements Runnable{
                     e.printStackTrace();
                 }
             }
-            PerformanceTracker.stopTracking(sleepTimeKeeper);
         }
     }
 
