@@ -1,23 +1,22 @@
 package main;
 
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class Observable<T> {
-
-    LinkedList<Observer> observers;
+    final Collection<Observer<T>> observers;
 
     public Observable(){
-        observers = new LinkedList<>();
+        observers = new HashSet<>();
     }
 
-    public void notifyObservers(T event){
-        for(Observer observer : observers){
-            observer.notify(event);
-        }
-    }
-
-    public void addObserver(Observer observer){
+    public void add(Observer<T> observer) {
         observers.add(observer);
     }
 
+    public void notify(T event) {
+        for(Observer observer : observers) {
+            observer.notify(event);
+        }
+    }
 }

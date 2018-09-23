@@ -1,7 +1,7 @@
 package notes.envelope;
 
-import main.SampleRate;
 import notes.envelope.functions.DeterministicFunction;
+import sound.SampleRate;
 
 import java.util.Arrays;
 

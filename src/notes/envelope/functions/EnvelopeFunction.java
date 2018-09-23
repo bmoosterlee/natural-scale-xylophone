@@ -1,6 +1,6 @@
 package notes.envelope.functions;
 
-import main.SampleRate;
+import sound.SampleRate;
 
 public abstract class EnvelopeFunction {
     SampleRate sampleRate;

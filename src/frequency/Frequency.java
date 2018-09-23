@@ -1,4 +1,4 @@
-package notes;
+package frequency;
 
 public class Frequency {
 

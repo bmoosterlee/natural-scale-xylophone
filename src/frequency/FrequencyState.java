@@ -1,6 +1,5 @@
-package notes.state;
+package frequency;
 
-import notes.Frequency;
 import notes.Note;
 
 import java.util.*;
@@ -20,4 +19,5 @@ public interface FrequencyState {
     public FrequencyState update(Set<Note> notes);
 
     FrequencyState update(long sampleCount);
+
 }

@@ -1,7 +1,7 @@
 package harmonics;
 
 import javafx.util.Builder;
-import notes.Frequency;
+import frequency.Frequency;
 
 import java.util.HashMap;
 import java.util.Set;

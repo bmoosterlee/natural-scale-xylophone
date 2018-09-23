@@ -1,8 +1,4 @@
-package notes.state;
-
-import main.PerformanceTracker;
-import main.SampleRate;
-import main.TimeKeeper;
+package main;
 
 public class Ticker implements Runnable{
 

@@ -1,7 +1,5 @@
 package notes.envelope;
 
-import notes.Frequency;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;

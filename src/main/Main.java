@@ -3,10 +3,9 @@ package main;
 import gui.GUI;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
-import notes.state.SampleTicker;
+import sound.SampleTicker;
 import notes.state.NoteManager;
-import notes.state.SoundEnvironment;
-import pianola.Pianola;
+import sound.SoundEnvironment;
 
 public class Main {
 

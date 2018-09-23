@@ -1,4 +1,4 @@
-package main;
+package sound;
 
 public class SampleRate {
     public final int sampleRate;

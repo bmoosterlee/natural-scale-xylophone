@@ -1,7 +1,7 @@
 package gui;
 
+import frequency.Frequency;
 import harmonics.HarmonicCalculator;
-import notes.*;
 import notes.state.NoteManager;
 
 import java.util.*;

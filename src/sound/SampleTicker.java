@@ -1,10 +1,8 @@
-package notes.state;
+package sound;
 
-import main.PerformanceTracker;
-import main.SampleRate;
-import main.TimeKeeper;
+import main.Ticker;
 
-public class SampleTicker extends Ticker{
+public class SampleTicker extends Ticker {
 
     private final int tickLookahead;
     private int maxBacklog;

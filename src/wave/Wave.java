@@ -1,6 +1,7 @@
-package notes;
+package wave;
 
-import main.SampleRate;
+import frequency.Frequency;
+import sound.SampleRate;
 
 public class Wave {
     private final SampleRate sampleRate;

@@ -1,6 +1,6 @@
 package harmonics;
 
-import notes.Frequency;
+import frequency.Frequency;
 
 import java.util.*;
 

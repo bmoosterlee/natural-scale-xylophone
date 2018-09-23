@@ -1,6 +1,5 @@
-package notes.state;
+package frequency;
 
-import notes.Frequency;
 import notes.Note;
 import notes.envelope.Envelope;
 

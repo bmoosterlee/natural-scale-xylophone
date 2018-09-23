@@ -1,12 +1,16 @@
 package notes.state;
 
-import main.SampleRate;
-import notes.Frequency;
+import frequency.CompositeFrequencyState;
+import frequency.Frequency;
+import frequency.FrequencyState;
 import notes.Note;
 import notes.envelope.PrecalculatedEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
+import sound.SampleRate;
+import sound.SampleTicker;
+import wave.WaveState;
 
 public class NoteManager {
     //todo move frequencyState elsewhere.

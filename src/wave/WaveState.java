@@ -1,8 +1,7 @@
-package notes.state;
+package wave;
 
-import main.SampleRate;
-import notes.Frequency;
-import notes.Wave;
+import frequency.Frequency;
+import sound.SampleRate;
 
 import java.util.*;
 

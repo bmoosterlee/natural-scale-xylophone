@@ -1,6 +1,6 @@
 package notes.envelope;
 
-import main.SampleRate;
+import sound.SampleRate;
 
 import java.util.*;
 

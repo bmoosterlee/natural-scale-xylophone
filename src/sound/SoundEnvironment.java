@@ -1,6 +1,4 @@
-package notes.state;
-
-import main.SampleRate;
+package sound;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -24,7 +22,7 @@ public class SoundEnvironment {
         initialize();
     }
 
-    void writeToBuffer(double amplitude) {
+    public void writeToBuffer(double amplitude) {
         sourceDataLine.write(new byte[]{fitAmplitude(amplitude)}, 0, 1);
     }
 

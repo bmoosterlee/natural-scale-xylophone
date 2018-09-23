@@ -1,5 +1,6 @@
 package notes;
 
+import frequency.Frequency;
 import notes.envelope.Envelope;
 
 public class Note {

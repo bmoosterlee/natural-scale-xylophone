@@ -1,9 +1,7 @@
 package notes.envelope;
 
-import main.SampleRate;
 import notes.envelope.functions.EnvelopeFunction;
-
-import java.util.Arrays;
+import sound.SampleRate;
 
 public interface Envelope {
 

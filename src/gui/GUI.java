@@ -1,11 +1,11 @@
 package gui;
 
+import frequency.Frequency;
 import harmonics.HarmonicCalculator;
-import notes.*;
-import notes.state.Observer;
-import notes.state.SampleTicker;
+import main.Observer;
+import sound.SampleTicker;
 import notes.state.NoteManager;
-import notes.state.Ticker;
+import main.Ticker;
 
 import javax.swing.*;
 import java.awt.*;

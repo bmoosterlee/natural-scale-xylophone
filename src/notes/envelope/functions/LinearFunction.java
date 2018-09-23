@@ -1,6 +1,6 @@
 package notes.envelope.functions;
 
-import main.SampleRate;
+import sound.SampleRate;
 
 public class LinearFunction extends DeterministicFunction {
     
