@@ -1,10 +1,11 @@
 package gui;
 
 import harmonics.HarmonicCalculator;
-import main.*;
 import notes.*;
+import notes.state.Observer;
 import notes.state.SampleTicker;
 import notes.state.NoteManager;
+import notes.state.Ticker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,48 +14,105 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.*;
 
-public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionListener {
+public class GUI extends JPanel {
     public final SpectrumWindow spectrumWindow;
-    public SpectrumSnapshot spectrumSnapshot;
+    private final MouseListener mouseListener;
+    private final MouseMotionListener mouseMotionListener;
 
+    public SpectrumSnapshot spectrumSnapshot;
     SampleTicker sampleTicker;
-    private NoteManager noteManager;
 
     public static final int WIDTH = 800*2;
     public static final int HEIGHT = 600;
     public static final double yScale = HEIGHT * 0.95;
     public static final double margin = HEIGHT * 0.05;
 
-    public static final long FRAME_TIME = 1000000000 / 60;
+    public Ticker ticker;
     public long startTime;
-    public int mouseX;
-    boolean calculatedMouseFrequency;
     public Frequency mouseFrequency;
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager){
-        this.sampleTicker = sampleTicker;
-        this.noteManager = noteManager;
+        GUI.this.sampleTicker = sampleTicker;
+
+        ticker = new Ticker((long) (1000000000 / 60));
+        ticker.getTickObservable().add((Observer<Long>) event -> tick());
 
         spectrumWindow = new SpectrumWindow(noteManager, harmonicCalculator);
+
+        mouseListener = new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                Frequency frequency = spectrumWindow.getFrequency(e.getX());
+                clickFrequency(noteManager, frequency);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        };
+        mouseMotionListener = new MouseMotionListener() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                moveMouse(spectrumWindow.getFrequency(e.getX()));
+            }
+        };
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        frame.setContentPane(this);
-        frame.addMouseListener(this);
-        frame.addMouseMotionListener(this);
+        frame.setContentPane(GUI.this);
+        frame.addMouseListener(mouseListener);
+        frame.addMouseMotionListener(mouseMotionListener);
         frame.pack();
         frame.setVisible(true);
 
+    }
+
+    public void start(){
+        ticker.start();
+    }
+
+    private void tick() {
+        startTime = System.nanoTime();
+        repaint();
+    }
+
+    private void moveMouse(Frequency newFrequency) {
+        mouseFrequency = newFrequency;
+    }
+
+    private void clickFrequency(NoteManager noteManager, Frequency frequency) {
+        noteManager.addNote(frequency);
     }
 
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
 
-        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedSampleCount());
-        while (getTimeLeftInFrame(startTime) > 1) {
+        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedTickCount());
+        while (ticker.getTimeLeftInFrame(startTime) > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
         spectrumSnapshot = spectrumSnapshotBuilder.finish();
@@ -82,41 +140,14 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
     }
 
     private void renderCursorLine(Graphics g) {
-        if(!calculatedMouseFrequency){
-            mouseFrequency = spectrumWindow.getFrequency(mouseX);
-            calculatedMouseFrequency = true;
-        }
         g.setColor(Color.green);
-        int x = spectrumWindow.getX(mouseFrequency);
-        g.drawRect(x, 0, 1, HEIGHT);
-    }
-
-    public void start(){
-        Thread thread = new Thread(this);
-        thread.start();
-    }
-
-    @Override
-    public void run() {
-        while(true) {
-            startTime = System.nanoTime();
-            tick();
-
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("gui.GUI sleep");
-            long timeLeftInFrame = getTimeLeftInFrame(startTime);
-            if (timeLeftInFrame > 0) {
-                try {
-                    Thread.sleep(timeLeftInFrame);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            PerformanceTracker.stopTracking(sleepTimeKeeper);
+        try {
+            int x = spectrumWindow.getX(mouseFrequency);
+            g.drawRect(x, 0, 1, HEIGHT);
         }
-    }
+        catch(NullPointerException ignored){
 
-    private void tick() {
-        repaint();
+        }
     }
 
     private void renderHarmonicsBuckets(Graphics g, Buckets buckets) {
@@ -125,55 +156,12 @@ public class GUI extends JPanel implements Runnable, MouseListener, MouseMotionL
         renderBuckets(g, buckets);
     }
 
-    public long getTimeLeftInFrame(long startTime) {
-        long currentTime;
-        currentTime = System.nanoTime();
-        long timePassed = (currentTime - startTime);
-        return (FRAME_TIME - timePassed)/ 1000000;
-    }
-
     public int getX(Frequency frequency) {
         return spectrumWindow.getX(frequency);
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        noteManager.addNote(spectrumWindow.getFrequency(e.getX()));
-    }
-
     public Frequency getFrequency(double x) {
         return spectrumWindow.getFrequency(x);
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        mouseX = e.getX();
-        calculatedMouseFrequency = false;
     }
 
     public SampleTicker getSampleTicker() {
