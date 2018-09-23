@@ -75,7 +75,13 @@ public class CompositeFrequencyState implements FrequencyState {
 
     @Override
     public FrequencyState removeNote(Note note) {
-        return this;
+        Set<Note> newNotes = new HashSet<>(notes);
+        Set<Frequency> newFrequencies = new HashSet<>(getFrequencies());
+        Map<Frequency, Envelope> newFrequencyEnvelopes = new HashMap<>(frequencyEnvelopes);
+
+        newNotes.remove(note);
+
+        return new CompositeFrequencyState(newNotes, newFrequencies, newFrequencyEnvelopes);
     }
 
     public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount) {
@@ -129,21 +135,28 @@ public class CompositeFrequencyState implements FrequencyState {
 
     @Override
     public FrequencyState update(long sampleCount) {
-        Set<Note> newNotes = new HashSet<>(notes);
+        FrequencyState newFrequencyState = this;
+
+        for(Frequency frequency : getFrequencies()){
+            newFrequencyState = updateFrequency(frequency, sampleCount);
+        }
+
+        return newFrequencyState;
+    }
+
+    private FrequencyState updateFrequency(Frequency frequency, long sampleCount) {
         Set<Frequency> newFrequencies = new HashSet<>(getFrequencies());
         Map<Frequency, Envelope> newFrequencyEnvelopes = new HashMap<>(frequencyEnvelopes);
 
-        for(Frequency frequency : getFrequencies()){
-            Envelope update = frequencyEnvelopes.get(frequency).update(sampleCount);
-            if(update==null){
-                newFrequencies.remove(frequency);
-                newFrequencyEnvelopes.remove(frequency);
-            }
-            else {
-                newFrequencyEnvelopes.put(frequency, update);
-            }
+        Envelope update = frequencyEnvelopes.get(frequency).update(sampleCount);
+        if(update==null){
+            newFrequencies.remove(frequency);
+            newFrequencyEnvelopes.remove(frequency);
+        }
+        else {
+            newFrequencyEnvelopes.put(frequency, update);
         }
 
-        return new CompositeFrequencyState(newNotes, newFrequencies, newFrequencyEnvelopes);
+        return new CompositeFrequencyState(notes, newFrequencies, newFrequencyEnvelopes);
     }
 }

@@ -20,8 +20,11 @@ public class AmplitudeCalculator implements Observer<Long> {
     }
 
     public void tick(long sampleCount) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getLiveNotes");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getFrequencyState");
         FrequencyState frequencyState = noteManager.getFrequencyState(sampleCount);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
         WaveState waveState = noteManager.getWaveState(sampleCount);
         PerformanceTracker.stopTracking(timeKeeper);
 

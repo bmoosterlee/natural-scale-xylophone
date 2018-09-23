@@ -3,6 +3,7 @@ package notes.state;
 import frequency.CompositeFrequencyState;
 import frequency.Frequency;
 import frequency.FrequencyState;
+import frequency.SimpleFrequencyState;
 import notes.Note;
 import notes.envelope.PrecalculatedEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
@@ -25,17 +26,17 @@ public class NoteManager {
         this.sampleTicker = sampleTicker;
         this.sampleRate = sampleRate;
         noteState = new NoteState();
-        // frequencyState = new SimpleFrequencyState();
-        frequencyState = new CompositeFrequencyState();
+        frequencyState = new SimpleFrequencyState();
         waveState = new WaveState(sampleRate);
         envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.4);
     }
 
     public void addNote(Frequency frequency) {
-        Note note = new Note(frequency, new PrecalculatedEnvelope(
+        Note note = new Note(frequency,
                 new SimpleDeterministicEnvelope(sampleTicker.getExpectedTickCount(),
                                                 sampleRate,
-                                                envelopeFunction)));
+                                                envelopeFunction)
+        );
 
         synchronized (noteState) {
             noteState = noteState.addNote(note);

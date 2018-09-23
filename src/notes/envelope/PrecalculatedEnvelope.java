@@ -45,21 +45,21 @@ public class PrecalculatedEnvelope extends SimpleDeterministicEnvelope {
     @Override
     public Envelope update(long sampleCount){
         //todo this method takes too long. We just can't be iterating over the entire keyset. What we might be able to do
-        //todo is to iterate through the timestamped volumes until we find now.
+        //todo is to iterate through the timestamped volumes until we find the sampleCount argument.
         if(isDead(sampleCount)) {
             return null;
         }
         else {
-            // Map<Long, Double> newVolumes = new HashMap<>();
-            // Iterator<Long> iterator = volumes.keySet().iterator();
-            // while(iterator.hasNext()){
-            //     Long i = iterator.next();
-            //     if(i>=sampleCount) {
-            //         newVolumes.put(i, volumes.get(i));
-            //     }
-            // }
-            // return new PrecalculatedEnvelope(sampleCount, getEndingSampleCount(), getSampleRate(), newVolumes);
-            return this;
+            Map<Long, Double> newVolumes = new HashMap<>();
+            Iterator<Long> iterator = volumes.keySet().iterator();
+            while(iterator.hasNext()){
+                Long i = iterator.next();
+                if(i>=sampleCount) {
+                    newVolumes.put(i, volumes.get(i));
+                }
+            }
+            return new PrecalculatedEnvelope(sampleCount, getEndingSampleCount(), getSampleRate(), newVolumes);
+            // return this;
         }
     }
 
