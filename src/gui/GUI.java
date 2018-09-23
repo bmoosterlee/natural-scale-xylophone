@@ -6,6 +6,8 @@ import main.Observer;
 import sound.SampleTicker;
 import notes.state.NoteManager;
 import time.Ticker;
+import time.TimeInNanoSeconds;
+import time.TimeInSeconds;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,13 +30,13 @@ public class GUI extends JPanel {
     public static final double margin = HEIGHT * 0.05;
 
     public Ticker ticker;
-    public long startTime;
+    public TimeInNanoSeconds startTime;
     public Frequency mouseFrequency;
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager){
         GUI.this.sampleTicker = sampleTicker;
 
-        ticker = new Ticker((long) (1000000000 / 60));
+        ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
 
         spectrumWindow = new SpectrumWindow(noteManager, harmonicCalculator);
@@ -95,7 +97,7 @@ public class GUI extends JPanel {
     }
 
     private void tick() {
-        startTime = System.nanoTime();
+        startTime = TimeInNanoSeconds.now();
         repaint();
     }
 
@@ -112,7 +114,7 @@ public class GUI extends JPanel {
         super.paintComponent(g);
 
         SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedTickCount());
-        while (ticker.getTimeLeftInFrame(startTime) > 1) {
+        while (ticker.getTimeLeftInFrame(startTime).toMilliSeconds().getValue() > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
         spectrumSnapshot = spectrumSnapshotBuilder.finish();

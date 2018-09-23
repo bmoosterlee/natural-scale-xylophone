@@ -6,10 +6,10 @@ public class Ticker implements Runnable{
 
     private final Observable<Long> observable = new Observable<>();
     protected long calculatedTicks = 0L;
-    protected long timeZero;
-    private final long frameTime;
+    protected TimeInNanoSeconds timeZero;
+    private final TimeInNanoSeconds frameTime;
 
-    public Ticker(long frameTime){
+    public Ticker(TimeInNanoSeconds frameTime){
         this.frameTime = frameTime;
     }
 
@@ -19,15 +19,15 @@ public class Ticker implements Runnable{
 
     @Override
     public void run() {
-        timeZero = System.nanoTime();
+        timeZero = TimeInNanoSeconds.now();
 
         while(true) {
-            long startTime = System.nanoTime();
+            TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
 
             //todo create Milisecond datatype, nanoseconds datatype, doubleTime datatype, and a sampleCount datatype
             tick();
 
-            long timeLeftInFrame = getTimeLeftInFrame(startTime);
+            long timeLeftInFrame = getTimeLeftInFrame(startTime).toMilliSeconds().getValue();
             if(timeLeftInFrame>0){
                 try {
                     Thread.sleep(timeLeftInFrame);
@@ -44,14 +44,13 @@ public class Ticker implements Runnable{
     }
 
     public long getExpectedTickCount() {
-        return (long) (((System.nanoTime()- timeZero) / 1000000000.)/frameTime);
+        return TimeInNanoSeconds.now().subtract(timeZero).divide(frameTime);
     }
 
-    public long getTimeLeftInFrame(long startTime) {
-        long currentTime;
-        currentTime = System.nanoTime();
-        long timePassed = (currentTime - startTime);
-        return (frameTime - timePassed)/ 1000000;
+    public TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
+        TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
+        TimeInNanoSeconds timePassed = currentTime.subtract(startTime);
+        return frameTime.subtract(timePassed);
     }
 
     public Observable getTickObservable() {

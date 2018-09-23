@@ -1,16 +1,15 @@
 package sound;
 
 import time.Ticker;
+import time.TimeInSeconds;
 
 public class SampleTicker extends Ticker {
 
     private final int tickLookahead;
     private int maxBacklog;
-    private final SampleRate sampleRate;
 
     public SampleTicker(SampleRate sampleRate){
-        super(1000000000 / sampleRate.sampleRate);
-        this.sampleRate = sampleRate;
+        super(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
 
         tickLookahead = sampleRate.sampleRate /1000;
         maxBacklog = sampleRate.sampleRate;
@@ -30,10 +29,6 @@ public class SampleTicker extends Ticker {
             super.tick();
             sampleBacklog--;
         }
-    }
-
-    public long getExpectedTickCount() {
-        return sampleRate.asSampleCount((System.nanoTime()- timeZero) / 1000000000.);
     }
 
 }
