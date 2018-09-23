@@ -47,6 +47,10 @@ public class WaveState {
     }
 
     public WaveState update(Set<Frequency> frequencies) {
+        if(frequencies.equals(this.frequencies)){
+            return this;
+        }
+
         WaveState newWaveState = this;
 
         Set<Frequency> removedFrequencies = new HashSet<>(this.frequencies);

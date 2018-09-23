@@ -17,15 +17,15 @@ public class AmplitudeCalculator implements Observer<Long> {
 
     public void tick(long sampleCount) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getLiveNotes");
-        NoteSnapshot noteSnapshot = noteManager.getSnapshot(sampleCount);
-        FrequencyState frequencyState = noteSnapshot.frequencyState;
+        FrequencyState frequencyState = noteManager.getFrequencyState(sampleCount);
+        WaveState waveState = noteManager.getWaveState(sampleCount);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
         double amplitude = calculateAmplitude(sampleCount,
                                               frequencyState.getFrequencies(),
                                               frequencyState,
-                                              noteSnapshot.waveState);
+                                              waveState);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
@@ -37,12 +37,13 @@ public class AmplitudeCalculator implements Observer<Long> {
         double amplitudeSum = 0;
         for (Frequency frequency : liveFrequencies) {
             Double volume = frequencyState.getVolume(frequency, sampleCount);
-            double amplitude = 0.;
+            Double amplitude;
             try {
                 amplitude = waveState.getAmplitude(frequency, sampleCount);
-            } catch (NullPointerException ignored) {
-
+            } catch (NullPointerException e) {
+                amplitude = 0.;
             }
+
             amplitudeSum += volume * amplitude;
         }
         return amplitudeSum;

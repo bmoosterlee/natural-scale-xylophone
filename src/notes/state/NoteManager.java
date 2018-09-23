@@ -14,7 +14,7 @@ public class NoteManager {
     private NoteState noteState;
     private FrequencyState frequencyState;
     private WaveState waveState;
-    DeterministicFunction envelopeFunction;
+    private DeterministicFunction envelopeFunction;
     private SampleRate sampleRate;
 
     public NoteManager(SampleTicker sampleTicker, SampleRate sampleRate) {
@@ -38,14 +38,24 @@ public class NoteManager {
         }
     }
 
-    public NoteSnapshot getSnapshot(long sampleCount) {
+    public WaveState getWaveState(long sampleCount) {
         synchronized (noteState) {
             noteState = noteState.update(sampleCount);
             frequencyState = frequencyState.update(noteState.getNotes());
             frequencyState = frequencyState.update(sampleCount);
             waveState = waveState.update(frequencyState.getFrequencies());
             waveState = waveState.update(sampleCount);
-            return new NoteSnapshot(noteState, frequencyState, waveState);
+            return waveState;
         }
     }
+
+    public FrequencyState getFrequencyState(long sampleCount) {
+        synchronized (noteState) {
+            noteState = noteState.update(sampleCount);
+            frequencyState = frequencyState.update(noteState.getNotes());
+            frequencyState = frequencyState.update(sampleCount);
+            return frequencyState;
+        }
+    }
+
 }

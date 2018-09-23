@@ -99,6 +99,10 @@ public class CompositeFrequencyState implements FrequencyState {
 
     @Override
     public FrequencyState update(Set<Note> notes) {
+        if(notes.equals(this.notes)){
+            return this;
+        }
+
         FrequencyState newFrequencyState = this;
 
         Set<Note> removedNotes = new HashSet<>(this.notes);
