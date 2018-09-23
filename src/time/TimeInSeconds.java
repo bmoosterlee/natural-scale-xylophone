@@ -1,17 +1,17 @@
 package time;
 
 public class TimeInSeconds {
-    private long value;
+    private double value;
 
-    public TimeInSeconds(long time) {
+    public TimeInSeconds(double time) {
         value = time;
     }
 
-    public long getValue() {
+    public double getValue() {
         return value;
     }
 
     public TimeInNanoSeconds toNanoSeconds() {
-        return new TimeInNanoSeconds(value*1000000000);
+        return new TimeInNanoSeconds((long) (value*1000000000));
     }
 }
