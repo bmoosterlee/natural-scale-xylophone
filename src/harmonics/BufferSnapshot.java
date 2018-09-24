@@ -6,10 +6,12 @@ import frequency.Frequency;
 import java.util.*;
 
 public class BufferSnapshot {
+    private final Set<Frequency> liveFrequencies;
     private final Map<Harmonic, Double> harmonicVolumeTable;
     private final PriorityQueue<Harmonic> harmonicHierarchy;
 
-    public BufferSnapshot(Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> volumeTable) {
+    public BufferSnapshot(Set<Frequency> liveFrequencies, Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> volumeTable) {
+        this.liveFrequencies = liveFrequencies;
         harmonicVolumeTable = calculateHarmonicVolumes(harmonicsTable, volumeTable);
         harmonicHierarchy = buildHarmonicHierarchy(harmonicVolumeTable);
     }
@@ -30,10 +32,10 @@ public class BufferSnapshot {
             Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> frequencyVolumeTable) {
         Map<Harmonic, Double> newHarmonicVolumeTable = new HashMap<>();
         synchronized (harmonicsTable) {
-            for(Map.Entry<Frequency, Double> pair : new HashSet<>(frequencyVolumeTable.entrySet())){
-                Set<Harmonic> harmonics = harmonicsTable.get(pair.getKey());
+            for(Frequency frequency : liveFrequencies){
+                Set<Harmonic> harmonics = harmonicsTable.get(frequency);
                 for (Harmonic harmonic : harmonics) {
-                    newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(pair.getValue()));
+                    newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(frequencyVolumeTable.get(frequency)));
                 }
             }
         }

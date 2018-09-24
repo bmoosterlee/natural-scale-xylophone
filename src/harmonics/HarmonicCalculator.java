@@ -17,7 +17,7 @@ public class HarmonicCalculator {
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
 
             harmonicsTable = harmonicsTable.getNewTable(liveFrequencies);
-            BufferSnapshot bufferSnapshot = new BufferSnapshot(harmonicsTable, calculatorSnapshot.getVolumeTable());
+            BufferSnapshot bufferSnapshot = new BufferSnapshot(liveFrequencies, harmonicsTable, calculatorSnapshot.getVolumeTable());
 
             addNewHarmonicsToBuffer(calculatorSnapshot, bufferSnapshot, maxHarmonics);
 
