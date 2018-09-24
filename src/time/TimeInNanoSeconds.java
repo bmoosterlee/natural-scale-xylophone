@@ -30,4 +30,8 @@ public class TimeInNanoSeconds {
     public TimeInNanoSeconds divide(int x) {
         return new TimeInNanoSeconds(value/x);
     }
+
+    public TimeInSeconds toSeconds() {
+        return new TimeInSeconds(value/1000000000);
+    }
 }
