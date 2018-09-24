@@ -1,5 +1,8 @@
 package sound;
 
+import time.TimeInNanoSeconds;
+import time.TimeInSeconds;
+
 public class SampleRate {
     public final int sampleRate;
 
@@ -7,11 +10,16 @@ public class SampleRate {
         this.sampleRate = sampleRate;
     }
 
-    public double asTime(long sampleCount) {
-        return (double)sampleCount / sampleRate;
+    public TimeInSeconds asTime(long sampleCount) {
+        return new TimeInSeconds((double)sampleCount / sampleRate);
     }
 
-    public long asSampleCount(double time) {
-        return (long) (time * sampleRate);
+    public long asSampleCount(TimeInSeconds time) {
+        return (long) (time.getValue() * sampleRate);
+    }
+
+
+    public long asSampleCount(TimeInNanoSeconds time) {
+        return asSampleCount(time.toSeconds());
     }
 }

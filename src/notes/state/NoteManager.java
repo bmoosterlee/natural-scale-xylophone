@@ -11,6 +11,7 @@ import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
 import sound.SampleRate;
 import sound.SampleTicker;
+import time.TimeInSeconds;
 import wave.WaveState;
 
 public class NoteManager {
@@ -28,7 +29,7 @@ public class NoteManager {
         noteState = new NoteState();
         frequencyState = new SimpleFrequencyState();
         waveState = new WaveState(sampleRate);
-        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, 0.4);
+        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, new TimeInSeconds(0.4));
     }
 
     public void addNote(Frequency frequency) {

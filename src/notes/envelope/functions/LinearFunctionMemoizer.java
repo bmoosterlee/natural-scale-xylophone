@@ -1,22 +1,23 @@
 package notes.envelope.functions;
 
 import sound.SampleRate;
+import time.TimeInSeconds;
 
 import java.util.HashMap;
 
 public class LinearFunctionMemoizer {
     public final static LinearFunctionMemoizer ENVELOPE_MEMOIZER = new LinearFunctionMemoizer();
 
-    HashMap<SampleRate, HashMap<Double, HashMap<Double, DeterministicFunction>>> calculatedEnvelopes;
+    HashMap<SampleRate, HashMap<Double, HashMap<TimeInSeconds, DeterministicFunction>>> calculatedEnvelopes;
 
     public LinearFunctionMemoizer(){
         calculatedEnvelopes = new HashMap<>();
     }
 
-    public DeterministicFunction get(SampleRate sampleRate, double amplitude, double lengthInSeconds) {
-        HashMap<Double, HashMap<Double, DeterministicFunction>> sampleRateMap = calculatedEnvelopes.get(sampleRate);
+    public DeterministicFunction get(SampleRate sampleRate, double amplitude, TimeInSeconds lengthInSeconds) {
+        HashMap<Double, HashMap<TimeInSeconds, DeterministicFunction>> sampleRateMap = calculatedEnvelopes.get(sampleRate);
 
-        HashMap<Double, DeterministicFunction> amplitudeMap;
+        HashMap<TimeInSeconds, DeterministicFunction> amplitudeMap;
         try {
             amplitudeMap = sampleRateMap.get(amplitude);
         }

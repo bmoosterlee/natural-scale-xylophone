@@ -5,13 +5,13 @@ import time.TimeInSeconds;
 
 public class SampleTicker extends Ticker {
 
-    private final int tickLookahead;
+    private final long tickLookahead;
     private int maxBacklog;
 
     public SampleTicker(SampleRate sampleRate){
         super(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
 
-        tickLookahead = sampleRate.sampleRate /1000;
+        tickLookahead = sampleRate.asSampleCount(new TimeInSeconds(1).toNanoSeconds().divide(1000));
         maxBacklog = sampleRate.sampleRate;
     }
 

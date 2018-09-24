@@ -3,6 +3,7 @@ package notes.envelope;
 import notes.envelope.functions.EnvelopeFunction;
 import sound.SampleRate;
 import sound.SoundEnvironment;
+import time.TimeInSeconds;
 
 import java.util.Arrays;
 
@@ -31,11 +32,11 @@ public class SimpleEnvelope implements Envelope {
         return getVolume(startingSampleCount, sampleCount);
     }
 
-    double getTimeDifference(long startingSampleCount, long sampleCount) {
+    TimeInSeconds getTimeDifference(long startingSampleCount, long sampleCount) {
         return sampleRate.asTime(sampleCount - startingSampleCount);
     }
 
-    double getTimeDifference(long sampleCount) {
+    TimeInSeconds getTimeDifference(long sampleCount) {
         return getTimeDifference(startingSampleCount, sampleCount);
     }
 

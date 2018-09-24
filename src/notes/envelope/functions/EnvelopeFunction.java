@@ -1,6 +1,7 @@
 package notes.envelope.functions;
 
 import sound.SampleRate;
+import time.TimeInSeconds;
 
 public abstract class EnvelopeFunction {
     SampleRate sampleRate;
@@ -11,14 +12,14 @@ public abstract class EnvelopeFunction {
         this.amplitude = amplitude;
     }
 
-    public double getVolume(double timeDifference) {
-        if (timeDifference < 0) {
+    public double getVolume(TimeInSeconds timeDifference) {
+        if (timeDifference.getValue() < 0) {
             return 0;
         }
 
         return getVolume2(timeDifference);
     }
 
-    protected abstract double getVolume2(double timeDifference);
+    protected abstract double getVolume2(TimeInSeconds timeDifference);
 
 }
