@@ -187,8 +187,15 @@ public class Buckets {
             Map.Entry<Integer, Double> pair = iterator.next();
             Integer x = pair.getKey();
             Double value = pair.getValue();
+            if(value == 0.0){
+                continue;
+            }
             Double value2 = otherBuckets.getValue(x);
-            newPairs.add(new Pair(x, value * value2));
+            if(value2 == 0.0){
+                continue;
+            }
+            double newValue = value * value2;
+            newPairs.add(new Pair(x, newValue));
         }
         return new Buckets(newPairs);
     }
