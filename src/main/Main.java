@@ -26,7 +26,8 @@ public class Main {
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
         NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, noteManager);
-        sampleTicker.getTickObservable().add(amplitudeCalculator);
+        sampleTicker.getTickObservable().add((Observer<Long>) event -> amplitudeCalculator.tick(event));
+
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
