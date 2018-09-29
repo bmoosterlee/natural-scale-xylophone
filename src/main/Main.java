@@ -7,6 +7,7 @@ import sound.SampleTicker;
 import notes.state.NoteManager;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
+import pianola.Pianola;
 
 public class Main {
 
@@ -18,7 +19,7 @@ public class Main {
             Another could be that we stream pipeline each unit, store the results persistently, and kill the thread when
         time runs out.*/
         int SAMPLE_SIZE_IN_BITS = 8;
-        int SAMPLE_RATE = 44100/2;
+        int SAMPLE_RATE = 44100;
 
         new PerformanceTracker();
         PerformanceTracker.start();
@@ -26,12 +27,16 @@ public class Main {
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
         NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, noteManager);
-        sampleTicker.getTickObservable().add(amplitudeCalculator);
+        sampleTicker.getTickObservable().add((Observer<Long>) event -> amplitudeCalculator.tick(event));
+
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
+        Pianola pianola = new Pianola(sampleTicker, gui, noteManager);
+
         sampleTicker.start();
         gui.start();
+        pianola.start();
 
         try {
             Thread.sleep(1000);

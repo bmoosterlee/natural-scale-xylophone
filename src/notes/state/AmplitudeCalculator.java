@@ -10,7 +10,7 @@ import wave.WaveState;
 
 import java.util.Set;
 
-public class AmplitudeCalculator implements Observer<Long> {
+public class AmplitudeCalculator {
     private final SoundEnvironment soundEnvironment;
     private final NoteManager noteManager;
 
@@ -56,8 +56,4 @@ public class AmplitudeCalculator implements Observer<Long> {
         return amplitudeSum;
     }
 
-    @Override
-    public void notify(Long event) {
-        tick(event);
-    }
 }

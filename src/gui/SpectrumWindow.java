@@ -9,7 +9,17 @@ import java.util.*;
 public class SpectrumWindow {
     public NoteManager noteManager;
     public HarmonicCalculator harmonicCalculator;
+    //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
 
+    //todo create CachedBuckets class which store what harmony a bucket refers to. Pick the highest value one.
+    //todo might just store only the highest one.
+    //todo first step is to get X out of the bucket world. Start dealing with frequencies.
+    //todo one way to do this is to keep a link between the frequencies that buckets were built on.
+    //todo then we don't need to translate back and forth. The issue is that buckets which cache the real value
+    //todo will not keep the frequencies, but the translated frequencies.
+    //todo we probably should just move to frequency buckets.
+    //todo we might index frequencies of buckets though such that we can still do easy manipulations on buckets using
+    //todo these indices
 
     private final BucketHistory bucketHistory = new BucketHistory(300);
     public final Frequency centerFrequency = new Frequency(2 * 261.63);
