@@ -7,6 +7,7 @@ import sound.SampleTicker;
 import notes.state.NoteManager;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
+import pianola.Pianola;
 
 public class Main {
 
@@ -31,8 +32,11 @@ public class Main {
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
+        Pianola pianola = new Pianola(sampleTicker, gui, noteManager);
+
         sampleTicker.start();
         gui.start();
+        pianola.start();
 
         try {
             Thread.sleep(1000);
