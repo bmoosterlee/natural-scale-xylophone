@@ -1,9 +1,9 @@
 package harmonics;
 
-import javafx.util.Pair;
 import frequency.Frequency;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class BufferSnapshot {
     private final Set<Frequency> liveFrequencies;
@@ -59,11 +59,11 @@ public class BufferSnapshot {
         }
     }
 
-    public LinkedList<Pair<Harmonic, Double>> getHarmonicHierarchyAsList() {
+    public LinkedList<Entry<Harmonic, Double>> getHarmonicHierarchyAsList() {
         LinkedList<Harmonic> harmonicHierarchyCopy = new LinkedList<>(getHarmonicHierarchy());
-        LinkedList<Pair<Harmonic, Double>> harmonicsWithVolumes = new LinkedList<>();
+        LinkedList<Entry<Harmonic, Double>> harmonicsWithVolumes = new LinkedList<>();
         for(Harmonic harmonic : harmonicHierarchyCopy){
-            harmonicsWithVolumes.addLast(new Pair(harmonic, getHarmonicVolumeTable().get(harmonic)));
+            harmonicsWithVolumes.addLast(new AbstractMap.SimpleImmutableEntry<>(harmonic, getHarmonicVolumeTable().get(harmonic)));
         }
         return harmonicsWithVolumes;
     }

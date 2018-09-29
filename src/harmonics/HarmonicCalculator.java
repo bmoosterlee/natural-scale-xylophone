@@ -1,17 +1,17 @@
 package harmonics;
 
-import javafx.util.Pair;
 import frequency.Frequency;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class HarmonicCalculator {
 
     private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(() -> new MemoableIterator());
-    private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<Harmonic>());
+    private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(() -> new HashSet<>());
 
 
-    public Iterator<Pair<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, int maxHarmonics) {
+    public Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, int maxHarmonics) {
         synchronized (iteratorTable) {
             CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
             CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
