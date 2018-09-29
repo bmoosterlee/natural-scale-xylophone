@@ -5,9 +5,9 @@ import gui.BucketHistory;
 import gui.Buckets;
 import gui.GUI;
 import gui.SpectrumSnapshot;
-import javafx.util.Pair;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class SimpleChordGenerator {
     private final GUI gui;
@@ -62,9 +62,9 @@ public class SimpleChordGenerator {
     }
 
     private Buckets calculateCenterProximity(int average) {
-        Set<Pair<Integer, Double>> nearCenterFrequencies = new HashSet<>();
+        Set<Entry<Integer, Double>> nearCenterFrequencies = new HashSet<>();
         for (int x = -totalMargin/2; x < totalMargin/2; x++) {
-            nearCenterFrequencies.add(new Pair(average + x, 1.));
+            nearCenterFrequencies.add(new AbstractMap.SimpleImmutableEntry(average + x, 1.));
         }
         return new Buckets(nearCenterFrequencies);
     }
@@ -89,7 +89,7 @@ public class SimpleChordGenerator {
 
         Buckets freqProximityBuckets = maximaBuckets.multiply(nearbyFrequencyBuckets).multiply(centerProximity);
 
-        PriorityQueue<Map.Entry<Integer, Double>> frequencyHierarchy = prioritizeFrequencies(freqProximityBuckets);
+        PriorityQueue<Entry<Integer, Double>> frequencyHierarchy = prioritizeFrequencies(freqProximityBuckets);
 
         try {
             Integer key = pickHighestValueHarmonic(frequencyHierarchy);
@@ -99,35 +99,35 @@ public class SimpleChordGenerator {
         }
     }
 
-    private PriorityQueue<Map.Entry<Integer, Double>> prioritizeFrequencies(Buckets freqProximityBuckets) {
-        PriorityQueue<Map.Entry<Integer, Double>> frequencyHierarchy = new PriorityQueue<>(
+    private PriorityQueue<Entry<Integer, Double>> prioritizeFrequencies(Buckets freqProximityBuckets) {
+        PriorityQueue<Entry<Integer, Double>> frequencyHierarchy = new PriorityQueue<>(
                 (o1, o2) -> -Double.compare(o1.getValue(), o2.getValue()));
-        Iterator<Map.Entry<Integer, Double>> iterator = freqProximityBuckets.iterator();
+        Iterator<Entry<Integer, Double>> iterator = freqProximityBuckets.iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Integer, Double> pair = iterator.next();
+            Entry<Integer, Double> pair = iterator.next();
             frequencyHierarchy.add(pair);
         }
         return frequencyHierarchy;
     }
 
     private Buckets getNearbyBuckets(Integer leftBorder, Integer rightBorder) {
-        Set<Pair<Integer, Double>> nearbyFrequencies = new HashSet<>();
+        Set<Entry<Integer, Double>> nearbyFrequencies = new HashSet<>();
         for (int x = leftBorder; x < rightBorder; x++) {
-            nearbyFrequencies.add(new Pair(x, 1.));
+            nearbyFrequencies.add(new AbstractMap.SimpleImmutableEntry(x, 1.));
         }
         return new Buckets(nearbyFrequencies);
     }
 
     private Buckets findBucketMaxima(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Buckets differenceBuckets = harmonicsBuckets.subtract(noteBuckets);
-        Set<Pair<Integer, Double>> maxima = differenceBuckets.findMaxima();
+        Set<Entry<Integer, Double>> maxima = differenceBuckets.findMaxima();
         return new Buckets(maxima);
     }
 
-    private Integer pickHighestValueHarmonic(PriorityQueue<Map.Entry<Integer, Double>> frequencyHierarchy) {
-        ArrayList<Map.Entry<Integer, Double>> topBuckets = new ArrayList<>();
-        Map.Entry<Integer, Double> pollFirst = frequencyHierarchy.poll();
-        Map.Entry<Integer, Double> poll = pollFirst;
+    private Integer pickHighestValueHarmonic(PriorityQueue<Entry<Integer, Double>> frequencyHierarchy) {
+        ArrayList<Entry<Integer, Double>> topBuckets = new ArrayList<>();
+        Entry<Integer, Double> pollFirst = frequencyHierarchy.poll();
+        Entry<Integer, Double> poll = pollFirst;
         do {
             topBuckets.add(poll);
             try {
