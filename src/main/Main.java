@@ -19,7 +19,7 @@ public class Main {
             Another could be that we stream pipeline each unit, store the results persistently, and kill the thread when
         time runs out.*/
         int SAMPLE_SIZE_IN_BITS = 8;
-        int SAMPLE_RATE = 44100/2;
+        int SAMPLE_RATE = 44100;
 
         new PerformanceTracker();
         PerformanceTracker.start();

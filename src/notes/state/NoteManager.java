@@ -29,7 +29,7 @@ public class NoteManager {
         noteState = new NoteState();
         frequencyState = new SimpleFrequencyState();
         waveState = new WaveState(sampleRate);
-        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.05, new TimeInSeconds(0.4));
+        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.25, new TimeInSeconds(0.3));
     }
 
     public void addNote(Frequency frequency) {
