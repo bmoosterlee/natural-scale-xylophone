@@ -32,6 +32,7 @@ public class SimpleDeterministicEnvelope extends SimpleEnvelope implements Deter
         return endingSampleCount;
     }
 
+    @Override
     public DeterministicCompositeEnvelope add(DeterministicEnvelope envelope) {
         return new DeterministicCompositeEnvelope(Arrays.asList(new DeterministicEnvelope[]{this, envelope}));
     }
