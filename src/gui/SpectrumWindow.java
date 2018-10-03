@@ -52,11 +52,16 @@ public class SpectrumWindow {
     Set<Frequency> clip(Set<Frequency> liveFrequencies) {
         Set<Frequency> clippedFrequencies = new HashSet<>();
         for (Frequency frequency : liveFrequencies) {
-            int x = getX(frequency);
-            if (x < 0 || x >= gui.GUI.WIDTH) {
-                continue;
+            try {
+                int x = getX(frequency);
+                if (x < 0 || x >= gui.GUI.WIDTH) {
+                    continue;
+                }
+                clippedFrequencies.add(frequency);
             }
-            clippedFrequencies.add(frequency);
+            catch(NullPointerException ignored){
+                
+            }
         }
         return clippedFrequencies;
     }
