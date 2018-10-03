@@ -23,6 +23,8 @@ public class Note {
     private final Envelope envelope;
 
     public Note(Frequency frequency, Envelope envelope){
+        if(frequency==null) throw new NullPointerException();
+
         this.frequency = frequency;
         this.envelope = envelope;
     }
