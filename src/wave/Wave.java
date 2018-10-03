@@ -19,7 +19,16 @@ public class Wave {
     }
 
     public double getAmplitude(long sampleCount) {
-        double angle = sampleRate.asTime(sampleCount).getValue() * frequencyAngleComponent;
+        return getAmplitude(sampleRate.asTime(sampleCount).getValue());
+    }
+
+    public double getAmplitude(double timeInSeconds) {
+        double angle = timeInSeconds * frequencyAngleComponent;
+        return Math.sin(angle);
+    }
+
+    public double getAmplitudePrecalculated(double timeAndAngleComponent) {
+        double angle = timeAndAngleComponent * frequency.getValue();
         return Math.sin(angle);
     }
 }

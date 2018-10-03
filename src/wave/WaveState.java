@@ -68,7 +68,12 @@ public class WaveState {
         if(!addedFrequencies.isEmpty()) {
             Iterator<Frequency> iterator = addedFrequencies.iterator();
             while (iterator.hasNext()) {
-                newWaveState = newWaveState.add(iterator.next());
+                try {
+                    newWaveState = newWaveState.add(iterator.next());
+                }
+                catch(NullPointerException ignored){
+
+                }
             }
         }
 
@@ -83,7 +88,11 @@ public class WaveState {
         return this;
     }
 
+    double angleComponent = 2.0 * Math.PI;
+
     public double getAmplitude(Frequency frequency, long sampleCount) {
-        return getWave(frequency).getAmplitude(sampleCount);
+        //todo create infrastructure (just correctly named methods) to move 2*Pi here as well
+        double timeAndAngleComponent = sampleRate.asTime(sampleCount).getValue() * angleComponent;
+        return getWave(frequency).getAmplitudePrecalculated(timeAndAngleComponent);
     }
 }
