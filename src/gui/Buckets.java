@@ -4,198 +4,165 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class Buckets {
-    final private HashMap<Integer, Double> bucketsData;
+    //todo constantly put new harmonics in a harmonicsBuckets which is used over time.
+    //todo copy the harmonicsBuckets when we want to use it somewhere else, but always keep adding.
+
+    protected final Set<Integer> indices;
+    protected final Map<Integer, Bucket> bucketsData;
 
     public Buckets() {
+        indices = new HashSet<>();
         bucketsData = new HashMap<>();
     }
 
-    public Buckets(Entry<Integer, Double> bucketEntry) {
-        this();
-        Integer x = bucketEntry.getKey();
-        Double value = bucketEntry.getValue();
-        put(x, value);
+    public Buckets(Set<Integer> indices, Map<Integer, Bucket> buckets) {
+        this.indices = indices;
+        this.bucketsData = buckets;
     }
 
-    public Buckets(Set<Entry<Integer, Double>> Entries) {
-        this();
-        for(Entry<Integer, Double> Entry : Entries){
-            Integer x = Entry.getKey();
-            put(x, getValue(x) + Entry.getValue());
-        }
-    }
-
-    private void put(int x, double value) {
-        bucketsData.put(x, value);
-    }
-
-    double getValue(int i) {
-        try {
-            return bucketsData.get(i);
-        }
-        catch(NullPointerException e){
-            return 0.0;
-        }
+    public Bucket getValue(int i) {
+        return bucketsData.get(i);
     }
 
     public Buckets add(Buckets otherBuckets) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Double>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, value));
+            Bucket value = Entry.getValue();
+            newIndices.add(x);
+            newEntries.put(x, value);
         }
 
         iterator = otherBuckets.iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, value));
+            Bucket value = Entry.getValue();
+            fill(newIndices, newEntries, x, value);
         }
-        return new Buckets(newEntries);
+        return new Buckets(newIndices, newEntries);
     }
 
-    public Set<Entry<Integer, Double>> findMaxima() {
-        Set<Entry<Integer, Double>> maxima = new HashSet<>();
+    public Buckets findMaxima() {
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> maxima = new HashMap<>();
 
-        Iterator<Entry<Integer, Double>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
 
-            Double center = Entry.getValue();
-            Double left = getValue(x-1);
-            Double right = getValue(x+1);
+            Bucket center = Entry.getValue();
+            Double centerValue = center.volume;
+            Double left;
+            try {
+                left = getValue(x - 1).volume;
+            }
+            catch(NullPointerException e){
+                left = centerValue;
+            }
+            Double right;
+            try {
+                right = getValue(x + 1).volume;
+            }
+            catch(NullPointerException e){
+                right = centerValue;
+            }
 
-            if(center>left && center>right){
-                maxima.add(new AbstractMap.SimpleImmutableEntry<>(x, center));
+            if(centerValue>left && centerValue>right){
+                newIndices.add(x);
+                maxima.put(x, center);
             }
         }
-        return maxima;
+        return new Buckets(newIndices, maxima);
     }
 
     public Buckets averageBuckets(int averagingWidth) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Double>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
-            Double value = Entry.getValue();
+            Bucket bucket = Entry.getValue();
 
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, value));
+            fill(newIndices, newEntries, x, bucket);
 
             for(int i = 1; i< averagingWidth; i++) {
-                double residue = value * (averagingWidth - i) / averagingWidth;
-                newEntries.add(new AbstractMap.SimpleImmutableEntry(x - i, residue));
-                newEntries.add(new AbstractMap.SimpleImmutableEntry(x + i, residue));
+                double residue = bucket.volume * (averagingWidth - i) / averagingWidth;
+
+                {
+                    int residueIndex = x - i;
+
+                    Bucket residueBucket = new Bucket(residue);
+                    fill(newIndices, newEntries, residueIndex, residueBucket);
+                }
+                {
+                    int residueIndex = x + i;
+
+                    Bucket residueBucket = new Bucket(residue);
+                    fill(newIndices, newEntries, residueIndex, residueBucket);
+                }
             }
         }
-        return new Buckets(newEntries);
+        return new Buckets(newIndices, newEntries);
+    }
+
+    protected static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
+        newIndices.add(x);
+        try {
+            entries.put(x, entries.get(x).add(bucket));
+        } catch (NullPointerException e) {
+            entries.put(x, bucket);
+        }
     }
 
     public Buckets multiply(double v) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Double>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, v * value));
+            Bucket bucket = Entry.getValue();
+
+            newEntries.put(x, new Bucket(v * bucket.volume, bucket.frequencies, bucket.volumes));
         }
-        return new Buckets(newEntries);
+        return new Buckets(newIndices, newEntries);
     }
 
-    public Iterator<Entry<Integer, Double>> iterator() {
+    public Iterator<Entry<Integer, Bucket>> iterator() {
         return bucketsData.entrySet().iterator();
     }
 
     public Buckets clip(int start, int end) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Double>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = iterator();
         while(iterator.hasNext()) {
-            Entry<Integer, Double> Entry = iterator.next();
+            Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
+
             if (x < start || x >= end) {
                 continue;
             }
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, value));
-        }
-        return new Buckets(newEntries);
-    }
 
-    public Buckets clip(int max) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
-
-        Iterator<Entry<Integer, Double>> iterator = iterator();
-        while(iterator.hasNext()) {
-            Entry<Integer, Double> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, Math.min(max, value)));
+            Bucket bucket = Entry.getValue();
+            newIndices.add(x);
+            newEntries.put(x, bucket);
         }
-        return new Buckets(newEntries);
+        return new Buckets(newIndices, newEntries);
     }
 
     public Buckets subtract(Buckets buckets) {
         return add(buckets.multiply(-1));
     }
 
-    public Buckets add(double a) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
-
-        Iterator<Entry<Integer, Double>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, a + value));
-        }
-        return new Buckets(newEntries);
-    }
-
-    public Buckets divide(Buckets otherBuckets) {
-        return multiply(otherBuckets.reciprocal());
-    }
-
-    private Buckets reciprocal() {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
-
-        Iterator<Entry<Integer, Double>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, 1. / value));
-        }
-        return new Buckets(newEntries);
-    }
-
-    public Buckets multiply(Buckets otherBuckets) {
-        Set<Entry<Integer, Double>> newEntries = new HashSet<>();
-
-        Iterator<Entry<Integer, Double>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Double> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Double value = Entry.getValue();
-            if(value == 0.0){
-                continue;
-            }
-            Double value2 = otherBuckets.getValue(x);
-            if(value2 == 0.0){
-                continue;
-            }
-            double newValue = value * value2;
-            newEntries.add(new AbstractMap.SimpleImmutableEntry(x, newValue));
-        }
-        return new Buckets(newEntries);
-    }
 }

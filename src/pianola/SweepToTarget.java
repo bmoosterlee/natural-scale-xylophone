@@ -40,8 +40,8 @@ public class SweepToTarget extends Sweep {
     @Override
     protected void generateNewChord() {
         simpleChordGenerator.generateChord();
-        sourceAsInt = simpleChordGenerator.getFrequencies()[0];
-        sourceFrequency = gui.spectrumWindow.getFrequency((double) sourceAsInt);
+        sourceFrequency = simpleChordGenerator.getFrequencies()[0];
+        sourceAsInt = gui.spectrumWindow.getX(sourceFrequency);
         targetFrequency = sourceFrequency.multiplyBy(multiplier);
         targetAsInt = gui.spectrumWindow.getX(targetFrequency);
         keyWidth = (targetAsInt -sourceAsInt)/size;

@@ -95,8 +95,8 @@ public class Sweep implements PianolaPattern {
     }
 
     protected SimpleChordGenerator findNextSweepGenerator() {
-        Frequency previousFrequency = gui.spectrumWindow.getFrequency((double) (sweepGenerator.getFrequencies()[0] +
-                simpleChordGenerator.margin + 1));
+        Frequency previousFrequency = gui.spectrumWindow.getFrequency(gui.getX(sweepGenerator.getFrequencies()[0]) +
+                simpleChordGenerator.margin + 1);
         return new SimpleChordGenerator(gui,
                                   1,
                                   previousFrequency,

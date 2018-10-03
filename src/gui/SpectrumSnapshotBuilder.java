@@ -3,6 +3,8 @@ package gui;
 import harmonics.Harmonic;
 import frequency.Frequency;
 import frequency.FrequencyState;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -13,7 +15,8 @@ public class SpectrumSnapshotBuilder {
     public final long sampleCount;
     public final Buckets noteBuckets;
     public final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
-    public final Set<Entry<Integer, Double>> newPairs;
+    public final Map<Frequency, Double> newPairs;
+    public final Set<Frequency> frequencies;
 
     public SpectrumSnapshotBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
@@ -25,42 +28,56 @@ public class SpectrumSnapshotBuilder {
         Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount);
         Set<Frequency> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
 
-        noteBuckets = getNewNoteBuckets(clippedFrequencies, frequencyVolumeTable);
+        noteBuckets = toBuckets(clippedFrequencies, frequencyVolumeTable);
         harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 100);
-        newPairs = new HashSet<>();
+        newPairs = new HashMap<>();
+        frequencies = new HashSet<>();
     }
 
     public boolean update() {
-        Entry<Harmonic, Double> nextHarmonicVolumePair;
         try {
-            nextHarmonicVolumePair = harmonicHierarchyIterator.next();
+            Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
+            Frequency frequency = harmonicVolume.getKey().getFrequency();
+            frequencies.add(frequency);
+            newPairs.put(frequency, harmonicVolume.getValue());
         } catch (NoSuchElementException e) {
-            return true;
-        }
-        try {
-            newPairs.add(new AbstractMap.SimpleImmutableEntry<Integer, Double>(spectrumWindow.getX(nextHarmonicVolumePair.getKey().getFrequency()),
-                    nextHarmonicVolumePair.getValue()));
-        } catch (NullPointerException e) {
             return true;
         }
         return false;
     }
 
     public SpectrumSnapshot finish() {
-        Buckets newHarmonicsBuckets = new Buckets(newPairs).clip(0, GUI.WIDTH);
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
+        Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs).clip(0, GUI.WIDTH);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 2");
         spectrumWindow.getBucketHistory().addNewBuckets(newHarmonicsBuckets);
-        return new SpectrumSnapshot(sampleCount, noteBuckets, spectrumWindow.getBucketHistory().getTimeAveragedBuckets());
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 3");
+        Buckets timeAveragedBuckets = spectrumWindow.getBucketHistory().getTimeAveragedBuckets();
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 4");
+        SpectrumSnapshot spectrumSnapshot = new SpectrumSnapshot(sampleCount, noteBuckets, timeAveragedBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        return spectrumSnapshot;
     }
 
-    public Buckets getNewNoteBuckets(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable) {
-        Set<Entry<Integer, Double>> noteVolumes = new HashSet<>();
-        for (Frequency frequency : liveFrequencies) {
+    protected Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){
+        Set<Integer> indices = new HashSet<>();
+        Map<Integer, Bucket> entries = new HashMap<>();
+
+        for(Frequency frequency : keys){
             int x = spectrumWindow.getX(frequency);
-            if (x < 0 || x >= GUI.WIDTH) {
-                continue;
-            }
-            noteVolumes.add(new AbstractMap.SimpleImmutableEntry<>(x, frequencyVolumeTable.get(frequency)));
+
+            Bucket bucket = new Bucket(frequency, map.get(frequency));
+
+            Buckets.fill(indices, entries, x, bucket);
         }
-        return new Buckets(noteVolumes);
+        return new Buckets(indices, entries);
     }
+
 }

@@ -75,7 +75,7 @@ public class SimpleArpeggio implements PianolaPattern {
 
     protected void generateNewChord() {
         simpleChordGenerator.generateChord();
-        Integer[] newFrequencies = simpleChordGenerator.getFrequencies();
+        Frequency[] newFrequencies = simpleChordGenerator.getFrequencies();
         arpeggiateUp = new ArpeggiateUp(gui, chordSize, 4, newFrequencies);
     }
 
