@@ -21,7 +21,7 @@ public class SpectrumWindow {
     //todo we might index frequencies of buckets though such that we can still do easy manipulations on buckets using
     //todo these indices
 
-    private final BucketHistory bucketHistory = new BucketHistory(300);
+    private final BucketHistory bucketHistory = new PrecalculatedBucketHistory(300);
     public final Frequency centerFrequency = new Frequency(2 * 261.63);
     double octaveRange = 3.;
     public Frequency lowerBound;
