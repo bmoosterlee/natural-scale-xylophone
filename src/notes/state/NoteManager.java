@@ -1,9 +1,6 @@
 package notes.state;
 
-import frequency.CompositeFrequencyState;
-import frequency.Frequency;
-import frequency.FrequencyState;
-import frequency.SimpleFrequencyState;
+import frequency.*;
 import notes.Note;
 import notes.envelope.PrecalculatedEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
@@ -17,11 +14,13 @@ import wave.WaveState;
 public class NoteManager {
     //todo move frequencyState elsewhere.
     private final SampleTicker sampleTicker;
+    private final SampleRate sampleRate;
+
+    private final DeterministicFunction envelopeFunction;
+
     private NoteState noteState;
     private FrequencyState frequencyState;
     private WaveState waveState;
-    private DeterministicFunction envelopeFunction;
-    private SampleRate sampleRate;
 
     public NoteManager(SampleTicker sampleTicker, SampleRate sampleRate) {
         this.sampleTicker = sampleTicker;
@@ -46,9 +45,7 @@ public class NoteManager {
 
     public WaveState getWaveState(long sampleCount) {
         synchronized (noteState) {
-            noteState = noteState.update(sampleCount);
-            frequencyState = frequencyState.update(noteState.getNotes());
-            frequencyState = frequencyState.update(sampleCount);
+            getFrequencyState(sampleCount);
             waveState = waveState.update(frequencyState.getFrequencies());
             waveState = waveState.update(sampleCount);
             return waveState;
@@ -57,11 +54,16 @@ public class NoteManager {
 
     public FrequencyState getFrequencyState(long sampleCount) {
         synchronized (noteState) {
-            noteState = noteState.update(sampleCount);
+            getNoteState(sampleCount);
             frequencyState = frequencyState.update(noteState.getNotes());
             frequencyState = frequencyState.update(sampleCount);
             return frequencyState;
         }
+    }
+
+    private NoteState getNoteState(long sampleCount) {
+        noteState = noteState.update(sampleCount);
+        return noteState;
     }
 
 }
