@@ -44,8 +44,7 @@ public class PrecalculatedEnvelope extends SimpleDeterministicEnvelope {
 
     @Override
     public Envelope update(long sampleCount){
-        //todo this method takes too long. We just can't be iterating over the entire keyset. What we might be able to do
-        //todo is to iterate through the timestamped volumes until we find the sampleCount argument.
+
         if(isDead(sampleCount)) {
             return null;
         }

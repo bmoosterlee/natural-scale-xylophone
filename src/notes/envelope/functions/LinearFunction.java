@@ -23,5 +23,4 @@ public class LinearFunction extends DeterministicFunction {
         }
     }
 
-    //todo implement seconds data type, implement samplecount datatype, implement miliseconds datatype, implement nanosecs
 }

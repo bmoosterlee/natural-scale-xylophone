@@ -24,7 +24,6 @@ public class SampleTicker extends Ticker {
         long sampleBacklog = getExpectedTickCount() + tickLookahead - calculatedTicks;
         sampleBacklog = Math.min(sampleBacklog, maxBacklog);
 
-        //todo create Milisecond datatype, nanoseconds datatype, doubleTime datatype, and a sampleCount datatype
         while(sampleBacklog>0) {
             super.tick();
             sampleBacklog--;
