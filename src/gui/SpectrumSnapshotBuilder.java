@@ -22,7 +22,7 @@ public class SpectrumSnapshotBuilder {
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        FrequencyState frequencyState = spectrumWindow.noteManager.getFrequencyState(sampleCount);
+        FrequencyState frequencyState = spectrumWindow.frequencyManager.getFrequencyState(sampleCount);
         Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
 
         Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount);

@@ -1,8 +1,11 @@
 package main;
 
+import frequency.Frequency;
 import gui.GUI;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
+import notes.state.FrequencyManager;
+import notes.state.WaveManager;
 import sound.SampleTicker;
 import notes.state.NoteManager;
 import sound.SoundEnvironment;
@@ -25,12 +28,16 @@ public class Main {
         PerformanceTracker.start();
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
+
         NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
-        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, noteManager);
+        FrequencyManager frequencyManager = new FrequencyManager(noteManager);
+        WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
+
+        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, frequencyManager, waveManager);
         sampleTicker.getTickObservable().add((Observer<Long>) event -> amplitudeCalculator.tick(event));
 
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
+        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager);
 
         Pianola pianola = new Pianola(sampleTicker, gui, noteManager, 1000000000 / 4);
 

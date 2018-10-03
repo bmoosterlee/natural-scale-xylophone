@@ -2,12 +2,13 @@ package gui;
 
 import frequency.Frequency;
 import harmonics.HarmonicCalculator;
+import notes.state.FrequencyManager;
 import notes.state.NoteManager;
 
 import java.util.*;
 
 public class SpectrumWindow {
-    public NoteManager noteManager;
+    public FrequencyManager frequencyManager;
     public HarmonicCalculator harmonicCalculator;
     //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
 
@@ -30,8 +31,8 @@ public class SpectrumWindow {
     double logFrequencyAdditive;
     double xMultiplier;
 
-    public SpectrumWindow(NoteManager noteManager, HarmonicCalculator harmonicCalculator) {
-        this.noteManager = noteManager;
+    public SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator) {
+        this.frequencyManager = frequencyManager;
         this.harmonicCalculator = harmonicCalculator;
 
         lowerBound = centerFrequency.divideBy(Math.pow(2, octaveRange / 2));

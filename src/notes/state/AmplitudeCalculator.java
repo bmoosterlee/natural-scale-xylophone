@@ -12,20 +12,22 @@ import java.util.Set;
 
 public class AmplitudeCalculator {
     private final SoundEnvironment soundEnvironment;
-    private final NoteManager noteManager;
+    private final FrequencyManager frequencyManager;
+    private final WaveManager waveManager;
 
-    public AmplitudeCalculator(SoundEnvironment soundEnvironment, NoteManager noteManager) {
+    public AmplitudeCalculator(SoundEnvironment soundEnvironment, FrequencyManager frequencyManager, WaveManager waveManager) {
         this.soundEnvironment = soundEnvironment;
-        this.noteManager = noteManager;
+        this.frequencyManager = frequencyManager;
+        this.waveManager = waveManager;
     }
 
     public void tick(long sampleCount) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getFrequencyState");
-        FrequencyState frequencyState = noteManager.getFrequencyState(sampleCount);
+        FrequencyState frequencyState = frequencyManager.getFrequencyState(sampleCount);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
-        WaveState waveState = noteManager.getWaveState(sampleCount);
+        WaveState waveState = waveManager.getWaveState(sampleCount);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
