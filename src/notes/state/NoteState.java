@@ -17,6 +17,7 @@ public class NoteState {
     }
 
     public NoteState addNote(Note note) {
+        if(note==null) throw new NullPointerException();
         Set<Note> newLiveNotes = new HashSet<>(notes);
         newLiveNotes.add(note);
         return new NoteState(newLiveNotes);
