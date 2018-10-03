@@ -5,9 +5,7 @@ import harmonics.HarmonicCalculator;
 import main.Observer;
 import sound.SampleTicker;
 import notes.state.NoteManager;
-import time.Ticker;
-import time.TimeInNanoSeconds;
-import time.TimeInSeconds;
+import time.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -127,18 +125,31 @@ public class GUI extends JPanel {
 
     @Override
     public void paintComponent(Graphics g){
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent");
         super.paintComponent(g);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 1");
 
         SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedTickCount());
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 2");
         while (ticker.getTimeLeftInFrame(startTime).toMilliSeconds().getValue() > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
-        spectrumSnapshot = spectrumSnapshotBuilder.finish();
+        PerformanceTracker.stopTracking(timeKeeper);
 
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 3");
+        spectrumSnapshot = spectrumSnapshotBuilder.finish();
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("paintComponent 4");
         renderHarmonicsBuckets(g, spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
         renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
 
         renderCursorLine(g);
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderNoteBuckets(Graphics g, Buckets buckets) {
