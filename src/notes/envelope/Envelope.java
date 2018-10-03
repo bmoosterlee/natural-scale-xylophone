@@ -5,9 +5,9 @@ import sound.SampleRate;
 
 public interface Envelope {
 
-    public long getStartingSampleCount();
-    public EnvelopeFunction getEnvelopeFunction();
-    public SampleRate getSampleRate();
+    long getStartingSampleCount();
+    EnvelopeFunction getEnvelopeFunction();
+    SampleRate getSampleRate();
 
     double getVolume(long sampleCount);
 
