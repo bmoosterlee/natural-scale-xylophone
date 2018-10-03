@@ -8,9 +8,9 @@ import java.util.Set;
 
 public class ChordPlayer implements PianolaPattern{
     GUI gui;
-    Integer[] chord;
+    Frequency[] chord;
 
-    public ChordPlayer(GUI gui, Integer[] chord) {
+    public ChordPlayer(GUI gui, Frequency[] chord) {
         this.gui = gui;
         this.chord = chord;
     }
@@ -19,8 +19,8 @@ public class ChordPlayer implements PianolaPattern{
     public Set<Frequency> playPattern() {
         Set<Frequency> frequencies = new HashSet<>();
 
-        for (Integer x : chord) {
-            frequencies.add(gui.spectrumWindow.getFrequency((double) x));
+        for (Frequency frequency : chord) {
+            frequencies.add(frequency);
         }
 
         return frequencies;
