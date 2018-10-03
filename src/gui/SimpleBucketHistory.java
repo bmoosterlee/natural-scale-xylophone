@@ -2,17 +2,18 @@ package gui;
 
 import java.util.LinkedList;
 
-public class BucketHistory {
+public class SimpleBucketHistory implements BucketHistory {
     LinkedList<Buckets> harmonicsBucketsHistory;
     private int size;
     private double multiplier;
 
-    public BucketHistory(int size) {
+    public SimpleBucketHistory(int size) {
         harmonicsBucketsHistory = new LinkedList<>();
         this.size = size;
         multiplier = 1. / size;
     }
 
+    @Override
     public void addNewBuckets(Buckets newBuckets) {
         synchronized (harmonicsBucketsHistory) {
             if (harmonicsBucketsHistory.size() >= size) {
@@ -22,6 +23,7 @@ public class BucketHistory {
         }
     }
 
+    @Override
     public Buckets getTimeAveragedBuckets() {
         Buckets timeAveragedBuckets = new Buckets();
         if (harmonicsBucketsHistory.isEmpty()) {
