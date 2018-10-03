@@ -32,7 +32,7 @@ public class Main {
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager);
 
-        Pianola pianola = new Pianola(sampleTicker, gui, noteManager);
+        Pianola pianola = new Pianola(sampleTicker, gui, noteManager, 1000000000 / 4);
 
         sampleTicker.start();
         gui.start();

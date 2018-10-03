@@ -17,4 +17,8 @@ public class Sequencer {
             j = (j + 1) % measuresTillReset;
         }
     }
+
+    boolean isResetting() {
+        return i==0 && j==0;
+    }
 }

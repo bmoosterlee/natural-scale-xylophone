@@ -43,21 +43,16 @@ public class Sweep implements PianolaPattern {
                 centerFrequency,
                 totalMargin,
                 gui.spectrumWindow.getX(gui.spectrumWindow.lowerBound),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(2.0)));
+                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(2.0)), 3);
     }
 
     public Set<Frequency> playPattern() {
         Set<Frequency> frequencies = new HashSet<>();
 
-        try {
-            updateNoteBuckets();
-        }
-        catch(NullPointerException e){
-
-        }
+        updateNoteBuckets();
 
         try {
-            if (sequencer.j == 0 && sequencer.i == 0) {
+            if (sequencer.isResetting()) {
                 generateNewChord();
                 frequencies.addAll(new ChordPlayer(gui, simpleChordGenerator.getFrequencies()).playPattern());
             }
@@ -79,7 +74,14 @@ public class Sweep implements PianolaPattern {
 
     private void updateNoteBuckets() {
         SpectrumSnapshot spectrumSnapshot = gui.spectrumSnapshot;
-        Buckets origNoteBuckets = spectrumSnapshot.noteBuckets;
+        Buckets origNoteBuckets;
+        try {
+            origNoteBuckets = spectrumSnapshot.noteBuckets;
+        }
+        catch(NullPointerException e){
+            origNoteBuckets = new Buckets();
+        }
+
         simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
     }
 
@@ -102,6 +104,6 @@ public class Sweep implements PianolaPattern {
                                   previousFrequency,
                                   totalMargin,
                 gui.spectrumWindow.getX(previousFrequency),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound));
+                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound), 1);
     }
 }

@@ -12,10 +12,10 @@ public class BottomIncrementalChordGenerator extends IncrementalChordGenerator {
     }
 
     @Override
-    protected void updateNotes(Buckets maximaBuckets, Buckets centerProximity, Integer[] leftBorders, Integer[] rightBorders) {
-        updateNote(maximaBuckets, centerProximity, 0, leftBorders[0], rightBorders[0]);
+    protected void updateNotes(Buckets maximaBuckets, Integer[] leftBorders, Integer[] rightBorders) {
+        frequencies[0] = updateNote(maximaBuckets, leftBorders[0], rightBorders[0]);
 
-        updateNote(maximaBuckets, centerProximity, noteIndex, leftBorders[noteIndex], rightBorders[noteIndex]);
+        frequencies[noteIndex] = updateNote(maximaBuckets, leftBorders[noteIndex], rightBorders[noteIndex]);
 
         noteIndex = 1 + (noteIndex + 1) % chordSize;
     }

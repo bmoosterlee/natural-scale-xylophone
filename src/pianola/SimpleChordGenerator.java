@@ -1,10 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.BucketHistory;
-import gui.Buckets;
-import gui.GUI;
-import gui.SpectrumSnapshot;
+import gui.*;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -19,8 +16,9 @@ public class SimpleChordGenerator {
     private int hardLeftBorder;
     private int hardRightBorder;
     private final int totalMargin;
+    private int repetitionDampener;
 
-    public SimpleChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder) {
+    public SimpleChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
         this.gui = gui;
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
@@ -29,6 +27,7 @@ public class SimpleChordGenerator {
 
         frequencies = new Frequency[chordSize];
 
+        this.repetitionDampener = repetitionDampener;
         int centerX = clipLeft(clipRight(gui.spectrumWindow.getX(centerFrequency)));
 
         for (int i1 = 0; i1 < chordSize; i1++) {
@@ -39,7 +38,7 @@ public class SimpleChordGenerator {
     void generateChord() {
         SpectrumSnapshot spectrumSnapshot = gui.spectrumSnapshot;
 
-        Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(3).averageBuckets(20);
+        Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
         Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(10);
 
         Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);

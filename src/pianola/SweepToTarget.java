@@ -34,7 +34,8 @@ public class SweepToTarget extends Sweep {
                 centerFrequency,
                 totalMargin,
                 gui.spectrumWindow.getX(gui.spectrumWindow.lowerBound),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(multiplier)));
+                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(multiplier)),
+                1);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class SweepToTarget extends Sweep {
             return new StaticGenerator(gui, targetFrequency);
         }
         else {
-            int center = (int) (sourceAsInt + keyWidth * sequencer.i);
+            int center = (sourceAsInt + keyWidth * sequencer.i);
             int left = (int) (center - keyWidth / 2.);
             int right = (int) (center + keyWidth / 2.);
             return new SimpleChordGenerator(gui,
@@ -62,7 +63,8 @@ public class SweepToTarget extends Sweep {
                     gui.spectrumWindow.getFrequency((double) center),
                     totalMargin,
                     left,
-                    right);
+                    right,
+                    0);
         }
     }
 }

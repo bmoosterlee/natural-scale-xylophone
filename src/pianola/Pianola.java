@@ -19,15 +19,18 @@ public class Pianola implements Runnable {
     NoteManager noteManager;
 
     public long startTime;
-    public static final long FRAME_TIME = 1000000000 / 4;
+    public final long FRAME_TIME;
 
-    public Pianola(SampleTicker sampleTicker, GUI gui, NoteManager noteManager) {
+    public Pianola(SampleTicker sampleTicker, GUI gui, NoteManager noteManager, long frame_time) {
         this.sampleTicker = sampleTicker;
         this.gui = gui;
         this.noteManager = noteManager;
-        // pianolaPattern = new SimpleArpeggio(this, 1);
-        // pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
-        pianolaPattern = new SweepToTarget(this, 4, gui.spectrumWindow.getCenterFrequency(), 2.0);
+        FRAME_TIME = frame_time;
+
+//        pianolaPattern = new SimpleArpeggio(this, 5);
+//         pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
+        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
+//        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
     }
 
     public void start(){
@@ -57,7 +60,12 @@ public class Pianola implements Runnable {
         this.startTime = startTime;
 
         for(Frequency frequency : pianolaPattern.playPattern()){
-            noteManager.addNote(frequency);
+            try {
+                noteManager.addNote(frequency);
+            }
+            catch(NullPointerException ignored){
+
+            };
         }
     }
 

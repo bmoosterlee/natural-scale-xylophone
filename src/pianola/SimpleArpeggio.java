@@ -18,13 +18,14 @@ public class SimpleArpeggio implements PianolaPattern {
         gui = pianola.getGui();
         this.chordSize = chordSize;
 
-        simpleChordGenerator =
-                new IncrementalChordGenerator(gui,
-                                              chordSize,
-                                              gui.spectrumWindow.getCenterFrequency().divideBy(2.0),
-                                   gui.spectrumWindow.getX(gui.spectrumWindow.getCenterFrequency().multiplyBy(1.5)) -
-                                           gui.spectrumWindow.getX(gui.spectrumWindow.getCenterFrequency()),
-                        gui.spectrumWindow.getX(gui.spectrumWindow.getCenterFrequency().divideBy(4.0)));
+        Frequency centerFrequency = gui.spectrumWindow.getCenterFrequency();
+        simpleChordGenerator = new SimpleChordGenerator(gui,
+                                chordSize,
+                                centerFrequency.divideBy(2.0),
+                     gui.spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
+                                    gui.spectrumWindow.getX(centerFrequency),
+                                gui.spectrumWindow.getX(centerFrequency.divideBy(4.0)),
+                                gui.spectrumWindow.getX(centerFrequency.multiplyBy(4.0)), 3);
         try {
             generateNewChord();
         }
