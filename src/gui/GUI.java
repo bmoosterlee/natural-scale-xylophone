@@ -55,7 +55,7 @@ public class GUI extends JPanel {
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
 
-        spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator);
+        spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator, WIDTH);
 
         MouseListener mouseListener = new MouseListener() {
             @Override

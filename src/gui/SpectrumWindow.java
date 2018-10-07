@@ -7,6 +7,7 @@ import harmonics.HarmonicCalculator;
 import notes.state.FrequencyManager;
 
 public class SpectrumWindow {
+    private final int width;
     FrequencyManager frequencyManager;
     HarmonicCalculator harmonicCalculator;
     //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
@@ -29,9 +30,10 @@ public class SpectrumWindow {
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
-    SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator) {
+    SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator, int width) {
         this.frequencyManager = frequencyManager;
         this.harmonicCalculator = harmonicCalculator;
+        this.width = width;
 
         lowerBound = centerFrequency.divideBy(Math.pow(2, octaveRange / 2));
         upperBound = centerFrequency.multiplyBy(Math.pow(2, octaveRange / 2));
@@ -39,9 +41,9 @@ public class SpectrumWindow {
         double logLowerBound = Math.log(lowerBound.getValue());
         double logUpperBound = Math.log(upperBound.getValue());
         double logRange = logUpperBound - logLowerBound;
-        logFrequencyMultiplier = gui.GUI.WIDTH / logRange;
-        logFrequencyAdditive = logLowerBound * gui.GUI.WIDTH / logRange;
-        xMultiplier = logRange / gui.GUI.WIDTH;
+        logFrequencyMultiplier = this.width / logRange;
+        logFrequencyAdditive = logLowerBound * this.width / logRange;
+        xMultiplier = logRange / this.width;
     }
 
     SpectrumStateBuilder createBuilder(SpectrumState spectrumState, long sampleCount) {
@@ -50,7 +52,7 @@ public class SpectrumWindow {
 
     boolean inBounds(Frequency frequency) {
         int x = getX(frequency);
-        if (x < 0 || x >= gui.GUI.WIDTH) {
+        if (x < 0 || x >= width) {
             return false;
         }
         return true;
