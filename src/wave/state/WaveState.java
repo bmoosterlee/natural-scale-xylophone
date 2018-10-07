@@ -7,23 +7,25 @@ import wave.Wave;
 import java.util.*;
 
 public class WaveState {
-    SampleRate sampleRate;
-    Set<Frequency> frequencies;
-    Map<Frequency, Wave> frequencyWaveTable;
+    private SampleRate sampleRate;
+    private Set<Frequency> frequencies;
+    private Map<Frequency, Wave> frequencyWaveTable;
 
-    public WaveState(SampleRate sampleRate){
+    private double angleComponent = 2.0 * Math.PI;
+
+    WaveState(SampleRate sampleRate){
         this.sampleRate = sampleRate;
         frequencies = new HashSet<>();
         frequencyWaveTable = new HashMap<>();
     }
 
-    public WaveState(SampleRate sampleRate, Set<Frequency> frequencies, Map<Frequency, Wave> frequencyWaveTable) {
+    private WaveState(SampleRate sampleRate, Set<Frequency> frequencies, Map<Frequency, Wave> frequencyWaveTable) {
         this.sampleRate = sampleRate;
         this.frequencies = frequencies;
         this.frequencyWaveTable = frequencyWaveTable;
     }
 
-    public WaveState remove(Frequency frequency) {
+    private WaveState remove(Frequency frequency) {
         Set<Frequency> newFrequencies = new HashSet<>(frequencies);
         Map<Frequency, Wave> newFrequencyWaveTable = new HashMap<>(frequencyWaveTable);
 
@@ -60,19 +62,16 @@ public class WaveState {
         addedFrequencies.removeAll(new HashSet<>(this.frequencies));
 
         if(!removedFrequencies.isEmpty()) {
-            Iterator<Frequency> iterator = removedFrequencies.iterator();
-            while (iterator.hasNext()) {
-                newWaveState = newWaveState.remove(iterator.next());
+            for (Frequency removedFrequency : removedFrequencies) {
+                newWaveState = newWaveState.remove(removedFrequency);
             }
         }
 
         if(!addedFrequencies.isEmpty()) {
-            Iterator<Frequency> iterator = addedFrequencies.iterator();
-            while (iterator.hasNext()) {
+            for (Frequency addedFrequency : addedFrequencies) {
                 try {
-                    newWaveState = newWaveState.add(iterator.next());
-                }
-                catch(NullPointerException ignored){
+                    newWaveState = newWaveState.add(addedFrequency);
+                } catch (NullPointerException ignored) {
 
                 }
             }
@@ -81,15 +80,13 @@ public class WaveState {
         return newWaveState;
     }
 
-    public Wave getWave(Frequency frequency) {
+    private Wave getWave(Frequency frequency) {
         return frequencyWaveTable.get(frequency);
     }
 
     public WaveState update(long sampleCount) {
         return this;
     }
-
-    double angleComponent = 2.0 * Math.PI;
 
     public double getAmplitude(Frequency frequency, long sampleCount) {
         //todo create infrastructure (just correctly named methods) to move 2*Pi here as well
