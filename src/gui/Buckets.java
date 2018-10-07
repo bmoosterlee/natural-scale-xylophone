@@ -1,5 +1,8 @@
 package gui;
 
+import time.PerformanceTracker;
+import time.TimeKeeper;
+
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -25,24 +28,11 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
-        Set<Integer> newIndices = new HashSet<>();
-        Map<Integer, Bucket> newEntries = new HashMap<>();
+        Set<Integer> newIndices = new HashSet<>(indices);
+        Map<Integer, Bucket> newEntries = new HashMap<>(bucketsData);
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Bucket> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Bucket value = Entry.getValue();
-            newIndices.add(x);
-            newEntries.put(x, value);
-        }
-
-        iterator = otherBuckets.iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Bucket> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Bucket value = Entry.getValue();
-            fill(newIndices, newEntries, x, value);
+        for(Integer x : otherBuckets.indices){
+            fill(newIndices, newEntries, x, otherBuckets.getValue(x));
         }
         return new Buckets(newIndices, newEntries);
     }
@@ -82,35 +72,41 @@ public class Buckets {
     }
 
     public Buckets averageBuckets(int averagingWidth) {
+        return averageBuckets(new BucketsAverager(averagingWidth));
+    }
+
+    public Buckets averageBuckets(BucketsAverager bucketsAverager) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
+
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Bucket> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Bucket bucket = Entry.getValue();
+        double[] multipliers = bucketsAverager.multipliers;
+        int averagingWidth = bucketsAverager.averagingWidth;
 
-            fill(newIndices, newEntries, x, bucket);
+        for(Integer x : indices){
+            Double volume = getValue(x).volume;
 
             for(int i = 1; i< averagingWidth; i++) {
-                double residue = bucket.volume * (averagingWidth - i) / averagingWidth;
+                Bucket residueBucket = new Bucket(volume * multipliers[i]);
 
                 {
                     int residueIndex = x - i;
 
-                    Bucket residueBucket = new Bucket(residue);
                     fill(newIndices, newEntries, residueIndex, residueBucket);
                 }
                 {
                     int residueIndex = x + i;
 
-                    Bucket residueBucket = new Bucket(residue);
                     fill(newIndices, newEntries, residueIndex, residueBucket);
                 }
             }
         }
-        return new Buckets(newIndices, newEntries);
+
+        Buckets buckets = add(new Buckets(newIndices, newEntries));
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        return buckets;
     }
 
     protected static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
@@ -123,18 +119,12 @@ public class Buckets {
     }
 
     public Buckets multiply(double v) {
-        Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
-        while(iterator.hasNext()){
-            Entry<Integer, Bucket> Entry = iterator.next();
-            Integer x = Entry.getKey();
-            Bucket bucket = Entry.getValue();
-
-            newEntries.put(x, new Bucket(v * bucket.volume, bucket.frequencies, bucket.volumes));
+        for(Integer x : indices){
+            newEntries.put(x, getValue(x).multiply(v));
         }
-        return new Buckets(newIndices, newEntries);
+        return new Buckets(indices, newEntries);
     }
 
     public Iterator<Entry<Integer, Bucket>> iterator() {
@@ -145,18 +135,13 @@ public class Buckets {
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
-        while(iterator.hasNext()) {
-            Entry<Integer, Bucket> Entry = iterator.next();
-            Integer x = Entry.getKey();
-
+        for(Integer x : indices){
             if (x < start || x >= end) {
                 continue;
             }
 
-            Bucket bucket = Entry.getValue();
             newIndices.add(x);
-            newEntries.put(x, bucket);
+            newEntries.put(x, getValue(x));
         }
         return new Buckets(newIndices, newEntries);
     }

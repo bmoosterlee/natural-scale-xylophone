@@ -47,4 +47,8 @@ public class Bucket {
 
         return new Bucket(newVolume, newFrequencies, newVolumes);
     }
+
+    public Bucket multiply(double v) {
+        return new Bucket(volume * v, frequencies, volumes);
+    }
 }

@@ -43,10 +43,11 @@ public class GUI extends JPanel {
     //todo this does not seem like a task for a state object, as we need to keep the tick state
     //todo stored somewhere.
 
-
     public Ticker ticker;
     public TimeInNanoSeconds startTime;
     public Frequency mouseFrequency;
+
+    public BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager){
         GUI.this.sampleTicker = sampleTicker;
@@ -146,7 +147,7 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 4");
-        renderHarmonicsBuckets(g, spectrumSnapshot.harmonicsBuckets.averageBuckets(10));
+        Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
         renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
 
         renderCursorLine(g);
