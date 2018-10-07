@@ -127,29 +127,37 @@ public class GUI extends JPanel {
 
     @Override
     public void paintComponent(Graphics g){
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("super paintComponent");
         super.paintComponent(g);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 1");
-
+        timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
         SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedTickCount());
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 2");
+        timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
         while (ticker.getTimeLeftInFrame(startTime).toMilliSeconds().getValue() > 1) {
             if (spectrumSnapshotBuilder.update()) break;
         }
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 3");
+        timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
         spectrumSnapshot = spectrumSnapshotBuilder.finish();
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 4");
+        timeKeeper = PerformanceTracker.startTracking("average harmonicsBuckets");
         Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
-        renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
 
+        timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
+        renderHarmonicsBuckets(g, harmonicsBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
+        renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("render cursor");
         renderCursorLine(g);
         PerformanceTracker.stopTracking(timeKeeper);
     }
