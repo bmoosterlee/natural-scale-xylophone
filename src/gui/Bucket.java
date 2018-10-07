@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class Bucket {
-    public Double volume;
+    public final Double volume;
 
-    Set<Frequency> frequencies;
-    Map<Frequency, Double> volumes;
+    final Set<Frequency> frequencies;
+    final Map<Frequency, Double> volumes;
 
     public Bucket(Frequency frequency, Double volume) {
         this.volume = volume;
