@@ -1,4 +1,4 @@
-package gui;
+package gui.spectrum.state;
 
 import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;

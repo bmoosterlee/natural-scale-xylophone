@@ -1,4 +1,4 @@
-package frequency;
+package frequency.state;
 
 import notes.Note;
 import notes.envelope.Envelope;

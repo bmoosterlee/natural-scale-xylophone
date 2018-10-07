@@ -1,9 +1,8 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.GUI;
-import gui.SpectrumManager;
-import gui.SpectrumWindow;
+import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.SpectrumWindow;
 
 public class StaticGenerator extends SimpleChordGenerator {
 

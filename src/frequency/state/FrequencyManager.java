@@ -1,8 +1,6 @@
-package notes.state;
+package frequency.state;
 
-import frequency.FrequencyState;
-import frequency.SimpleFrequencyState;
-import frequency.SimpleFrequencyStateBucket;
+import notes.state.NoteManager;
 
 public class FrequencyManager {
     private final NoteManager noteManager;

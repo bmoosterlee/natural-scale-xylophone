@@ -1,5 +1,6 @@
-package frequency;
+package frequency.state;
 
+import frequency.Frequency;
 import notes.Note;
 
 import java.util.*;

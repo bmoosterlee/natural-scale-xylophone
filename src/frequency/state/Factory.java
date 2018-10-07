@@ -1,4 +1,4 @@
-package frequency;
+package frequency.state;
 
 public interface Factory<T> {
 

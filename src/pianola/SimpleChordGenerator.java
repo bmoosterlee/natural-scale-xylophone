@@ -1,8 +1,10 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.*;
 import gui.buckets.*;
+import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.state.SpectrumState;
+import gui.spectrum.SpectrumWindow;
 
 import java.util.*;
 import java.util.Map.Entry;

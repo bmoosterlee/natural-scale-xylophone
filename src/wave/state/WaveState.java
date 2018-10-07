@@ -1,7 +1,8 @@
-package wave;
+package wave.state;
 
 import frequency.Frequency;
 import sound.SampleRate;
+import wave.Wave;
 
 import java.util.*;
 

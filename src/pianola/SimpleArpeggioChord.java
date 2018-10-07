@@ -1,7 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.SpectrumManager;
+import gui.spectrum.state.SpectrumManager;
 
 import java.util.HashSet;
 import java.util.Set;

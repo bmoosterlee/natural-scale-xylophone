@@ -1,7 +1,7 @@
-package notes.state;
+package wave.state;
 
+import frequency.state.FrequencyManager;
 import sound.SampleRate;
-import wave.WaveState;
 
 public class WaveManager {
     private final FrequencyManager frequencyManager;

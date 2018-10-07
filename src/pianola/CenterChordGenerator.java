@@ -2,7 +2,7 @@ package pianola;
 
 import frequency.Frequency;
 import gui.GUI;
-import gui.SpectrumManager;
+import gui.spectrum.state.SpectrumManager;
 
 public class CenterChordGenerator extends IncrementalChordGenerator {
     int centerFrequency;

@@ -1,12 +1,13 @@
-package gui;
+package gui.spectrum.state;
 
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
 import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
+import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
 import frequency.Frequency;
-import frequency.FrequencyState;
+import frequency.state.FrequencyState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -23,7 +24,7 @@ public class SpectrumStateBuilder {
     private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    SpectrumStateBuilder(SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
+    public SpectrumStateBuilder(SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
         this.spectrumState = spectrumState;
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
@@ -59,7 +60,7 @@ public class SpectrumStateBuilder {
         return false;
     }
 
-    SpectrumState finish() {
+    public SpectrumState finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);

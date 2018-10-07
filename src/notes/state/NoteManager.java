@@ -41,7 +41,7 @@ public class NoteManager {
 
 
 
-    protected NoteState getNoteState(long sampleCount) {
+    public NoteState getNoteState(long sampleCount) {
         synchronized(this) {
             if(sampleCount>updatedToSample) {
                 noteState = noteState.update(sampleCount);

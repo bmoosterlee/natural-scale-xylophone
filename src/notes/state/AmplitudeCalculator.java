@@ -1,12 +1,13 @@
 package notes.state;
 
-import frequency.FrequencyState;
-import main.Observer;
+import frequency.state.FrequencyManager;
+import frequency.state.FrequencyState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 import frequency.Frequency;
 import sound.SoundEnvironment;
-import wave.WaveState;
+import wave.state.WaveManager;
+import wave.state.WaveState;
 
 import java.util.Set;
 

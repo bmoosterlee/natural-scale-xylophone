@@ -1,12 +1,12 @@
 package main;
 
 import gui.GUI;
-import gui.SpectrumManager;
+import gui.spectrum.state.SpectrumManager;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
-import notes.state.FrequencyManager;
+import frequency.state.FrequencyManager;
 import notes.state.NoteManager;
-import notes.state.WaveManager;
+import wave.state.WaveManager;
 import pianola.Pianola;
 import sound.SampleTicker;
 import sound.SoundEnvironment;

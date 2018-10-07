@@ -7,7 +7,7 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import gui.GUI;
 import frequency.Frequency;
-import gui.SpectrumManager;
+import gui.spectrum.state.SpectrumManager;
 import sound.SampleTicker;
 import time.PerformanceTracker;
 import time.TimeKeeper;

@@ -1,13 +1,15 @@
-package gui;
+package gui.spectrum;
 
 import frequency.Frequency;
+import gui.spectrum.state.SpectrumState;
+import gui.spectrum.state.SpectrumStateBuilder;
 import harmonics.HarmonicCalculator;
-import notes.state.FrequencyManager;
+import frequency.state.FrequencyManager;
 
 public class SpectrumWindow {
     private final int width;
-    FrequencyManager frequencyManager;
-    HarmonicCalculator harmonicCalculator;
+    public FrequencyManager frequencyManager;
+    public HarmonicCalculator harmonicCalculator;
     //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
 
     //todo create CachedBuckets class which store what harmony a bucket refers to. Pick the highest value one.
@@ -28,7 +30,7 @@ public class SpectrumWindow {
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
-    SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator, int width) {
+    public SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator, int width) {
         this.frequencyManager = frequencyManager;
         this.harmonicCalculator = harmonicCalculator;
         this.width = width;
@@ -44,11 +46,11 @@ public class SpectrumWindow {
         xMultiplier = logRange / this.width;
     }
 
-    SpectrumStateBuilder createBuilder(SpectrumState spectrumState, long sampleCount) {
+    public SpectrumStateBuilder createBuilder(SpectrumState spectrumState, long sampleCount) {
         return new SpectrumStateBuilder(spectrumState, sampleCount, this);
     }
 
-    boolean inBounds(Frequency frequency) {
+    public boolean inBounds(Frequency frequency) {
         int x = getX(frequency);
         if (x < 0 || x >= width) {
             return false;

@@ -2,8 +2,8 @@ package pianola;
 
 
 import frequency.Frequency;
-import gui.SpectrumManager;
-import gui.SpectrumWindow;
+import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.SpectrumWindow;
 
 import java.util.*;
 
