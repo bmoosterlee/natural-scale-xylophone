@@ -1,6 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.SpectrumManager;
 import gui.buckets.Buckets;
 import gui.GUI;
 import gui.SpectrumState;
@@ -13,14 +14,16 @@ public class Sweep implements PianolaPattern {
     //todo and lets each sweep find the highest value harmonic in that range.
     final int totalMargin;
     GUI gui;
+    SpectrumManager spectrumManager;
     int size;
     SimpleChordGenerator simpleChordGenerator;
     SimpleChordGenerator sweepGenerator;
 
     protected Sequencer sequencer;
 
-    public Sweep(Pianola pianola, int size, Frequency centerFrequency) {
+    public Sweep(Pianola pianola, SpectrumManager spectrumManager, int size, Frequency centerFrequency) {
         gui = pianola.getGui();
+        this.spectrumManager = spectrumManager;
         this.size = size;
         sequencer = new Sequencer(size, 1);
 
@@ -39,6 +42,7 @@ public class Sweep implements PianolaPattern {
 
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(gui,
+                spectrumManager,
                 1,
                 centerFrequency,
                 totalMargin,
@@ -73,7 +77,7 @@ public class Sweep implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumState spectrumState = gui.spectrumState;
+        SpectrumState spectrumState = spectrumManager.getSpectrumState();
         Buckets origNoteBuckets;
         try {
             origNoteBuckets = spectrumState.noteBuckets;
@@ -100,7 +104,8 @@ public class Sweep implements PianolaPattern {
         Frequency previousFrequency = gui.spectrumWindow.getFrequency(gui.getX(sweepGenerator.getFrequencies()[0]) +
                 simpleChordGenerator.margin + 1);
         return new SimpleChordGenerator(gui,
-                                  1,
+                spectrumManager,
+                1,
                                   previousFrequency,
                                   totalMargin,
                 gui.spectrumWindow.getX(previousFrequency),

@@ -7,6 +7,7 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import gui.GUI;
 import frequency.Frequency;
+import gui.SpectrumManager;
 import sound.SampleTicker;
 import time.PerformanceTracker;
 import time.TimeKeeper;
@@ -16,21 +17,23 @@ public class Pianola implements Runnable {
     final PianolaPattern pianolaPattern;
     SampleTicker sampleTicker;
     GUI gui;
+    SpectrumManager spectrumManager;
     NoteManager noteManager;
 
     public long startTime;
     public final long FRAME_TIME;
 
-    public Pianola(SampleTicker sampleTicker, GUI gui, NoteManager noteManager, long frame_time) {
+    public Pianola(SampleTicker sampleTicker, GUI gui, SpectrumManager spectrumManager, NoteManager noteManager, long frame_time) {
         this.sampleTicker = sampleTicker;
         this.gui = gui;
+        this.spectrumManager = spectrumManager;
         this.noteManager = noteManager;
         FRAME_TIME = frame_time;
 
 //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
 //        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
-        pianolaPattern = new SimpleArpeggio(this, 3);
+        pianolaPattern = new SimpleArpeggio(this, spectrumManager, 3);
     }
 
     public void start(){

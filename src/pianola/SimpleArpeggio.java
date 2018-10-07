@@ -1,5 +1,6 @@
 package pianola;
 
+import gui.SpectrumManager;
 import gui.buckets.Buckets;
 import gui.GUI;
 import frequency.Frequency;
@@ -9,17 +10,20 @@ import java.util.*;
 
 public class SimpleArpeggio implements PianolaPattern {
     protected GUI gui;
+    SpectrumManager spectrumManager;
     int chordSize;
     final SimpleChordGenerator simpleChordGenerator;
 
     protected ArpeggiateUp arpeggiateUp;
 
-    public SimpleArpeggio(Pianola pianola, int chordSize) {
+    public SimpleArpeggio(Pianola pianola, SpectrumManager spectrumManager, int chordSize) {
         gui = pianola.getGui();
+        this.spectrumManager = spectrumManager;
         this.chordSize = chordSize;
 
         Frequency centerFrequency = gui.spectrumWindow.getCenterFrequency();
         simpleChordGenerator = new IncrementalChordGenerator(gui,
+                                spectrumManager,
                                 chordSize,
                                 centerFrequency.divideBy(2.0),
                      gui.spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
@@ -69,7 +73,7 @@ public class SimpleArpeggio implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumState spectrumState = gui.spectrumState;
+        SpectrumState spectrumState = spectrumManager.getSpectrumState();
         Buckets origNoteBuckets = spectrumState.noteBuckets;
         simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
     }

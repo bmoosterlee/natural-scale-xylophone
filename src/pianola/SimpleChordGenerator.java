@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 public class SimpleChordGenerator {
     private final GUI gui;
+    SpectrumManager spectrumManager;
     protected final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
     BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
@@ -19,8 +20,9 @@ public class SimpleChordGenerator {
     private final int totalMargin;
     private int repetitionDampener;
 
-    public SimpleChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
+    public SimpleChordGenerator(GUI gui, SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
         this.gui = gui;
+        this.spectrumManager = spectrumManager;
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
@@ -37,7 +39,7 @@ public class SimpleChordGenerator {
     }
 
     void generateChord() {
-        SpectrumState spectrumState = gui.spectrumState;
+        SpectrumState spectrumState = spectrumManager.getSpectrumState();
 
         Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
         Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(10);

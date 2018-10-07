@@ -1,6 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.SpectrumManager;
 
 public class SweepToTarget extends Sweep {
     Frequency sourceFrequency;
@@ -10,8 +11,8 @@ public class SweepToTarget extends Sweep {
     private int keyWidth;
     private double multiplier;
 
-    public SweepToTarget(Pianola pianola, int size, Frequency centerFrequency, double multiplier) {
-        super(pianola, size, centerFrequency);
+    public SweepToTarget(Pianola pianola, SpectrumManager spectrumManager, int size, Frequency centerFrequency, double multiplier) {
+        super(pianola, spectrumManager, size, centerFrequency);
 
         this.multiplier = multiplier;
 
@@ -30,6 +31,7 @@ public class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(gui,
+                spectrumManager,
                 1,
                 centerFrequency,
                 totalMargin,
@@ -52,13 +54,14 @@ public class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(gui, targetFrequency);
+            return new StaticGenerator(gui, spectrumManager, targetFrequency);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);
             int left = (int) (center - keyWidth / 2.);
             int right = (int) (center + keyWidth / 2.);
             return new SimpleChordGenerator(gui,
+                    spectrumManager,
                     1,
                     gui.spectrumWindow.getFrequency((double) center),
                     totalMargin,

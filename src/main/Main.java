@@ -1,6 +1,7 @@
 package main;
 
 import gui.GUI;
+import gui.SpectrumManager;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
 import notes.state.FrequencyManager;
@@ -35,10 +36,11 @@ public class Main {
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, frequencyManager, waveManager);
         sampleTicker.getTickObservable().add((Observer<Long>) amplitudeCalculator::tick);
 
+        SpectrumManager spectrumManager = new SpectrumManager();
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager);
+        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager, spectrumManager);
 
-        Pianola pianola = new Pianola(sampleTicker, gui, noteManager, 1000000000 / 4);
+        Pianola pianola = new Pianola(sampleTicker, gui, spectrumManager, noteManager, 1000000000 / 4);
 
         sampleTicker.start();
         gui.start();

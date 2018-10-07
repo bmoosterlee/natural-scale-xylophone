@@ -1,13 +1,14 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.SpectrumManager;
 import gui.buckets.Buckets;
 import gui.GUI;
 
 public class BottomIncrementalChordGenerator extends IncrementalChordGenerator {
 
-    public BottomIncrementalChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
-        super(gui, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener);
+    public BottomIncrementalChordGenerator(GUI gui, SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
+        super(gui, spectrumManager, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener);
         noteIndex = 1;
     }
 

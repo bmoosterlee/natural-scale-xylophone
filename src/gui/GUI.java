@@ -3,7 +3,6 @@ package gui;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
-import gui.buckets.PrecalculatedBucketHistory;
 import harmonics.HarmonicCalculator;
 import main.Observer;
 import notes.state.FrequencyManager;
@@ -28,7 +27,6 @@ public class GUI extends JPanel {
 //When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
 
-    public SpectrumState spectrumState;
     private final SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
@@ -48,9 +46,11 @@ public class GUI extends JPanel {
     private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
 
-    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager){
+    private SpectrumManager spectrumManager;
+
+    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, SpectrumManager spectrumManager){
         this.sampleTicker = sampleTicker;
-        spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(300));
+        this.spectrumManager = spectrumManager;
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
@@ -131,8 +131,26 @@ public class GUI extends JPanel {
         super.paintComponent(g);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(spectrumState, sampleTicker.getExpectedTickCount());
+        updateSpectrumState();
+
+        Buckets harmonicsBuckets = spectrumManager.getSpectrumState().harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+
+        timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
+        renderHarmonicsBuckets(g, harmonicsBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
+        renderNoteBuckets(g, spectrumManager.getSpectrumState().noteBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("render cursor");
+        renderCursorLine(g);
+        PerformanceTracker.stopTracking(timeKeeper);
+    }
+
+    private void updateSpectrumState() {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
+        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(spectrumManager.getSpectrumState(), sampleTicker.getExpectedTickCount());
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
@@ -142,21 +160,7 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
-        spectrumState = spectrumStateBuilder.finish();
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
-
-        timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
-        renderHarmonicsBuckets(g, harmonicsBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
-        renderNoteBuckets(g, spectrumState.noteBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("render cursor");
-        renderCursorLine(g);
+        spectrumManager.setSpectrumState(spectrumStateBuilder.finish());
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
