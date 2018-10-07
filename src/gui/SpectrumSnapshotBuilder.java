@@ -34,12 +34,18 @@ public class SpectrumSnapshotBuilder {
         frequencies = new HashSet<>();
     }
 
+    //return true when harmonicHierarchy has been depleted.
     public boolean update() {
         try {
             Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
             Frequency frequency = harmonicVolume.getKey().getFrequency();
-            frequencies.add(frequency);
-            newPairs.put(frequency, harmonicVolume.getValue());
+
+                frequencies.add(frequency);
+                try {
+                    newPairs.put(frequency, newPairs.get(frequency) + harmonicVolume.getValue());
+                } catch (NullPointerException e) {
+                    newPairs.put(frequency, harmonicVolume.getValue());
+                }
         } catch (NoSuchElementException e) {
             return true;
         }
