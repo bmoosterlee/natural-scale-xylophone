@@ -30,7 +30,7 @@ public class GUI extends JPanel {
     private final SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
-    static final int WIDTH = 800*2;
+    final int WIDTH;
     private static final int HEIGHT = 600;
     private static final double yScale = HEIGHT * 0.95;
     private static final double margin = HEIGHT * 0.05;
@@ -51,6 +51,8 @@ public class GUI extends JPanel {
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, SpectrumManager spectrumManager){
         this.sampleTicker = sampleTicker;
         this.spectrumManager = spectrumManager;
+
+        WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
