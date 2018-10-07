@@ -41,9 +41,12 @@ public class Pianola implements Runnable {
     public void run() {
         while(true) {
             long startTime = System.nanoTime();
-            tick(startTime);
 
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("pianola.Pianola sleep");
+            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("pianola tick");
+            tick(startTime);
+            PerformanceTracker.stopTracking(sleepTimeKeeper);
+
+
             long timeLeftInFrame = getTimeLeftInFrame(startTime);
             if (timeLeftInFrame > 0) {
                 try {
@@ -52,7 +55,6 @@ public class Pianola implements Runnable {
                     e.printStackTrace();
                 }
             }
-            PerformanceTracker.stopTracking(sleepTimeKeeper);
         }
     }
 
