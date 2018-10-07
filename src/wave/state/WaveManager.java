@@ -12,7 +12,7 @@ public class WaveManager {
     public WaveManager(FrequencyManager frequencyManager, SampleRate sampleRate) {
         this.frequencyManager = frequencyManager;
 
-        waveState = new WaveState(sampleRate);
+        waveState = new SimpleWaveState(sampleRate);
     }
 
     public WaveState getWaveState(long sampleCount) {
