@@ -64,11 +64,14 @@ public class PerformanceTracker implements Runnable{
         PriorityQueue<String> sortedNames = new PriorityQueue<>(Comparator.comparing(o -> -performanceTracker.stateTimes.get(o)));
         sortedNames.addAll(names);
 
-        while(!sortedNames.isEmpty()){
+        byte counter = 0x00;
+        while(!sortedNames.isEmpty() && counter<5){
             String stateName = sortedNames.poll();
             long stateValue = performanceTracker.stateTimes.get(stateName);
             System.out.println(stateName + " took : " + String.valueOf(stateValue/1000000000.));
             performanceTracker.stateTimes.put(stateName, performanceTracker.stateTimes.get(stateName)-stateValue);
+
+            counter++;
         }
     }
 }
