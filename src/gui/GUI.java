@@ -26,8 +26,6 @@ public class GUI extends JPanel {
 //function over the frequencies, which we then throw into buckets by sampling.
 //When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
-
-    private final SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
     final int WIDTH;
@@ -43,21 +41,21 @@ public class GUI extends JPanel {
     private final BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
     private final Ticker ticker;
+
+    private final SampleTicker sampleTicker;
+    private final SpectrumManager spectrumManager;
     private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
-
-    private SpectrumManager spectrumManager;
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, SpectrumManager spectrumManager){
         this.sampleTicker = sampleTicker;
         this.spectrumManager = spectrumManager;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+        spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator, WIDTH);
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
-
-        spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator, WIDTH);
 
         MouseListener mouseListener = new MouseListener() {
             @Override
@@ -107,7 +105,6 @@ public class GUI extends JPanel {
         frame.addMouseMotionListener(mouseMotionListener);
         frame.pack();
         frame.setVisible(true);
-
     }
 
     public void start(){
