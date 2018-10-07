@@ -40,7 +40,7 @@ public class Main {
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager, spectrumManager);
 
-        Pianola pianola = new Pianola(sampleTicker, gui, spectrumManager, noteManager, 1000000000 / 4);
+        Pianola pianola = new Pianola(sampleTicker, gui, spectrumManager, noteManager, gui.spectrumWindow, 1000000000 / 4);
 
         sampleTicker.start();
         gui.start();
