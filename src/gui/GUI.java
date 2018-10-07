@@ -20,13 +20,11 @@ public class GUI extends JPanel {
 //    performancetrack everything. Optimize pianola for variable speed, or better performance at higher speed.
 //    let the performance lead the way.
 
-//todo fix aliasing with buckets by storing what harmony frequencies were added at which buckets, and their volumes.
-//todo then either pick the highest frequency, or find the weighted average frequency when calling getFrequency.
 //todo solve rounding issues with translating back and forth from x and frequency. One way is using an averaging
 //function over the frequencies, which we then throw into buckets by sampling.
 //When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
-    //TODO do we want to split the entire project into state objects and immutable objects?
+    //TODO do we want to split the entire project into state manager objects and immutable objects?
 
     final int WIDTH;
     private final int HEIGHT = 600;
