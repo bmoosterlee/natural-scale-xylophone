@@ -31,9 +31,9 @@ public class GUI extends JPanel {
     //TODO do we want to split the entire project into state objects and immutable objects?
 
     final int WIDTH;
-    private static final int HEIGHT = 600;
-    private static final double yScale = HEIGHT * 0.95;
-    private static final double margin = HEIGHT * 0.05;
+    private final int HEIGHT = 600;
+    private final double yScale = HEIGHT * 0.95;
+    private final double margin = HEIGHT * 0.05;
     //todo change use of ticker pattern such that getTimeLeftInFrame isn't used externally anymore
     //todo this could be done by having a tick wrapper which waits for the next tick. Until the next
     //todo tick hasn't arrived yet, we iterate. As soon as the next tick arrives, we finish the last tick.
