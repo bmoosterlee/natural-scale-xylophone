@@ -25,13 +25,19 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add buckets setup");
         Set<Integer> newIndices = new HashSet<>(indices);
         Map<Integer, Bucket> newEntries = new HashMap<>(bucketsData);
 
         for(Integer x : otherBuckets.indices){
-            fill(newIndices, newEntries, x, otherBuckets.getValue(x));
+            Bucket value = otherBuckets.getValue(x);
+            PerformanceTracker.stopTracking(timeKeeper);
+            fill(newIndices, newEntries, x, value);
+            timeKeeper = PerformanceTracker.startTracking("add buckets setup");
         }
-        return new Buckets(newIndices, newEntries);
+        Buckets newBuckets = new Buckets(newIndices, newEntries);
+        PerformanceTracker.stopTracking(timeKeeper);
+        return newBuckets;
     }
 
     public Buckets findMaxima() {
@@ -44,17 +50,17 @@ public class Buckets {
             Integer x = Entry.getKey();
 
             Bucket center = Entry.getValue();
-            Double centerValue = center.volume;
+            Double centerValue = center.getVolume();
             Double left;
             try {
-                left = getValue(x - 1).volume;
+                left = getValue(x - 1).getVolume();
             }
             catch(NullPointerException e){
                 left = centerValue;
             }
             Double right;
             try {
-                right = getValue(x + 1).volume;
+                right = getValue(x + 1).getVolume();
             }
             catch(NullPointerException e){
                 right = centerValue;
@@ -73,20 +79,25 @@ public class Buckets {
     }
 
     public Buckets averageBuckets(BucketsAverager bucketsAverager) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
-
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets setup");
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
         double[] multipliers = bucketsAverager.multipliers;
         int averagingWidth = bucketsAverager.averagingWidth;
+        PerformanceTracker.stopTracking(timeKeeper);
 
         for(Integer x : indices){
-            Double volume = getValue(x).volume;
+            timeKeeper = PerformanceTracker.startTracking("average buckets get volume");
+            Double volume = getValue(x).getVolume();
+            PerformanceTracker.stopTracking(timeKeeper);
 
             for(int i = 1; i< averagingWidth; i++) {
-                Bucket residueBucket = new Bucket(volume * multipliers[i]);
+                timeKeeper = PerformanceTracker.startTracking("average buckets multiply bucket");
+                AtomicBucket residueBucket = new AtomicBucket(volume * multipliers[i]);
+                PerformanceTracker.stopTracking(timeKeeper);
 
+                timeKeeper = PerformanceTracker.startTracking("average buckets fill residue");
                 {
                     int residueIndex = x - i;
 
@@ -97,22 +108,39 @@ public class Buckets {
 
                     fill(newIndices, newEntries, residueIndex, residueBucket);
                 }
+                PerformanceTracker.stopTracking(timeKeeper);
             }
         }
 
-        Buckets buckets = add(new Buckets(newIndices, newEntries));
+        timeKeeper = PerformanceTracker.startTracking("average buckets construct new buckets");
+        Buckets newBuckets = new Buckets(newIndices, newEntries);
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("average buckets add to original");
+        Buckets buckets = add(newBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         return buckets;
     }
 
     protected static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("fill");
         newIndices.add(x);
+        Bucket newBucket;
+
         try {
-            entries.put(x, entries.get(x).add(bucket));
+            Bucket oldBucket = entries.get(x);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            newBucket = oldBucket.add(bucket);
+
+            timeKeeper = PerformanceTracker.startTracking("fill");
         } catch (NullPointerException e) {
-            entries.put(x, bucket);
+            newBucket = bucket;
         }
+
+        entries.put(x, newBucket);
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     public Buckets multiply(double v) {

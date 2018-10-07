@@ -145,9 +145,7 @@ public class GUI extends JPanel {
         spectrumSnapshot = spectrumSnapshotBuilder.finish();
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("average harmonicsBuckets");
         Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
-        PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
         renderHarmonicsBuckets(g, harmonicsBuckets);
@@ -173,7 +171,7 @@ public class GUI extends JPanel {
         while(iterator.hasNext()) {
             Map.Entry<Integer, Bucket> pair = iterator.next();
             int x = pair.getKey();
-            int y = (int) (pair.getValue().volume * yScale + margin);
+            int y = (int) (pair.getValue().getVolume() * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
     }

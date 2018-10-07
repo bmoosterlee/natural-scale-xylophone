@@ -80,7 +80,7 @@ public class SpectrumSnapshotBuilder {
         for(Frequency frequency : keys){
             int x = spectrumWindow.getX(frequency);
 
-            Bucket bucket = new Bucket(frequency, map.get(frequency));
+            AtomicBucket bucket = new AtomicBucket(frequency, map.get(frequency));
 
             Buckets.fill(indices, entries, x, bucket);
         }

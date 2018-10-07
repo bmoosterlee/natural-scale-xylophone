@@ -100,7 +100,7 @@ public class SimpleChordGenerator {
         Iterator<Entry<Integer, Bucket>> iterator = freqProximityBuckets.iterator();
         while (iterator.hasNext()) {
             Entry<Integer, Bucket> pair = iterator.next();
-            frequencyHierarchy.add(new AbstractMap.SimpleImmutableEntry<>(pair.getKey(), pair.getValue().volume));
+            frequencyHierarchy.add(new AbstractMap.SimpleImmutableEntry<>(pair.getKey(), pair.getValue().getVolume()));
         }
         return frequencyHierarchy;
     }
