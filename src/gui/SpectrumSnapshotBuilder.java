@@ -26,10 +26,9 @@ public class SpectrumSnapshotBuilder {
         Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
 
         Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount);
-        Set<Frequency> clippedFrequencies = spectrumWindow.clip(liveFrequencies);
 
-        noteBuckets = toBuckets(clippedFrequencies, frequencyVolumeTable);
-        harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(clippedFrequencies, frequencyVolumeTable, 100);
+        noteBuckets = toBuckets(liveFrequencies, frequencyVolumeTable);
+        harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
     }
@@ -40,12 +39,14 @@ public class SpectrumSnapshotBuilder {
             Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
             Frequency frequency = harmonicVolume.getKey().getFrequency();
 
+            if(spectrumWindow.inBounds(frequency)) {
                 frequencies.add(frequency);
                 try {
                     newPairs.put(frequency, newPairs.get(frequency) + harmonicVolume.getValue());
                 } catch (NullPointerException e) {
                     newPairs.put(frequency, harmonicVolume.getValue());
                 }
+            }
         } catch (NoSuchElementException e) {
             return true;
         }
@@ -54,7 +55,7 @@ public class SpectrumSnapshotBuilder {
 
     public SpectrumSnapshot finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
-        Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs).clip(0, GUI.WIDTH);
+        Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 2");
