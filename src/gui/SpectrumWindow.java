@@ -1,8 +1,6 @@
 package gui;
 
 import frequency.Frequency;
-import gui.buckets.BucketHistory;
-import gui.buckets.PrecalculatedBucketHistory;
 import harmonics.HarmonicCalculator;
 import notes.state.FrequencyManager;
 
