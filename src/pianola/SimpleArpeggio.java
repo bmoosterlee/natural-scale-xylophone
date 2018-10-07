@@ -3,7 +3,7 @@ package pianola;
 import gui.Buckets;
 import gui.GUI;
 import frequency.Frequency;
-import gui.SpectrumSnapshot;
+import gui.SpectrumState;
 
 import java.util.*;
 
@@ -69,8 +69,8 @@ public class SimpleArpeggio implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumSnapshot spectrumSnapshot = gui.spectrumSnapshot;
-        Buckets origNoteBuckets = spectrumSnapshot.noteBuckets;
+        SpectrumState spectrumState = gui.spectrumState;
+        Buckets origNoteBuckets = spectrumState.noteBuckets;
         simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
     }
 

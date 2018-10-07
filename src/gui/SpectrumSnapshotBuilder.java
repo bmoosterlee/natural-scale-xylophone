@@ -53,7 +53,7 @@ public class SpectrumSnapshotBuilder {
         return false;
     }
 
-    public SpectrumSnapshot finish() {
+    public SpectrumState finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);
@@ -67,10 +67,10 @@ public class SpectrumSnapshotBuilder {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 4");
-        SpectrumSnapshot spectrumSnapshot = new SpectrumSnapshot(sampleCount, noteBuckets, timeAveragedBuckets);
+        SpectrumState spectrumState = new SpectrumState(noteBuckets, timeAveragedBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        return spectrumSnapshot;
+        return spectrumState;
     }
 
     protected Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){

@@ -3,7 +3,7 @@ package pianola;
 import frequency.Frequency;
 import gui.Buckets;
 import gui.GUI;
-import gui.SpectrumSnapshot;
+import gui.SpectrumState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -73,10 +73,10 @@ public class Sweep implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumSnapshot spectrumSnapshot = gui.spectrumSnapshot;
+        SpectrumState spectrumState = gui.spectrumState;
         Buckets origNoteBuckets;
         try {
-            origNoteBuckets = spectrumSnapshot.noteBuckets;
+            origNoteBuckets = spectrumState.noteBuckets;
         }
         catch(NullPointerException e){
             origNoteBuckets = new Buckets();

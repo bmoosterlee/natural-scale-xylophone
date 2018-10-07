@@ -25,7 +25,7 @@ public class GUI extends JPanel {
 //When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
 
-    public SpectrumSnapshot spectrumSnapshot;
+    public SpectrumState spectrumState;
     private SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
@@ -139,17 +139,17 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
-        spectrumSnapshot = spectrumSnapshotBuilder.finish();
+        spectrumState = spectrumSnapshotBuilder.finish();
         PerformanceTracker.stopTracking(timeKeeper);
 
-        Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
 
         timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
         renderHarmonicsBuckets(g, harmonicsBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
-        renderNoteBuckets(g, spectrumSnapshot.noteBuckets);
+        renderNoteBuckets(g, spectrumState.noteBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("render cursor");

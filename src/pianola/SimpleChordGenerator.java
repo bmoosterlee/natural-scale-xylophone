@@ -36,10 +36,10 @@ public class SimpleChordGenerator {
     }
 
     void generateChord() {
-        SpectrumSnapshot spectrumSnapshot = gui.spectrumSnapshot;
+        SpectrumState spectrumState = gui.spectrumState;
 
         Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
-        Buckets harmonicsBuckets = spectrumSnapshot.harmonicsBuckets.averageBuckets(10);
+        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(10);
 
         Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
 
