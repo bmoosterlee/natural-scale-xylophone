@@ -167,11 +167,8 @@ public class GUI extends JPanel {
     }
 
     private void renderBuckets(Graphics g, Buckets buckets) {
-        Iterator<Map.Entry<Integer, Bucket>> iterator = buckets.iterator();
-        while(iterator.hasNext()) {
-            Map.Entry<Integer, Bucket> pair = iterator.next();
-            int x = pair.getKey();
-            int y = (int) (pair.getValue().getVolume() * yScale + margin);
+        for(Integer x : buckets.indices){
+            int y = (int) (buckets.getValue(x).getVolume() * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
     }
