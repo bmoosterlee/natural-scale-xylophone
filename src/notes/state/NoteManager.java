@@ -2,6 +2,7 @@ package notes.state;
 
 import frequency.*;
 import notes.Note;
+import notes.envelope.DeterministicEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
@@ -25,7 +26,7 @@ public class NoteManager {
     }
 
     public void addNote(Frequency frequency) {
-        Note note = new Note(frequency,
+        Note note = new Note<DeterministicEnvelope>(frequency,
                 new SimpleDeterministicEnvelope(sampleTicker.getExpectedTickCount(),
                                                 sampleRate,
                                                 envelopeFunction)
