@@ -196,12 +196,4 @@ public class GUI extends JPanel {
         renderBuckets(g, buckets);
     }
 
-    public int getX(Frequency frequency) {
-        return spectrumWindow.getX(frequency);
-    }
-
-    public Frequency getFrequency(double x) {
-        return spectrumWindow.getFrequency(x);
-    }
-
 }

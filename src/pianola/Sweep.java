@@ -2,6 +2,7 @@ package pianola;
 
 import frequency.Frequency;
 import gui.SpectrumManager;
+import gui.SpectrumWindow;
 import gui.buckets.Buckets;
 import gui.GUI;
 import gui.SpectrumState;
@@ -13,22 +14,22 @@ public class Sweep implements PianolaPattern {
     //todo build a sweep which finds the octave higher, cuts the space from the tonic to the octave in -size- pieces
     //todo and lets each sweep find the highest value harmonic in that range.
     final int totalMargin;
-    GUI gui;
     SpectrumManager spectrumManager;
     int size;
     SimpleChordGenerator simpleChordGenerator;
     SimpleChordGenerator sweepGenerator;
 
     protected Sequencer sequencer;
+    final SpectrumWindow spectrumWindow;
 
-    public Sweep(Pianola pianola, SpectrumManager spectrumManager, int size, Frequency centerFrequency) {
-        gui = pianola.getGui();
+    public Sweep(SpectrumManager spectrumManager, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
+        this.spectrumWindow = spectrumWindow;
         this.spectrumManager = spectrumManager;
         this.size = size;
         sequencer = new Sequencer(size, 1);
 
-        totalMargin = gui.spectrumWindow.getX(gui.spectrumWindow.getCenterFrequency().multiplyBy(1.5)) -
-                gui.spectrumWindow.getX(gui.spectrumWindow.getCenterFrequency());
+        totalMargin = spectrumWindow.getX(spectrumWindow.getCenterFrequency().multiplyBy(1.5)) -
+                spectrumWindow.getX(spectrumWindow.getCenterFrequency());
 
         simpleChordGenerator =
                 getSimpleChordGenerator(centerFrequency);
@@ -41,13 +42,13 @@ public class Sweep implements PianolaPattern {
     }
 
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
-        return new SimpleChordGenerator(gui,
+        return new SimpleChordGenerator(
                 spectrumManager,
                 1,
                 centerFrequency,
                 totalMargin,
-                gui.spectrumWindow.getX(gui.spectrumWindow.lowerBound),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(2.0)), 3);
+                spectrumWindow.getX(spectrumWindow.lowerBound),
+                spectrumWindow.getX(spectrumWindow.upperBound.divideBy(2.0)), 3, spectrumWindow);
     }
 
     public Set<Frequency> playPattern() {
@@ -58,11 +59,11 @@ public class Sweep implements PianolaPattern {
         try {
             if (sequencer.isResetting()) {
                 generateNewChord();
-                frequencies.addAll(new ChordPlayer(gui, simpleChordGenerator.getFrequencies()).playPattern());
+                frequencies.addAll(new ChordPlayer(simpleChordGenerator.getFrequencies()).playPattern());
             }
             else {
                 moveRight();
-                frequencies.addAll(new ChordPlayer(gui, sweepGenerator.getFrequencies()).playPattern());
+                frequencies.addAll(new ChordPlayer(sweepGenerator.getFrequencies()).playPattern());
             }
             sequencer.tick();
         } catch (NullPointerException e) {
@@ -101,14 +102,14 @@ public class Sweep implements PianolaPattern {
     }
 
     protected SimpleChordGenerator findNextSweepGenerator() {
-        Frequency previousFrequency = gui.spectrumWindow.getFrequency(gui.getX(sweepGenerator.getFrequencies()[0]) +
+        Frequency previousFrequency = spectrumWindow.getFrequency(spectrumWindow.getX(sweepGenerator.getFrequencies()[0]) +
                 simpleChordGenerator.margin + 1);
-        return new SimpleChordGenerator(gui,
+        return new SimpleChordGenerator(
                 spectrumManager,
                 1,
                                   previousFrequency,
                                   totalMargin,
-                gui.spectrumWindow.getX(previousFrequency),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound), 1);
+                spectrumWindow.getX(previousFrequency),
+                spectrumWindow.getX(spectrumWindow.upperBound), 1, spectrumWindow);
     }
 }

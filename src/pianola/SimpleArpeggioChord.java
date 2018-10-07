@@ -37,7 +37,7 @@ public class SimpleArpeggioChord extends SimpleArpeggio {
     @Override
     protected void generateNewChord() {
         super.generateNewChord();
-        chordPlayer = new ChordPlayer(gui, simpleChordGenerator.getFrequencies());
+        chordPlayer = new ChordPlayer(simpleChordGenerator.getFrequencies());
     }
 
 }

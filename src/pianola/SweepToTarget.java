@@ -2,6 +2,7 @@ package pianola;
 
 import frequency.Frequency;
 import gui.SpectrumManager;
+import gui.SpectrumWindow;
 
 public class SweepToTarget extends Sweep {
     Frequency sourceFrequency;
@@ -11,8 +12,8 @@ public class SweepToTarget extends Sweep {
     private int keyWidth;
     private double multiplier;
 
-    public SweepToTarget(Pianola pianola, SpectrumManager spectrumManager, int size, Frequency centerFrequency, double multiplier) {
-        super(pianola, spectrumManager, size, centerFrequency);
+    public SweepToTarget(SpectrumManager spectrumManager, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
+        super(spectrumManager, size, centerFrequency, spectrumWindow);
 
         this.multiplier = multiplier;
 
@@ -30,23 +31,23 @@ public class SweepToTarget extends Sweep {
 
     @Override
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
-        return new SimpleChordGenerator(gui,
+        return new SimpleChordGenerator(
                 spectrumManager,
                 1,
                 centerFrequency,
                 totalMargin,
-                gui.spectrumWindow.getX(gui.spectrumWindow.lowerBound),
-                gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(multiplier)),
-                2);
+                spectrumWindow.getX(spectrumWindow.lowerBound),
+                spectrumWindow.getX(spectrumWindow.upperBound.divideBy(multiplier)),
+                2, spectrumWindow);
     }
 
     @Override
     protected void generateNewChord() {
         simpleChordGenerator.generateChord();
         sourceFrequency = simpleChordGenerator.getFrequencies()[0];
-        sourceAsInt = gui.spectrumWindow.getX(sourceFrequency);
+        sourceAsInt = spectrumWindow.getX(sourceFrequency);
         targetFrequency = sourceFrequency.multiplyBy(multiplier);
-        targetAsInt = gui.spectrumWindow.getX(targetFrequency);
+        targetAsInt = spectrumWindow.getX(targetFrequency);
         keyWidth = (targetAsInt -sourceAsInt)/size;
         moveRight();
     }
@@ -54,20 +55,20 @@ public class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(gui, spectrumManager, targetFrequency);
+            return new StaticGenerator(spectrumManager, targetFrequency, spectrumWindow);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);
             int left = (int) (center - keyWidth / 2.);
             int right = (int) (center + keyWidth / 2.);
-            return new SimpleChordGenerator(gui,
+            return new SimpleChordGenerator(
                     spectrumManager,
                     1,
-                    gui.spectrumWindow.getFrequency((double) center),
+                    spectrumWindow.getFrequency((double) center),
                     totalMargin,
                     left,
                     right,
-                    0);
+                    0, spectrumWindow);
         }
     }
 }

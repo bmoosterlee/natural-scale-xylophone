@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class SimpleChordGenerator {
-    private final GUI gui;
+    private final SpectrumWindow spectrumWindow;
     SpectrumManager spectrumManager;
     protected final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
@@ -20,21 +20,21 @@ public class SimpleChordGenerator {
     private final int totalMargin;
     private int repetitionDampener;
 
-    public SimpleChordGenerator(GUI gui, SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
-        this.gui = gui;
+    public SimpleChordGenerator(SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
         this.spectrumManager = spectrumManager;
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
         this.hardRightBorder = hardRightBorder;
+        this.spectrumWindow = spectrumWindow;
+        this.repetitionDampener = repetitionDampener;
 
         frequencies = new Frequency[chordSize];
 
-        this.repetitionDampener = repetitionDampener;
-        int centerX = clipLeft(clipRight(gui.spectrumWindow.getX(centerFrequency)));
+        int centerX = clipLeft(clipRight(this.spectrumWindow.getX(centerFrequency)));
 
         for (int i1 = 0; i1 < chordSize; i1++) {
-            frequencies[i1] = gui.getFrequency((int) (centerX + (-chordSize / 2. + i1) * margin));
+            frequencies[i1] = spectrumWindow.getFrequency((int) (centerX + (-chordSize / 2. + i1) * margin));
         }
     }
 
@@ -60,7 +60,7 @@ public class SimpleChordGenerator {
         int average = 0;
         for (int i = 0; i < chordSize; i++) {
             try {
-                average += gui.getX(frequencies[i]);
+                average += spectrumWindow.getX(frequencies[i]);
             }
             catch(NullPointerException ignored){
 
@@ -91,7 +91,7 @@ public class SimpleChordGenerator {
         Bucket highestValueBucket = freqProximityBuckets.getValue(highestValueIndex);
         Frequency frequency = FirstBucketFrequencyStrategy.getFrequency(highestValueBucket);
         if(frequency==null){
-            frequency = gui.getFrequency(highestValueIndex);
+            frequency = spectrumWindow.getFrequency(highestValueIndex);
         }
 
         return frequency;
@@ -162,8 +162,8 @@ public class SimpleChordGenerator {
             rightBorders = new Integer[chordSize];
 
             for (int i = 0; i < chordSize - 1; i++) {
-                Integer frequencyX = gui.getX(frequencies[i]);
-                Integer frequency2X = gui.getX(frequencies[i + 1]);
+                Integer frequencyX = spectrumWindow.getX(frequencies[i]);
+                Integer frequency2X = spectrumWindow.getX(frequencies[i + 1]);
                 int middleBorder = (frequencyX + frequency2X) / 2;
                 int marginBorder = frequencyX + margin;
 

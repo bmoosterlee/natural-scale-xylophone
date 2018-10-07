@@ -7,11 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ChordPlayer implements PianolaPattern{
-    GUI gui;
     Frequency[] chord;
 
-    public ChordPlayer(GUI gui, Frequency[] chord) {
-        this.gui = gui;
+    public ChordPlayer(Frequency[] chord) {
         this.chord = chord;
     }
 
