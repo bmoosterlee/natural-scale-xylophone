@@ -46,8 +46,8 @@ public class SpectrumWindow {
         xMultiplier = logRange / gui.GUI.WIDTH;
     }
 
-    SpectrumSnapshotBuilder createBuilder(long sampleCount) {
-        return new SpectrumSnapshotBuilder(sampleCount, this);
+    SpectrumStateBuilder createBuilder(long sampleCount) {
+        return new SpectrumStateBuilder(sampleCount, this);
     }
 
     boolean inBounds(Frequency frequency) {

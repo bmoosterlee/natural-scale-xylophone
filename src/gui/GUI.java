@@ -129,17 +129,17 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(sampleTicker.getExpectedTickCount());
+        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(sampleTicker.getExpectedTickCount());
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
         while (ticker.getTimeLeftInFrame(startTime).toMilliSeconds().getValue() > 1) {
-            if (spectrumSnapshotBuilder.update()) break;
+            if (spectrumStateBuilder.update()) break;
         }
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
-        spectrumState = spectrumSnapshotBuilder.finish();
+        spectrumState = spectrumStateBuilder.finish();
         PerformanceTracker.stopTracking(timeKeeper);
 
         Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);

@@ -9,7 +9,7 @@ import time.TimeKeeper;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class SpectrumSnapshotBuilder {
+public class SpectrumStateBuilder {
     final SpectrumWindow spectrumWindow;
 
     public final long sampleCount;
@@ -18,7 +18,7 @@ public class SpectrumSnapshotBuilder {
     public final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    public SpectrumSnapshotBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
+    public SpectrumStateBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
