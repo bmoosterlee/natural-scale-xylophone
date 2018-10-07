@@ -6,8 +6,8 @@ import gui.GUI;
 
 public class BottomIncrementalChordGenerator extends IncrementalChordGenerator {
 
-    public BottomIncrementalChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder) {
-        super(gui, chordSize, centerFrequency, totalMargin, hardLeftBorder);
+    public BottomIncrementalChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
+        super(gui, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener);
         noteIndex = 1;
     }
 

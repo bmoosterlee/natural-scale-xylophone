@@ -19,7 +19,7 @@ public class SimpleArpeggio implements PianolaPattern {
         this.chordSize = chordSize;
 
         Frequency centerFrequency = gui.spectrumWindow.getCenterFrequency();
-        simpleChordGenerator = new SimpleChordGenerator(gui,
+        simpleChordGenerator = new IncrementalChordGenerator(gui,
                                 chordSize,
                                 centerFrequency.divideBy(2.0),
                      gui.spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -

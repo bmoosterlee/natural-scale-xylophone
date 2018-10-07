@@ -7,8 +7,8 @@ import gui.GUI;
 public class IncrementalChordGenerator extends SimpleChordGenerator {
     protected int noteIndex = 0;
 
-    public IncrementalChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder) {
-        super(gui, chordSize, centerFrequency, totalMargin, hardLeftBorder, gui.spectrumWindow.getX(gui.spectrumWindow.upperBound), 3);
+    public IncrementalChordGenerator(GUI gui, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
+        super(gui, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener);
     }
 
     @Override
