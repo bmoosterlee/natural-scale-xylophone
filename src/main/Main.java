@@ -1,16 +1,15 @@
 package main;
 
-import frequency.Frequency;
 import gui.GUI;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
 import notes.state.FrequencyManager;
-import notes.state.WaveManager;
-import sound.SampleTicker;
 import notes.state.NoteManager;
+import notes.state.WaveManager;
+import pianola.Pianola;
+import sound.SampleTicker;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
-import pianola.Pianola;
 
 public class Main {
 
