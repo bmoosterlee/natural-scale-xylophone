@@ -2,6 +2,7 @@ package notes.state;
 
 import frequency.FrequencyState;
 import frequency.SimpleFrequencyState;
+import frequency.SimpleFrequencyStateBucket;
 
 public class FrequencyManager {
     private final NoteManager noteManager;
@@ -9,7 +10,7 @@ public class FrequencyManager {
 
     public FrequencyManager(NoteManager noteManager) {
         this.noteManager = noteManager;
-        frequencyState = new SimpleFrequencyState();
+        frequencyState = new SimpleFrequencyState<>(SimpleFrequencyStateBucket::new);
     }
 
     public FrequencyState getFrequencyState(long sampleCount) {

@@ -4,188 +4,121 @@ import notes.Note;
 
 import java.util.*;
 
-public class SimpleFrequencyState implements FrequencyState {
+public class SimpleFrequencyState<T extends FrequencyStateBucket> implements FrequencyState {
     public final Set<Note> notes;
     public final Set<Frequency> frequencies;
-    public final Map<Frequency, Set<Note>> frequencyNoteTable;
+    public final Map<Frequency, T> buckets;
+    protected final Factory<T> factory;
 
-    public SimpleFrequencyState() {
+    public SimpleFrequencyState(Factory<T> factory) {
         notes = new HashSet<>();
         frequencies = new HashSet<>();
-        frequencyNoteTable = new HashMap<>();
+        buckets = new HashMap<>();
+        this.factory = factory;
     }
 
-    public SimpleFrequencyState(Set<Note> notes, Set<Frequency> frequencies, Map<Frequency, Set<Note>> frequencyNoteTable) {
+    protected SimpleFrequencyState(Set<Note> notes, Set<Frequency> frequencies, Map<Frequency, T> buckets, Factory<T> factory) {
         this.notes = notes;
         this.frequencies = frequencies;
-        this.frequencyNoteTable = frequencyNoteTable;
+        this.buckets = buckets;
+        this.factory = factory;
     }
 
     public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount) {
         Map<Frequency, Double> frequencyVolumes = new HashMap<>();
 
-        Iterator<Frequency> iterator = frequencies.iterator();
-        while (iterator.hasNext()) {
-            Frequency frequency = iterator.next();
-            Double volume = 0.;
-            Iterator<Note> noteIterator = frequencyNoteTable.get(frequency).iterator();
-            while (noteIterator.hasNext()) {
-                Note note = noteIterator.next();
-                try {
-                    volume += note.getEnvelope().getVolume(sampleCount);
-                } catch (NullPointerException e) {
-                    continue;
-                }
-            }
-            frequencyVolumes.put(frequency, volume);
+        for(Frequency frequency : frequencies){
+            frequencyVolumes.put(frequency, getVolume(frequency, sampleCount));
         }
         return frequencyVolumes;
     }
 
-    @Override
     public Double getVolume(Frequency frequency, long sampleCount) {
-        Double volume = 0.;
-        Iterator<Note> noteIterator = frequencyNoteTable.get(frequency).iterator();
-        while (noteIterator.hasNext()) {
-            Note note = noteIterator.next();
-            try {
-                volume += note.getEnvelope().getVolume(sampleCount);
-            } catch (NullPointerException e) {
-                continue;
-            }
+        try {
+            return buckets.get(frequency).getVolume(sampleCount);
         }
-        return volume;
+        catch(NullPointerException e){
+            return 0.;
+        }
     }
 
-    @Override
     public FrequencyState update(Set<Note> notes) {
         FrequencyState newFrequencyState = this;
 
         Set<Note> removedNotes = new HashSet<>(this.notes);
-        removedNotes.removeAll(new HashSet<>(notes));
+        removedNotes.removeAll(notes);
 
         Set<Note> addedNotes = new HashSet<>(notes);
-        addedNotes.removeAll(new HashSet<>(this.notes));
+        addedNotes.removeAll(this.notes);
 
-        if(!removedNotes.isEmpty()) {
-            Iterator<Note> iterator = removedNotes.iterator();
-            while (iterator.hasNext()) {
-                newFrequencyState = newFrequencyState.removeNote(iterator.next());
-            }
+        for(Note note : removedNotes){
+            newFrequencyState = newFrequencyState.removeNote(note);
         }
 
-        if(!addedNotes.isEmpty()) {
-            Iterator<Note> iterator = addedNotes.iterator();
-            while (iterator.hasNext()) {
-                newFrequencyState = newFrequencyState.addNote(iterator.next());
-            }
+        for(Note note : addedNotes){
+            newFrequencyState = newFrequencyState.addNote(note);
         }
 
         return newFrequencyState;
     }
 
-    public SimpleFrequencyState removeNote(Note note) {
+    public SimpleFrequencyState<T> removeNote(Note note) {
+        Set<Note> newNotes = new HashSet<>(notes);
+        newNotes.remove(note);
+
         Frequency frequency = note.getFrequency();
 
-        Set<Note> newNotes = new HashSet<>(notes);
-        Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
-        Set<Frequency> newFrequencies = new HashSet<>(frequencies);
-
-        newNotes.remove(note);
-        Set<Note> notes = newFrequencyNoteTable.get(frequency);
+        Set<Frequency> newFrequencies = new HashSet<>(getFrequencies());
+        Map<Frequency, T> newBuckets = new HashMap<>(buckets);
+        T newBucket = null;
         try {
-            notes.remove(note);
-
-            if (notes.isEmpty()) {
-                newFrequencies.remove(frequency);
-                newFrequencyNoteTable.remove(frequency);
-            }
+            newBucket = newBuckets.get(frequency).removeNote(note);
         }
         catch(NullPointerException e){
-            
+
+        }
+        if(newBucket==null){
+            newFrequencies.remove(frequency);
+            newBuckets.remove(frequency);
+        }
+        else{
+            newBuckets.put(frequency, newBucket);
         }
 
-        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
+        return new SimpleFrequencyState<>(newNotes, newFrequencies, newBuckets, factory);
     }
 
-    public SimpleFrequencyState removeNotes(Set<Note> notes) {
-        if (notes.isEmpty()) {
-            return this;
-        }
-
-        Set<Note> newNotes = new HashSet<>(notes);
-        newNotes.removeAll(notes);
-
-        Set<Frequency> newFrequencies = frequencies;
-        Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
-
-        Set<Frequency> touchedFrequencies = new HashSet<>();
-
-        for (Note note : notes) {
-            Frequency frequency = note.getFrequency();
-
-            newFrequencyNoteTable.get(frequency).remove(note);
-            touchedFrequencies.add(frequency);
-        }
-
-        if (!touchedFrequencies.isEmpty()) {
-            newFrequencies = new HashSet<>(frequencies);
-
-            for (Frequency frequency : touchedFrequencies) {
-                if (newFrequencyNoteTable.get(frequency).isEmpty()) {
-                    newFrequencies.remove(frequency);
-                    newFrequencyNoteTable.remove(frequency);
-                }
-            }
-        }
-
-        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
-    }
-
-    @Override
     public FrequencyState update(long sampleCount) {
         return this;
     }
 
     public SimpleFrequencyState addNote(Note note) {
         Frequency frequency = note.getFrequency();
-
         Set<Note> newNotes = new HashSet<>(notes);
-        Map<Frequency, Set<Note>> newFrequencyNoteTable = copyFrequencyNoteTable();
-        Set<Frequency> newFrequencies = frequencies;
-
         newNotes.add(note);
-        Set<Note> noteSet;
 
-        if (!newFrequencyNoteTable.containsKey(frequency)) {
+        Set<Frequency> newFrequencies = frequencies;
+        if (!newFrequencies.contains(frequency)) {
             newFrequencies = new HashSet<>(frequencies);
             newFrequencies.add(frequency);
-
-            noteSet = new HashSet<>();
-            newFrequencyNoteTable.put(frequency, noteSet);
-        } else {
-            noteSet = newFrequencyNoteTable.get(frequency);
         }
-        noteSet.add(note);
 
-        return new SimpleFrequencyState(newNotes, newFrequencies, newFrequencyNoteTable);
-    }
-
-    Map<Frequency, Set<Note>> copyFrequencyNoteTable() {
         //todo if we want the list to be immutable, we could calculate the death time of each note, and create a
         //todo new version of the object at each death time.
         //todo by using zipper like structures, we can only update a particular note list.
         //todo we can link together all these death time based frequencytables, and request the current one from the
         // todo noteManager, like an iterator. We might even turn it into an iterator.
-        HashMap<Frequency, Set<Note>> frequencyNoteTableCopy = new HashMap<>();
-
-        Iterator<Map.Entry<Frequency, Set<Note>>> iterator = frequencyNoteTable.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Frequency, Set<Note>> entry = iterator.next();
-            frequencyNoteTableCopy.put(entry.getKey(), new HashSet<>(entry.getValue()));
+        Map<Frequency, T> newBuckets = new HashMap<>(buckets);
+        T newBucket;
+        try {
+            newBucket = newBuckets.get(frequency).addNote(note);
         }
+        catch(NullPointerException e){
+            newBucket = factory.make().addNote(note);
+        }
+        newBuckets.put(frequency, newBucket);
 
-        return frequencyNoteTableCopy;
+        return new SimpleFrequencyState<>(newNotes, newFrequencies, newBuckets, factory);
     }
 
     public Set<Frequency> getFrequencies(){
