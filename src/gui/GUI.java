@@ -13,7 +13,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.*;
 
 public class GUI extends JPanel {
 //    performancetrack everything. Optimize pianola for variable speed, or better performance at higher speed.
@@ -25,17 +24,15 @@ public class GUI extends JPanel {
 //function over the frequencies, which we then throw into buckets by sampling.
 //When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
-    private final MouseListener mouseListener;
-    private final MouseMotionListener mouseMotionListener;
 
     public SpectrumSnapshot spectrumSnapshot;
-    SampleTicker sampleTicker;
+    private SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
-    public static final int WIDTH = 800*2;
-    public static final int HEIGHT = 600;
-    public static final double yScale = HEIGHT * 0.95;
-    public static final double margin = HEIGHT * 0.05;
+    static final int WIDTH = 800*2;
+    private static final int HEIGHT = 600;
+    private static final double yScale = HEIGHT * 0.95;
+    private static final double margin = HEIGHT * 0.05;
     //todo change use of ticker pattern such that getTimeLeftInFrame isn't used externally anymore
     //todo this could be done by having a tick wrapper which waits for the next tick. Until the next
     //todo tick hasn't arrived yet, we iterate. As soon as the next tick arrives, we finish the last tick.
@@ -43,11 +40,11 @@ public class GUI extends JPanel {
     //todo this does not seem like a task for a state object, as we need to keep the tick state
     //todo stored somewhere.
 
-    public Ticker ticker;
-    public TimeInNanoSeconds startTime;
-    public Frequency mouseFrequency;
+    private Ticker ticker;
+    private TimeInNanoSeconds startTime;
+    private Frequency mouseFrequency;
 
-    public BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
+    private BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager){
         GUI.this.sampleTicker = sampleTicker;
@@ -57,7 +54,7 @@ public class GUI extends JPanel {
 
         spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator);
 
-        mouseListener = new MouseListener() {
+        MouseListener mouseListener = new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
 
@@ -84,7 +81,7 @@ public class GUI extends JPanel {
 
             }
         };
-        mouseMotionListener = new MouseMotionListener() {
+        MouseMotionListener mouseMotionListener = new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
 
@@ -132,7 +129,7 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(getSampleTicker().getExpectedTickCount());
+        SpectrumSnapshotBuilder spectrumSnapshotBuilder = spectrumWindow.createBuilder(sampleTicker.getExpectedTickCount());
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
@@ -196,10 +193,6 @@ public class GUI extends JPanel {
 
     public Frequency getFrequency(double x) {
         return spectrumWindow.getFrequency(x);
-    }
-
-    public SampleTicker getSampleTicker() {
-        return sampleTicker;
     }
 
 }
