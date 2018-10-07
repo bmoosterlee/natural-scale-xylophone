@@ -1,4 +1,4 @@
-package gui;
+package gui.buckets;
 
 import time.PerformanceTracker;
 import time.TimeKeeper;
@@ -7,8 +7,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class Buckets {
-    protected final Set<Integer> indices;
-    protected final Map<Integer, Bucket> bucketsData;
+    private final Set<Integer> indices;
+    private final Map<Integer, Bucket> bucketsData;
 
     public Buckets() {
         indices = new HashSet<>();
@@ -21,15 +21,15 @@ public class Buckets {
     }
 
     public Bucket getValue(int i) {
-        return bucketsData.get(i);
+        return getBucketsData().get(i);
     }
 
     public Buckets add(Buckets otherBuckets) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("add buckets setup");
-        Set<Integer> newIndices = new HashSet<>(indices);
-        Map<Integer, Bucket> newEntries = new HashMap<>(bucketsData);
+        Set<Integer> newIndices = new HashSet<>(getIndices());
+        Map<Integer, Bucket> newEntries = new HashMap<>(getBucketsData());
 
-        for(Integer x : otherBuckets.indices){
+        for(Integer x : otherBuckets.getIndices()){
             Bucket value = otherBuckets.getValue(x);
             PerformanceTracker.stopTracking(timeKeeper);
             fill(newIndices, newEntries, x, value);
@@ -87,7 +87,7 @@ public class Buckets {
         int averagingWidth = bucketsAverager.averagingWidth;
         PerformanceTracker.stopTracking(timeKeeper);
 
-        for(Integer x : indices){
+        for(Integer x : getIndices()){
             timeKeeper = PerformanceTracker.startTracking("average buckets get volume");
             Double volume = getValue(x).getVolume();
             PerformanceTracker.stopTracking(timeKeeper);
@@ -118,7 +118,7 @@ public class Buckets {
         return buckets;
     }
 
-    protected static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
+    public static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("fill");
         newIndices.add(x);
         Bucket newBucket;
@@ -141,21 +141,21 @@ public class Buckets {
     public Buckets multiply(double v) {
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        for(Integer x : indices){
+        for(Integer x : getIndices()){
             newEntries.put(x, getValue(x).multiply(v));
         }
-        return new Buckets(indices, newEntries);
+        return new Buckets(getIndices(), newEntries);
     }
 
     public Iterator<Entry<Integer, Bucket>> iterator() {
-        return bucketsData.entrySet().iterator();
+        return getBucketsData().entrySet().iterator();
     }
 
     public Buckets clip(int start, int end) {
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
-        for(Integer x : indices){
+        for(Integer x : getIndices()){
             if (x < start || x >= end) {
                 continue;
             }
@@ -170,4 +170,11 @@ public class Buckets {
         return add(buckets.multiply(-1));
     }
 
+    public Set<Integer> getIndices() {
+        return indices;
+    }
+
+    public Map<Integer, Bucket> getBucketsData() {
+        return bucketsData;
+    }
 }

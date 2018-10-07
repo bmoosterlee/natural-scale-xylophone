@@ -1,6 +1,6 @@
 package pianola;
 
-import gui.Buckets;
+import gui.buckets.Buckets;
 import gui.GUI;
 import frequency.Frequency;
 import gui.SpectrumState;

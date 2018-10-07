@@ -1,4 +1,4 @@
-package gui;
+package gui.buckets;
 
 public interface BucketFrequencyStrategy {
 }

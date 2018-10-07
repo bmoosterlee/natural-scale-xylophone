@@ -1,4 +1,4 @@
-package gui;
+package gui.buckets;
 
 import java.util.LinkedList;
 

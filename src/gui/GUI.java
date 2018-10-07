@@ -1,6 +1,8 @@
 package gui;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
+import gui.buckets.BucketsAverager;
 import harmonics.HarmonicCalculator;
 import main.Observer;
 import notes.state.FrequencyManager;
@@ -164,7 +166,7 @@ public class GUI extends JPanel {
     }
 
     private void renderBuckets(Graphics g, Buckets buckets) {
-        for(Integer x : buckets.indices){
+        for(Integer x : buckets.getIndices()){
             int y = (int) (buckets.getValue(x).getVolume() * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }

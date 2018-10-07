@@ -1,5 +1,7 @@
 package gui;
 
+import gui.buckets.Buckets;
+
 public class SpectrumState {
     public final Buckets noteBuckets;
     public final Buckets harmonicsBuckets;

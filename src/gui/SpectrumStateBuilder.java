@@ -1,5 +1,8 @@
 package gui;
 
+import gui.buckets.AtomicBucket;
+import gui.buckets.Bucket;
+import gui.buckets.Buckets;
 import harmonics.Harmonic;
 import frequency.Frequency;
 import frequency.FrequencyState;

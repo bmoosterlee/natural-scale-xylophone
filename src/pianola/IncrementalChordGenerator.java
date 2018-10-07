@@ -1,7 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.Buckets;
+import gui.buckets.Buckets;
 import gui.GUI;
 
 public class IncrementalChordGenerator extends SimpleChordGenerator {

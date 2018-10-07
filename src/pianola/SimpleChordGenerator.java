@@ -2,6 +2,7 @@ package pianola;
 
 import frequency.Frequency;
 import gui.*;
+import gui.buckets.*;
 
 import java.util.*;
 import java.util.Map.Entry;
