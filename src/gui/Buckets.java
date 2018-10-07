@@ -97,7 +97,6 @@ public class Buckets {
                 AtomicBucket residueBucket = new AtomicBucket(volume * multipliers[i]);
                 PerformanceTracker.stopTracking(timeKeeper);
 
-                timeKeeper = PerformanceTracker.startTracking("average buckets fill residue");
                 {
                     int residueIndex = x - i;
 
@@ -108,7 +107,6 @@ public class Buckets {
 
                     fill(newIndices, newEntries, residueIndex, residueBucket);
                 }
-                PerformanceTracker.stopTracking(timeKeeper);
             }
         }
 
@@ -116,10 +114,7 @@ public class Buckets {
         Buckets newBuckets = new Buckets(newIndices, newEntries);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("average buckets add to original");
         Buckets buckets = add(newBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
-
         return buckets;
     }
 
