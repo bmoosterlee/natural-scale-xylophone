@@ -35,7 +35,7 @@ public class SweepToTarget extends Sweep {
                 totalMargin,
                 gui.spectrumWindow.getX(gui.spectrumWindow.lowerBound),
                 gui.spectrumWindow.getX(gui.spectrumWindow.upperBound.divideBy(multiplier)),
-                1);
+                2);
     }
 
     @Override

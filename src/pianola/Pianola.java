@@ -27,10 +27,10 @@ public class Pianola implements Runnable {
         this.noteManager = noteManager;
         FRAME_TIME = frame_time;
 
-//        pianolaPattern = new SimpleArpeggio(this, 5);
-//         pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
-        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
+//        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
+//        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
+        pianolaPattern = new SimpleArpeggio(this, 3);
     }
 
     public void start(){

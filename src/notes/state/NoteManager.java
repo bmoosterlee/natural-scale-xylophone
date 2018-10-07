@@ -23,7 +23,7 @@ public class NoteManager {
         this.sampleTicker = sampleTicker;
         this.sampleRate = sampleRate;
         noteState = new NoteState();
-        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.25, new TimeInSeconds(0.3));
+        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
     }
 
     public void addNote(Frequency frequency) {
