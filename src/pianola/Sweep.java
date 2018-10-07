@@ -82,7 +82,7 @@ public class Sweep implements PianolaPattern {
             origNoteBuckets = new Buckets();
         }
 
-        simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+        simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
     }
 
     protected void generateNewChord() {

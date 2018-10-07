@@ -3,13 +3,14 @@ package gui.buckets;
 import java.util.LinkedList;
 
 public class PrecalculatedBucketHistory implements BucketHistory {
-    LinkedList<Buckets> harmonicsBucketsHistory;
-    private int size;
-    private double multiplier;
-    Buckets timeAverage;
+    private final int size;
+    private final LinkedList<Buckets> history;
+
+    private final double multiplier;
+    private final Buckets timeAverage;
 
     public PrecalculatedBucketHistory(int size) {
-        harmonicsBucketsHistory = new LinkedList<>();
+        history = new LinkedList<>();
         this.size = size;
 
         timeAverage = new Buckets();
@@ -17,30 +18,38 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         multiplier = 1. / size;
     }
 
+    public PrecalculatedBucketHistory(int size, LinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
+        this.size = size;
+        this.history = history;
+        this.multiplier = multiplier;
+        this.timeAverage = timeAverage;
+    }
+
     @Override
-    public void addNewBuckets(Buckets newBuckets) {
-        synchronized (harmonicsBucketsHistory) {
-            if (harmonicsBucketsHistory.size() >= size) {
-                Buckets removed = harmonicsBucketsHistory.pollFirst();
-                timeAverage = timeAverage.subtract(removed);
-            }
+    public BucketHistory addNewBuckets(Buckets newBuckets) {
+        LinkedList<Buckets> newHistory = new LinkedList<>(history);
+        Buckets newTimeAverage = timeAverage;
 
-            Buckets added = newBuckets.multiply(multiplier);
-
-            harmonicsBucketsHistory.addLast(added);
-            timeAverage = timeAverage.add(added);
+        if (history.size() >= size) {
+            Buckets removed = newHistory.pollFirst();
+            newTimeAverage = newTimeAverage.subtract(removed);
         }
+
+        Buckets added = newBuckets.multiply(multiplier);
+
+        newHistory.addLast(added);
+        newTimeAverage = newTimeAverage.add(added);
+
+        return new PrecalculatedBucketHistory(size, newHistory, multiplier, newTimeAverage);
     }
 
     @Override
     public Buckets getTimeAveragedBuckets() {
-        synchronized (harmonicsBucketsHistory) {
-            if (harmonicsBucketsHistory.isEmpty()) {
-                return new Buckets();
-            }
-            else {
-                return timeAverage;
-            }
+        if (history.isEmpty()) {
+            return new Buckets();
+        }
+        else {
+            return timeAverage;
         }
     }
 

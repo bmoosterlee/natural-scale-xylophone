@@ -3,37 +3,45 @@ package gui.buckets;
 import java.util.LinkedList;
 
 public class SimpleBucketHistory implements BucketHistory {
-    LinkedList<Buckets> harmonicsBucketsHistory;
-    private int size;
-    private double multiplier;
+    private final LinkedList<Buckets> history;
+    private final int size;
+    private final double multiplier;
 
     public SimpleBucketHistory(int size) {
-        harmonicsBucketsHistory = new LinkedList<>();
+        history = new LinkedList<>();
         this.size = size;
         multiplier = 1. / size;
     }
 
+    private SimpleBucketHistory(int size, LinkedList<Buckets> history, double multiplier) {
+        this.size = size;
+        this.history = history;
+        this.multiplier = multiplier;
+    }
+
     @Override
-    public void addNewBuckets(Buckets newBuckets) {
-        synchronized (harmonicsBucketsHistory) {
-            if (harmonicsBucketsHistory.size() >= size) {
-                harmonicsBucketsHistory.removeFirst();
-            }
-            harmonicsBucketsHistory.addLast(newBuckets.multiply(multiplier));
+    public BucketHistory addNewBuckets(Buckets newBuckets) {
+        LinkedList<Buckets> newHistory = new LinkedList<>(history);
+
+        if (history.size() >= size) {
+            newHistory.removeFirst();
         }
+        newHistory.addLast(newBuckets.multiply(multiplier));
+
+        return new SimpleBucketHistory(size, newHistory, multiplier);
     }
 
     @Override
     public Buckets getTimeAveragedBuckets() {
         Buckets timeAveragedBuckets = new Buckets();
-        if (harmonicsBucketsHistory.isEmpty()) {
+        if (history.isEmpty()) {
             return timeAveragedBuckets;
         }
-        synchronized (harmonicsBucketsHistory) {
-            for (Buckets buckets : harmonicsBucketsHistory) {
-                timeAveragedBuckets = timeAveragedBuckets.add(buckets);
-            }
+
+        for (Buckets buckets : history) {
+            timeAveragedBuckets = timeAveragedBuckets.add(buckets);
         }
+
         return timeAveragedBuckets;
     }
 

@@ -21,7 +21,6 @@ public class SpectrumWindow {
     //todo we might index frequencies of buckets though such that we can still do easy manipulations on buckets using
     //todo these indices
 
-    private final BucketHistory bucketHistory = new PrecalculatedBucketHistory(300);
     public final Frequency centerFrequency = new Frequency(2 * 261.63);
     private double octaveRange = 3.;
     public Frequency lowerBound;
@@ -45,8 +44,8 @@ public class SpectrumWindow {
         xMultiplier = logRange / gui.GUI.WIDTH;
     }
 
-    SpectrumStateBuilder createBuilder(long sampleCount) {
-        return new SpectrumStateBuilder(sampleCount, this);
+    SpectrumStateBuilder createBuilder(SpectrumState spectrumState, long sampleCount) {
+        return new SpectrumStateBuilder(spectrumState, sampleCount, this);
     }
 
     boolean inBounds(Frequency frequency) {
@@ -68,10 +67,6 @@ public class SpectrumWindow {
 
     public Frequency getCenterFrequency() {
         return centerFrequency;
-    }
-
-    BucketHistory getBucketHistory() {
-        return bucketHistory;
     }
 
 }

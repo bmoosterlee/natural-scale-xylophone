@@ -2,6 +2,7 @@ package gui;
 
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
+import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import harmonics.Harmonic;
 import frequency.Frequency;
@@ -15,13 +16,15 @@ import java.util.Map.Entry;
 public class SpectrumStateBuilder {
     private final SpectrumWindow spectrumWindow;
 
+    private final SpectrumState spectrumState;
     public final long sampleCount;
     private final Buckets noteBuckets;
     private final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
     private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    SpectrumStateBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
+    SpectrumStateBuilder(SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
+        this.spectrumState = spectrumState;
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
@@ -62,15 +65,15 @@ public class SpectrumStateBuilder {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 2");
-        spectrumWindow.getBucketHistory().addNewBuckets(newHarmonicsBuckets);
+        BucketHistory bucketHistory = spectrumState.bucketHistory.addNewBuckets(newHarmonicsBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 3");
-        Buckets timeAveragedBuckets = spectrumWindow.getBucketHistory().getTimeAveragedBuckets();
+        Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 4");
-        SpectrumState spectrumState = new SpectrumState(noteBuckets, timeAveragedBuckets);
+        SpectrumState spectrumState = new SpectrumState(noteBuckets, timeAveragedBuckets, bucketHistory);
         PerformanceTracker.stopTracking(timeKeeper);
 
         return spectrumState;

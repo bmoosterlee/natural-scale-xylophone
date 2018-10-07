@@ -1,7 +1,7 @@
 package gui.buckets;
 
 public interface BucketHistory {
-    void addNewBuckets(Buckets newBuckets);
+    BucketHistory addNewBuckets(Buckets newBuckets);
 
     Buckets getTimeAveragedBuckets();
 }

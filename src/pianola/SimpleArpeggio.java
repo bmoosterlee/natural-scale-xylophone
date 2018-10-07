@@ -71,7 +71,7 @@ public class SimpleArpeggio implements PianolaPattern {
     private void updateNoteBuckets() {
         SpectrumState spectrumState = gui.spectrumState;
         Buckets origNoteBuckets = spectrumState.noteBuckets;
-        simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+        simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
     }
 
     protected void generateNewChord() {

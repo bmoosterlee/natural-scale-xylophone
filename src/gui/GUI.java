@@ -3,6 +3,7 @@ package gui;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
+import gui.buckets.PrecalculatedBucketHistory;
 import harmonics.HarmonicCalculator;
 import main.Observer;
 import notes.state.FrequencyManager;
@@ -50,6 +51,7 @@ public class GUI extends JPanel {
 
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager){
         GUI.this.sampleTicker = sampleTicker;
+        spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(300));
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());
@@ -131,7 +133,7 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(sampleTicker.getExpectedTickCount());
+        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(spectrumState, sampleTicker.getExpectedTickCount());
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
