@@ -7,9 +7,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class Buckets {
-    //todo constantly put new harmonics in a harmonicsBuckets which is used over time.
-    //todo copy the harmonicsBuckets when we want to use it somewhere else, but always keep adding.
-
     protected final Set<Integer> indices;
     protected final Map<Integer, Bucket> bucketsData;
 
