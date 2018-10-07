@@ -6,7 +6,9 @@ import frequency.SimpleFrequencyStateBucket;
 
 public class FrequencyManager {
     private final NoteManager noteManager;
+
     FrequencyState frequencyState;
+    long updatedToSample = -1;
 
     public FrequencyManager(NoteManager noteManager) {
         this.noteManager = noteManager;
@@ -15,8 +17,11 @@ public class FrequencyManager {
 
     public FrequencyState getFrequencyState(long sampleCount) {
         synchronized (noteManager) {
-            frequencyState = frequencyState.update(noteManager.getNoteState(sampleCount).getNotes());
-            frequencyState = frequencyState.update(sampleCount);
+            if(sampleCount>updatedToSample) {
+                frequencyState = frequencyState.update(noteManager.getNoteState(sampleCount).getNotes());
+                frequencyState = frequencyState.update(sampleCount);
+                updatedToSample = sampleCount;
+            }
             return frequencyState;
         }
     }

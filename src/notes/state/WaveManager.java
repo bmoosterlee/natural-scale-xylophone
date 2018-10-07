@@ -5,7 +5,9 @@ import wave.WaveState;
 
 public class WaveManager {
     private final FrequencyManager frequencyManager;
+
     WaveState waveState;
+    long updatedToSample = -1;
 
     public WaveManager(FrequencyManager frequencyManager, SampleRate sampleRate) {
         this.frequencyManager = frequencyManager;
@@ -15,8 +17,11 @@ public class WaveManager {
 
     public WaveState getWaveState(long sampleCount) {
         synchronized (frequencyManager) {
-            waveState = waveState.update(frequencyManager.getFrequencyState(sampleCount).getFrequencies());
-            waveState = waveState.update(sampleCount);
+            if(sampleCount>updatedToSample) {
+                waveState = waveState.update(frequencyManager.getFrequencyState(sampleCount).getFrequencies());
+                waveState = waveState.update(sampleCount);
+                updatedToSample = sampleCount;
+            }
             return waveState;
         }
     }

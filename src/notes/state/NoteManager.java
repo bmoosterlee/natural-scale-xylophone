@@ -17,6 +17,7 @@ public class NoteManager {
     private final DeterministicFunction envelopeFunction;
 
     private NoteState noteState;
+    long updatedToSample = -1;
 
     public NoteManager(SampleTicker sampleTicker, SampleRate sampleRate) {
         this.sampleTicker = sampleTicker;
@@ -42,7 +43,10 @@ public class NoteManager {
 
     protected NoteState getNoteState(long sampleCount) {
         synchronized(this) {
-            noteState = noteState.update(sampleCount);
+            if(sampleCount>updatedToSample) {
+                noteState = noteState.update(sampleCount);
+                updatedToSample = sampleCount;
+            }
             return noteState;
         }
     }
