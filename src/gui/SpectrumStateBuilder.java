@@ -10,15 +10,15 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class SpectrumStateBuilder {
-    final SpectrumWindow spectrumWindow;
+    private final SpectrumWindow spectrumWindow;
 
     public final long sampleCount;
-    public final Buckets noteBuckets;
-    public final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
-    public final Map<Frequency, Double> newPairs;
+    private final Buckets noteBuckets;
+    private final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
+    private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    public SpectrumStateBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
+    SpectrumStateBuilder(long sampleCount, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
@@ -53,7 +53,7 @@ public class SpectrumStateBuilder {
         return false;
     }
 
-    public SpectrumState finish() {
+    SpectrumState finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);
@@ -73,7 +73,7 @@ public class SpectrumStateBuilder {
         return spectrumState;
     }
 
-    protected Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){
+    private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){
         Set<Integer> indices = new HashSet<>();
         Map<Integer, Bucket> entries = new HashMap<>();
 

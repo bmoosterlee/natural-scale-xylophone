@@ -3,13 +3,10 @@ package gui;
 import frequency.Frequency;
 import harmonics.HarmonicCalculator;
 import notes.state.FrequencyManager;
-import notes.state.NoteManager;
-
-import java.util.*;
 
 public class SpectrumWindow {
-    public FrequencyManager frequencyManager;
-    public HarmonicCalculator harmonicCalculator;
+    FrequencyManager frequencyManager;
+    HarmonicCalculator harmonicCalculator;
     //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
 
     //todo create CachedBuckets class which store what harmony a bucket refers to. Pick the highest value one.
@@ -24,14 +21,14 @@ public class SpectrumWindow {
 
     private final BucketHistory bucketHistory = new PrecalculatedBucketHistory(300);
     public final Frequency centerFrequency = new Frequency(2 * 261.63);
-    double octaveRange = 3.;
+    private double octaveRange = 3.;
     public Frequency lowerBound;
     public Frequency upperBound;
-    double logFrequencyMultiplier;
-    double logFrequencyAdditive;
-    double xMultiplier;
+    private double logFrequencyMultiplier;
+    private double logFrequencyAdditive;
+    private double xMultiplier;
 
-    public SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator) {
+    SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator) {
         this.frequencyManager = frequencyManager;
         this.harmonicCalculator = harmonicCalculator;
 
@@ -71,7 +68,7 @@ public class SpectrumWindow {
         return centerFrequency;
     }
 
-    public BucketHistory getBucketHistory() {
+    BucketHistory getBucketHistory() {
         return bucketHistory;
     }
 
