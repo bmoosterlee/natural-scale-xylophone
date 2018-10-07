@@ -1,5 +1,7 @@
 package time;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PerformanceTracker implements Runnable{
@@ -58,7 +60,12 @@ public class PerformanceTracker implements Runnable{
 
     public void tick(){
         System.out.println("------------");
-        for(String stateName : performanceTracker.stateTimes.keySet()){
+        ConcurrentHashMap.KeySetView<String, Long> names = performanceTracker.stateTimes.keySet();
+        PriorityQueue<String> sortedNames = new PriorityQueue<>(Comparator.comparing(o -> -performanceTracker.stateTimes.get(o)));
+        sortedNames.addAll(names);
+
+        while(!sortedNames.isEmpty()){
+            String stateName = sortedNames.poll();
             long stateValue = performanceTracker.stateTimes.get(stateName);
             System.out.println(stateName + " took : " + String.valueOf(stateValue/1000000000.));
             performanceTracker.stateTimes.put(stateName, performanceTracker.stateTimes.get(stateName)-stateValue);
