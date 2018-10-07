@@ -25,24 +25,24 @@ public class CompositeEnvelope<T extends Envelope> extends SimpleEnvelope {
 
     protected static Long calculateStartingSampleCount(Collection<? extends Envelope> envelopes) {
         Long startingSampleCount = null;
-        Iterator<? extends Envelope> iterator = envelopes.iterator();
-        while(iterator.hasNext()){
-            Envelope envelope = iterator.next();
+
+        for(Envelope envelope : envelopes){
             long sampleCount = envelope.getStartingSampleCount();
             if(startingSampleCount==null || sampleCount<startingSampleCount){
                 startingSampleCount = sampleCount;
             }
         }
+
         return startingSampleCount;
     }
 
     public double getVolume(long sampleCount) {
         double volume = 0.;
-        Iterator<T> iterator = envelopes.iterator();
-        while(iterator.hasNext()) {
-            T envelope = iterator.next();
+
+        for(T envelope : envelopes){
             volume += envelope.getVolume(sampleCount);
         }
+
         return volume;
     }
 
