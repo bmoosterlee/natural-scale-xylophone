@@ -29,7 +29,7 @@ public class GUI extends JPanel {
     public final SpectrumWindow spectrumWindow;
 
     public SpectrumState spectrumState;
-    private SampleTicker sampleTicker;
+    private final SampleTicker sampleTicker;
     //TODO do we want to split the entire project into state objects and immutable objects?
 
     static final int WIDTH = 800*2;
@@ -42,15 +42,14 @@ public class GUI extends JPanel {
     //todo we then start the next tick.
     //todo this does not seem like a task for a state object, as we need to keep the tick state
     //todo stored somewhere.
+    private final BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
-    private Ticker ticker;
+    private final Ticker ticker;
     private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
 
-    private BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
-
     public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager){
-        GUI.this.sampleTicker = sampleTicker;
+        this.sampleTicker = sampleTicker;
         spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(300));
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));

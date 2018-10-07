@@ -22,12 +22,12 @@ public class SpectrumWindow {
     //todo these indices
 
     public final Frequency centerFrequency = new Frequency(2 * 261.63);
-    private double octaveRange = 3.;
-    public Frequency lowerBound;
-    public Frequency upperBound;
-    private double logFrequencyMultiplier;
-    private double logFrequencyAdditive;
-    private double xMultiplier;
+    private final double octaveRange = 3.;
+    public final Frequency lowerBound;
+    public final Frequency upperBound;
+    private final double logFrequencyMultiplier;
+    private final double logFrequencyAdditive;
+    private final double xMultiplier;
 
     SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator) {
         this.frequencyManager = frequencyManager;
