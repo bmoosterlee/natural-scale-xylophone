@@ -10,10 +10,6 @@ public class SpectrumWindow {
     private final int width;
     public FrequencyManager frequencyManager;
     public HarmonicCalculator harmonicCalculator;
-    //todo move noteManager and harmonicCalculator to Renderer. Pass them during building.
-
-    //todo create CachedBuckets class which store what harmony a bucket refers to. Pick the highest value one.
-    //todo might just store only the highest one.
     //todo first step is to get X out of the bucket world. Start dealing with frequencies.
     //todo one way to do this is to keep a link between the frequencies that buckets were built on.
     //todo then we don't need to translate back and forth. The issue is that buckets which cache the real value
