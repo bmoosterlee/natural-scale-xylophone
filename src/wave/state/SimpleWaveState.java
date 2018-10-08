@@ -6,36 +6,36 @@ import wave.Wave;
 
 import java.util.*;
 
-public class WaveState {
+public class SimpleWaveState implements WaveState {
     private SampleRate sampleRate;
     private Set<Frequency> frequencies;
     private Map<Frequency, Wave> frequencyWaveTable;
 
     private double angleComponent = 2.0 * Math.PI;
 
-    WaveState(SampleRate sampleRate){
+    SimpleWaveState(SampleRate sampleRate){
         this.sampleRate = sampleRate;
         frequencies = new HashSet<>();
         frequencyWaveTable = new HashMap<>();
     }
 
-    private WaveState(SampleRate sampleRate, Set<Frequency> frequencies, Map<Frequency, Wave> frequencyWaveTable) {
+    private SimpleWaveState(SampleRate sampleRate, Set<Frequency> frequencies, Map<Frequency, Wave> frequencyWaveTable) {
         this.sampleRate = sampleRate;
         this.frequencies = frequencies;
         this.frequencyWaveTable = frequencyWaveTable;
     }
 
-    private WaveState remove(Frequency frequency) {
+    private SimpleWaveState remove(Frequency frequency) {
         Set<Frequency> newFrequencies = new HashSet<>(frequencies);
         Map<Frequency, Wave> newFrequencyWaveTable = new HashMap<>(frequencyWaveTable);
 
         newFrequencies.remove(frequency);
         newFrequencyWaveTable.remove(frequency);
 
-        return new WaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
+        return new SimpleWaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
     }
 
-    public WaveState add(Frequency frequency) {
+    public SimpleWaveState add(Frequency frequency) {
         Set<Frequency> newFrequencies = new HashSet<>(frequencies);
         Map<Frequency, Wave> newFrequencyWaveTable = new HashMap<>(frequencyWaveTable);
 
@@ -45,15 +45,16 @@ public class WaveState {
             newFrequencyWaveTable.put(frequency, wave);
         }
 
-        return new WaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
+        return new SimpleWaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
     }
 
+    @Override
     public WaveState update(Set<Frequency> frequencies) {
         if(frequencies.equals(this.frequencies)){
             return this;
         }
 
-        WaveState newWaveState = this;
+        SimpleWaveState newWaveState = this;
 
         Set<Frequency> removedFrequencies = new HashSet<>(this.frequencies);
         removedFrequencies.removeAll(new HashSet<>(frequencies));
@@ -84,10 +85,12 @@ public class WaveState {
         return frequencyWaveTable.get(frequency);
     }
 
+    @Override
     public WaveState update(long sampleCount) {
         return this;
     }
 
+    @Override
     public double getAmplitude(Frequency frequency, long sampleCount) {
         //todo create infrastructure (just correctly named methods) to move 2*Pi here as well
         double timeAndAngleComponent = sampleRate.asTime(sampleCount).getValue() * angleComponent;
