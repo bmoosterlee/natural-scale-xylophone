@@ -6,8 +6,8 @@ import frequency.state.FrequencyState;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
 import time.TimeKeeper;
-import wave.state.WaveManager;
 import wave.state.WaveState;
+import wave.state.WaveManager;
 
 import java.util.Set;
 
