@@ -10,7 +10,7 @@ public class FrequencyManager {
 
     public FrequencyManager(NoteManager noteManager) {
         this.noteManager = noteManager;
-        frequencyState = new SimpleFrequencyState<>(SimpleFrequencyStateBucket::new);
+        frequencyState = new FrequencyState();
     }
 
     public FrequencyState getFrequencyState(long sampleCount) {

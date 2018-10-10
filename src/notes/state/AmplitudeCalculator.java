@@ -1,11 +1,11 @@
 package notes.state;
 
+import frequency.Frequency;
 import frequency.state.FrequencyManager;
 import frequency.state.FrequencyState;
+import sound.SoundEnvironment;
 import time.PerformanceTracker;
 import time.TimeKeeper;
-import frequency.Frequency;
-import sound.SoundEnvironment;
 import wave.state.WaveManager;
 import wave.state.WaveState;
 

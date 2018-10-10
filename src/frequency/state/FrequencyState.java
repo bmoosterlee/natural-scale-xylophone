@@ -5,25 +5,130 @@ import notes.Note;
 
 import java.util.*;
 
+public class FrequencyState {
+    //todo find a way to create events and event listeners for adding notes and frequencies.
+    //todo either that, or have a singular pipeline down for creating notes and frequencies.
+    //todo explore including envelopes in buckets for faster buckets value calculation
+    //todo of course, this would mean we're excluding other volume calculations.
+    //todo to assess whether this is useful and doesn't require double volume calculation,
+    //todo we should encapsulate accessing volumes to see where we can hide implementation details.
 
+    public final Set<Note> notes;
+    public final Set<Frequency> frequencies;
+    public final Map<Frequency, Set<Note>> buckets;
 
+    public FrequencyState() {
+        notes = new HashSet<>();
+        frequencies = new HashSet<>();
+        buckets = new HashMap<>();
+    }
 
+    protected FrequencyState(Set<Note> notes, Set<Frequency> frequencies, Map<Frequency, Set<Note>> buckets) {
+        this.notes = notes;
+        this.frequencies = frequencies;
+        this.buckets = buckets;
+    }
 
+    public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount) {
+        Map<Frequency, Double> frequencyVolumes = new HashMap<>();
 
-public interface FrequencyState {
+        for(Frequency frequency : frequencies){
+            frequencyVolumes.put(frequency, getVolume(frequency, sampleCount));
+        }
+        return frequencyVolumes;
+    }
 
-    FrequencyState update(Set<Note> notes);
+    public Double getVolume(Frequency frequency, long sampleCount) {
+        try {
+            Double volume = 0.;
+            for(Note note : buckets.get(frequency)) {
+                volume += note.getEnvelope().getVolume(sampleCount);
+            }
+            return volume;
+        }
+        catch(NullPointerException e){
+            return 0.;
+        }
+    }
 
-    FrequencyState update(long sampleCount);
+    public FrequencyState update(Set<Note> notes) {
+        FrequencyState newFrequencyState = this;
 
-    FrequencyState addNote(Note note);
+        Set<Note> removedNotes = new HashSet<>(this.notes);
+        removedNotes.removeAll(notes);
 
-    FrequencyState removeNote(Note note);
+        Set<Note> addedNotes = new HashSet<>(notes);
+        addedNotes.removeAll(this.notes);
 
-    Set<Frequency> getFrequencies();
+        for(Note note : removedNotes){
+            newFrequencyState = newFrequencyState.removeNote(note);
+        }
 
-    Double getVolume(Frequency frequency, long sampleCount);
+        for(Note note : addedNotes){
+            newFrequencyState = newFrequencyState.addNote(note);
+        }
 
-    Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount);
+        return newFrequencyState;
+    }
+
+    public FrequencyState removeNote(Note note) {
+        Set<Note> newNotes = new HashSet<>(notes);
+        newNotes.remove(note);
+
+        Frequency frequency = note.getFrequency();
+
+        Set<Frequency> newFrequencies = new HashSet<>(getFrequencies());
+        Map<Frequency, Set<Note>> newBuckets = buckets;
+        Set<Note> oldBucket = newBuckets.get(frequency);
+        if(oldBucket!=null) {
+            newBuckets = new HashMap<>(buckets);
+
+            Set<Note> newBucket = new HashSet<>(oldBucket);
+            newBucket.remove(note);
+
+            if (newBucket.isEmpty()) {
+                newFrequencies.remove(frequency);
+                newBuckets.remove(frequency);
+            } else {
+                newBuckets.put(frequency, newBucket);
+            }
+        }
+
+        return new FrequencyState(newNotes, newFrequencies, newBuckets);
+    }
+
+    public FrequencyState update(long sampleCount) {
+        return this;
+    }
+
+    public FrequencyState addNote(Note note) {
+        Frequency frequency = note.getFrequency();
+        Set<Note> newNotes = new HashSet<>(notes);
+        newNotes.add(note);
+
+        Set<Frequency> newFrequencies;
+
+        Map<Frequency, Set<Note>> newBuckets = new HashMap<>(buckets);
+        Set<Note> newBucket;
+
+        if(!buckets.containsKey(frequency)) {
+            newFrequencies = new HashSet<>(frequencies);
+            newFrequencies.add(frequency);
+
+            newBucket = new HashSet<>();
+        }
+        else {
+            newFrequencies = frequencies;
+            newBucket = new HashSet<>(buckets.get(frequency));
+        }
+
+        newBucket.add(note);
+
+        return new FrequencyState(newNotes, newFrequencies, newBuckets);
+    }
+
+    public Set<Frequency> getFrequencies(){
+        return new HashSet<>(frequencies);
+    }
 
 }

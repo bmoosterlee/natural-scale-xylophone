@@ -1,13 +1,13 @@
 package gui.spectrum.state;
 
+import frequency.Frequency;
+import frequency.state.FrequencyState;
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
 import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
-import frequency.Frequency;
-import frequency.state.FrequencyState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
