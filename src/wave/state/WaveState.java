@@ -1,6 +1,7 @@
 package wave.state;
 
 import frequency.Frequency;
+import notes.Note;
 import sound.SampleRate;
 import wave.Wave;
 
@@ -54,36 +55,27 @@ public class WaveState {
         return new WaveState(sampleRate, newFrequencies, newFrequencyWaveTable);
     }
 
-    public WaveState update(Set<Frequency> frequencies) {
-        if(frequencies.equals(this.frequencies)){
-            return this;
-        }
+    public WaveState update(Set<Frequency> frequencies, Map<Frequency, Set<Note>> map) {
+        Set<Frequency> newFrequencies = new HashSet<>();
+        Map<Frequency, Wave> newFrequencyWaveTable = new HashMap<>();
 
-        WaveState newWaveState = this;
+        for(Frequency frequency : frequencies){
+            newFrequencies.add(frequency);
 
-        Set<Frequency> removedFrequencies = new HashSet<>(this.frequencies);
-        removedFrequencies.removeAll(new HashSet<>(frequencies));
+            Set<Note> notes = map.get(frequency);
+            Wave oldWave = frequencyWaveTable.get(frequency);
+            Wave newWave;
 
-        Set<Frequency> addedFrequencies = new HashSet<>(frequencies);
-        addedFrequencies.removeAll(new HashSet<>(this.frequencies));
-
-        if(!removedFrequencies.isEmpty()) {
-            for (Frequency removedFrequency : removedFrequencies) {
-                newWaveState = newWaveState.remove(removedFrequency);
+            if(oldWave==null){
+                newWave = new Wave(frequency, notes, sampleRate);
             }
-        }
-
-        if(!addedFrequencies.isEmpty()) {
-            for (Frequency addedFrequency : addedFrequencies) {
-                try {
-                    newWaveState = newWaveState.add(addedFrequency);
-                } catch (NullPointerException ignored) {
-
-                }
+            else{
+                newWave = frequencyWaveTable.get(frequency).update(notes);
             }
+            newFrequencyWaveTable.put(frequency, newWave);
         }
 
-        return newWaveState;
+        return new WaveState(sampleRate, frequencies, newFrequencyWaveTable);
     }
 
     private Wave getWave(Frequency frequency) {

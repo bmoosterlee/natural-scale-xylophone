@@ -1,6 +1,7 @@
 package wave.state;
 
 import frequency.state.FrequencyManager;
+import frequency.state.FrequencyState;
 import sound.SampleRate;
 
 public class WaveManager {
@@ -18,7 +19,8 @@ public class WaveManager {
     public WaveState getWaveState(long sampleCount) {
         synchronized (frequencyManager) {
             if(sampleCount>updatedToSample) {
-                waveState = waveState.update(frequencyManager.getFrequencyState(sampleCount).getFrequencies());
+                FrequencyState frequencyState = frequencyManager.getFrequencyState(sampleCount);
+                waveState = waveState.update(frequencyState.getFrequencies(), frequencyState.buckets);
                 waveState = waveState.update(sampleCount);
                 updatedToSample = sampleCount;
             }
