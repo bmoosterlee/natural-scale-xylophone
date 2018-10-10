@@ -14,7 +14,7 @@ public class FrequencyManager {
     }
 
     public FrequencyState getFrequencyState(long sampleCount) {
-        synchronized (noteManager) {
+        synchronized (this) {
             if(sampleCount>updatedToSample) {
                 frequencyState = frequencyState.update(noteManager.getNoteState(sampleCount).getNotes());
                 frequencyState = frequencyState.update(sampleCount);

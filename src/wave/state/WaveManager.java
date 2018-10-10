@@ -17,7 +17,7 @@ public class WaveManager {
     }
 
     public WaveState getWaveState(long sampleCount) {
-        synchronized (frequencyManager) {
+        synchronized (this) {
             if(sampleCount>updatedToSample) {
                 FrequencyState frequencyState = frequencyManager.getFrequencyState(sampleCount);
                 waveState = waveState.update(frequencyState.getFrequencies(), frequencyState.buckets);

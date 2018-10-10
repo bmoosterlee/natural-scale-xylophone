@@ -9,6 +9,7 @@ import gui.spectrum.SpectrumWindow;
 import harmonics.HarmonicCalculator;
 import main.Observer;
 import frequency.state.FrequencyManager;
+import notes.envelope.EnvelopeManager;
 import sound.SampleTicker;
 import notes.state.NoteManager;
 import time.*;
@@ -48,12 +49,12 @@ public class GUI extends JPanel {
     private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
 
-    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, SpectrumManager spectrumManager){
+    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, SpectrumManager spectrumManager){
         this.sampleTicker = sampleTicker;
         this.spectrumManager = spectrumManager;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-        spectrumWindow = new SpectrumWindow(frequencyManager, harmonicCalculator, WIDTH);
+        spectrumWindow = new SpectrumWindow(frequencyManager, envelopeManager, harmonicCalculator, WIDTH);
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add((Observer<Long>) event -> tick());

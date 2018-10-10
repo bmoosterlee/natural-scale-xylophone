@@ -1,6 +1,7 @@
 package notes.state;
 
 import notes.Note;
+import notes.envelope.EnvelopeState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,22 +19,29 @@ public class NoteState {
 
     public NoteState addNote(Note note) {
         if(note==null) throw new NullPointerException();
+
         Set<Note> newLiveNotes = new HashSet<>(notes);
         newLiveNotes.add(note);
         return new NoteState(newLiveNotes);
     }
 
-    public NoteState update(long sampleCount) {
-        Set<Note> newNotes = new HashSet();
-        for(Note note : notes){
-            if(!note.isDead(sampleCount)){
-                newNotes.add(note);
-            }
-        }
-        return new NoteState(newNotes);
-    }
-
     public Set<Note> getNotes() {
         return new HashSet<>(notes);
+    }
+
+    public NoteState removeNote(Note note) {
+        if(note==null) throw new NullPointerException();
+
+        Set<Note> newLiveNotes = new HashSet<>(notes);
+        newLiveNotes.remove(note);
+        return new NoteState(newLiveNotes);
+    }
+
+    public NoteState update(EnvelopeState envelopeState, long sampleCount) {
+        Set<Note> newNotes = new HashSet<>();
+
+        newNotes.removeAll(envelopeState.getDeadNotes(sampleCount));
+
+        return new NoteState(newNotes);
     }
 }

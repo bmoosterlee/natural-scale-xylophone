@@ -2,6 +2,7 @@ package frequency.state;
 
 import frequency.Frequency;
 import notes.Note;
+import notes.envelope.EnvelopeState;
 
 import java.util.*;
 
@@ -29,20 +30,20 @@ public class FrequencyState {
         this.buckets = buckets;
     }
 
-    public Map<Frequency, Double> getFrequencyVolumeTable(long sampleCount) {
+    public Map<Frequency, Double> getFrequencyVolumeTable(EnvelopeState envelopeState, long sampleCount) {
         Map<Frequency, Double> frequencyVolumes = new HashMap<>();
 
         for(Frequency frequency : frequencies){
-            frequencyVolumes.put(frequency, getVolume(frequency, sampleCount));
+            frequencyVolumes.put(frequency, getVolume(frequency, envelopeState, sampleCount));
         }
         return frequencyVolumes;
     }
 
-    public Double getVolume(Frequency frequency, long sampleCount) {
+    public Double getVolume(Frequency frequency, EnvelopeState envelopeState, long sampleCount) {
         try {
             Double volume = 0.;
             for(Note note : buckets.get(frequency)) {
-                volume += note.getEnvelope().getVolume(sampleCount);
+                volume += envelopeState.getNote(note).getVolume(sampleCount);
             }
             return volume;
         }
@@ -54,11 +55,11 @@ public class FrequencyState {
     public FrequencyState update(Set<Note> notes) {
         FrequencyState newFrequencyState = this;
 
-        Set<Note> removedNotes = new HashSet<>(this.notes);
-        removedNotes.removeAll(notes);
-
         Set<Note> addedNotes = new HashSet<>(notes);
         addedNotes.removeAll(this.notes);
+
+        Set<Note> removedNotes = new HashSet<>(this.notes);
+        removedNotes.removeAll(notes);
 
         for(Note note : removedNotes){
             newFrequencyState = newFrequencyState.removeNote(note);
@@ -116,9 +117,11 @@ public class FrequencyState {
             newFrequencies.add(frequency);
 
             newBucket = new HashSet<>();
+            newBuckets.put(frequency, newBucket);
         }
         else {
             newFrequencies = frequencies;
+
             newBucket = new HashSet<>(buckets.get(frequency));
         }
 

@@ -32,7 +32,7 @@ public class SpectrumStateBuilder {
         FrequencyState frequencyState = spectrumWindow.frequencyManager.getFrequencyState(sampleCount);
         Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
 
-        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(sampleCount);
+        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(spectrumWindow.envelopeManager.getEnvelopeState(sampleCount), sampleCount);
 
         noteBuckets = toBuckets(liveFrequencies, frequencyVolumeTable);
         harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);

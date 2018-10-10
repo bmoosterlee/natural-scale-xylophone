@@ -3,6 +3,7 @@ package main;
 import gui.GUI;
 import gui.spectrum.state.SpectrumManager;
 import harmonics.HarmonicCalculator;
+import notes.envelope.EnvelopeManager;
 import notes.state.AmplitudeCalculator;
 import frequency.state.FrequencyManager;
 import notes.state.NoteManager;
@@ -29,18 +30,21 @@ public class Main {
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
 
-        NoteManager noteManager = new NoteManager(sampleTicker, soundEnvironment.getSampleRate());
+        NoteManager noteManager = new NoteManager(sampleTicker);
+        EnvelopeManager envelopeManager = new EnvelopeManager(noteManager, soundEnvironment.getSampleRate());
         FrequencyManager frequencyManager = new FrequencyManager(noteManager);
         WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
 
-        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, frequencyManager, waveManager);
+        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, frequencyManager, envelopeManager, waveManager);
         sampleTicker.getTickObservable().add((Observer<Long>) amplitudeCalculator::tick);
 
         SpectrumManager spectrumManager = new SpectrumManager();
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager, spectrumManager);
+        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager, envelopeManager, spectrumManager);
 
         Pianola pianola = new Pianola(sampleTicker, gui, spectrumManager, noteManager, gui.spectrumWindow, 1000000000 / 4);
+        //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
+        //todo and plays harmonically complimentary notes near the notes being played. Use a higher framerate preferably
 
         sampleTicker.start();
         gui.start();

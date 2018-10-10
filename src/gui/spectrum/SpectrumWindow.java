@@ -5,6 +5,7 @@ import gui.spectrum.state.SpectrumState;
 import gui.spectrum.state.SpectrumStateBuilder;
 import harmonics.HarmonicCalculator;
 import frequency.state.FrequencyManager;
+import notes.envelope.EnvelopeManager;
 
 public class SpectrumWindow {
     private final int width;
@@ -25,9 +26,11 @@ public class SpectrumWindow {
     private final double logFrequencyMultiplier;
     private final double logFrequencyAdditive;
     private final double xMultiplier;
+    public EnvelopeManager envelopeManager;
 
-    public SpectrumWindow(FrequencyManager frequencyManager, HarmonicCalculator harmonicCalculator, int width) {
+    public SpectrumWindow(FrequencyManager frequencyManager, EnvelopeManager envelopeManager, HarmonicCalculator harmonicCalculator, int width) {
         this.frequencyManager = frequencyManager;
+        this.envelopeManager = envelopeManager;
         this.harmonicCalculator = harmonicCalculator;
         this.width = width;
 

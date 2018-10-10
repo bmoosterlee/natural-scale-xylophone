@@ -3,26 +3,22 @@ package notes;
 import frequency.Frequency;
 import notes.envelope.Envelope;
 
-public class Note<T extends Envelope> {
+public class Note {
     private final Frequency frequency;
-    private final T envelope;
+    private final long startingSampleCount;
 
-    public Note(Frequency frequency, T envelope){
+    public Note(Frequency frequency, long startingSampleCount){
         if(frequency==null) throw new NullPointerException();
 
         this.frequency = frequency;
-        this.envelope = envelope;
+        this.startingSampleCount = startingSampleCount;
     }
 
     public Frequency getFrequency() {
         return frequency;
     }
 
-    public T getEnvelope() {
-        return envelope;
-    }
-
-    public boolean isDead(long sampleCount) {
-        return getEnvelope().isDead(sampleCount);
+    public long getStartingCount() {
+        return startingSampleCount;
     }
 }
