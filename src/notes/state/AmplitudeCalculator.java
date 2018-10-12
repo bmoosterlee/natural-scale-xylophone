@@ -52,7 +52,7 @@ public class AmplitudeCalculator {
         PerformanceTracker.stopTracking(timeKeeper);
     }
 
-    public double calculateAmplitude(long sampleCount, Set<Frequency> liveFrequencies, FrequencyState frequencyState, EnvelopeState envelopeState, WaveState waveState) {
+    private double calculateAmplitude(long sampleCount, Set<Frequency> liveFrequencies, FrequencyState frequencyState, EnvelopeState envelopeState, WaveState waveState) {
         double amplitudeSum = 0;
         for (Frequency frequency : liveFrequencies) {
             Double volume = frequencyState.getVolume(frequency, envelopeState, sampleCount);

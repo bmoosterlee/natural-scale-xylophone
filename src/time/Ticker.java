@@ -6,7 +6,7 @@ public class Ticker implements Runnable{
 
     private final Observable<Long> observable = new Observable<>();
     protected long calculatedTicks = 0L;
-    protected TimeInNanoSeconds timeZero;
+    private TimeInNanoSeconds timeZero;
     private final TimeInNanoSeconds frameTime;
 
     public Ticker(TimeInNanoSeconds frameTime){
