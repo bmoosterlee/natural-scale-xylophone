@@ -23,22 +23,20 @@ import java.util.AbstractMap;
 public class Pianola {
     final PianolaPattern pianolaPattern;
     SampleTicker sampleTicker;
-    GUI gui;
     SpectrumManager spectrumManager;
     NoteManager noteManager;
 
     private OutputPort<AbstractMap.SimpleImmutableEntry<Long, Frequency>> playedNotes;
 
-    public Pianola(SampleTicker sampleTicker, GUI gui, SpectrumManager spectrumManager, NoteManager noteManager, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> buffer) {
+    public Pianola(SampleTicker sampleTicker, SpectrumManager spectrumManager, NoteManager noteManager, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> buffer) {
         this.sampleTicker = sampleTicker;
-        this.gui = gui;
         this.spectrumManager = spectrumManager;
         this.noteManager = noteManager;
 
 //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
 //        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
-        pianolaPattern = new SweepToTargetUpDown(spectrumManager, 8, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+        pianolaPattern = new SweepToTargetUpDown(spectrumManager, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
 
         playedNotes = new OutputPort<>(buffer);
 
@@ -59,7 +57,4 @@ public class Pianola {
         }
     }
 
-    public GUI getGui() {
-        return gui;
-    }
 }

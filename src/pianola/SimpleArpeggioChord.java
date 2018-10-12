@@ -1,6 +1,8 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.GUI;
+import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
 
 import java.util.HashSet;
@@ -9,8 +11,8 @@ import java.util.Set;
 public class SimpleArpeggioChord extends SimpleArpeggio {
     private ChordPlayer chordPlayer;
 
-    public SimpleArpeggioChord(Pianola pianola, SpectrumManager spectrumManager, int chordSize) {
-        super(pianola, spectrumManager, chordSize);
+    public SimpleArpeggioChord(SpectrumManager spectrumManager, int chordSize, SpectrumWindow spectrumWindow) {
+        super(spectrumManager, chordSize, spectrumWindow);
     }
 
     @Override

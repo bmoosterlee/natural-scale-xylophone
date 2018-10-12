@@ -1,15 +1,15 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
 import gui.buckets.Buckets;
-import gui.GUI;
 
 public class IncrementalChordGenerator extends SimpleChordGenerator {
     protected int noteIndex = 0;
 
-    public IncrementalChordGenerator(GUI gui, SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener) {
-        super(spectrumManager, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, gui.spectrumWindow);
+    public IncrementalChordGenerator(SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
+        super(spectrumManager, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow);
     }
 
     @Override

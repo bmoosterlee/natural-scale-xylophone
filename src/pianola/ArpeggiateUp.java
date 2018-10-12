@@ -9,11 +9,9 @@ import java.util.Set;
 
 public class ArpeggiateUp implements PianolaPattern{
     final Sequencer sequencer;
-    private final GUI gui;
     Frequency[] frequencies;
 
-    public ArpeggiateUp(GUI gui, int notesPerMeasure, int measuresTillReset, Frequency[] frequencies) {
-        this.gui = gui;
+    public ArpeggiateUp(int notesPerMeasure, int measuresTillReset, Frequency[] frequencies) {
         sequencer = new Sequencer(notesPerMeasure, measuresTillReset);
         this.frequencies = frequencies;
     }
