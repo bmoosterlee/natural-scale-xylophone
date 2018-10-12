@@ -27,7 +27,9 @@ public class Main {
 
         new PerformanceTracker();
         PerformanceTracker.start();
-        SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE);
+
+        BoundedBuffer<Double> sampleAmplitude = new BoundedBuffer<>(SAMPLE_RATE/2);
+        SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, sampleAmplitude);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
 
         NoteManager noteManager = new NoteManager(sampleTicker);
@@ -35,7 +37,7 @@ public class Main {
         FrequencyManager frequencyManager = new FrequencyManager(noteManager);
         WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
 
-        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(soundEnvironment, frequencyManager, envelopeManager, waveManager);
+        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, waveManager, sampleAmplitude);
         sampleTicker.getTickObservable().add((Observer<Long>) amplitudeCalculator::tick);
 
         SpectrumManager spectrumManager = new SpectrumManager();

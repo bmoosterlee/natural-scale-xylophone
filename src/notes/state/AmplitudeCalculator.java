@@ -3,9 +3,10 @@ package notes.state;
 import frequency.Frequency;
 import frequency.state.FrequencyManager;
 import frequency.state.FrequencyState;
+import main.BoundedBuffer;
+import main.OutputPort;
 import notes.envelope.EnvelopeManager;
 import notes.envelope.EnvelopeState;
-import sound.SoundEnvironment;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 import wave.state.WaveManager;
@@ -14,16 +15,18 @@ import wave.state.WaveState;
 import java.util.Set;
 
 public class AmplitudeCalculator {
-    private final SoundEnvironment soundEnvironment;
     private final FrequencyManager frequencyManager;
     private final EnvelopeManager envelopeManager;
     private final WaveManager waveManager;
 
-    public AmplitudeCalculator(SoundEnvironment soundEnvironment, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, WaveManager waveManager) {
-        this.soundEnvironment = soundEnvironment;
+    private OutputPort<Double> sampleAmplitude;
+
+    public AmplitudeCalculator(FrequencyManager frequencyManager, EnvelopeManager envelopeManager, WaveManager waveManager, BoundedBuffer<Double> buffer) {
         this.frequencyManager = frequencyManager;
         this.envelopeManager = envelopeManager;
         this.waveManager = waveManager;
+
+        sampleAmplitude = new OutputPort<>(buffer);
     }
 
     public void tick(long sampleCount) {
@@ -48,7 +51,11 @@ public class AmplitudeCalculator {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
-        soundEnvironment.writeToBuffer(amplitude);
+        try {
+            sampleAmplitude.produce(amplitude);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         PerformanceTracker.stopTracking(timeKeeper);
     }
 

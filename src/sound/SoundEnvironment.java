@@ -1,5 +1,10 @@
 package sound;
 
+import main.BoundedBuffer;
+import main.InputPort;
+import time.Ticker;
+import time.TimeInSeconds;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
@@ -12,17 +17,33 @@ public class SoundEnvironment {
     private final int sampleSize;
     private final double marginalSampleSize;
 
-    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE) {
+    private InputPort<Double> sampleAmplitude;
+
+    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> buffer) {
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.sampleRate = new SampleRate(SAMPLE_RATE);
 
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
+        sampleAmplitude = new InputPort<>(buffer);
+
+        Ticker sampleTicker = new Ticker(new TimeInSeconds(1.).toNanoSeconds().divide(sampleRate.sampleRate));
+        sampleTicker.getTickObservable().add(this::tick);
+        sampleTicker.start();
+
         initialize();
     }
 
-    public void writeToBuffer(double amplitude) {
+    private void tick(Long time) {
+        try {
+            writeToBuffer(sampleAmplitude.consume());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeToBuffer(double amplitude) {
         sourceDataLine.write(new byte[]{fitAmplitude(amplitude)}, 0, 1);
     }
 
