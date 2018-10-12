@@ -28,7 +28,7 @@ public class SoundEnvironment {
 
         sampleAmplitude = new InputPort<>(buffer);
 
-        Ticker sampleTicker = new Ticker(new TimeInSeconds(1.).toNanoSeconds().divide(sampleRate.sampleRate));
+        SampleTicker sampleTicker = new SampleTicker(sampleRate);
         sampleTicker.getTickObservable().add(this::tick);
         sampleTicker.start();
 
