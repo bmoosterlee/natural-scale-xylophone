@@ -1,6 +1,7 @@
 package gui.spectrum;
 
 import frequency.Frequency;
+import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import gui.spectrum.state.SpectrumStateBuilder;
 import harmonics.HarmonicCalculator;
@@ -9,8 +10,6 @@ import notes.envelope.EnvelopeManager;
 
 public class SpectrumWindow {
     private final int width;
-    public FrequencyManager frequencyManager;
-    public HarmonicCalculator harmonicCalculator;
     //todo first step is to get X out of the bucket world. Start dealing with frequencies.
     //todo one way to do this is to keep a link between the frequencies that buckets were built on.
     //todo then we don't need to translate back and forth. The issue is that buckets which cache the real value
@@ -26,12 +25,8 @@ public class SpectrumWindow {
     private final double logFrequencyMultiplier;
     private final double logFrequencyAdditive;
     private final double xMultiplier;
-    public EnvelopeManager envelopeManager;
 
-    public SpectrumWindow(FrequencyManager frequencyManager, EnvelopeManager envelopeManager, HarmonicCalculator harmonicCalculator, int width) {
-        this.frequencyManager = frequencyManager;
-        this.envelopeManager = envelopeManager;
-        this.harmonicCalculator = harmonicCalculator;
+    public SpectrumWindow(int width) {
         this.width = width;
 
         lowerBound = centerFrequency.divideBy(Math.pow(2, octaveRange / 2));
@@ -43,10 +38,6 @@ public class SpectrumWindow {
         logFrequencyMultiplier = this.width / logRange;
         logFrequencyAdditive = logLowerBound * this.width / logRange;
         xMultiplier = logRange / this.width;
-    }
-
-    public SpectrumStateBuilder createBuilder(SpectrumState spectrumState, long sampleCount) {
-        return new SpectrumStateBuilder(spectrumState, sampleCount, this);
     }
 
     public boolean inBounds(Frequency frequency) {

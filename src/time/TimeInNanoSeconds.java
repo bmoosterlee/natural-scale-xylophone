@@ -34,4 +34,12 @@ public class TimeInNanoSeconds {
     public TimeInSeconds toSeconds() {
         return new TimeInSeconds(value/1000000000);
     }
+
+    public TimeInNanoSeconds add(TimeInNanoSeconds other) {
+        return new TimeInNanoSeconds(value + other.value);
+    }
+
+    public boolean lessThan(TimeInNanoSeconds other) {
+        return value < other.value;
+    }
 }

@@ -15,7 +15,6 @@ import sound.SampleTicker;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
 
-import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Main {
@@ -46,9 +45,9 @@ public class Main {
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, waveManager, sampleAmplitude);
         sampleTicker.getTickObservable().add(amplitudeCalculator::tick);
 
-        SpectrumManager spectrumManager = new SpectrumManager();
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, harmonicCalculator, frequencyManager, envelopeManager, spectrumManager, newNotes);
+        SpectrumManager spectrumManager = new SpectrumManager(frequencyManager, envelopeManager, harmonicCalculator);
+        GUI gui = new GUI(sampleTicker, spectrumManager, newNotes);
 
         new Pianola(sampleTicker, gui, spectrumManager, noteManager, gui.spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,

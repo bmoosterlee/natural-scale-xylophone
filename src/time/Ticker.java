@@ -46,7 +46,11 @@ public class Ticker implements Runnable{
         return TimeInNanoSeconds.now().subtract(timeZero).divide(frameTime);
     }
 
-    public TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
+    public TimeInNanoSeconds getFrameEndTime(TimeInNanoSeconds startTime){
+        return startTime.add(frameTime);
+    }
+
+    private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
         TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
         TimeInNanoSeconds timePassed = currentTime.subtract(startTime);
         return frameTime.subtract(timePassed);

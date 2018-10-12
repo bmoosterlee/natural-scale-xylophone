@@ -5,15 +5,10 @@ import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
-import gui.spectrum.state.SpectrumStateBuilder;
 import gui.spectrum.SpectrumWindow;
-import harmonics.HarmonicCalculator;
 import main.BoundedBuffer;
-import frequency.state.FrequencyManager;
 import main.OutputPort;
-import notes.envelope.EnvelopeManager;
 import sound.SampleTicker;
-import notes.state.NoteManager;
 import time.*;
 
 import javax.swing.*;
@@ -21,7 +16,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class GUI extends JPanel {
@@ -54,13 +48,14 @@ public class GUI extends JPanel {
     private Frequency mouseFrequency;
 
     private OutputPort<SimpleImmutableEntry<Long, Frequency>> clickedFrequencies;
+    private TimeInNanoSeconds frameEndTime;
 
-    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, SpectrumManager spectrumManager, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> buffer){
+    public GUI(SampleTicker sampleTicker, SpectrumManager spectrumManager, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> buffer){
         this.sampleTicker = sampleTicker;
         this.spectrumManager = spectrumManager;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-        spectrumWindow = new SpectrumWindow(frequencyManager, envelopeManager, harmonicCalculator, WIDTH);
+        spectrumWindow = new SpectrumWindow(WIDTH);
 
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add(event -> tick());
@@ -126,6 +121,7 @@ public class GUI extends JPanel {
 
     private void tick() {
         startTime = TimeInNanoSeconds.now();
+        frameEndTime = ticker.getFrameEndTime(startTime);
         repaint();
     }
 
@@ -139,8 +135,7 @@ public class GUI extends JPanel {
         super.paintComponent(g);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        updateSpectrumState();
-        SpectrumState spectrumState = spectrumManager.getSpectrumState();
+        SpectrumState spectrumState = spectrumManager.getSpectrumState(spectrumWindow, sampleTicker.getExpectedTickCount(), frameEndTime);
 
         Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
 
@@ -154,22 +149,6 @@ public class GUI extends JPanel {
 
         timeKeeper = PerformanceTracker.startTracking("render cursor");
         renderCursorLine(g);
-        PerformanceTracker.stopTracking(timeKeeper);
-    }
-
-    private void updateSpectrumState() {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-        SpectrumStateBuilder spectrumStateBuilder = spectrumWindow.createBuilder(spectrumManager.getSpectrumState(), sampleTicker.getExpectedTickCount());
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
-        while (ticker.getTimeLeftInFrame(startTime).toMilliSeconds().getValue() > 1) {
-            if (spectrumStateBuilder.update()) break;
-        }
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
-        spectrumManager.setSpectrumState(spectrumStateBuilder.finish());
         PerformanceTracker.stopTracking(timeKeeper);
     }
 

@@ -24,18 +24,18 @@ public class SpectrumStateBuilder {
     private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    public SpectrumStateBuilder(SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
+    public SpectrumStateBuilder(SpectrumManager spectrumManager, SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
         this.spectrumState = spectrumState;
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        FrequencyState frequencyState = spectrumWindow.frequencyManager.getFrequencyState(sampleCount);
+        FrequencyState frequencyState = spectrumManager.frequencyManager.getFrequencyState(sampleCount);
         Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
 
-        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(spectrumWindow.envelopeManager.getEnvelopeState(sampleCount), sampleCount);
+        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(spectrumManager.envelopeManager.getEnvelopeState(sampleCount), sampleCount);
 
         noteBuckets = toBuckets(liveFrequencies, frequencyVolumeTable);
-        harmonicHierarchyIterator = spectrumWindow.harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
+        harmonicHierarchyIterator = spectrumManager.harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
     }
