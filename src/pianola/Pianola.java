@@ -9,77 +9,54 @@ import gui.GUI;
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
+import main.BoundedBuffer;
+import main.OutputPort;
 import sound.SampleTicker;
 import time.PerformanceTracker;
+import time.Ticker;
+import time.TimeInNanoSeconds;
 import time.TimeKeeper;
 import notes.state.NoteManager;
 
-public class Pianola implements Runnable {
+import java.util.AbstractMap;
+
+public class Pianola {
     final PianolaPattern pianolaPattern;
     SampleTicker sampleTicker;
     GUI gui;
     SpectrumManager spectrumManager;
     NoteManager noteManager;
 
-    public long startTime;
-    public final long FRAME_TIME;
+    private OutputPort<AbstractMap.SimpleImmutableEntry<Long, Frequency>> playedNotes;
 
-    public Pianola(SampleTicker sampleTicker, GUI gui, SpectrumManager spectrumManager, NoteManager noteManager, SpectrumWindow spectrumWindow, long frame_time) {
+    public Pianola(SampleTicker sampleTicker, GUI gui, SpectrumManager spectrumManager, NoteManager noteManager, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> buffer) {
         this.sampleTicker = sampleTicker;
         this.gui = gui;
         this.spectrumManager = spectrumManager;
         this.noteManager = noteManager;
-        FRAME_TIME = frame_time;
 
 //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
 //        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
-        pianolaPattern = new SimpleArpeggio(this, spectrumManager, 3);
-    }
+        pianolaPattern = new SweepToTargetUpDown(spectrumManager, 8, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
 
-    public void start(){
-        new Thread(this).start();
+        playedNotes = new OutputPort<>(buffer);
+
+        Ticker ticker = new Ticker(frame_time);
+        ticker.getTickObservable().add(this::tick);
+
+        ticker.start();
     }
     
-    @Override
-    public void run() {
-        while(true) {
-            long startTime = System.nanoTime();
-
-            TimeKeeper sleepTimeKeeper = PerformanceTracker.startTracking("pianola tick");
-            tick(startTime);
-            PerformanceTracker.stopTracking(sleepTimeKeeper);
-
-
-            long timeLeftInFrame = getTimeLeftInFrame(startTime);
-            if (timeLeftInFrame > 0) {
-                try {
-                    Thread.sleep(timeLeftInFrame);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     private void tick(long startTime) {
-        this.startTime = startTime;
-
         for(Frequency frequency : pianolaPattern.playPattern()){
             try {
-                noteManager.addNote(frequency);
+                playedNotes.produce(new AbstractMap.SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), frequency));
             }
-            catch(NullPointerException ignored){
+            catch(NullPointerException | InterruptedException ignored){
 
-            };
+            }
         }
-    }
-
-    private long getTimeLeftInFrame(long startTime) {
-        long currentTime;
-        currentTime = System.nanoTime();
-        long timePassed = (currentTime - startTime);
-        return (FRAME_TIME - timePassed)/ 1000000;
     }
 
     public GUI getGui() {

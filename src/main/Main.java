@@ -1,5 +1,6 @@
 package main;
 
+import frequency.Frequency;
 import gui.GUI;
 import gui.spectrum.state.SpectrumManager;
 import harmonics.HarmonicCalculator;
@@ -7,11 +8,15 @@ import notes.envelope.EnvelopeManager;
 import notes.state.AmplitudeCalculator;
 import frequency.state.FrequencyManager;
 import notes.state.NoteManager;
+import time.TimeInSeconds;
 import wave.state.WaveManager;
 import pianola.Pianola;
 import sound.SampleTicker;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
+
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Main {
 
@@ -32,7 +37,8 @@ public class Main {
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, sampleAmplitude);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
 
-        NoteManager noteManager = new NoteManager(sampleTicker);
+        BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> newNotes = new BoundedBuffer<>(5);
+        NoteManager noteManager = new NoteManager(soundEnvironment.getSampleRate(), newNotes);
         EnvelopeManager envelopeManager = new EnvelopeManager(noteManager, soundEnvironment.getSampleRate());
         FrequencyManager frequencyManager = new FrequencyManager(noteManager);
         WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
@@ -42,25 +48,22 @@ public class Main {
 
         SpectrumManager spectrumManager = new SpectrumManager();
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, harmonicCalculator, noteManager, frequencyManager, envelopeManager, spectrumManager);
+        GUI gui = new GUI(sampleTicker, harmonicCalculator, frequencyManager, envelopeManager, spectrumManager, newNotes);
 
-        Pianola pianola = new Pianola(sampleTicker, gui, spectrumManager, noteManager, gui.spectrumWindow, 1000000000 / 4);
+        new Pianola(sampleTicker, gui, spectrumManager, noteManager, gui.spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
         //todo and plays harmonically complimentary notes near the notes being played. Use a higher framerate preferably
 
         sampleTicker.start();
         gui.start();
-        pianola.start();
 
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        noteManager.addNote(gui.spectrumWindow.getCenterFrequency());
-
         try {
-            Thread.sleep(500);
+            new OutputPort<>(newNotes).produce(new SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), gui.spectrumWindow.getCenterFrequency()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

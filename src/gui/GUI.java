@@ -7,8 +7,9 @@ import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumStateBuilder;
 import gui.spectrum.SpectrumWindow;
 import harmonics.HarmonicCalculator;
-import main.Observer;
+import main.BoundedBuffer;
 import frequency.state.FrequencyManager;
+import main.OutputPort;
 import notes.envelope.EnvelopeManager;
 import sound.SampleTicker;
 import notes.state.NoteManager;
@@ -19,6 +20,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class GUI extends JPanel {
 //    performancetrack everything. Optimize pianola for variable speed, or better performance at higher speed.
@@ -49,7 +52,9 @@ public class GUI extends JPanel {
     private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
 
-    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, NoteManager noteManager, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, SpectrumManager spectrumManager){
+    private OutputPort<SimpleImmutableEntry<Long, Frequency>> clickedFrequencies;
+
+    public GUI(SampleTicker sampleTicker, HarmonicCalculator harmonicCalculator, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, SpectrumManager spectrumManager, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> buffer){
         this.sampleTicker = sampleTicker;
         this.spectrumManager = spectrumManager;
 
@@ -59,6 +64,8 @@ public class GUI extends JPanel {
         ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add(event -> tick());
 
+        clickedFrequencies = new OutputPort<>(buffer);
+
         MouseListener mouseListener = new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -67,8 +74,11 @@ public class GUI extends JPanel {
 
             @Override
             public void mousePressed(MouseEvent e) {
-                Frequency frequency = spectrumWindow.getFrequency(e.getX());
-                clickFrequency(noteManager, frequency);
+                try {
+                    clickedFrequencies.produce(new SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), spectrumWindow.getFrequency(e.getX())));
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
 
             @Override
@@ -120,10 +130,6 @@ public class GUI extends JPanel {
 
     private void moveMouse(Frequency newFrequency) {
         mouseFrequency = newFrequency;
-    }
-
-    private void clickFrequency(NoteManager noteManager, Frequency frequency) {
-        noteManager.addNote(frequency);
     }
 
     @Override

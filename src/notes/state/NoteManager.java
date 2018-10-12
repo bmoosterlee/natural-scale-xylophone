@@ -1,6 +1,8 @@
 package notes.state;
 
 import frequency.*;
+import main.BoundedBuffer;
+import main.InputPort;
 import notes.Note;
 import notes.envelope.*;
 import notes.envelope.functions.DeterministicFunction;
@@ -9,20 +11,37 @@ import sound.SampleRate;
 import sound.SampleTicker;
 import time.TimeInSeconds;
 
-public class NoteManager {
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
-    private final SampleTicker sampleTicker;
+public class NoteManager {
 
     private NoteState noteState;
     long updatedToSample = -1;
 
-    public NoteManager(SampleTicker sampleTicker) {
-        this.sampleTicker = sampleTicker;
+    private InputPort<SimpleImmutableEntry<Long, Frequency>> newNotes;
+
+    public NoteManager(SampleRate sampleRate, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> buffer) {
+        newNotes = new InputPort<>(buffer);
+
+        SampleTicker sampleTicker = new SampleTicker(sampleRate);
+        sampleTicker.getTickObservable().add(this::tick);
+        sampleTicker.start();
+
         noteState = new NoteState();
     }
 
-    public void addNote(Frequency frequency) {
-        Note note = new Note(frequency, sampleTicker.getExpectedTickCount());
+    private void tick(Long sampleCount) {
+        try {
+            SimpleImmutableEntry<Long, Frequency> newNote = newNotes.consume();
+            addNote(newNote.getKey(), newNote.getValue());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addNote(Long startTime, Frequency frequency) {
+        Note note = new Note(frequency, startTime);
 
         synchronized (this) {
             noteState = noteState.addNote(note);
