@@ -35,7 +35,7 @@ public class SoundEnvironment {
         initialize();
     }
 
-    private void tick(Long time) {
+    private void tick(Long sampleCount) {
         try {
             writeToBuffer(sampleAmplitude.consume());
         } catch (InterruptedException e) {
