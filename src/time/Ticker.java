@@ -52,7 +52,7 @@ public class Ticker implements Runnable{
         return frameTime.subtract(timePassed);
     }
 
-    public Observable getTickObservable() {
+    public Observable<Long> getTickObservable() {
         return observable;
     }
 }
