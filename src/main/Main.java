@@ -38,7 +38,7 @@ public class Main {
         WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
 
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, waveManager, sampleAmplitude);
-        sampleTicker.getTickObservable().add((Observer<Long>) amplitudeCalculator::tick);
+        sampleTicker.getTickObservable().add(amplitudeCalculator::tick);
 
         SpectrumManager spectrumManager = new SpectrumManager();
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
