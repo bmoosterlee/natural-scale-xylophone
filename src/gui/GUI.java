@@ -4,6 +4,7 @@ import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
 import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.state.SpectrumState;
 import gui.spectrum.state.SpectrumStateBuilder;
 import gui.spectrum.SpectrumWindow;
 import harmonics.HarmonicCalculator;
@@ -139,15 +140,16 @@ public class GUI extends JPanel {
         PerformanceTracker.stopTracking(timeKeeper);
 
         updateSpectrumState();
+        SpectrumState spectrumState = spectrumManager.getSpectrumState();
 
-        Buckets harmonicsBuckets = spectrumManager.getSpectrumState().harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
 
         timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
         renderHarmonicsBuckets(g, harmonicsBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
-        renderNoteBuckets(g, spectrumManager.getSpectrumState().noteBuckets);
+        renderNoteBuckets(g, spectrumState.noteBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("render cursor");
