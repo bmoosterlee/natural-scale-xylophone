@@ -3,7 +3,7 @@ package main;
 import frequency.Frequency;
 import gui.GUI;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumInput;
+import gui.spectrum.state.SpectrumData;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import harmonics.HarmonicCalculator;
@@ -58,7 +58,7 @@ public class Main {
         });
         sampleTicker.start();
 
-        BoundedBuffer<SpectrumInput> spectrumInputBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<SpectrumData> spectrumInputBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         GUI gui = new GUI(sampleTicker, spectrumInputBuffer, spectrumStateGUIBuffer, newNoteBuffer);

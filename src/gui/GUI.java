@@ -3,7 +3,7 @@ package gui;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
-import gui.spectrum.state.SpectrumInput;
+import gui.spectrum.state.SpectrumData;
 import gui.spectrum.state.SpectrumState;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
@@ -17,7 +17,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class GUI extends JPanel {
 //    performancetrack everything. Optimize pianola for variable speed, or better performance at higher speed.
@@ -48,11 +47,11 @@ public class GUI extends JPanel {
 
     private TimeInNanoSeconds frameEndTime;
 
-    private OutputPort<SpectrumInput> spectrumInput;
+    private OutputPort<SpectrumData> spectrumInput;
     private InputPort<SpectrumState> newSpectrumState;
     private OutputPort<Frequency> clickedFrequencies;
 
-    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumInput> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
+    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
         this.sampleTicker = sampleTicker;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
@@ -137,7 +136,7 @@ public class GUI extends JPanel {
         long sampleCount = sampleTicker.getExpectedTickCount();
 
         try {
-            spectrumInput.produce(new SpectrumInput(sampleCount, frameEndTime));
+            spectrumInput.produce(new SpectrumData(frameEndTime));
 
             SpectrumState spectrumState = newSpectrumState.consume();
 
