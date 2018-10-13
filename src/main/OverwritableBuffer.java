@@ -9,8 +9,8 @@ class OverwritableBuffer<T> extends BoundedBuffer<T>{
     @Override
     void offer(T packet) throws InterruptedException {
         if(emptySpots.availablePermits()==0){
-            buffer.poll();
             buffer.offer(packet);
+            buffer.poll();
         }
         else{
             emptySpots.acquire();
