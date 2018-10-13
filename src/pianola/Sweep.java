@@ -5,6 +5,8 @@ import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
+import main.InputPort;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +15,6 @@ public class Sweep implements PianolaPattern {
     //todo build a sweep which finds the octave higher, cuts the space from the tonic to the octave in -size- pieces
     //todo and lets each sweep find the highest value harmonic in that range.
     final int totalMargin;
-    SpectrumManager spectrumManager;
     int size;
     SimpleChordGenerator simpleChordGenerator;
     SimpleChordGenerator sweepGenerator;
@@ -21,10 +22,16 @@ public class Sweep implements PianolaPattern {
     protected Sequencer sequencer;
     final SpectrumWindow spectrumWindow;
 
-    public Sweep(SpectrumManager spectrumManager, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
+    InputPort<SpectrumState> spectrumStateInput;
+    BoundedBuffer buffer;
+
+    public Sweep(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
-        this.spectrumManager = spectrumManager;
         this.size = size;
+
+        spectrumStateInput = new InputPort<>(buffer);
+        this.buffer = buffer;
+
         sequencer = new Sequencer(size, 1);
 
         totalMargin = spectrumWindow.getX(spectrumWindow.getCenterFrequency().multiplyBy(1.5)) -
@@ -42,7 +49,7 @@ public class Sweep implements PianolaPattern {
 
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
-                spectrumManager,
+                buffer,
                 1,
                 centerFrequency,
                 totalMargin,
@@ -77,16 +84,22 @@ public class Sweep implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumState spectrumState = spectrumManager.getSpectrumState();
-        Buckets origNoteBuckets;
         try {
-            origNoteBuckets = spectrumState.noteBuckets;
-        }
-        catch(NullPointerException e){
-            origNoteBuckets = new Buckets();
-        }
+            SpectrumState spectrumState = spectrumStateInput.consume();
 
-        simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+            Buckets origNoteBuckets;
+            try {
+                origNoteBuckets = spectrumState.noteBuckets;
+            }
+            catch(NullPointerException e){
+                origNoteBuckets = new Buckets();
+            }
+
+            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void generateNewChord() {
@@ -104,7 +117,7 @@ public class Sweep implements PianolaPattern {
         Frequency previousFrequency = spectrumWindow.getFrequency(spectrumWindow.getX(sweepGenerator.getFrequencies()[0]) +
                 simpleChordGenerator.margin + 1);
         return new SimpleChordGenerator(
-                spectrumManager,
+                buffer,
                 1,
                                   previousFrequency,
                                   totalMargin,

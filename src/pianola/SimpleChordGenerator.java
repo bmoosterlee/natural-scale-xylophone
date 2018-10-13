@@ -5,13 +5,14 @@ import gui.buckets.*;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import gui.spectrum.SpectrumWindow;
+import main.BoundedBuffer;
+import main.InputPort;
 
 import java.util.*;
 import java.util.Map.Entry;
 
 public class SimpleChordGenerator {
     private final SpectrumWindow spectrumWindow;
-    SpectrumManager spectrumManager;
     protected final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
     BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
@@ -22,14 +23,17 @@ public class SimpleChordGenerator {
     private final int totalMargin;
     private int repetitionDampener;
 
-    public SimpleChordGenerator(SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
-        this.spectrumManager = spectrumManager;
+    InputPort<SpectrumState> spectrumStateInput;
+
+    public SimpleChordGenerator(BoundedBuffer<SpectrumState> buffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
         this.hardRightBorder = hardRightBorder;
         this.spectrumWindow = spectrumWindow;
         this.repetitionDampener = repetitionDampener;
+
+        spectrumStateInput = new InputPort<>(buffer);
 
         frequencies = new Frequency[chordSize];
 
@@ -41,21 +45,26 @@ public class SimpleChordGenerator {
     }
 
     void generateChord() {
-        SpectrumState spectrumState = spectrumManager.getSpectrumState();
+        try {
+            SpectrumState spectrumState = spectrumStateInput.consume();
 
-        Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
-        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(10);
+            Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
+            Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(10);
 
-        Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
+            Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
 
-        int average = findCenterFrequency();
-        Buckets centerMaximaBuckets = maximaBuckets.clip(average-totalMargin/2, average+totalMargin/2);
+            int average = findCenterFrequency();
+            Buckets centerMaximaBuckets = maximaBuckets.clip(average-totalMargin/2, average+totalMargin/2);
 
-        Borders borders = new Borders().invoke();
-        Integer[] leftBorders = borders.getLeftBorders();
-        Integer[] rightBorders = borders.getRightBorders();
+            Borders borders = new Borders().invoke();
+            Integer[] leftBorders = borders.getLeftBorders();
+            Integer[] rightBorders = borders.getRightBorders();
 
-        updateNotes(centerMaximaBuckets, leftBorders, rightBorders);
+            updateNotes(centerMaximaBuckets, leftBorders, rightBorders);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     protected int findCenterFrequency() {

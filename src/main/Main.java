@@ -2,7 +2,10 @@ package main;
 
 import frequency.Frequency;
 import gui.GUI;
+import gui.spectrum.SpectrumWindow;
+import gui.spectrum.state.SpectrumInput;
 import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.state.SpectrumState;
 import harmonics.HarmonicCalculator;
 import notes.envelope.EnvelopeManager;
 import notes.state.AmplitudeCalculator;
@@ -16,6 +19,8 @@ import sound.SoundEnvironment;
 import time.PerformanceTracker;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Arrays;
+import java.util.HashSet;
 
 public class Main {
 
@@ -44,17 +49,24 @@ public class Main {
 
         AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, waveManager, sampleAmplitude);
         sampleTicker.getTickObservable().add(amplitudeCalculator::tick);
+        sampleTicker.start();
 
+        BoundedBuffer<SpectrumInput> spectrumInputBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        SpectrumManager spectrumManager = new SpectrumManager(frequencyManager, envelopeManager, harmonicCalculator);
-        GUI gui = new GUI(sampleTicker, spectrumManager, newNotes);
+        GUI gui = new GUI(sampleTicker, spectrumInputBuffer, spectrumStateGUIBuffer, newNotes);
 
-        new Pianola(sampleTicker, spectrumManager, noteManager, gui.spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
+        SpectrumWindow spectrumWindow = gui.spectrumWindow;
+
+        BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
+        OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
+
+        new SpectrumManager(spectrumWindow, frequencyManager, envelopeManager, harmonicCalculator, spectrumInputBuffer, spectrumStateMultiplexerInputBuffer);
+
+        new Pianola(sampleTicker, spectrumStatePianolaBuffer, noteManager, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
         //todo and plays harmonically complimentary notes near the notes being played. Use a higher framerate preferably
-
-        sampleTicker.start();
-        gui.start();
 
         try {
             Thread.sleep(1000);
@@ -62,7 +74,7 @@ public class Main {
             e.printStackTrace();
         }
         try {
-            new OutputPort<>(newNotes).produce(new SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), gui.spectrumWindow.getCenterFrequency()));
+            new OutputPort<>(newNotes).produce(new SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), spectrumWindow.getCenterFrequency()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

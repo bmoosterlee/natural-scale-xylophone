@@ -4,24 +4,25 @@ package pianola;
 import frequency.Frequency;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
+import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
+import main.InputPort;
 
 import java.util.*;
 
 public class SweepToTargetUpDown implements PianolaPattern {
-    SpectrumManager spectrumManager;
     Sequencer sequencer;
 
     int halvedSize;
     SweepToTarget sweep;
     Frequency[] frequencies;
 
-    public SweepToTargetUpDown(SpectrumManager spectrumManager, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
-        this.spectrumManager = spectrumManager;
+    public SweepToTargetUpDown(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
         sequencer = new Sequencer(size, 1);
 
         halvedSize = (int) (Math.ceil(size/2.)+1);
         frequencies = new Frequency[halvedSize];
-        sweep = new SweepToTarget(spectrumManager, halvedSize, centerFrequency, multiplier, spectrumWindow);
+        sweep = new SweepToTarget(buffer, halvedSize, centerFrequency, multiplier, spectrumWindow);
     }
 
     @Override

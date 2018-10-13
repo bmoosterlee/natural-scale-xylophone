@@ -3,11 +3,13 @@ package pianola;
 import frequency.Frequency;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
+import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
 
 public class StaticGenerator extends SimpleChordGenerator {
 
-    public StaticGenerator(SpectrumManager spectrumManager, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
-        super(spectrumManager, 1, centerFrequency, 0, 0, 0, 3, spectrumWindow);
+    public StaticGenerator(BoundedBuffer<SpectrumState> buffer, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
+        super(buffer, 1, centerFrequency, 0, 0, 0, 3, spectrumWindow);
         frequencies = new Frequency[]{centerFrequency};
     }
 

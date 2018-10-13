@@ -4,6 +4,8 @@ import frequency.Frequency;
 import gui.GUI;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,8 +13,8 @@ import java.util.Set;
 public class SimpleArpeggioChord extends SimpleArpeggio {
     private ChordPlayer chordPlayer;
 
-    public SimpleArpeggioChord(SpectrumManager spectrumManager, int chordSize, SpectrumWindow spectrumWindow) {
-        super(spectrumManager, chordSize, spectrumWindow);
+    public SimpleArpeggioChord(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
+        super(buffer, chordSize, spectrumWindow);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package gui.spectrum.state;
 
 import frequency.Frequency;
+import frequency.state.FrequencyManager;
 import frequency.state.FrequencyState;
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
@@ -8,6 +9,8 @@ import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
+import harmonics.HarmonicCalculator;
+import notes.envelope.EnvelopeManager;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -17,25 +20,25 @@ import java.util.Map.Entry;
 public class SpectrumStateBuilder {
     private final SpectrumWindow spectrumWindow;
 
-    private final SpectrumState spectrumState;
+    private final SpectrumState oldSpectrumState;
     public final long sampleCount;
     private final Buckets noteBuckets;
     private final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
     private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    public SpectrumStateBuilder(SpectrumManager spectrumManager, SpectrumState spectrumState, long sampleCount, SpectrumWindow spectrumWindow) {
-        this.spectrumState = spectrumState;
+    public SpectrumStateBuilder(SpectrumWindow spectrumWindow, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState, long sampleCount) {
+        this.oldSpectrumState = oldSpectrumState;
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        FrequencyState frequencyState = spectrumManager.frequencyManager.getFrequencyState(sampleCount);
+        FrequencyState frequencyState = frequencyManager.getFrequencyState(sampleCount);
         Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
 
-        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(spectrumManager.envelopeManager.getEnvelopeState(sampleCount), sampleCount);
+        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(envelopeManager.getEnvelopeState(sampleCount), sampleCount);
 
         noteBuckets = toBuckets(liveFrequencies, frequencyVolumeTable);
-        harmonicHierarchyIterator = spectrumManager.harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
+        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
     }
@@ -66,7 +69,7 @@ public class SpectrumStateBuilder {
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 2");
-        BucketHistory bucketHistory = spectrumState.bucketHistory.addNewBuckets(newHarmonicsBuckets);
+        BucketHistory bucketHistory = oldSpectrumState.bucketHistory.addNewBuckets(newHarmonicsBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("paintComponent 3 3");

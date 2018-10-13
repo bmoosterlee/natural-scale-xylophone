@@ -3,10 +3,11 @@ package gui;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
-import gui.spectrum.state.SpectrumManager;
+import gui.spectrum.state.SpectrumInput;
 import gui.spectrum.state.SpectrumState;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
+import main.InputPort;
 import main.OutputPort;
 import sound.SampleTicker;
 import time.*;
@@ -43,24 +44,23 @@ public class GUI extends JPanel {
     private final Ticker ticker;
 
     private final SampleTicker sampleTicker;
-    private final SpectrumManager spectrumManager;
-    private TimeInNanoSeconds startTime;
     private Frequency mouseFrequency;
 
-    private OutputPort<SimpleImmutableEntry<Long, Frequency>> clickedFrequencies;
     private TimeInNanoSeconds frameEndTime;
 
-    public GUI(SampleTicker sampleTicker, SpectrumManager spectrumManager, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> buffer){
+    private OutputPort<SpectrumInput> spectrumInput;
+    private InputPort<SpectrumState> newSpectrumState;
+    private OutputPort<SimpleImmutableEntry<Long, Frequency>> clickedFrequencies;
+
+    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumInput> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> newNotesBuffer){
         this.sampleTicker = sampleTicker;
-        this.spectrumManager = spectrumManager;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         spectrumWindow = new SpectrumWindow(WIDTH);
 
-        ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
-        ticker.getTickObservable().add(event -> tick());
-
-        clickedFrequencies = new OutputPort<>(buffer);
+        spectrumInput = new OutputPort<>(spectrumInputBuffer);
+        newSpectrumState = new InputPort<>(newSpectrumStateBuffer);
+        clickedFrequencies = new OutputPort<>(newNotesBuffer);
 
         MouseListener mouseListener = new MouseListener() {
             @Override
@@ -113,15 +113,14 @@ public class GUI extends JPanel {
         frame.addMouseMotionListener(mouseMotionListener);
         frame.pack();
         frame.setVisible(true);
-    }
 
-    public void start(){
+        ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
+        ticker.getTickObservable().add(event -> tick());
         ticker.start();
     }
 
     private void tick() {
-        startTime = TimeInNanoSeconds.now();
-        frameEndTime = ticker.getFrameEndTime(startTime);
+        frameEndTime = ticker.getFrameEndTime(TimeInNanoSeconds.now());
         repaint();
     }
 
@@ -135,17 +134,26 @@ public class GUI extends JPanel {
         super.paintComponent(g);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        SpectrumState spectrumState = spectrumManager.getSpectrumState(spectrumWindow, sampleTicker.getExpectedTickCount(), frameEndTime);
+        long sampleCount = sampleTicker.getExpectedTickCount();
 
-        Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+        try {
+            spectrumInput.produce(new SpectrumInput(sampleCount, frameEndTime));
 
-        timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
-        renderHarmonicsBuckets(g, harmonicsBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
+            SpectrumState spectrumState = newSpectrumState.consume();
 
-        timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
-        renderNoteBuckets(g, spectrumState.noteBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
+            Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+
+            timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
+            renderHarmonicsBuckets(g, harmonicsBuckets);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
+            renderNoteBuckets(g, spectrumState.noteBuckets);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         timeKeeper = PerformanceTracker.startTracking("render cursor");
         renderCursorLine(g);

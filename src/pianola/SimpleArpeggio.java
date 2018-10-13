@@ -6,23 +6,27 @@ import gui.buckets.Buckets;
 import gui.GUI;
 import frequency.Frequency;
 import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
+import main.InputPort;
 
 import java.util.*;
 
 public class SimpleArpeggio implements PianolaPattern {
-    SpectrumManager spectrumManager;
     int chordSize;
     final SimpleChordGenerator simpleChordGenerator;
 
     protected ArpeggiateUp arpeggiateUp;
 
-    public SimpleArpeggio(SpectrumManager spectrumManager, int chordSize, SpectrumWindow spectrumWindow) {
-        this.spectrumManager = spectrumManager;
+    InputPort<SpectrumState> spectrumStateInput;
+
+    public SimpleArpeggio(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
+
+        spectrumStateInput = new InputPort<>(buffer);
 
         Frequency centerFrequency = spectrumWindow.getCenterFrequency();
         simpleChordGenerator = new IncrementalChordGenerator(
-                                spectrumManager,
+                                buffer,
                                 chordSize,
                                 centerFrequency.divideBy(2.0),
                      spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
@@ -72,9 +76,15 @@ public class SimpleArpeggio implements PianolaPattern {
     }
 
     private void updateNoteBuckets() {
-        SpectrumState spectrumState = spectrumManager.getSpectrumState();
-        Buckets origNoteBuckets = spectrumState.noteBuckets;
-        simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+        try {
+            SpectrumState spectrumState = spectrumStateInput.consume();
+
+            Buckets origNoteBuckets = spectrumState.noteBuckets;
+            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void generateNewChord() {

@@ -4,12 +4,14 @@ import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
 import gui.buckets.Buckets;
+import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
 
 public class IncrementalChordGenerator extends SimpleChordGenerator {
     protected int noteIndex = 0;
 
-    public IncrementalChordGenerator(SpectrumManager spectrumManager, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
-        super(spectrumManager, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow);
+    public IncrementalChordGenerator(BoundedBuffer<SpectrumState> buffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
+        super(buffer, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow);
     }
 
     @Override

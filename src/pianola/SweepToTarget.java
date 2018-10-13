@@ -3,6 +3,8 @@ package pianola;
 import frequency.Frequency;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
+import gui.spectrum.state.SpectrumState;
+import main.BoundedBuffer;
 
 public class SweepToTarget extends Sweep {
     Frequency sourceFrequency;
@@ -12,8 +14,8 @@ public class SweepToTarget extends Sweep {
     private int keyWidth;
     private double multiplier;
 
-    public SweepToTarget(SpectrumManager spectrumManager, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
-        super(spectrumManager, size, centerFrequency, spectrumWindow);
+    public SweepToTarget(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
+        super(buffer, size, centerFrequency, spectrumWindow);
 
         this.multiplier = multiplier;
 
@@ -32,7 +34,7 @@ public class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
-                spectrumManager,
+                buffer,
                 1,
                 centerFrequency,
                 totalMargin,
@@ -55,14 +57,14 @@ public class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(spectrumManager, targetFrequency, spectrumWindow);
+            return new StaticGenerator(buffer, targetFrequency, spectrumWindow);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);
             int left = (int) (center - keyWidth / 2.);
             int right = (int) (center + keyWidth / 2.);
             return new SimpleChordGenerator(
-                    spectrumManager,
+                    buffer,
                     1,
                     spectrumWindow.getFrequency((double) center),
                     totalMargin,
