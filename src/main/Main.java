@@ -64,7 +64,7 @@ public class Main {
 
         new SpectrumManager(spectrumWindow, frequencyManager, envelopeManager, harmonicCalculator, spectrumInputBuffer, spectrumStateMultiplexerInputBuffer);
 
-        new Pianola(sampleTicker, spectrumStatePianolaBuffer, noteManager, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
+        new Pianola(sampleTicker, spectrumStatePianolaBuffer, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNotes);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
         //todo and plays harmonically complimentary notes near the notes being played. Use a higher framerate preferably
 

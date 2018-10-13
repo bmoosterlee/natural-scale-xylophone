@@ -5,32 +5,25 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo let the pianola take the rhymthic harmonic value in real time and play that.
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
-import gui.GUI;
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.OutputPort;
 import sound.SampleTicker;
-import time.PerformanceTracker;
 import time.Ticker;
 import time.TimeInNanoSeconds;
-import time.TimeKeeper;
-import notes.state.NoteManager;
 
 import java.util.AbstractMap;
 
 public class Pianola {
-    final PianolaPattern pianolaPattern;
-    SampleTicker sampleTicker;
-    NoteManager noteManager;
+    private final PianolaPattern pianolaPattern;
+    private SampleTicker sampleTicker;
 
     private OutputPort<AbstractMap.SimpleImmutableEntry<Long, Frequency>> playedNotes;
 
-    public Pianola(SampleTicker sampleTicker, BoundedBuffer<SpectrumState> inputBuffer, NoteManager noteManager, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> outputBuffer) {
+    public Pianola(SampleTicker sampleTicker, BoundedBuffer<SpectrumState> inputBuffer, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> outputBuffer) {
         this.sampleTicker = sampleTicker;
-        this.noteManager = noteManager;
 
 //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
@@ -49,8 +42,10 @@ public class Pianola {
             try {
                 playedNotes.produce(new AbstractMap.SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), frequency));
             }
-            catch(NullPointerException | InterruptedException ignored){
+            catch(NullPointerException ignored){
 
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
