@@ -47,10 +47,6 @@ public class SpectrumManager implements Runnable {
         }
     }
 
-    public SpectrumState getSpectrumState() {
-        return spectrumState;
-    }
-
     public void tick() {
         try {
             SpectrumInput spectrumInput = newSpectrumInput.consume();
