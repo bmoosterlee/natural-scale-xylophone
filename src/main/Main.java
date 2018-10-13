@@ -11,12 +11,14 @@ import notes.envelope.EnvelopeManager;
 import notes.state.AmplitudeCalculator;
 import frequency.state.FrequencyManager;
 import notes.state.NoteManager;
+import sound.SampleRate;
 import time.TimeInSeconds;
 import wave.state.WaveManager;
 import pianola.Pianola;
 import sound.SampleTicker;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
+import wave.state.WaveState;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
@@ -37,7 +39,8 @@ public class Main {
         new PerformanceTracker();
         PerformanceTracker.start();
 
-        BoundedBuffer<Double> sampleAmplitude = new BoundedBuffer<>(SAMPLE_RATE/2);
+        int lookahead = SAMPLE_RATE / 20;
+        BoundedBuffer<Double> sampleAmplitude = new BoundedBuffer<>(lookahead);
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, sampleAmplitude);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
 
@@ -45,9 +48,12 @@ public class Main {
         NoteManager noteManager = new NoteManager(soundEnvironment.getSampleRate(), newNotes);
         EnvelopeManager envelopeManager = new EnvelopeManager(noteManager, soundEnvironment.getSampleRate());
         FrequencyManager frequencyManager = new FrequencyManager(noteManager);
-        WaveManager waveManager = new WaveManager(frequencyManager, soundEnvironment.getSampleRate());
 
-        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, waveManager, sampleAmplitude);
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
+        BoundedBuffer<WaveState> waveStateBuffer = new BoundedBuffer<>(lookahead);
+        new WaveManager(frequencyManager, soundEnvironment.getSampleRate(), sampleCountBuffer, waveStateBuffer);
+
+        AmplitudeCalculator amplitudeCalculator = new AmplitudeCalculator(frequencyManager, envelopeManager, sampleAmplitude, sampleCountBuffer, waveStateBuffer);
         sampleTicker.getTickObservable().add(amplitudeCalculator::tick);
         sampleTicker.start();
 

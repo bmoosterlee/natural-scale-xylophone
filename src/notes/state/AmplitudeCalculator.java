@@ -4,6 +4,7 @@ import frequency.Frequency;
 import frequency.state.FrequencyManager;
 import frequency.state.FrequencyState;
 import main.BoundedBuffer;
+import main.InputPort;
 import main.OutputPort;
 import notes.envelope.EnvelopeManager;
 import notes.envelope.EnvelopeState;
@@ -17,16 +18,20 @@ import java.util.Set;
 public class AmplitudeCalculator {
     private final FrequencyManager frequencyManager;
     private final EnvelopeManager envelopeManager;
-    private final WaveManager waveManager;
+
+    private OutputPort<Long> sampleCountOutput;
+    private InputPort<WaveState> waveStateInput;
 
     private OutputPort<Double> sampleAmplitude;
 
-    public AmplitudeCalculator(FrequencyManager frequencyManager, EnvelopeManager envelopeManager, WaveManager waveManager, BoundedBuffer<Double> buffer) {
+    public AmplitudeCalculator(FrequencyManager frequencyManager, EnvelopeManager envelopeManager, BoundedBuffer<Double> amplitudeOutputBuffer, BoundedBuffer<Long> sampleCountOutputBuffer, BoundedBuffer<WaveState> waveStateInputBuffer) {
         this.frequencyManager = frequencyManager;
         this.envelopeManager = envelopeManager;
-        this.waveManager = waveManager;
 
-        sampleAmplitude = new OutputPort<>(buffer);
+        sampleCountOutput = new OutputPort<>(sampleCountOutputBuffer);
+        waveStateInput = new InputPort<>(waveStateInputBuffer);
+
+        sampleAmplitude = new OutputPort<>(amplitudeOutputBuffer);
     }
 
     public void tick(long sampleCount) {
@@ -38,25 +43,31 @@ public class AmplitudeCalculator {
         EnvelopeState envelopeState = envelopeManager.getEnvelopeState(sampleCount);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
-        WaveState waveState = waveManager.getWaveState(sampleCount);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
-        double amplitude = calculateAmplitude(sampleCount,
-                                              frequencyState.getFrequencies(),
-                                              frequencyState,
-                                              envelopeState,
-                                              waveState);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
         try {
-            sampleAmplitude.produce(amplitude);
+            timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
+            sampleCountOutput.produce(sampleCount);
+            WaveState waveState = waveStateInput.consume();
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
+            double amplitude = calculateAmplitude(sampleCount,
+                                                  frequencyState.getFrequencies(),
+                                                  frequencyState,
+                                                  envelopeState,
+                                                  waveState);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
+            try {
+                sampleAmplitude.produce(amplitude);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            PerformanceTracker.stopTracking(timeKeeper);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private double calculateAmplitude(long sampleCount, Set<Frequency> liveFrequencies, FrequencyState frequencyState, EnvelopeState envelopeState, WaveState waveState) {
