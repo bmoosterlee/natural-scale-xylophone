@@ -5,9 +5,9 @@ import java.util.concurrent.Semaphore;
 
 public class BoundedBuffer<T> {
 
-    private final ConcurrentLinkedQueue<T> buffer;
-    private final Semaphore emptySpots;
-    private final Semaphore filledSpots;
+    protected final ConcurrentLinkedQueue<T> buffer;
+    protected final Semaphore emptySpots;
+    protected final Semaphore filledSpots;
 
     public BoundedBuffer(int capacity){
         buffer = new ConcurrentLinkedQueue<>();
