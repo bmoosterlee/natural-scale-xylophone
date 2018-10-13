@@ -41,7 +41,7 @@ public class Main {
         SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, sampleAmplitude);
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
 
-        BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> newNotes = new BoundedBuffer<>(5);
+        BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> newNotes = new BoundedBuffer<>(10);
         NoteManager noteManager = new NoteManager(soundEnvironment.getSampleRate(), newNotes);
         EnvelopeManager envelopeManager = new EnvelopeManager(noteManager, soundEnvironment.getSampleRate());
         FrequencyManager frequencyManager = new FrequencyManager(noteManager);
