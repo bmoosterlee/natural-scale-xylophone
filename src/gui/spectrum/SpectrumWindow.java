@@ -1,12 +1,6 @@
 package gui.spectrum;
 
 import frequency.Frequency;
-import gui.spectrum.state.SpectrumManager;
-import gui.spectrum.state.SpectrumState;
-import gui.spectrum.state.SpectrumStateBuilder;
-import harmonics.HarmonicCalculator;
-import frequency.state.FrequencyManager;
-import notes.envelope.EnvelopeManager;
 
 public class SpectrumWindow {
     private final int width;

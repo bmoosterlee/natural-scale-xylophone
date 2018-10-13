@@ -10,20 +10,15 @@ import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.OutputPort;
-import sound.SampleTicker;
 import time.Ticker;
 import time.TimeInNanoSeconds;
 
-import java.util.AbstractMap;
-
 public class Pianola {
     private final PianolaPattern pianolaPattern;
-    private SampleTicker sampleTicker;
 
-    private OutputPort<AbstractMap.SimpleImmutableEntry<Long, Frequency>> playedNotes;
+    private OutputPort<Frequency> playedNotes;
 
-    public Pianola(SampleTicker sampleTicker, BoundedBuffer<SpectrumState> inputBuffer, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Frequency>> outputBuffer) {
-        this.sampleTicker = sampleTicker;
+    public Pianola(BoundedBuffer<SpectrumState> inputBuffer, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Frequency> outputBuffer) {
 
 //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
@@ -40,7 +35,7 @@ public class Pianola {
     private void tick(long startTime) {
         for(Frequency frequency : pianolaPattern.playPattern()){
             try {
-                playedNotes.produce(new AbstractMap.SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), frequency));
+                playedNotes.produce(frequency);
             }
             catch(NullPointerException ignored){
 

@@ -50,9 +50,9 @@ public class GUI extends JPanel {
 
     private OutputPort<SpectrumInput> spectrumInput;
     private InputPort<SpectrumState> newSpectrumState;
-    private OutputPort<SimpleImmutableEntry<Long, Frequency>> clickedFrequencies;
+    private OutputPort<Frequency> clickedFrequencies;
 
-    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumInput> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<SimpleImmutableEntry<Long, Frequency>> newNotesBuffer){
+    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumInput> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
         this.sampleTicker = sampleTicker;
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
@@ -71,7 +71,7 @@ public class GUI extends JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 try {
-                    clickedFrequencies.produce(new SimpleImmutableEntry<>(sampleTicker.getExpectedTickCount(), spectrumWindow.getFrequency(e.getX())));
+                    clickedFrequencies.produce(spectrumWindow.getFrequency(e.getX()));
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }

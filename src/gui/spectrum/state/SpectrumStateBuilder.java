@@ -1,8 +1,6 @@
 package gui.spectrum.state;
 
 import frequency.Frequency;
-import frequency.state.FrequencyManager;
-import frequency.state.FrequencyState;
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
 import gui.buckets.BucketHistory;
@@ -10,7 +8,6 @@ import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
-import notes.envelope.EnvelopeManager;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -27,18 +24,15 @@ public class SpectrumStateBuilder {
     private final Map<Frequency, Double> newPairs;
     public final Set<Frequency> frequencies;
 
-    public SpectrumStateBuilder(SpectrumWindow spectrumWindow, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState, long sampleCount) {
+    public SpectrumStateBuilder(SpectrumWindow spectrumWindow, Map<Frequency, Double> volumes, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState, long sampleCount) {
         this.oldSpectrumState = oldSpectrumState;
         this.spectrumWindow = spectrumWindow;
         this.sampleCount = sampleCount;
 
-        FrequencyState frequencyState = frequencyManager.getFrequencyState(sampleCount);
-        Set<Frequency> liveFrequencies = frequencyState.getFrequencies();
+        Set<Frequency> liveFrequencies = volumes.keySet();
 
-        Map<Frequency, Double> frequencyVolumeTable = frequencyState.getFrequencyVolumeTable(envelopeManager.getEnvelopeState(sampleCount), sampleCount);
-
-        noteBuckets = toBuckets(liveFrequencies, frequencyVolumeTable);
-        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, frequencyVolumeTable, 100);
+        noteBuckets = toBuckets(liveFrequencies, volumes);
+        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
     }

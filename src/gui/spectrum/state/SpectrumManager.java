@@ -1,6 +1,5 @@
 package gui.spectrum.state;
 
-import frequency.state.FrequencyManager;
 import gui.buckets.Buckets;
 import gui.buckets.PrecalculatedBucketHistory;
 import gui.spectrum.SpectrumWindow;
@@ -8,61 +7,58 @@ import harmonics.HarmonicCalculator;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
-import notes.envelope.EnvelopeManager;
+import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeInNanoSeconds;
 import time.TimeKeeper;
 
 public class SpectrumManager implements Runnable {
     private SpectrumWindow spectrumWindow;
-    private FrequencyManager frequencyManager;
-    private EnvelopeManager envelopeManager;
     private HarmonicCalculator harmonicCalculator;
 
     private SpectrumState spectrumState;
 
-    private InputPort<SpectrumInput> newSpectrumInput;
+    private InputPort<SpectrumInput> spectrumData;
+    private InputPort<VolumeState> volumeStateInput;
     private OutputPort<SpectrumState> newSpectrumState;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, FrequencyManager frequencyManager, EnvelopeManager envelopeManager, HarmonicCalculator harmonicCalculator, BoundedBuffer<SpectrumInput> inputBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<SpectrumInput> spectrumInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
         this.spectrumWindow = spectrumWindow;
-        this.frequencyManager = frequencyManager;
-        this.envelopeManager = envelopeManager;
         this.harmonicCalculator = harmonicCalculator;
 
-        newSpectrumInput = new InputPort<>(inputBuffer);
+        spectrumData = new InputPort<>(spectrumInputBuffer);
+        volumeStateInput = new InputPort<>(volumeStateBuffer);
         newSpectrumState = new OutputPort<>(outputBuffer);
 
-        setSpectrumState(new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200)));
+        this.spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200));
 
         start();
     }
 
-    private void setSpectrumState(SpectrumState spectrumState) {
-        this.spectrumState = spectrumState;
-        try {
-            newSpectrumState.produce(spectrumState);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void tick() {
         try {
-            SpectrumInput spectrumInput = newSpectrumInput.consume();
+            SpectrumInput spectrumInput = spectrumData.consume();
+            VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, frequencyManager, envelopeManager, harmonicCalculator, spectrumState, spectrumInput.getExpectedTickCount());
+            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState, volumeState.sampleCount);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
-            while (TimeInNanoSeconds.now().lessThan(spectrumInput.getFrameEndTime())) {
+            TimeInNanoSeconds frameEndTime = spectrumInput.getFrameEndTime();
+            while (TimeInNanoSeconds.now().lessThan(frameEndTime)) {
                 if (spectrumStateBuilder.update()) break;
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
-            setSpectrumState(spectrumStateBuilder.finish());
+            SpectrumState newSpectrumState = spectrumStateBuilder.finish();
+            this.spectrumState = newSpectrumState;
+            try {
+                this.newSpectrumState.produce(spectrumState);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             PerformanceTracker.stopTracking(timeKeeper);
 
         } catch (InterruptedException e) {

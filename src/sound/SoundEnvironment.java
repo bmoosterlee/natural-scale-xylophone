@@ -2,42 +2,63 @@ package sound;
 
 import main.BoundedBuffer;
 import main.InputPort;
-import time.Ticker;
-import time.TimeInSeconds;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-public class SoundEnvironment {
+public class SoundEnvironment implements Runnable{
     private final int SAMPLE_SIZE_IN_BITS;
     private final SampleRate sampleRate;
     private SourceDataLine sourceDataLine;
     private final int sampleSize;
     private final double marginalSampleSize;
 
-    private InputPort<Double> sampleAmplitude;
+    private InputPort<Double> sampleAmplitudeInput;
 
-    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> buffer) {
+    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> inputBuffer) {
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
         this.sampleRate = new SampleRate(SAMPLE_RATE);
 
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
-        sampleAmplitude = new InputPort<>(buffer);
-
-        SampleTicker sampleTicker = new SampleTicker(sampleRate);
-        sampleTicker.getTickObservable().add(this::tick);
-        sampleTicker.start();
+        sampleAmplitudeInput = new InputPort<>(inputBuffer);
 
         initialize();
+
+        start();
     }
 
-    private void tick(Long sampleCount) {
+    private void initialize() {
+        AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
+        sourceDataLine = null;
         try {
-            writeToBuffer(sampleAmplitude.consume());
+            sourceDataLine = AudioSystem.getSourceDataLine(af);
+            sourceDataLine.open();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
+        sourceDataLine.start();
+    }
+
+    private void start() {
+        new Thread(this).start();
+    }
+
+    @Override
+    public void run() {
+        while(true){
+            tick();
+        }
+    }
+
+    private void tick() {
+        try {
+            Double amplitude = sampleAmplitudeInput.consume();
+            writeToBuffer(amplitude);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -53,18 +74,6 @@ public class SoundEnvironment {
 
     public boolean isAudible(Double volume) {
         return volume >= marginalSampleSize;
-    }
-
-    private void initialize() {
-        AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
-        sourceDataLine = null;
-        try {
-            sourceDataLine = AudioSystem.getSourceDataLine(af);
-            sourceDataLine.open();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-        sourceDataLine.start();
     }
 
     public SampleRate getSampleRate() {
