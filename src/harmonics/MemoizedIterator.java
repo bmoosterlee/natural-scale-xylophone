@@ -2,10 +2,10 @@ package harmonics;
 
 import java.util.Iterator;
 
-public class MemoizedIterator implements Iterator<Fraction> {
+class MemoizedIterator implements Iterator<Fraction> {
 
-    final static FractionMemoizer FRACTION_MEMOIZER = new FractionMemoizer(new RelativelyPrimeFractionIterator());
-    int index;
+    private final static FractionMemoizer FRACTION_MEMOIZER = new FractionMemoizer(new RelativelyPrimeFractionIterator());
+    private int index;
 
     public boolean hasNext(){
         return true;

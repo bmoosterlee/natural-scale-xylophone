@@ -2,7 +2,7 @@ package gui.buckets;
 
 import frequency.Frequency;
 
-public class HighestValueBucketFrequencyStrategy implements BucketFrequencyStrategy {
+class HighestValueBucketFrequencyStrategy implements BucketFrequencyStrategy {
 
     public static Frequency getFrequency(Bucket bucket) {
         Frequency highestFrequency = null;

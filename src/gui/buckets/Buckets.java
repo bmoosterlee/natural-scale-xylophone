@@ -114,8 +114,7 @@ public class Buckets {
         Buckets newBuckets = new Buckets(newIndices, newEntries);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        Buckets buckets = add(newBuckets);
-        return buckets;
+        return add(newBuckets);
     }
 
     public static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
@@ -174,7 +173,7 @@ public class Buckets {
         return indices;
     }
 
-    public Map<Integer, Bucket> getBucketsData() {
+    private Map<Integer, Bucket> getBucketsData() {
         return bucketsData;
     }
 }

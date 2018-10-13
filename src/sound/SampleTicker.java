@@ -6,7 +6,7 @@ import time.TimeInSeconds;
 public class SampleTicker extends Ticker {
 
     private final long tickLookahead;
-    private int maxBacklog;
+    private final int maxBacklog;
 
     public SampleTicker(SampleRate sampleRate){
         super(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));

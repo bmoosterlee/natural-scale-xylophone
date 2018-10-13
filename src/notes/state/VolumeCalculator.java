@@ -17,14 +17,14 @@ import java.util.Map;
 
 public class VolumeCalculator implements Runnable {
 
-    private SampleRate sampleRate;
-    private DeterministicFunction envelopeFunction;
+    private final SampleRate sampleRate;
+    private final DeterministicFunction envelopeFunction;
 
-    private Map<Long, VolumeState> futureVolumes;
+    private final Map<Long, VolumeState> futureVolumes;
 
-    private InputPort<Long> sampleCountInput;
-    private InputPort<Frequency> newNoteInput;
-    private OutputPort<VolumeState> volumeStateOutput;
+    private final InputPort<Long> sampleCountInput;
+    private final InputPort<Frequency> newNoteInput;
+    private final OutputPort<VolumeState> volumeStateOutput;
 
     public VolumeCalculator(BoundedBuffer<Long> sampleCountInputBuffer, BoundedBuffer<Frequency> newNoteInputBuffer, BoundedBuffer<VolumeState> volumeStateOutputBuffer, SampleRate sampleRate){
         this.sampleRate = sampleRate;

@@ -3,7 +3,7 @@ package time;
 import java.util.Objects;
 
 public class TimeInSeconds {
-    private double value;
+    private final double value;
 
     public TimeInSeconds(double time) {
         value = time;

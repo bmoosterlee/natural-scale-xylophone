@@ -5,7 +5,7 @@ import time.TimeInSeconds;
 
 public class LinearFunction extends DeterministicFunction {
     
-    public LinearFunction(SampleRate sampleRate, double amplitude, TimeInSeconds totalTime) {
+    LinearFunction(SampleRate sampleRate, double amplitude, TimeInSeconds totalTime) {
         super(sampleRate, amplitude, totalTime);
     }
 

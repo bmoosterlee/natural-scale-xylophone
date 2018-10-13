@@ -4,8 +4,8 @@ import frequency.Frequency;
 
 public class Harmonic {
 
-    final int sharedPeriod;
-    final Frequency frequency;
+    private final int sharedPeriod;
+    private final Frequency frequency;
 
     public Harmonic(Frequency tonic, Fraction harmonicAsFraction){
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);

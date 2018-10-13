@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class Observable<T> {
-    final Collection<Observer<T>> observers;
+    private final Collection<Observer<T>> observers;
 
     public Observable(){
         observers = new HashSet<>();
@@ -15,7 +15,7 @@ public class Observable<T> {
     }
 
     public void notify(T event) {
-        for(Observer observer : observers) {
+        for(Observer<T> observer : observers) {
             observer.notify(event);
         }
     }

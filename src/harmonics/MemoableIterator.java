@@ -2,10 +2,10 @@ package harmonics;
 
 import java.util.Iterator;
 
-public class MemoableIterator implements Iterator<Fraction> {
+class MemoableIterator implements Iterator<Fraction> {
 
     private final Iterator<Fraction> iterator;
-    Fraction currentHarmonicAsFraction;
+    private Fraction currentHarmonicAsFraction;
 
     public MemoableIterator(){
         iterator = new MemoizedIterator();

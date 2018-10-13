@@ -2,7 +2,7 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo find maxima of these smoothed values. Perform fourier analysis on this signal, also obtaining the phases of
  * todo a frequency. find harmonic image of each frequency, multiply image by the phase of the tonic.
  * todo add all these phase dependent harmonic images together, and display the rhythmic value in real time.
- * todo let the pianola take the rhymthic harmonic value in real time and play that.
+ * todo let the pianola take the rhythmic harmonic value in real time and play that.
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import frequency.Frequency;
@@ -16,14 +16,14 @@ import time.TimeInNanoSeconds;
 public class Pianola {
     private final PianolaPattern pianolaPattern;
 
-    private OutputPort<Frequency> playedNotes;
+    private final OutputPort<Frequency> playedNotes;
 
     public Pianola(BoundedBuffer<SpectrumState> inputBuffer, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Frequency> outputBuffer) {
 
-//        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
-//        pianolaPattern = new SweepToTarget(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
-//        pianolaPattern = new SweepToTargetUpDown(this, 8, gui.spectrumWindow.getCenterFrequency(), 2.0);
+        //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
+//        pianolaPattern = new PatternPauser(8, new SweepToTarget(spectrumManager, 5, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         pianolaPattern = new SweepToTargetUpDown(inputBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+//        pianolaPattern = new SimpleArpeggio(this, spectrumManager, 4);
 
         playedNotes = new OutputPort<>(outputBuffer);
 

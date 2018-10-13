@@ -9,12 +9,12 @@ public class SimpleDeterministicEnvelope extends SimpleEnvelope implements Deter
     private final long endingSampleCount;
 
     public SimpleDeterministicEnvelope(long startingSampleCount, SampleRate sampleRate, DeterministicFunction deterministicFunction) {
-        super(startingSampleCount, sampleRate, deterministicFunction, null);
+        super(startingSampleCount, sampleRate, deterministicFunction);
         endingSampleCount = startingSampleCount+sampleRate.asSampleCount(deterministicFunction.totalTime);
     }
 
-    public SimpleDeterministicEnvelope(long startingSampleCount, SampleRate sampleRate, long endingSampleCount) {
-        super(startingSampleCount, sampleRate, null, null);
+    SimpleDeterministicEnvelope(long startingSampleCount, SampleRate sampleRate, long endingSampleCount) {
+        super(startingSampleCount, sampleRate, null);
         this.endingSampleCount = endingSampleCount;
     }
 
@@ -34,7 +34,7 @@ public class SimpleDeterministicEnvelope extends SimpleEnvelope implements Deter
 
     @Override
     public DeterministicCompositeEnvelope add(DeterministicEnvelope envelope) {
-        return new DeterministicCompositeEnvelope(Arrays.asList(new DeterministicEnvelope[]{this, envelope}));
+        return new DeterministicCompositeEnvelope(Arrays.asList(this, envelope));
     }
 
     public DeterministicCompositeEnvelope add(DeterministicCompositeEnvelope envelope) {
@@ -55,8 +55,7 @@ public class SimpleDeterministicEnvelope extends SimpleEnvelope implements Deter
         }
     }
 
-    @Override
-    public boolean isDead(long sampleCount) {
+    boolean isDead(long sampleCount) {
         return sampleCount >= getEndingSampleCount();
     }
 }

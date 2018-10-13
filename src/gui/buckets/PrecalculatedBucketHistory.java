@@ -18,7 +18,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         multiplier = 1. / size;
     }
 
-    public PrecalculatedBucketHistory(int size, LinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
+    private PrecalculatedBucketHistory(int size, LinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
         this.size = size;
         this.history = history;
         this.multiplier = multiplier;

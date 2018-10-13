@@ -18,7 +18,7 @@ public class PrecalculatedEnvelope extends SimpleDeterministicEnvelope {
         }
     }
 
-    public PrecalculatedEnvelope(long startingSampleCount, long endingSampleCount, SampleRate sampleRate, Map<Long, Double> volumes) {
+    private PrecalculatedEnvelope(long startingSampleCount, long endingSampleCount, SampleRate sampleRate, Map<Long, Double> volumes) {
         super(startingSampleCount, sampleRate, endingSampleCount);
         this.volumes = volumes;
     }
@@ -28,10 +28,7 @@ public class PrecalculatedEnvelope extends SimpleDeterministicEnvelope {
         try{
             return volumes.get(sampleCount);
         }
-        catch(NoSuchElementException e){
-            return 0.;
-        }
-        catch(NullPointerException e){
+        catch(NoSuchElementException | NullPointerException e){
             return 0.;
         }
     }
@@ -50,10 +47,8 @@ public class PrecalculatedEnvelope extends SimpleDeterministicEnvelope {
         }
         else {
             Map<Long, Double> newVolumes = new HashMap<>();
-            Iterator<Long> iterator = volumes.keySet().iterator();
-            while(iterator.hasNext()){
-                Long i = iterator.next();
-                if(i>=sampleCount) {
+            for (Long i : volumes.keySet()) {
+                if (i >= sampleCount) {
                     newVolumes.put(i, volumes.get(i));
                 }
             }

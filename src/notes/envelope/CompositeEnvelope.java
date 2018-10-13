@@ -2,28 +2,27 @@ package notes.envelope;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class CompositeEnvelope<T extends Envelope> extends SimpleEnvelope {
     final Set<T> envelopes;
 
-    public CompositeEnvelope(T envelope) {
-        super(envelope.getStartingSampleCount(), envelope.getSampleRate(), null, null);
+    CompositeEnvelope(T envelope) {
+        super(envelope.getStartingSampleCount(), envelope.getSampleRate(), null);
         envelopes = new HashSet<>();
         envelopes.add(envelope);
     }
 
-    public CompositeEnvelope(Collection<T> envelopes) {
+    CompositeEnvelope(Collection<T> envelopes) {
         this(envelopes, calculateStartingSampleCount(envelopes));
     }
 
-    public CompositeEnvelope(Collection<T> envelopes, long startingSampleCount) {
-        super(startingSampleCount, envelopes.iterator().next().getSampleRate(), null, null);
+    CompositeEnvelope(Collection<T> envelopes, long startingSampleCount) {
+        super(startingSampleCount, envelopes.iterator().next().getSampleRate(), null);
         this.envelopes = new HashSet<>(envelopes);
     }
 
-    protected static Long calculateStartingSampleCount(Collection<? extends Envelope> envelopes) {
+    private static Long calculateStartingSampleCount(Collection<? extends Envelope> envelopes) {
         Long startingSampleCount = null;
 
         for(Envelope envelope : envelopes){
@@ -52,7 +51,7 @@ public class CompositeEnvelope<T extends Envelope> extends SimpleEnvelope {
 
         newEnvelopes.add(envelope);
 
-        return new CompositeEnvelope(newEnvelopes);
+        return new CompositeEnvelope<>(newEnvelopes);
     }
 
     public Envelope add(CompositeEnvelope envelope) {
@@ -60,7 +59,7 @@ public class CompositeEnvelope<T extends Envelope> extends SimpleEnvelope {
 
         newEnvelopes.addAll(envelope.envelopes);
 
-        return new CompositeEnvelope(newEnvelopes);
+        return new CompositeEnvelope<>(newEnvelopes);
     }
 
     @Override

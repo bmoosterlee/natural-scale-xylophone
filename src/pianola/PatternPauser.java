@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PatternPauser implements PianolaPattern {
-    PianolaPattern pianolaPattern;
-    int patternSize;
-    Sequencer sequencer;
+    private final PianolaPattern pianolaPattern;
+    private final int patternSize;
+    private final Sequencer sequencer;
 
     PatternPauser(int size, PianolaPattern pianolaPattern, int patternSize){
         this.pianolaPattern = pianolaPattern;

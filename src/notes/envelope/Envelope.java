@@ -15,5 +15,4 @@ public interface Envelope {
 
     Envelope update(long sampleCount);
 
-    boolean isDead(long sampleCount);
 }

@@ -14,10 +14,10 @@ import java.util.Set;
 
 public class AmplitudeCalculator implements Runnable{
 
-    private SampleRate sampleRate;
+    private final SampleRate sampleRate;
 
-    private InputPort<VolumeState> volumeStateInput;
-    private OutputPort<Double> amplitudeOutput;
+    private final InputPort<VolumeState> volumeStateInput;
+    private final OutputPort<Double> amplitudeOutput;
 
     public AmplitudeCalculator(BoundedBuffer<VolumeState> volumeStateInputBuffer, BoundedBuffer<Double> amplitudeOutputBuffer, SampleRate sampleRate) {
         this.sampleRate = sampleRate;
@@ -39,7 +39,7 @@ public class AmplitudeCalculator implements Runnable{
         }
     }
 
-    public void tick() {
+    private void tick() {
         try {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
             VolumeState volumeState = volumeStateInput.consume();

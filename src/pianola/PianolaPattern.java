@@ -4,8 +4,8 @@ import frequency.Frequency;
 
 import java.util.Set;
 
-public interface PianolaPattern {
+interface PianolaPattern {
 
-    public Set<Frequency> playPattern();
+    Set<Frequency> playPattern();
 
 }

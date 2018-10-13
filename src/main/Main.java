@@ -23,11 +23,6 @@ public class Main {
 
     public static void main(String[] args){
 
-        /*todo move towards threads started for each frame which can quit at any moment, so that when time in the frame
-        runs out, we can move on to the next frame without losing all our progress from this frame. One way to do it
-        could be to stream pipeline each unit, and check after each unit whether we have time left.
-            Another could be that we stream pipeline each unit, store the results persistently, and kill the thread when
-        time runs out.*/
         int SAMPLE_SIZE_IN_BITS = 8;
         int SAMPLE_RATE = 44100;
 
@@ -72,7 +67,6 @@ public class Main {
 
         new Pianola(spectrumStatePianolaBuffer, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
-        //todo and plays harmonically complimentary notes near the notes being played. Use a higher framerate preferably
 
         try {
             Thread.sleep(1000);

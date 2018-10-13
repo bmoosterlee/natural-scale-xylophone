@@ -1,18 +1,15 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 
-public class SweepToTarget extends Sweep {
-    Frequency sourceFrequency;
-    Frequency targetFrequency;
-    int sourceAsInt;
-    int targetAsInt;
+class SweepToTarget extends Sweep {
+    private Frequency targetFrequency;
+    private int sourceAsInt;
     private int keyWidth;
-    private double multiplier;
+    private final double multiplier;
 
     public SweepToTarget(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
         super(buffer, size, centerFrequency, spectrumWindow);
@@ -26,13 +23,13 @@ public class SweepToTarget extends Sweep {
         try {
             generateNewChord();
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
     }
 
     @Override
-    protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
+    SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
                 buffer,
                 1,
@@ -44,12 +41,12 @@ public class SweepToTarget extends Sweep {
     }
 
     @Override
-    protected void generateNewChord() {
+    void generateNewChord() {
         simpleChordGenerator.generateChord();
-        sourceFrequency = simpleChordGenerator.getFrequencies()[0];
+        Frequency sourceFrequency = simpleChordGenerator.getFrequencies()[0];
         sourceAsInt = spectrumWindow.getX(sourceFrequency);
         targetFrequency = sourceFrequency.multiplyBy(multiplier);
-        targetAsInt = spectrumWindow.getX(targetFrequency);
+        int targetAsInt = spectrumWindow.getX(targetFrequency);
         keyWidth = (targetAsInt -sourceAsInt)/size;
         moveRight();
     }

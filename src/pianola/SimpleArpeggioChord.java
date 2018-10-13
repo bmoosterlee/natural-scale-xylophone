@@ -1,9 +1,7 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.GUI;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 
@@ -31,7 +29,7 @@ public class SimpleArpeggioChord extends SimpleArpeggio {
                 }
             }
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
 

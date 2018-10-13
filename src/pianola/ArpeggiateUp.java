@@ -1,17 +1,16 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.GUI;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ArpeggiateUp implements PianolaPattern{
     final Sequencer sequencer;
-    Frequency[] frequencies;
+    private final Frequency[] frequencies;
 
-    public ArpeggiateUp(int notesPerMeasure, int measuresTillReset, Frequency[] frequencies) {
+    ArpeggiateUp(int notesPerMeasure, int measuresTillReset, Frequency[] frequencies) {
         sequencer = new Sequencer(notesPerMeasure, measuresTillReset);
         this.frequencies = frequencies;
     }
@@ -22,7 +21,7 @@ public class ArpeggiateUp implements PianolaPattern{
 
         sequencer.tick();
 
-        return new HashSet(Arrays.asList(new Frequency[]{frequency}));
+        return new HashSet<>(Collections.singletonList(frequency));
     }
 
 }

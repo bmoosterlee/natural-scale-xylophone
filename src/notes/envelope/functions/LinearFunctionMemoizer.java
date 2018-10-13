@@ -8,9 +8,9 @@ import java.util.HashMap;
 public class LinearFunctionMemoizer {
     public final static LinearFunctionMemoizer ENVELOPE_MEMOIZER = new LinearFunctionMemoizer();
 
-    HashMap<SampleRate, HashMap<Double, HashMap<TimeInSeconds, DeterministicFunction>>> calculatedEnvelopes;
+    private final HashMap<SampleRate, HashMap<Double, HashMap<TimeInSeconds, DeterministicFunction>>> calculatedEnvelopes;
 
-    public LinearFunctionMemoizer(){
+    private LinearFunctionMemoizer(){
         calculatedEnvelopes = new HashMap<>();
     }
 

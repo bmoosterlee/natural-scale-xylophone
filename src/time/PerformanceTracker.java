@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PerformanceTracker implements Runnable{
 
-    static PerformanceTracker performanceTracker;
-    ConcurrentHashMap<String, Long> stateTimes = new ConcurrentHashMap<>();
+    private static PerformanceTracker performanceTracker;
+    private final ConcurrentHashMap<String, Long> stateTimes = new ConcurrentHashMap<>();
 
     public PerformanceTracker(){
         performanceTracker = this;
@@ -36,7 +36,7 @@ public class PerformanceTracker implements Runnable{
 
     @Override
     public void run() {
-        long frameTime = 1000/1;
+        long frameTime = 1000;
         long startTime;
         long currentTime;
 
@@ -58,7 +58,7 @@ public class PerformanceTracker implements Runnable{
         }
     }
 
-    public void tick(){
+    private void tick(){
         System.out.println("------------");
         ConcurrentHashMap.KeySetView<String, Long> names = performanceTracker.stateTimes.keySet();
         PriorityQueue<String> sortedNames = new PriorityQueue<>(Comparator.comparing(o -> -performanceTracker.stateTimes.get(o)));

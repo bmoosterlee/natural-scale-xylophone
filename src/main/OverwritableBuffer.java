@@ -1,6 +1,6 @@
 package main;
 
-public class OverwritableBuffer<T> extends BoundedBuffer<T>{
+class OverwritableBuffer<T> extends BoundedBuffer<T>{
 
     public OverwritableBuffer(int capacity) {
         super(capacity);

@@ -1,9 +1,7 @@
 package pianola;
 
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumManager;
 import gui.buckets.Buckets;
-import gui.GUI;
 import frequency.Frequency;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
@@ -12,14 +10,14 @@ import main.InputPort;
 import java.util.*;
 
 public class SimpleArpeggio implements PianolaPattern {
-    int chordSize;
+    private final int chordSize;
     final SimpleChordGenerator simpleChordGenerator;
 
-    protected ArpeggiateUp arpeggiateUp;
+    ArpeggiateUp arpeggiateUp;
 
-    InputPort<SpectrumState> spectrumStateInput;
+    private final InputPort<SpectrumState> spectrumStateInput;
 
-    public SimpleArpeggio(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
+    SimpleArpeggio(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
 
         spectrumStateInput = new InputPort<>(buffer);
@@ -36,7 +34,7 @@ public class SimpleArpeggio implements PianolaPattern {
         try {
             generateNewChord();
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
     }
@@ -47,7 +45,7 @@ public class SimpleArpeggio implements PianolaPattern {
         try {
             updateNoteBuckets();
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
 
@@ -60,7 +58,7 @@ public class SimpleArpeggio implements PianolaPattern {
             try {
                 generateNewChord();
             }
-            catch(NullPointerException e2){
+            catch(NullPointerException ignored){
 
             }
         }
@@ -68,7 +66,7 @@ public class SimpleArpeggio implements PianolaPattern {
         try {
             frequencies.addAll(arpeggiateUp.playPattern());
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
 
@@ -87,7 +85,7 @@ public class SimpleArpeggio implements PianolaPattern {
         }
     }
 
-    protected void generateNewChord() {
+    void generateNewChord() {
         simpleChordGenerator.generateChord();
         Frequency[] newFrequencies = simpleChordGenerator.getFrequencies();
         arpeggiateUp = new ArpeggiateUp(chordSize, 4, newFrequencies);

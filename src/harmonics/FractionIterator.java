@@ -2,10 +2,10 @@ package harmonics;
 
 import java.util.Iterator;
 
-public class FractionIterator implements Iterator<Fraction> {
+class FractionIterator implements Iterator<Fraction> {
 
-    Fraction index;
-    boolean reciprocal;
+    private Fraction index;
+    private boolean reciprocal;
 
     public FractionIterator(){
         index = new Fraction(1,1);

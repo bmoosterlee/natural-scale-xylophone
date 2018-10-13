@@ -1,6 +1,6 @@
 package harmonics;
 
-public interface Builder<T> {
+interface Builder<T> {
 
     T build();
 

@@ -5,7 +5,7 @@ import frequency.Frequency;
 import java.util.*;
 
 public class CompositeBucket<T extends Bucket> implements Bucket {
-    private Set<T> buckets;
+    private final Set<T> buckets;
 
     CompositeBucket(Collection<T> buckets) {
         this.buckets = new HashSet<>(buckets);

@@ -32,7 +32,7 @@ public class TimeInNanoSeconds {
     }
 
     public TimeInSeconds toSeconds() {
-        return new TimeInSeconds(value/1000000000);
+        return new TimeInSeconds((double)value/1000000000);
     }
 
     public TimeInNanoSeconds add(TimeInNanoSeconds other) {

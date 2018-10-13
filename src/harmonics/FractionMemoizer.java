@@ -3,7 +3,7 @@ package harmonics;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class FractionMemoizer {
+class FractionMemoizer {
     private final ArrayList<Fraction> calculatedFractions;
     private int lastCalculatedIndex;
     private final Iterator<Fraction> iterator;
@@ -14,11 +14,11 @@ public class FractionMemoizer {
         this.lastCalculatedIndex = -1;
     }
 
-    public Fraction getCalculatedFraction(int index){
+    private Fraction getCalculatedFraction(int index){
         return calculatedFractions.get(index);
     }
 
-    public Fraction calculateNextFraction() {
+    private Fraction calculateNextFraction() {
         Fraction newFraction  = iterator.next();
         calculatedFractions.add(newFraction);
         this.lastCalculatedIndex = lastCalculatedIndex + 1;

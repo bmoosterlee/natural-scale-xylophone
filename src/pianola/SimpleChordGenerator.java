@@ -2,7 +2,6 @@ package pianola;
 
 import frequency.Frequency;
 import gui.buckets.*;
-import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
@@ -13,17 +12,17 @@ import java.util.Map.Entry;
 
 public class SimpleChordGenerator {
     private final SpectrumWindow spectrumWindow;
-    protected final int chordSize;
+    final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
     BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
-    protected Frequency[] frequencies;
-    protected int margin = 80;
-    private int hardLeftBorder;
-    private int hardRightBorder;
+    Frequency[] frequencies;
+    final int margin = 80;
+    private final int hardLeftBorder;
+    private final int hardRightBorder;
     private final int totalMargin;
-    private int repetitionDampener;
+    private final int repetitionDampener;
 
-    InputPort<SpectrumState> spectrumStateInput;
+    private final InputPort<SpectrumState> spectrumStateInput;
 
     public SimpleChordGenerator(BoundedBuffer<SpectrumState> buffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
@@ -67,7 +66,7 @@ public class SimpleChordGenerator {
         }
     }
 
-    protected int findCenterFrequency() {
+    int findCenterFrequency() {
         int average = 0;
         for (int i = 0; i < chordSize; i++) {
             try {
@@ -81,18 +80,18 @@ public class SimpleChordGenerator {
         return average;
     }
 
-    protected void updateNotes(Buckets maximaBuckets, Integer[] leftBorders, Integer[] rightBorders) {
+    void updateNotes(Buckets maximaBuckets, Integer[] leftBorders, Integer[] rightBorders) {
         for(int i = 0; i< chordSize; i++) {
             try {
                 frequencies[i] = updateNote(maximaBuckets, leftBorders[i], rightBorders[i]);
             }
-            catch(NullPointerException e){
+            catch(NullPointerException ignored){
 
             }
         }
     }
 
-    protected Frequency updateNote(Buckets maximaBuckets, Integer leftBorder, Integer rightBorder) {
+    Frequency updateNote(Buckets maximaBuckets, Integer leftBorder, Integer rightBorder) {
         Buckets freqProximityBuckets = maximaBuckets.clip(leftBorder, rightBorder);
 
         PriorityQueue<Entry<Integer, Double>> frequencyHierarchy = prioritizeFrequencies(freqProximityBuckets);
@@ -135,7 +134,7 @@ public class SimpleChordGenerator {
             } catch (NullPointerException e) {
                 break;
             }
-        } while (poll.getValue() == pollFirst.getValue());
+        } while (poll.getValue().equals(pollFirst.getValue()));
 
         return topBuckets.get((int) (Math.random() * topBuckets.size())).getKey();
     }
@@ -160,21 +159,21 @@ public class SimpleChordGenerator {
         private Integer[] leftBorders;
         private Integer[] rightBorders;
 
-        public Integer[] getLeftBorders() {
+        Integer[] getLeftBorders() {
             return leftBorders;
         }
 
-        public Integer[] getRightBorders() {
+        Integer[] getRightBorders() {
             return rightBorders;
         }
 
-        public Borders invoke() {
+        Borders invoke() {
             leftBorders = new Integer[chordSize];
             rightBorders = new Integer[chordSize];
 
             for (int i = 0; i < chordSize - 1; i++) {
                 Integer frequencyX = spectrumWindow.getX(frequencies[i]);
-                Integer frequency2X = spectrumWindow.getX(frequencies[i + 1]);
+                int frequency2X = spectrumWindow.getX(frequencies[i + 1]);
                 int middleBorder = (frequencyX + frequency2X) / 2;
                 int marginBorder = frequencyX + margin;
 

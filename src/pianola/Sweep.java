@@ -1,7 +1,6 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import gui.spectrum.state.SpectrumState;
@@ -15,17 +14,17 @@ public class Sweep implements PianolaPattern {
     //todo build a sweep which finds the octave higher, cuts the space from the tonic to the octave in -size- pieces
     //todo and lets each sweep find the highest value harmonic in that range.
     final int totalMargin;
-    int size;
+    final int size;
     SimpleChordGenerator simpleChordGenerator;
-    SimpleChordGenerator sweepGenerator;
+    private SimpleChordGenerator sweepGenerator;
 
-    protected Sequencer sequencer;
+    final Sequencer sequencer;
     final SpectrumWindow spectrumWindow;
 
-    InputPort<SpectrumState> spectrumStateInput;
-    BoundedBuffer buffer;
+    private final InputPort<SpectrumState> spectrumStateInput;
+    final BoundedBuffer<SpectrumState> buffer;
 
-    public Sweep(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
+    Sweep(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
         this.size = size;
 
@@ -42,12 +41,12 @@ public class Sweep implements PianolaPattern {
         try {
             generateNewChord();
         }
-        catch(NullPointerException e){
+        catch(NullPointerException ignored){
 
         }
     }
 
-    protected SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
+    SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
                 buffer,
                 1,
@@ -75,7 +74,7 @@ public class Sweep implements PianolaPattern {
         } catch (NullPointerException e) {
             try {
                 generateNewChord();
-            } catch (NullPointerException e2) {
+            } catch (NullPointerException ignored) {
 
             }
         }
@@ -102,18 +101,18 @@ public class Sweep implements PianolaPattern {
         }
     }
 
-    protected void generateNewChord() {
+    void generateNewChord() {
         simpleChordGenerator.generateChord();
         sweepGenerator = simpleChordGenerator;
     }
 
-    protected void moveRight() {
+    void moveRight() {
         sweepGenerator = findNextSweepGenerator();
         sweepGenerator.noteHistory = simpleChordGenerator.noteHistory;
         sweepGenerator.generateChord();
     }
 
-    protected SimpleChordGenerator findNextSweepGenerator() {
+    SimpleChordGenerator findNextSweepGenerator() {
         Frequency previousFrequency = spectrumWindow.getFrequency(spectrumWindow.getX(sweepGenerator.getFrequencies()[0]) +
                 simpleChordGenerator.margin + 1);
         return new SimpleChordGenerator(

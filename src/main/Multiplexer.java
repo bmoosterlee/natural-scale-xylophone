@@ -3,10 +3,10 @@ package main;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Multiplexer<T> implements Runnable{
+class Multiplexer<T> implements Runnable{
 
-    private InputPort<T> input;
-    private Set<OutputPort<T>> outputs;
+    private final InputPort<T> input;
+    private final Set<OutputPort<T>> outputs;
 
     Multiplexer(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);

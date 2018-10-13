@@ -12,7 +12,7 @@ public class SpectrumWindow {
     //todo we might index frequencies of buckets though such that we can still do easy manipulations on buckets using
     //todo these indices
 
-    public final Frequency centerFrequency = new Frequency(2 * 261.63);
+    private final Frequency centerFrequency = new Frequency(2 * 261.63);
     private final double octaveRange = 3.;
     public final Frequency lowerBound;
     public final Frequency upperBound;
@@ -36,10 +36,7 @@ public class SpectrumWindow {
 
     public boolean inBounds(Frequency frequency) {
         int x = getX(frequency);
-        if (x < 0 || x >= width) {
-            return false;
-        }
-        return true;
+        return x >= 0 && x < width;
     }
 
     public int getX(Frequency frequency) {

@@ -4,10 +4,10 @@ import sound.SampleRate;
 import time.TimeInSeconds;
 
 public abstract class EnvelopeFunction {
-    SampleRate sampleRate;
-    protected double amplitude;
+    final SampleRate sampleRate;
+    final double amplitude;
 
-    public EnvelopeFunction(SampleRate sampleRate, double amplitude) {
+    EnvelopeFunction(SampleRate sampleRate, double amplitude) {
         this.sampleRate = sampleRate;
         this.amplitude = amplitude;
     }

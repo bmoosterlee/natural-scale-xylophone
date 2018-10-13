@@ -1,8 +1,8 @@
 package gui.buckets;
 
 public class BucketsAverager {
-    int averagingWidth;
-    double[] multipliers;
+    final int averagingWidth;
+    final double[] multipliers;
 
     public BucketsAverager(int averagingWidth) {
         this.averagingWidth = averagingWidth;

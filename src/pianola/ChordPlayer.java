@@ -1,13 +1,13 @@
 package pianola;
 
 import frequency.Frequency;
-import gui.GUI;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ChordPlayer implements PianolaPattern{
-    Frequency[] chord;
+    private final Frequency[] chord;
 
     public ChordPlayer(Frequency[] chord) {
         this.chord = chord;
@@ -17,9 +17,7 @@ public class ChordPlayer implements PianolaPattern{
     public Set<Frequency> playPattern() {
         Set<Frequency> frequencies = new HashSet<>();
 
-        for (Frequency frequency : chord) {
-            frequencies.add(frequency);
-        }
+        Collections.addAll(frequencies, chord);
 
         return frequencies;
     }

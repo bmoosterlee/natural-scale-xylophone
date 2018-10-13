@@ -2,9 +2,9 @@ package harmonics;
 
 import java.util.Iterator;
 
-public class RelativelyPrimeFractionIterator implements Iterator<Fraction> {
+class RelativelyPrimeFractionIterator implements Iterator<Fraction> {
 
-    private FractionIterator fractionIterator;
+    private final FractionIterator fractionIterator;
 
     public RelativelyPrimeFractionIterator(){
         fractionIterator = new FractionIterator();
@@ -24,7 +24,7 @@ public class RelativelyPrimeFractionIterator implements Iterator<Fraction> {
         return nextFraction;
     }
 
-    public boolean isRelativelyPrime(Fraction fraction){
+    private boolean isRelativelyPrime(Fraction fraction){
         return gcd(fraction.numerator, fraction.denominator) == 1;
     }
 

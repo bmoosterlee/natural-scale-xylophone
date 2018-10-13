@@ -5,7 +5,7 @@ import frequency.Frequency;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class BufferSnapshot {
+class BufferSnapshot {
     private final Set<Frequency> liveFrequencies;
     private final Map<Harmonic, Double> harmonicVolumeTable;
     private final PriorityQueue<Harmonic> harmonicHierarchy;
@@ -18,35 +18,31 @@ public class BufferSnapshot {
 
     private PriorityQueue<Harmonic> buildHarmonicHierarchy(Map<Harmonic, Double> harmonicVolumeTable) {
 //            calculate harmonic volumes using note volumes
-//            store volumes in a pair with the harmonic in a priorityqueue
 
         PriorityQueue<Harmonic> newHarmonicPriorityQueue = new PriorityQueue<>(
                 (o1, o2) -> -harmonicVolumeTable.get(o1).compareTo(harmonicVolumeTable.get(o2)));
-        for(Harmonic harmonic : harmonicVolumeTable.keySet()){
-            newHarmonicPriorityQueue.add(harmonic);
-        }
+        newHarmonicPriorityQueue.addAll(harmonicVolumeTable.keySet());
         return newHarmonicPriorityQueue;
     }
 
     private Map<Harmonic, Double> calculateHarmonicVolumes(
-            Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> frequencyVolumeTable) {
+        Map<Frequency, Set<Harmonic>> harmonicsTable, Map<Frequency, Double> frequencyVolumeTable) {
         Map<Harmonic, Double> newHarmonicVolumeTable = new HashMap<>();
-        synchronized (harmonicsTable) {
-            for(Frequency frequency : liveFrequencies){
-                Set<Harmonic> harmonics = harmonicsTable.get(frequency);
-                for (Harmonic harmonic : harmonics) {
-                    newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(frequencyVolumeTable.get(frequency)));
-                }
+
+        for(Frequency frequency : liveFrequencies){
+            Set<Harmonic> harmonics = harmonicsTable.get(frequency);
+            for (Harmonic harmonic : harmonics) {
+                newHarmonicVolumeTable.put(harmonic, harmonic.getVolume(frequencyVolumeTable.get(frequency)));
             }
         }
         return newHarmonicVolumeTable;
     }
 
-    public Map<Harmonic, Double> getHarmonicVolumeTable() {
+    private Map<Harmonic, Double> getHarmonicVolumeTable() {
         return harmonicVolumeTable;
     }
 
-    public PriorityQueue<Harmonic> getHarmonicHierarchy() {
+    private PriorityQueue<Harmonic> getHarmonicHierarchy() {
         return harmonicHierarchy;
     }
 

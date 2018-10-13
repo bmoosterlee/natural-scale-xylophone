@@ -19,25 +19,13 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 public class GUI extends JPanel {
-//    performancetrack everything. Optimize pianola for variable speed, or better performance at higher speed.
-//    let the performance lead the way.
-
-//todo solve rounding issues with translating back and forth from x and frequency. One way is using an averaging
-//function over the frequencies, which we then throw into buckets by sampling.
-//When we get the maxima in the pianola, we use the function and an algorithm instead of the buckets
     public final SpectrumWindow spectrumWindow;
-    //TODO do we want to split the entire project into state manager objects and immutable objects?
 
-    final int WIDTH;
+    private final int WIDTH;
     private final int HEIGHT = 600;
     private final double yScale = HEIGHT * 0.95;
     private final double margin = HEIGHT * 0.05;
-    //todo change use of ticker pattern such that getTimeLeftInFrame isn't used externally anymore
-    //todo this could be done by having a tick wrapper which waits for the next tick. Until the next
-    //todo tick hasn't arrived yet, we iterate. As soon as the next tick arrives, we finish the last tick.
-    //todo we then start the next tick.
-    //todo this does not seem like a task for a state object, as we need to keep the tick state
-    //todo stored somewhere.
+
     private final BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
     private final Ticker ticker;
@@ -47,9 +35,9 @@ public class GUI extends JPanel {
 
     private TimeInNanoSeconds frameEndTime;
 
-    private OutputPort<SpectrumData> spectrumInput;
-    private InputPort<SpectrumState> newSpectrumState;
-    private OutputPort<Frequency> clickedFrequencies;
+    private final OutputPort<SpectrumData> spectrumInput;
+    private final InputPort<SpectrumState> newSpectrumState;
+    private final OutputPort<Frequency> clickedFrequencies;
 
     public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
         this.sampleTicker = sampleTicker;

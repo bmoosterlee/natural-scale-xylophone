@@ -13,14 +13,14 @@ import time.TimeInNanoSeconds;
 import time.TimeKeeper;
 
 public class SpectrumManager implements Runnable {
-    private SpectrumWindow spectrumWindow;
-    private HarmonicCalculator harmonicCalculator;
+    private final SpectrumWindow spectrumWindow;
+    private final HarmonicCalculator harmonicCalculator;
 
     private SpectrumState spectrumState;
 
-    private InputPort<SpectrumData> spectrumDataInput;
-    private InputPort<VolumeState> volumeStateInput;
-    private OutputPort<SpectrumState> spectrumStateOutput;
+    private final InputPort<SpectrumData> spectrumDataInput;
+    private final InputPort<VolumeState> volumeStateInput;
+    private final OutputPort<SpectrumState> spectrumStateOutput;
 
     public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
         this.spectrumWindow = spectrumWindow;
@@ -35,7 +35,7 @@ public class SpectrumManager implements Runnable {
         start();
     }
 
-    public void start() {
+    private void start() {
         new Thread(this).start();
     }
 
@@ -46,12 +46,12 @@ public class SpectrumManager implements Runnable {
         }
     }
 
-    public void tick() {
+    private void tick() {
         try {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
             SpectrumData spectrumData = spectrumDataInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
-            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState, volumeState.sampleCount);
+            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");

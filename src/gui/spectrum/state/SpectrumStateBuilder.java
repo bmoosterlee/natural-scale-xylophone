@@ -14,20 +14,18 @@ import time.TimeKeeper;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class SpectrumStateBuilder {
+class SpectrumStateBuilder {
     private final SpectrumWindow spectrumWindow;
 
     private final SpectrumState oldSpectrumState;
-    public final long sampleCount;
     private final Buckets noteBuckets;
     private final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
     private final Map<Frequency, Double> newPairs;
-    public final Set<Frequency> frequencies;
+    private final Set<Frequency> frequencies;
 
-    public SpectrumStateBuilder(SpectrumWindow spectrumWindow, Map<Frequency, Double> volumes, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState, long sampleCount) {
+    SpectrumStateBuilder(SpectrumWindow spectrumWindow, Map<Frequency, Double> volumes, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState) {
         this.oldSpectrumState = oldSpectrumState;
         this.spectrumWindow = spectrumWindow;
-        this.sampleCount = sampleCount;
 
         Set<Frequency> liveFrequencies = volumes.keySet();
 
@@ -38,7 +36,7 @@ public class SpectrumStateBuilder {
     }
 
     //return true when harmonicHierarchy has been depleted.
-    public boolean update() {
+    boolean update() {
         try {
             Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
             Frequency frequency = harmonicVolume.getKey().getFrequency();
@@ -57,7 +55,7 @@ public class SpectrumStateBuilder {
         return false;
     }
 
-    public SpectrumState finish() {
+    SpectrumState finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);

@@ -2,7 +2,6 @@ package pianola;
 
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumManager;
 import gui.buckets.Buckets;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;

@@ -4,7 +4,7 @@ import sound.SampleRate;
 import time.TimeInSeconds;
 
 public class PrecalculatedLinearFunction extends LinearFunction {
-    Double[] volumes;
+    private final Double[] volumes;
 
     public PrecalculatedLinearFunction(SampleRate sampleRate, double amplitude, TimeInSeconds lengthInSeconds) {
         super(sampleRate, amplitude, lengthInSeconds);

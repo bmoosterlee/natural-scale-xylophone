@@ -2,9 +2,9 @@ package time;
 
 public class TimeKeeper {
 
-    String stateName;
-    long startTime;
-    long endTime;
+    private final String stateName;
+    private long startTime;
+    private long endTime;
 
     public TimeKeeper(String stateName){
         this.stateName = stateName;

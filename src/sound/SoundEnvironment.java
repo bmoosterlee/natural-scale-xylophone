@@ -15,7 +15,7 @@ public class SoundEnvironment implements Runnable{
     private final int sampleSize;
     private final double marginalSampleSize;
 
-    private InputPort<Double> sampleAmplitudeInput;
+    private final InputPort<Double> sampleAmplitudeInput;
 
     public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> inputBuffer) {
         this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;

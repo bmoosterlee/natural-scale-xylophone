@@ -2,7 +2,6 @@ package notes.envelope;
 
 import notes.envelope.functions.EnvelopeFunction;
 import sound.SampleRate;
-import sound.SoundEnvironment;
 import time.TimeInSeconds;
 
 import java.util.Arrays;
@@ -11,16 +10,14 @@ public class SimpleEnvelope implements Envelope {
     private final EnvelopeFunction envelopeFunction;
     private final SampleRate sampleRate;
     private final long startingSampleCount;
-    private final SoundEnvironment soundEnvironment;
 
-    public SimpleEnvelope(long startingSampleCount, SampleRate sampleRate, EnvelopeFunction envelopeFunction, SoundEnvironment soundEnvironment) {
+    SimpleEnvelope(long startingSampleCount, SampleRate sampleRate, EnvelopeFunction envelopeFunction) {
         this.sampleRate = sampleRate;
         this.startingSampleCount = startingSampleCount;
         this.envelopeFunction = envelopeFunction;
-        this.soundEnvironment = soundEnvironment;
     }
 
-    protected double getVolume(long startingSampleCount, long sampleCount) {
+    double getVolume(long startingSampleCount, long sampleCount) {
         if (sampleCount < startingSampleCount) {
             return 0.;
         } else {
@@ -41,22 +38,12 @@ public class SimpleEnvelope implements Envelope {
     }
 
     public Envelope add(Envelope envelope) {
-        return new CompositeEnvelope(Arrays.asList(new Envelope[]{this, envelope}));
+        return new CompositeEnvelope<>(Arrays.asList(this, envelope));
     }
 
     @Override
     public Envelope update(long sampleCount) {
-        if(isDead(sampleCount)){
-            return null;
-        }
-        else {
-            return this;
-        }
-    }
-
-    @Override
-    public boolean isDead(long sampleCount) {
-        return !soundEnvironment.isAudible(getVolume(sampleCount));
+        return this;
     }
 
     public Envelope add(CompositeEnvelope envelope) {
