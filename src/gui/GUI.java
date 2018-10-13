@@ -3,13 +3,12 @@ package gui;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
+import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumData;
 import gui.spectrum.state.SpectrumState;
-import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
-import sound.SampleTicker;
 import time.*;
 
 import javax.swing.*;
@@ -30,7 +29,6 @@ public class GUI extends JPanel {
 
     private final Ticker ticker;
 
-    private final SampleTicker sampleTicker;
     private Frequency mouseFrequency;
 
     private TimeInNanoSeconds frameEndTime;
@@ -39,8 +37,7 @@ public class GUI extends JPanel {
     private final InputPort<SpectrumState> newSpectrumState;
     private final OutputPort<Frequency> clickedFrequencies;
 
-    public GUI(SampleTicker sampleTicker, BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
-        this.sampleTicker = sampleTicker;
+    public GUI(BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         spectrumWindow = new SpectrumWindow(WIDTH);
@@ -120,8 +117,6 @@ public class GUI extends JPanel {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("super paintComponent");
         super.paintComponent(g);
         PerformanceTracker.stopTracking(timeKeeper);
-
-        long sampleCount = sampleTicker.getExpectedTickCount();
 
         try {
             spectrumInput.produce(new SpectrumData(frameEndTime));

@@ -22,16 +22,16 @@ import java.util.HashSet;
 public class Main {
 
     public static void main(String[] args){
+        new PerformanceTracker();
+        PerformanceTracker.start();
 
         int SAMPLE_SIZE_IN_BITS = 8;
         int SAMPLE_RATE = 44100;
 
-        new PerformanceTracker();
-        PerformanceTracker.start();
-
         int lookahead = SAMPLE_RATE / 20;
-        BoundedBuffer<Double> sampleAmplitudeBuffer = new BoundedBuffer<>(lookahead);
-        SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, sampleAmplitudeBuffer);
+
+        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
+        SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, amplitudeBuffer);
 
         BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
@@ -41,7 +41,20 @@ public class Main {
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
-        new AmplitudeCalculator(volumeStateBuffer2, sampleAmplitudeBuffer, soundEnvironment.getSampleRate());
+        new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
+
+
+        BoundedBuffer<SpectrumData> spectrumInputBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
+        GUI gui = new GUI(spectrumInputBuffer, spectrumStateGUIBuffer, newNoteBuffer);
+
+        SpectrumWindow spectrumWindow = gui.spectrumWindow;
+
+        BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
+        OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
+        new SpectrumManager(spectrumWindow, harmonicCalculator, spectrumInputBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
 
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
         sampleTicker.getTickObservable().add(event -> {
@@ -52,18 +65,6 @@ public class Main {
             }
         });
         sampleTicker.start();
-
-        BoundedBuffer<SpectrumData> spectrumInputBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(sampleTicker, spectrumInputBuffer, spectrumStateGUIBuffer, newNoteBuffer);
-
-        SpectrumWindow spectrumWindow = gui.spectrumWindow;
-
-        BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
-        OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
-        new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
-        new SpectrumManager(spectrumWindow, harmonicCalculator, spectrumInputBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
 
         new Pianola(spectrumStatePianolaBuffer, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
