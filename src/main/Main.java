@@ -43,7 +43,6 @@ public class Main {
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
 
-
         BoundedBuffer<SpectrumData> spectrumInputBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
