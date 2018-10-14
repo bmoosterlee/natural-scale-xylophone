@@ -20,10 +20,10 @@ public class Pianola {
 
     public Pianola(SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, BoundedBuffer<Frequency> outputBuffer) {
 
-        //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
+//        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new PatternPauser(8, new SweepToTarget(spectrumManager, 5, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
-        pianolaPattern = new SweepToTargetUpDown(notesBuffer, harmonicsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
-//        pianolaPattern = new SimpleArpeggio(this, spectrumManager, 4);
+//        pianolaPattern = new SweepToTargetUpDown(notesBuffer, harmonicsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+        pianolaPattern = new SimpleArpeggio(notesBuffer, harmonicsBuffer,3, spectrumWindow);
 
         playedNotes = new OutputPort<>(outputBuffer);
 

@@ -10,8 +10,13 @@ public class HarmonicCalculator {
     private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(MemoableIterator::new);
     private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(HashSet::new);
 
+    private int maxHarmonics;
 
-    public Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable, int maxHarmonics) {
+    public HarmonicCalculator(int maxHarmonics){
+        this.maxHarmonics = maxHarmonics;
+    }
+
+    public Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable) {
         CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
         CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
 

@@ -7,7 +7,6 @@ import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
-import harmonics.HarmonicCalculator;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -23,14 +22,12 @@ class SpectrumStateBuilder {
     private final Map<Frequency, Double> newPairs;
     private final Set<Frequency> frequencies;
 
-    SpectrumStateBuilder(SpectrumWindow spectrumWindow, Map<Frequency, Double> volumes, HarmonicCalculator harmonicCalculator, SpectrumState oldSpectrumState) {
-        this.oldSpectrumState = oldSpectrumState;
+    SpectrumStateBuilder(SpectrumWindow spectrumWindow, Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes, SpectrumState oldSpectrumState, Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator) {
         this.spectrumWindow = spectrumWindow;
-
-        Set<Frequency> liveFrequencies = volumes.keySet();
+        this.oldSpectrumState = oldSpectrumState;
+        this.harmonicHierarchyIterator = harmonicHierarchyIterator;
 
         noteBuckets = toBuckets(liveFrequencies, volumes).precalculate();
-        harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
     }

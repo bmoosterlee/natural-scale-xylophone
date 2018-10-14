@@ -10,6 +10,7 @@ import time.TimeKeeper;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 public class GUI extends JPanel implements Runnable {
     public final SpectrumWindow spectrumWindow;
@@ -74,13 +75,9 @@ public class GUI extends JPanel implements Runnable {
             super.paintComponent(g);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
             renderHarmonicsBuckets(g, harmonics);
-            PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
             renderNoteBuckets(g, notes);
-            PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("render cursor");
             renderCursorLine(g, x);
@@ -110,8 +107,11 @@ public class GUI extends JPanel implements Runnable {
     }
 
     private void renderBuckets(Graphics g, Buckets buckets) {
-        for(Integer x : buckets.getIndices()){
+        Set<Integer> indices = buckets.getIndices();
+        for(Integer x : indices){
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("render bucket");
             int y = (int) (buckets.getValue(x).getVolume() * yScale + margin);
+            PerformanceTracker.stopTracking(timeKeeper);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
     }

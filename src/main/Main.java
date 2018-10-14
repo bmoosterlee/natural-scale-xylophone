@@ -96,8 +96,7 @@ public class Main {
         gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
         gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
 
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
@@ -108,7 +107,6 @@ public class Main {
         new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
 
         new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
-
 
         new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,

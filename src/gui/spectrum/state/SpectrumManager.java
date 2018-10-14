@@ -1,8 +1,10 @@
 package gui.spectrum.state;
 
+import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.PrecalculatedBucketHistory;
 import gui.spectrum.SpectrumWindow;
+import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
 import main.BoundedBuffer;
 import main.InputPort;
@@ -11,6 +13,10 @@ import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeInNanoSeconds;
 import time.TimeKeeper;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
@@ -54,7 +60,10 @@ public class SpectrumManager implements Runnable {
             VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState);
+            Map<Frequency, Double> volumes = volumeState.volumes;
+            Set<Frequency> liveFrequencies = volumes.keySet();
+            Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes);
+            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, liveFrequencies, volumes, spectrumState, harmonicHierarchyIterator);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
