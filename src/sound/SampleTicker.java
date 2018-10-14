@@ -1,18 +1,16 @@
 package sound;
 
 import time.Ticker;
-import time.TimeInSeconds;
+import time.TimeInNanoSeconds;
 
 public class SampleTicker extends Ticker {
 
-    private final long tickLookahead;
     private final int maxBacklog;
 
-    public SampleTicker(SampleRate sampleRate){
-        super(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
+    public SampleTicker(TimeInNanoSeconds frameTime, int maxBacklog){
+        super(frameTime);
 
-        tickLookahead = sampleRate.asSampleCount(new TimeInSeconds(1).toNanoSeconds().divide(1000));
-        maxBacklog = sampleRate.sampleRate;
+        this.maxBacklog = maxBacklog;
     }
 
     public void start(){
@@ -21,7 +19,7 @@ public class SampleTicker extends Ticker {
 
     @Override
     protected void tick() {
-        long sampleBacklog = getExpectedTickCount() + tickLookahead - calculatedTicks;
+        long sampleBacklog = getExpectedTickCount() - calculatedTicks;
         sampleBacklog = Math.min(sampleBacklog, maxBacklog);
 
         while(sampleBacklog>0) {

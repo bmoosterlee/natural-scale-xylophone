@@ -78,7 +78,7 @@ public class Main {
         });
         ticker.start();
 
-        SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
+        SampleTicker sampleTicker = new SampleTicker(new TimeInSeconds(1).toNanoSeconds().divide(soundEnvironment.getSampleRate().sampleRate), soundEnvironment.getSampleRate().sampleRate);
         sampleTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
 
