@@ -41,19 +41,15 @@ public class AmplitudeCalculator implements Runnable{
 
     private void tick() {
         try {
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick getWaveState");
             VolumeState volumeState = volumeStateInput.consume();
-            PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
             double amplitude = calculateAmplitude(  volumeState.sampleCount,
                                                     volumeState.volumes.keySet(),
                                                     volumeState.volumes);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("Tick writeToBuffer");
             amplitudeOutput.produce(amplitude);
-            PerformanceTracker.stopTracking(timeKeeper);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

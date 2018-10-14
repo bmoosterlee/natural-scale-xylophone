@@ -48,9 +48,10 @@ public class SpectrumManager implements Runnable {
 
     private void tick() {
         try {
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
             TimeInNanoSeconds frameEndTime = frameEndTimeInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
+
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
             SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState);
             PerformanceTracker.stopTracking(timeKeeper);
 
@@ -62,8 +63,9 @@ public class SpectrumManager implements Runnable {
 
             timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
             spectrumState = spectrumStateBuilder.finish();
-            spectrumStateOutput.produce(spectrumState);
             PerformanceTracker.stopTracking(timeKeeper);
+
+            spectrumStateOutput.produce(spectrumState);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

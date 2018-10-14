@@ -72,8 +72,11 @@ public class GUI extends JPanel implements Runnable {
 
             int x = getCurrentX(newCursorXs);
 
-            timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
+            timeKeeper = PerformanceTracker.startTracking("average harmonicsBuckets");
             Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
             renderHarmonicsBuckets(g, harmonicsBuckets);
             PerformanceTracker.stopTracking(timeKeeper);
 

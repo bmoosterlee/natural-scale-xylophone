@@ -2,6 +2,8 @@ package sound;
 
 import main.BoundedBuffer;
 import main.InputPort;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -57,15 +59,22 @@ public class SoundEnvironment implements Runnable{
     private void tick() {
         try {
             Double amplitude = sampleAmplitudeInput.consume();
-            writeToBuffer(amplitude);
+
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("fit amplitude");
+            byte fittedAmplitude = fitAmplitude(amplitude);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("write to buffer");
+            writeToBuffer(fittedAmplitude);
+            PerformanceTracker.stopTracking(timeKeeper);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void writeToBuffer(double amplitude) {
-        sourceDataLine.write(new byte[]{fitAmplitude(amplitude)}, 0, 1);
+    private void writeToBuffer(byte amplitude) {
+        sourceDataLine.write(new byte[]{amplitude}, 0, 1);
     }
 
     private byte fitAmplitude(double amplitude) {
