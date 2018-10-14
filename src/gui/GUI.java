@@ -1,21 +1,16 @@
 package gui;
 
-import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumData;
 import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.InputPort;
-import main.OutputPort;
 import time.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.util.List;
 
 public class GUI extends JPanel implements Runnable {
     public final SpectrumWindow spectrumWindow;
@@ -27,68 +22,23 @@ public class GUI extends JPanel implements Runnable {
 
     private final BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
 
-    private Frequency mouseFrequency;
-
     private final InputPort<SpectrumState> newSpectrumState;
-    private final OutputPort<Frequency> clickedFrequencies;
+    private final InputPort<Integer> newCursorX;
 
-    public GUI(BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Frequency> newNotesBuffer){
+    private int oldCursorX;
+
+    public GUI(BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Integer> newCursorXBuffer){
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         spectrumWindow = new SpectrumWindow(WIDTH);
 
         newSpectrumState = new InputPort<>(newSpectrumStateBuffer);
-        clickedFrequencies = new OutputPort<>(newNotesBuffer);
-
-        MouseListener mouseListener = new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                try {
-                    clickedFrequencies.produce(spectrumWindow.getFrequency(e.getX()));
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        };
-        MouseMotionListener mouseMotionListener = new MouseMotionListener() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                moveMouse(spectrumWindow.getFrequency(e.getX()));
-            }
-        };
+        newCursorX = new InputPort<>(newCursorXBuffer);
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        frame.setContentPane(GUI.this);
-        frame.addMouseListener(mouseListener);
-        frame.addMouseMotionListener(mouseMotionListener);
+        frame.setContentPane(this);
         frame.pack();
         frame.setVisible(true);
 
@@ -110,10 +60,6 @@ public class GUI extends JPanel implements Runnable {
         repaint();
     }
 
-    private void moveMouse(Frequency newFrequency) {
-        mouseFrequency = newFrequency;
-    }
-
     @Override
     public void paintComponent(Graphics g){
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("super paintComponent");
@@ -122,7 +68,10 @@ public class GUI extends JPanel implements Runnable {
 
         try {
             SpectrumState spectrumState = newSpectrumState.consume();
-            
+            java.util.List<Integer> newCursorXs = newCursorX.flush();
+
+            int x = getCurrentX(newCursorXs);
+
             timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
             Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
             renderHarmonicsBuckets(g, harmonicsBuckets);
@@ -132,13 +81,25 @@ public class GUI extends JPanel implements Runnable {
             renderNoteBuckets(g, spectrumState.noteBuckets);
             PerformanceTracker.stopTracking(timeKeeper);
 
+            timeKeeper = PerformanceTracker.startTracking("render cursor");
+            renderCursorLine(g, x);
+            PerformanceTracker.stopTracking(timeKeeper);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
-        timeKeeper = PerformanceTracker.startTracking("render cursor");
-        renderCursorLine(g);
-        PerformanceTracker.stopTracking(timeKeeper);
+    private int getCurrentX(List<Integer> newCursorXs) {
+        int x;
+        try {
+            x = newCursorXs.get(0);
+            oldCursorX = x;
+        }
+        catch(IndexOutOfBoundsException ignored){
+            x = oldCursorX;
+        }
+        return x;
     }
 
     private void renderNoteBuckets(Graphics g, Buckets buckets) {
@@ -154,15 +115,10 @@ public class GUI extends JPanel implements Runnable {
         }
     }
 
-    private void renderCursorLine(Graphics g) {
+    private void renderCursorLine(Graphics g, int x) {
         g.setColor(Color.green);
-        try {
-            int x = spectrumWindow.getX(mouseFrequency);
-            g.drawRect(x, 0, 1, HEIGHT);
-        }
-        catch(NullPointerException ignored){
 
-        }
+        g.drawRect(x, 0, 1, HEIGHT);
     }
 
     private void renderHarmonicsBuckets(Graphics g, Buckets buckets) {

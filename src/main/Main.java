@@ -2,8 +2,9 @@ package main;
 
 import frequency.Frequency;
 import gui.GUI;
+import gui.NoteClicker;
+import gui.CursorMover;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumData;
 import gui.spectrum.state.SpectrumManager;
 import gui.spectrum.state.SpectrumState;
 import harmonics.HarmonicCalculator;
@@ -46,35 +47,48 @@ public class Main {
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
 
         BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(spectrumStateGUIBuffer, newNoteBuffer);
+        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
+        GUI gui = new GUI(spectrumStateGUIBuffer, cursorXBuffer);
 
         SpectrumWindow spectrumWindow = gui.spectrumWindow;
 
+        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
+        gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
+
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
         BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
         OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
         new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
 
-        OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
         Ticker ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
-        ticker.getTickObservable().add(event -> {
-            TimeInNanoSeconds frameEndTime = ticker.getFrameEndTime(TimeInNanoSeconds.now());
-            try {
-                frameEndTimeOutput.produce(frameEndTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        ticker.getTickObservable().add(new Observer<>() {
+            private final OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
+
+            @Override
+            public void notify(Long event) {
+                TimeInNanoSeconds frameEndTime = ticker.getFrameEndTime(TimeInNanoSeconds.now());
+                try {
+                    frameEndTimeOutput.produce(frameEndTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
         ticker.start();
 
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
-        sampleTicker.getTickObservable().add(event -> {
-            try {
-                new OutputPort<>(sampleCountBuffer).produce(event);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        sampleTicker.getTickObservable().add(new Observer<>() {
+            private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
+
+            @Override
+            public void notify(Long event) {
+                try {
+                    longOutputPort.produce(event);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
         sampleTicker.start();
