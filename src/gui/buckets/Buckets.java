@@ -1,5 +1,6 @@
 package gui.buckets;
 
+import frequency.Frequency;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -132,5 +133,15 @@ public class Buckets {
 
     private Map<Integer, Bucket> getBucketsData() {
         return bucketsData;
+    }
+
+    public Buckets precalculate() {
+        Map<Integer, Bucket> newMap = new HashMap<>();
+
+        for(Integer index : indices){
+            newMap.put(index, new PrecalculatedBucket(bucketsData.get(index)));
+        }
+
+        return new Buckets(indices, newMap);
     }
 }

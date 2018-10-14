@@ -29,7 +29,7 @@ class SpectrumStateBuilder {
 
         Set<Frequency> liveFrequencies = volumes.keySet();
 
-        noteBuckets = toBuckets(liveFrequencies, volumes);
+        noteBuckets = toBuckets(liveFrequencies, volumes).precalculate();
         harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes, 100);
         newPairs = new HashMap<>();
         frequencies = new HashSet<>();
@@ -86,7 +86,7 @@ class SpectrumStateBuilder {
 
             Buckets.fill(indices, entries, x, bucket);
         }
-        return new Buckets(indices, entries);
+        return new Buckets(indices, entries).precalculate();
     }
 
 }
