@@ -14,6 +14,8 @@ import pianola.Pianola;
 import sound.SampleTicker;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
+import time.Ticker;
+import time.TimeInNanoSeconds;
 import time.TimeInSeconds;
 
 import java.util.Arrays;
@@ -43,17 +45,29 @@ public class Main {
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
 
-        BoundedBuffer<SpectrumData> spectrumInputBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-        GUI gui = new GUI(spectrumInputBuffer, spectrumStateGUIBuffer, newNoteBuffer);
+        GUI gui = new GUI(spectrumStateGUIBuffer, newNoteBuffer);
 
         SpectrumWindow spectrumWindow = gui.spectrumWindow;
 
+        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
         OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
-        new SpectrumManager(spectrumWindow, harmonicCalculator, spectrumInputBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
+        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
+
+        OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
+        Ticker ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
+        ticker.getTickObservable().add(event -> {
+            TimeInNanoSeconds frameEndTime = ticker.getFrameEndTime(TimeInNanoSeconds.now());
+            try {
+                frameEndTimeOutput.produce(frameEndTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        ticker.start();
 
         SampleTicker sampleTicker = new SampleTicker(soundEnvironment.getSampleRate());
         sampleTicker.getTickObservable().add(event -> {

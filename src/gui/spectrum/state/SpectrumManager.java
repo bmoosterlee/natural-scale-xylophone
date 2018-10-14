@@ -18,19 +18,19 @@ public class SpectrumManager implements Runnable {
 
     private SpectrumState spectrumState;
 
-    private final InputPort<SpectrumData> spectrumDataInput;
+    private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<SpectrumState> spectrumStateOutput;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<SpectrumData> spectrumInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
         this.spectrumWindow = spectrumWindow;
         this.harmonicCalculator = harmonicCalculator;
 
-        spectrumDataInput = new InputPort<>(spectrumInputBuffer);
+        frameEndTimeInput = new InputPort<>(frameEndTimeInputBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
         spectrumStateOutput = new OutputPort<>(outputBuffer);
 
-        this.spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200));
+        spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200));
 
         start();
     }
@@ -49,13 +49,12 @@ public class SpectrumManager implements Runnable {
     private void tick() {
         try {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-            SpectrumData spectrumData = spectrumDataInput.consume();
+            TimeInNanoSeconds frameEndTime = frameEndTimeInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
             SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, volumeState.volumes, harmonicCalculator, spectrumState);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
-            TimeInNanoSeconds frameEndTime = spectrumData.getFrameEndTime();
             while (TimeInNanoSeconds.now().lessThan(frameEndTime)) {
                 if (spectrumStateBuilder.update()) break;
             }
