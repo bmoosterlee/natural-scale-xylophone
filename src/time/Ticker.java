@@ -42,7 +42,7 @@ public class Ticker implements Runnable{
         calculatedTicks++;
     }
 
-    public long getExpectedTickCount() {
+    protected long getExpectedTickCount() {
         return TimeInNanoSeconds.now().subtract(timeZero).divide(frameTime);
     }
 

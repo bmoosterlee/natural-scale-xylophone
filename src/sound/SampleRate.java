@@ -1,6 +1,5 @@
 package sound;
 
-import time.TimeInNanoSeconds;
 import time.TimeInSeconds;
 
 public class SampleRate {
@@ -18,8 +17,4 @@ public class SampleRate {
         return (long) (time.getValue() * sampleRate);
     }
 
-
-    public long asSampleCount(TimeInNanoSeconds time) {
-        return asSampleCount(time.toSeconds());
-    }
 }

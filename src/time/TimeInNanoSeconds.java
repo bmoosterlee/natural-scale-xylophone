@@ -3,7 +3,7 @@ package time;
 public class TimeInNanoSeconds {
     private final long value;
 
-    public TimeInNanoSeconds(long time) {
+    TimeInNanoSeconds(long time) {
         this.value = time;
     }
 
@@ -11,7 +11,7 @@ public class TimeInNanoSeconds {
         return new TimeInNanoSeconds(System.nanoTime());
     }
 
-    public TimeInNanoSeconds subtract(TimeInNanoSeconds other) {
+    TimeInNanoSeconds subtract(TimeInNanoSeconds other) {
         return new TimeInNanoSeconds(value - other.value);
     }
 
@@ -19,11 +19,11 @@ public class TimeInNanoSeconds {
         return value;
     }
 
-    public TimeInMilliSeconds toMilliSeconds() {
+    TimeInMilliSeconds toMilliSeconds() {
         return new TimeInMilliSeconds(value/1000000);
     }
 
-    public long divide(TimeInNanoSeconds other) {
+    long divide(TimeInNanoSeconds other) {
         return value/other.value;
     }
 
