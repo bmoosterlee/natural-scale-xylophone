@@ -13,7 +13,7 @@ import notes.state.AmplitudeCalculator;
 import notes.state.VolumeCalculator;
 import notes.state.VolumeState;
 import pianola.Pianola;
-import sound.SampleTicker;
+import sound.SampleRate;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
 import time.Ticker;
@@ -42,61 +42,17 @@ public class Main {
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
-
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
-        BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
-        new VolumeCalculator(sampleCountBuffer, newNoteBuffer, volumeStateBuffer, soundEnvironment.getSampleRate());
-
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
-        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
-        new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
-
-        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
+        SampleRate sampleRate = soundEnvironment.getSampleRate();
 
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
         GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer);
 
         SpectrumWindow spectrumWindow = gui.spectrumWindow;
 
-        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
-        gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
-
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
-
-        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
-
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
-        new Multiplexer<>(inputHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
-
-        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
-        new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
-
-        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
-
-        Ticker ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
-        ticker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
-
-            @Override
-            public void notify(Long event) {
-                TimeInNanoSeconds frameEndTime = ticker.getFrameEndTime(TimeInNanoSeconds.now());
-                try {
-                    frameEndTimeOutput.produce(frameEndTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        ticker.start();
-
-        SampleTicker sampleTicker = new SampleTicker(new TimeInSeconds(1).toNanoSeconds().divide(soundEnvironment.getSampleRate().sampleRate), soundEnvironment.getSampleRate().sampleRate);
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
+        Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
         sampleTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
 
@@ -110,6 +66,49 @@ public class Main {
             }
         });
         sampleTicker.start();
+
+        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
+        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
+        frameTicker.getTickObservable().add(new Observer<>() {
+            private final OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
+
+            @Override
+            public void notify(Long event) {
+                TimeInNanoSeconds frameEndTime = frameTicker.getFrameEndTime(TimeInNanoSeconds.now());
+                try {
+                    frameEndTimeOutput.produce(frameEndTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        frameTicker.start();
+
+        BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
+        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
+        new VolumeCalculator(sampleCountBuffer, newNoteBuffer, volumeStateBuffer, sampleRate);
+
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
+        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+        new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, sampleRate);
+
+        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
+        gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
+
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
+
+        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(inputHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
+        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
+
+        new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
+
 
         new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,

@@ -61,16 +61,18 @@ public class GUI extends JPanel implements Runnable {
 
     @Override
     public void paintComponent(Graphics g){
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("super paintComponent");
-        super.paintComponent(g);
-        PerformanceTracker.stopTracking(timeKeeper);
-
         try {
             Buckets harmonics = newHarmonics.consume();
             Buckets notes = newNotes.consume();
             java.util.List<Integer> newCursorXs = newCursorX.flush();
 
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("getCursorX");
             int x = getCurrentX(newCursorXs);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("super paintComponent");
+            super.paintComponent(g);
+            PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
             renderHarmonicsBuckets(g, harmonics);
