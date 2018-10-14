@@ -20,6 +20,7 @@ import time.Ticker;
 import time.TimeInNanoSeconds;
 import time.TimeInSeconds;
 
+import javax.sound.sampled.LineUnavailableException;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -35,7 +36,12 @@ public class Main {
         int lookahead = SAMPLE_RATE / 20;
 
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
-        SoundEnvironment soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, amplitudeBuffer);
+        SoundEnvironment soundEnvironment = null;
+        try {
+            soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, amplitudeBuffer);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
 
         BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);

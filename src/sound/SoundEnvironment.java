@@ -11,16 +11,14 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 public class SoundEnvironment implements Runnable{
-    private final int SAMPLE_SIZE_IN_BITS;
     private final SampleRate sampleRate;
-    private SourceDataLine sourceDataLine;
+    private final SourceDataLine sourceDataLine;
     private final int sampleSize;
     private final double marginalSampleSize;
 
     private final InputPort<Double> sampleAmplitudeInput;
 
-    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> inputBuffer) {
-        this.SAMPLE_SIZE_IN_BITS = SAMPLE_SIZE_IN_BITS;
+    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> inputBuffer) throws LineUnavailableException {
         this.sampleRate = new SampleRate(SAMPLE_RATE);
 
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
@@ -28,21 +26,12 @@ public class SoundEnvironment implements Runnable{
 
         sampleAmplitudeInput = new InputPort<>(inputBuffer);
 
-        initialize();
+        AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
+        sourceDataLine = AudioSystem.getSourceDataLine(af);
+        sourceDataLine.open();
+        sourceDataLine.start();
 
         start();
-    }
-
-    private void initialize() {
-        AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
-        sourceDataLine = null;
-        try {
-            sourceDataLine = AudioSystem.getSourceDataLine(af);
-            sourceDataLine.open();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-        sourceDataLine.start();
     }
 
     private void start() {
