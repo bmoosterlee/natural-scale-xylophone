@@ -1,5 +1,6 @@
 package main;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -25,5 +26,14 @@ public class InputPort<T> {
             count++;
         }
         return list;
+    }
+
+    public List<T> flushOrConsume() throws InterruptedException {
+        if(buffer.filledSpots.availablePermits()==0){
+            return Collections.singletonList(consume());
+        }
+        else{
+            return flush();
+        }
     }
 }
