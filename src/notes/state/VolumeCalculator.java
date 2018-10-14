@@ -9,7 +9,9 @@ import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.DeterministicFunction;
 import notes.envelope.functions.LinearFunctionMemoizer;
 import sound.SampleRate;
+import time.PerformanceTracker;
 import time.TimeInSeconds;
+import time.TimeKeeper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +56,7 @@ public class VolumeCalculator implements Runnable {
         try {
             Long sampleCount = sampleCountInput.consume();
 
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("calculate volumes");
             addNotes(sampleCount);
 
             VolumeState currentState = futureVolumes.remove(sampleCount);
@@ -61,6 +64,7 @@ public class VolumeCalculator implements Runnable {
             if(currentState==null){
                 currentState = new VolumeState(sampleCount, new HashMap<>());
             }
+            PerformanceTracker.stopTracking(timeKeeper);
 
             volumeStateOutput.produce(currentState);
 
