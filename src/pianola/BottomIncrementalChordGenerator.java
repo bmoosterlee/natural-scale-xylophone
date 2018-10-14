@@ -3,13 +3,12 @@ package pianola;
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 
 public class BottomIncrementalChordGenerator extends IncrementalChordGenerator {
 
-    public BottomIncrementalChordGenerator(BoundedBuffer<SpectrumState> buffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
-        super(buffer, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow);
+    public BottomIncrementalChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
+        super(harmonicsBuffer, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow);
         noteIndex = 1;
     }
 

@@ -74,49 +74,6 @@ public class Buckets {
         return new Buckets(newIndices, maxima);
     }
 
-    public Buckets averageBuckets(int averagingWidth) {
-        return averageBuckets(new BucketsAverager(averagingWidth));
-    }
-
-    public Buckets averageBuckets(BucketsAverager bucketsAverager) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets setup");
-        Set<Integer> newIndices = new HashSet<>();
-        Map<Integer, Bucket> newEntries = new HashMap<>();
-
-        double[] multipliers = bucketsAverager.multipliers;
-        int averagingWidth = bucketsAverager.averagingWidth;
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        for(Integer x : getIndices()){
-            timeKeeper = PerformanceTracker.startTracking("average buckets get volume");
-            Double volume = getValue(x).getVolume();
-            PerformanceTracker.stopTracking(timeKeeper);
-
-            for(int i = 1; i< averagingWidth; i++) {
-                timeKeeper = PerformanceTracker.startTracking("average buckets multiply bucket");
-                AtomicBucket residueBucket = new AtomicBucket(volume * multipliers[i]);
-                PerformanceTracker.stopTracking(timeKeeper);
-
-                {
-                    int residueIndex = x - i;
-
-                    fill(newIndices, newEntries, residueIndex, residueBucket);
-                }
-                {
-                    int residueIndex = x + i;
-
-                    fill(newIndices, newEntries, residueIndex, residueBucket);
-                }
-            }
-        }
-
-        timeKeeper = PerformanceTracker.startTracking("average buckets construct new buckets");
-        Buckets newBuckets = new Buckets(newIndices, newEntries);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        return add(newBuckets);
-    }
-
     public static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("fill");
         newIndices.add(x);

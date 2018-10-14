@@ -2,10 +2,10 @@ package pianola;
 
 import frequency.Frequency;
 import gui.buckets.*;
-import gui.spectrum.state.SpectrumState;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.InputPort;
+import main.OutputPort;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -22,9 +22,12 @@ public class SimpleChordGenerator {
     private final int totalMargin;
     private final int repetitionDampener;
 
-    private final InputPort<SpectrumState> spectrumStateInput;
+    private final OutputPort<Buckets> notesOutput;
+    private final InputPort<Buckets> notesInput;
 
-    public SimpleChordGenerator(BoundedBuffer<SpectrumState> buffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
+    private final InputPort<Buckets> harmonicsInput;
+
+    public SimpleChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
@@ -32,7 +35,18 @@ public class SimpleChordGenerator {
         this.spectrumWindow = spectrumWindow;
         this.repetitionDampener = repetitionDampener;
 
-        spectrumStateInput = new InputPort<>(buffer);
+        BoundedBuffer<Buckets> notesAveragerInputBuffer = new BoundedBuffer<>(1);
+        notesOutput = new OutputPort<>(notesAveragerInputBuffer);
+
+        BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(1);
+        new BucketsAverager(20, notesAveragerInputBuffer, notesAveragerOutputBuffer);
+
+        notesInput = new InputPort<>(notesAveragerOutputBuffer);
+
+
+        BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(1);
+        new BucketsAverager(10, harmonicsBuffer, harmonicsAveragerBuffer);
+        harmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
 
         frequencies = new Frequency[chordSize];
 
@@ -45,10 +59,11 @@ public class SimpleChordGenerator {
 
     void generateChord() {
         try {
-            SpectrumState spectrumState = spectrumStateInput.consume();
+            Buckets notesBeforeAveraging = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener);
+            notesOutput.produce(notesBeforeAveraging);
+            Buckets noteBuckets = notesInput.consume();
 
-            Buckets noteBuckets = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener).averageBuckets(20);
-            Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(10);
+            Buckets harmonicsBuckets = harmonicsInput.consume();
 
             Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
 

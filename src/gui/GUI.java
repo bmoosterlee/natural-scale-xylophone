@@ -1,12 +1,11 @@
 package gui;
 
 import gui.buckets.Buckets;
-import gui.buckets.BucketsAverager;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.InputPort;
-import time.*;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,20 +19,16 @@ public class GUI extends JPanel implements Runnable {
     private final double yScale = HEIGHT * 0.95;
     private final double margin = HEIGHT * 0.05;
 
-    private final BucketsAverager harmonicsBucketsAverager = new BucketsAverager(10);
-
-    private final InputPort<SpectrumState> newSpectrumState;
+    private final InputPort<Buckets> newHarmonics;
+    private final InputPort<Buckets> newNotes;
     private final InputPort<Integer> newCursorX;
 
     private int oldCursorX;
 
-    public GUI(BoundedBuffer<SpectrumState> newSpectrumStateBuffer, BoundedBuffer<Integer> newCursorXBuffer){
+    public GUI(BoundedBuffer<Buckets> newHarmonicsBuffer, BoundedBuffer<Buckets> newNotesBuffer, BoundedBuffer<Integer> newCursorXBuffer){
 
         WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         spectrumWindow = new SpectrumWindow(WIDTH);
-
-        newSpectrumState = new InputPort<>(newSpectrumStateBuffer);
-        newCursorX = new InputPort<>(newCursorXBuffer);
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,6 +36,10 @@ public class GUI extends JPanel implements Runnable {
         frame.setContentPane(this);
         frame.pack();
         frame.setVisible(true);
+
+        newHarmonics = new InputPort<>(newHarmonicsBuffer);
+        newNotes = new InputPort<>(newNotesBuffer);
+        newCursorX = new InputPort<>(newCursorXBuffer);
 
         start();
     }
@@ -67,21 +66,18 @@ public class GUI extends JPanel implements Runnable {
         PerformanceTracker.stopTracking(timeKeeper);
 
         try {
-            SpectrumState spectrumState = newSpectrumState.consume();
+            Buckets harmonics = newHarmonics.consume();
+            Buckets notes = newNotes.consume();
             java.util.List<Integer> newCursorXs = newCursorX.flush();
 
             int x = getCurrentX(newCursorXs);
 
-            timeKeeper = PerformanceTracker.startTracking("average harmonicsBuckets");
-            Buckets harmonicsBuckets = spectrumState.harmonicsBuckets.averageBuckets(harmonicsBucketsAverager);
-            PerformanceTracker.stopTracking(timeKeeper);
-
             timeKeeper = PerformanceTracker.startTracking("render harmonicsBuckets");
-            renderHarmonicsBuckets(g, harmonicsBuckets);
+            renderHarmonicsBuckets(g, harmonics);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("render noteBuckets");
-            renderNoteBuckets(g, spectrumState.noteBuckets);
+            renderNoteBuckets(g, notes);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("render cursor");

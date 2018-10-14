@@ -1,8 +1,8 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 
 class SweepToTarget extends Sweep {
@@ -11,8 +11,8 @@ class SweepToTarget extends Sweep {
     private int keyWidth;
     private final double multiplier;
 
-    public SweepToTarget(BoundedBuffer<SpectrumState> buffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
-        super(buffer, size, centerFrequency, spectrumWindow);
+    public SweepToTarget(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
+        super(notesBuffer, harmonicsBuffer, size, centerFrequency, spectrumWindow);
 
         this.multiplier = multiplier;
 
@@ -31,7 +31,7 @@ class SweepToTarget extends Sweep {
     @Override
     SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
-                buffer,
+                harmonicsBuffer,
                 1,
                 centerFrequency,
                 totalMargin,
@@ -54,14 +54,14 @@ class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(buffer, targetFrequency, spectrumWindow);
+            return new StaticGenerator(notesBuffer, harmonicsBuffer, targetFrequency, spectrumWindow);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);
             int left = (int) (center - keyWidth / 2.);
             int right = (int) (center + keyWidth / 2.);
             return new SimpleChordGenerator(
-                    buffer,
+                    harmonicsBuffer,
                     1,
                     spectrumWindow.getFrequency((double) center),
                     totalMargin,

@@ -1,16 +1,17 @@
 package main;
 
 import frequency.Frequency;
+import gui.CursorMover;
 import gui.GUI;
 import gui.NoteClicker;
-import gui.CursorMover;
+import gui.buckets.Buckets;
+import gui.buckets.BucketsAverager;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.SpectrumManager;
-import gui.spectrum.state.SpectrumState;
 import harmonics.HarmonicCalculator;
+import notes.state.AmplitudeCalculator;
 import notes.state.VolumeCalculator;
 import notes.state.VolumeState;
-import notes.state.AmplitudeCalculator;
 import pianola.Pianola;
 import sound.SampleTicker;
 import sound.SoundEnvironment;
@@ -46,9 +47,13 @@ public class Main {
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, soundEnvironment.getSampleRate());
 
-        BoundedBuffer<SpectrumState> spectrumStateGUIBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
+
+        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
-        GUI gui = new GUI(spectrumStateGUIBuffer, cursorXBuffer);
+        GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer);
 
         SpectrumWindow spectrumWindow = gui.spectrumWindow;
 
@@ -56,11 +61,18 @@ public class Main {
         gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
 
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator();
+
         BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<SpectrumState> spectrumStateMultiplexerInputBuffer = new BoundedBuffer<>(1);
-        OverwritableBuffer<SpectrumState> spectrumStatePianolaBuffer = new OverwritableBuffer<>(1);
-        new Multiplexer<>(spectrumStateMultiplexerInputBuffer, new HashSet<>(Arrays.asList(spectrumStateGUIBuffer, spectrumStatePianolaBuffer)));
-        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, spectrumStateMultiplexerInputBuffer);
+
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(inputHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
+
+        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
+        new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
+
+        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
 
         Ticker ticker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
         ticker.getTickObservable().add(new Observer<>() {
@@ -93,7 +105,7 @@ public class Main {
         });
         sampleTicker.start();
 
-        new Pianola(spectrumStatePianolaBuffer, spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
+        new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
 
         try {

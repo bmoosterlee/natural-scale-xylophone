@@ -20,15 +20,17 @@ public class SpectrumManager implements Runnable {
 
     private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
-    private final OutputPort<SpectrumState> spectrumStateOutput;
+    private final OutputPort<Buckets> notesOutput;
+    private final OutputPort<Buckets> harmonicsOutput;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<SpectrumState> outputBuffer) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesOutputBuffer, BoundedBuffer<Buckets> harmonicsOutputBuffer) {
         this.spectrumWindow = spectrumWindow;
         this.harmonicCalculator = harmonicCalculator;
 
         frameEndTimeInput = new InputPort<>(frameEndTimeInputBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
-        spectrumStateOutput = new OutputPort<>(outputBuffer);
+        notesOutput = new OutputPort<>(notesOutputBuffer);
+        harmonicsOutput = new OutputPort<>(harmonicsOutputBuffer);
 
         spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200));
 
@@ -65,7 +67,8 @@ public class SpectrumManager implements Runnable {
             spectrumState = spectrumStateBuilder.finish();
             PerformanceTracker.stopTracking(timeKeeper);
 
-            spectrumStateOutput.produce(spectrumState);
+            notesOutput.produce(spectrumState.noteBuckets);
+            harmonicsOutput.produce(spectrumState.harmonicsBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

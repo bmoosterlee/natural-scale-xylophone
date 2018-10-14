@@ -3,7 +3,6 @@ package pianola;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import frequency.Frequency;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.InputPort;
 
@@ -15,18 +14,18 @@ public class SimpleArpeggio implements PianolaPattern {
 
     ArpeggiateUp arpeggiateUp;
 
-    private final InputPort<SpectrumState> spectrumStateInput;
+    private final InputPort<Buckets> notesInput;
 
-    SimpleArpeggio(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
+    SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
 
-        spectrumStateInput = new InputPort<>(buffer);
+        notesInput = new InputPort<>(notesBuffer);
 
         Frequency centerFrequency = spectrumWindow.getCenterFrequency();
         simpleChordGenerator = new IncrementalChordGenerator(
-                                buffer,
+                                harmonicsBuffer,
                                 chordSize,
-                                centerFrequency.divideBy(2.0),
+                centerFrequency.divideBy(2.0),
                      spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
                                     spectrumWindow.getX(centerFrequency),
                                 spectrumWindow.getX(centerFrequency.divideBy(4.0)),
@@ -75,10 +74,9 @@ public class SimpleArpeggio implements PianolaPattern {
 
     private void updateNoteBuckets() {
         try {
-            SpectrumState spectrumState = spectrumStateInput.consume();
+            Buckets notes = notesInput.consume();
 
-            Buckets origNoteBuckets = spectrumState.noteBuckets;
-            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
+            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(notes);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

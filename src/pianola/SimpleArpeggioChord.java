@@ -1,8 +1,8 @@
 package pianola;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 
 import java.util.HashSet;
@@ -11,8 +11,8 @@ import java.util.Set;
 public class SimpleArpeggioChord extends SimpleArpeggio {
     private ChordPlayer chordPlayer;
 
-    public SimpleArpeggioChord(BoundedBuffer<SpectrumState> buffer, int chordSize, SpectrumWindow spectrumWindow) {
-        super(buffer, chordSize, spectrumWindow);
+    public SimpleArpeggioChord(BoundedBuffer<Buckets> harmonicsBuffer, BoundedBuffer<Buckets> notesBuffer, int chordSize, SpectrumWindow spectrumWindow) {
+        super(notesBuffer, harmonicsBuffer, chordSize, spectrumWindow);
     }
 
     @Override

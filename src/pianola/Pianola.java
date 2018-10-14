@@ -6,8 +6,8 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumState;
 import main.BoundedBuffer;
 import main.OutputPort;
 import time.Ticker;
@@ -18,11 +18,11 @@ public class Pianola {
 
     private final OutputPort<Frequency> playedNotes;
 
-    public Pianola(BoundedBuffer<SpectrumState> inputBuffer, SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Frequency> outputBuffer) {
+    public Pianola(SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, BoundedBuffer<Frequency> outputBuffer) {
 
         //        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
 //        pianolaPattern = new PatternPauser(8, new SweepToTarget(spectrumManager, 5, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
-        pianolaPattern = new SweepToTargetUpDown(inputBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+        pianolaPattern = new SweepToTargetUpDown(notesBuffer, harmonicsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
 //        pianolaPattern = new SimpleArpeggio(this, spectrumManager, 4);
 
         playedNotes = new OutputPort<>(outputBuffer);
