@@ -9,20 +9,16 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SoundEnvironment implements Runnable{
-    private final SampleRate sampleRate;
     private final SourceDataLine sourceDataLine;
     private final int sampleSize;
     private final double marginalSampleSize;
 
     private final InputPort<Double> sampleAmplitudeInput;
 
-    public SoundEnvironment(int SAMPLE_SIZE_IN_BITS, int SAMPLE_RATE, BoundedBuffer<Double> inputBuffer) throws LineUnavailableException {
-        this.sampleRate = new SampleRate(SAMPLE_RATE);
-
+    public SoundEnvironment(BoundedBuffer<Double> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) throws LineUnavailableException {
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -100,10 +96,6 @@ public class SoundEnvironment implements Runnable{
 
     public boolean isAudible(Double volume) {
         return volume >= marginalSampleSize;
-    }
-
-    public SampleRate getSampleRate() {
-        return sampleRate;
     }
 
     public void close() {

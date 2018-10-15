@@ -3,7 +3,6 @@ package gui.spectrum.state;
 import frequency.Frequency;
 import gui.buckets.AtomicBucket;
 import gui.buckets.Bucket;
-import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
@@ -16,15 +15,13 @@ import java.util.Map.Entry;
 class SpectrumStateBuilder {
     private final SpectrumWindow spectrumWindow;
 
-    private final SpectrumState oldSpectrumState;
     private final Buckets noteBuckets;
     private final Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator;
     private final Map<Frequency, Double> newPairs;
     private final Set<Frequency> frequencies;
 
-    SpectrumStateBuilder(SpectrumWindow spectrumWindow, Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes, SpectrumState oldSpectrumState, Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator) {
+    SpectrumStateBuilder(SpectrumWindow spectrumWindow, Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes, Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator) {
         this.spectrumWindow = spectrumWindow;
-        this.oldSpectrumState = oldSpectrumState;
         this.harmonicHierarchyIterator = harmonicHierarchyIterator;
 
         noteBuckets = toBuckets(liveFrequencies, volumes).precalculate();
@@ -53,20 +50,12 @@ class SpectrumStateBuilder {
     }
 
     SpectrumState finish() {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("paintComponent 3 1");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("harmonics toBuckets");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 2");
-        BucketHistory bucketHistory = oldSpectrumState.bucketHistory.addNewBuckets(newHarmonicsBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 3");
-        Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("paintComponent 3 4");
-        SpectrumState spectrumState = new SpectrumState(noteBuckets, timeAveragedBuckets, bucketHistory);
+        timeKeeper = PerformanceTracker.startTracking("create SpectrumState");
+        SpectrumState spectrumState = new SpectrumState(noteBuckets, newHarmonicsBuckets);
         PerformanceTracker.stopTracking(timeKeeper);
 
         return spectrumState;

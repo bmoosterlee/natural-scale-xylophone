@@ -21,6 +21,7 @@ import time.TimeInNanoSeconds;
 import time.TimeInSeconds;
 
 import javax.sound.sampled.LineUnavailableException;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -33,23 +34,9 @@ public class Main {
         int SAMPLE_SIZE_IN_BITS = 8;
         int SAMPLE_RATE = 44100;
 
-        int lookahead = SAMPLE_RATE / 20;
+        int lookahead = SAMPLE_RATE / 4;
 
-        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
-        SoundEnvironment soundEnvironment = null;
-        try {
-            soundEnvironment = new SoundEnvironment(SAMPLE_SIZE_IN_BITS, SAMPLE_RATE, amplitudeBuffer);
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-        SampleRate sampleRate = soundEnvironment.getSampleRate();
-
-        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
-        GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer);
-
-        SpectrumWindow spectrumWindow = gui.spectrumWindow;
+        SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
 
         BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
         Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
@@ -91,22 +78,35 @@ public class Main {
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, sampleRate);
 
-        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
-        gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
+        try {
+            new SoundEnvironment(amplitudeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
 
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+        SpectrumWindow spectrumWindow = new SpectrumWindow(width);
+        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
+
+        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(inputHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
-        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
-
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
+        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
+        GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer, width);
+
+        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
+        gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
 
         new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,

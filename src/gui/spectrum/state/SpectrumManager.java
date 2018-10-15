@@ -1,6 +1,7 @@
 package gui.spectrum.state;
 
 import frequency.Frequency;
+import gui.buckets.BucketHistory;
 import gui.buckets.Buckets;
 import gui.buckets.PrecalculatedBucketHistory;
 import gui.spectrum.SpectrumWindow;
@@ -22,6 +23,7 @@ public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
     private final HarmonicCalculator harmonicCalculator;
 
+    private BucketHistory bucketHistory;
     private SpectrumState spectrumState;
 
     private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
@@ -33,12 +35,13 @@ public class SpectrumManager implements Runnable {
         this.spectrumWindow = spectrumWindow;
         this.harmonicCalculator = harmonicCalculator;
 
+        bucketHistory = new PrecalculatedBucketHistory(200);
+        spectrumState = new SpectrumState(new Buckets(), new Buckets());
+
         frameEndTimeInput = new InputPort<>(frameEndTimeInputBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
         notesOutput = new OutputPort<>(notesOutputBuffer);
         harmonicsOutput = new OutputPort<>(harmonicsOutputBuffer);
-
-        spectrumState = new SpectrumState(new Buckets(), new Buckets(), new PrecalculatedBucketHistory(200));
 
         start();
     }
@@ -63,7 +66,7 @@ public class SpectrumManager implements Runnable {
             Map<Frequency, Double> volumes = volumeState.volumes;
             Set<Frequency> liveFrequencies = volumes.keySet();
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes);
-            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, liveFrequencies, volumes, spectrumState, harmonicHierarchyIterator);
+            SpectrumStateBuilder spectrumStateBuilder = new SpectrumStateBuilder(spectrumWindow, liveFrequencies, volumes, harmonicHierarchyIterator);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
@@ -72,12 +75,18 @@ public class SpectrumManager implements Runnable {
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("finish building spectrum snapshot");
             spectrumState = spectrumStateBuilder.finish();
+
+            timeKeeper = PerformanceTracker.startTracking("add to bucketHistory");
+            bucketHistory = bucketHistory.addNewBuckets(spectrumState.harmonicsBuckets);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            timeKeeper = PerformanceTracker.startTracking("get timeAveragedBuckets");
+            Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
             PerformanceTracker.stopTracking(timeKeeper);
 
             notesOutput.produce(spectrumState.noteBuckets);
-            harmonicsOutput.produce(spectrumState.harmonicsBuckets);
+            harmonicsOutput.produce(timeAveragedBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

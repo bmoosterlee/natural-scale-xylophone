@@ -1,7 +1,6 @@
 package gui;
 
 import gui.buckets.Buckets;
-import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.InputPort;
 import time.PerformanceTracker;
@@ -13,9 +12,6 @@ import java.util.List;
 import java.util.Set;
 
 public class GUI extends JPanel implements Runnable {
-    public final SpectrumWindow spectrumWindow;
-
-    private final int WIDTH;
     private final int HEIGHT = 600;
     private final double yScale = HEIGHT * 0.95;
     private final double margin = HEIGHT * 0.05;
@@ -26,14 +22,11 @@ public class GUI extends JPanel implements Runnable {
 
     private int oldCursorX;
 
-    public GUI(BoundedBuffer<Buckets> newHarmonicsBuffer, BoundedBuffer<Buckets> newNotesBuffer, BoundedBuffer<Integer> newCursorXBuffer){
-
-        WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-        spectrumWindow = new SpectrumWindow(WIDTH);
+    public GUI(BoundedBuffer<Buckets> newHarmonicsBuffer, BoundedBuffer<Buckets> newNotesBuffer, BoundedBuffer<Integer> newCursorXBuffer, int width){
 
         JFrame frame = new JFrame("FrameDemo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setPreferredSize(new Dimension(width, HEIGHT));
         frame.setContentPane(this);
         frame.pack();
         frame.setVisible(true);
