@@ -38,38 +38,9 @@ public class Main {
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
 
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
-        Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
-        sampleTicker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(lookahead, sampleRate);
 
-            @Override
-            public void notify(Long event) {
-                try {
-                    longOutputPort.produce(event);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        sampleTicker.start();
-
-        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
-        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
-        frameTicker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
-
-            @Override
-            public void notify(Long event) {
-                TimeInNanoSeconds frameEndTime = frameTicker.getFrameEndTime(TimeInNanoSeconds.now());
-                try {
-                    frameEndTimeOutput.produce(frameEndTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        frameTicker.start();
+        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = initializeGUITicker();
 
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
@@ -81,11 +52,7 @@ public class Main {
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, sampleRate);
 
-        try {
-            new SoundEnvironment(amplitudeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
+        initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
         HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
@@ -111,6 +78,10 @@ public class Main {
         new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
 
+        playTestTone(newNoteBuffer, spectrumWindow);
+    }
+
+    private static void playTestTone(BoundedBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -121,6 +92,53 @@ public class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void initializeSoundEnvironment(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Double> amplitudeBuffer) {
+        try {
+            new SoundEnvironment(amplitudeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static BoundedBuffer<TimeInNanoSeconds> initializeGUITicker() {
+        BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer = new BoundedBuffer<>(1);
+        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(60));
+        frameTicker.getTickObservable().add(new Observer<>() {
+            private final OutputPort<TimeInNanoSeconds> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
+
+            @Override
+            public void notify(Long event) {
+                TimeInNanoSeconds frameEndTime = frameTicker.getFrameEndTime(TimeInNanoSeconds.now());
+                try {
+                    frameEndTimeOutput.produce(frameEndTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        frameTicker.start();
+        return frameEndTimeBuffer;
+    }
+
+    private static BoundedBuffer<Long> initializeSampleTicker(int lookahead, SampleRate sampleRate) {
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
+        Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
+        sampleTicker.getTickObservable().add(new Observer<>() {
+            private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
+
+            @Override
+            public void notify(Long event) {
+                try {
+                    longOutputPort.produce(event);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        sampleTicker.start();
+        return sampleCountBuffer;
     }
 
 }
