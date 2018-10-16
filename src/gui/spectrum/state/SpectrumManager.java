@@ -77,17 +77,11 @@ public class SpectrumManager implements Runnable {
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
-            Buckets harmonicsBuckets = finish();
+            TimeKeeper timeKeeper1 = PerformanceTracker.startTracking("harmonics toBuckets");
+            Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
+            PerformanceTracker.stopTracking(timeKeeper1);
 
-            timeKeeper = PerformanceTracker.startTracking("add to bucketHistory");
-            bucketHistory = bucketHistory.addNewBuckets(harmonicsBuckets);
-            PerformanceTracker.stopTracking(timeKeeper);
-
-            timeKeeper = PerformanceTracker.startTracking("get timeAveragedBuckets");
-            Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
-            PerformanceTracker.stopTracking(timeKeeper);
-
-            harmonicsOutput.produce(timeAveragedBuckets);
+            harmonicsOutput.produce(newHarmonicsBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -114,18 +108,6 @@ public class SpectrumManager implements Runnable {
             return true;
         }
         return false;
-    }
-
-    private Buckets finish() {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("harmonics toBuckets");
-        Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("create SpectrumState");
-        Buckets spectrumState = newHarmonicsBuckets;
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        return spectrumState;
     }
 
     private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){

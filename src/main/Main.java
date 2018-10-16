@@ -4,6 +4,7 @@ import frequency.Frequency;
 import gui.CursorMover;
 import gui.GUI;
 import gui.NoteClicker;
+import gui.buckets.BucketHistoryComponent;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
 import gui.spectrum.SpectrumWindow;
@@ -65,12 +66,15 @@ public class Main {
         BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputHarmonicsBucketsBuffer);
 
+        BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        new BucketHistoryComponent(200, inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
+
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Multiplexer<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
         BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
-        new Multiplexer<>(inputHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
+        new Multiplexer<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
         BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
