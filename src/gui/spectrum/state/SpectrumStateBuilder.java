@@ -37,11 +37,13 @@ class SpectrumStateBuilder {
 
             if(spectrumWindow.inBounds(frequency)) {
                 frequencies.add(frequency);
+                Double newValue;
                 try {
-                    newPairs.put(frequency, newPairs.get(frequency) + harmonicVolume.getValue());
+                    newValue = newPairs.get(frequency) + harmonicVolume.getValue();
                 } catch (NullPointerException e) {
-                    newPairs.put(frequency, harmonicVolume.getValue());
+                    newValue = harmonicVolume.getValue();
                 }
+                newPairs.put(frequency, newValue);
             }
         } catch (NoSuchElementException e) {
             return true;
