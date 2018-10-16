@@ -106,11 +106,11 @@ public class SpectrumManager implements Runnable {
             Frequency frequency = harmonicVolume.getKey().getFrequency();
 
             if(spectrumWindow.inBounds(frequency)) {
-                frequencies.add(frequency);
                 Double newValue;
                 try {
                     newValue = newPairs.get(frequency) + harmonicVolume.getValue();
                 } catch (NullPointerException e) {
+                    frequencies.add(frequency);
                     newValue = harmonicVolume.getValue();
                 }
                 newPairs.put(frequency, newValue);
