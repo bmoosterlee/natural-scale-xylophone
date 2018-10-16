@@ -7,6 +7,7 @@ import gui.NoteClicker;
 import gui.buckets.Buckets;
 import gui.buckets.BucketsAverager;
 import gui.spectrum.SpectrumWindow;
+import gui.spectrum.state.BucketBuilder;
 import gui.spectrum.state.SpectrumManager;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
@@ -33,6 +34,7 @@ public class Main {
 
         int SAMPLE_SIZE_IN_BITS = 8;
         int SAMPLE_RATE = 44100;
+        int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 
         int lookahead = SAMPLE_RATE / 4;
 
@@ -48,18 +50,20 @@ public class Main {
 
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
-        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+        BoundedBuffer<VolumeState> volumeStateBuffer4 = new OverwritableBuffer<>(1);
+        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3, volumeStateBuffer4)));
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(lookahead);
         new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, sampleRate);
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
-        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
         SpectrumWindow spectrumWindow = new SpectrumWindow(width);
-        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputNotesBucketsBuffer, inputHarmonicsBucketsBuffer);
+        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
+        new BucketBuilder(spectrumWindow, frameEndTimeBuffer, volumeStateBuffer4, inputNotesBucketsBuffer);
+
+        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        new SpectrumManager(spectrumWindow, harmonicCalculator, frameEndTimeBuffer, volumeStateBuffer3, inputHarmonicsBucketsBuffer);
 
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);

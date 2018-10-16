@@ -20,25 +20,21 @@ public class SpectrumManager implements Runnable {
     private final HarmonicCalculator harmonicCalculator;
 
     private BucketHistory bucketHistory;
-    private SpectrumState spectrumState;
 
     private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
-    private final OutputPort<Buckets> notesOutput;
     private final OutputPort<Buckets> harmonicsOutput;
     private Map<Frequency, Double> newPairs;
     private Set<Frequency> frequencies;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesOutputBuffer, BoundedBuffer<Buckets> harmonicsOutputBuffer) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> harmonicsOutputBuffer) {
         this.spectrumWindow = spectrumWindow;
         this.harmonicCalculator = harmonicCalculator;
 
         bucketHistory = new PrecalculatedBucketHistory(200);
-        spectrumState = new SpectrumState(new Buckets(), new Buckets());
 
         frameEndTimeInput = new InputPort<>(frameEndTimeInputBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
-        notesOutput = new OutputPort<>(notesOutputBuffer);
         harmonicsOutput = new OutputPort<>(harmonicsOutputBuffer);
 
         start();
@@ -61,10 +57,10 @@ public class SpectrumManager implements Runnable {
             VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
+            //todo remove this class as the middleman which creates buckets from the map
             Map<Frequency, Double> volumes = volumeState.volumes;
             Set<Frequency> liveFrequencies = volumes.keySet();
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes);
-            Buckets noteBuckets = toBuckets(liveFrequencies, volumes).precalculate();
             newPairs = new HashMap<>();
             frequencies = new HashSet<>();
             PerformanceTracker.stopTracking(timeKeeper);
@@ -81,17 +77,16 @@ public class SpectrumManager implements Runnable {
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
-            spectrumState = finish(noteBuckets);
+            Buckets harmonicsBuckets = finish();
 
             timeKeeper = PerformanceTracker.startTracking("add to bucketHistory");
-            bucketHistory = bucketHistory.addNewBuckets(spectrumState.harmonicsBuckets);
+            bucketHistory = bucketHistory.addNewBuckets(harmonicsBuckets);
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("get timeAveragedBuckets");
             Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
             PerformanceTracker.stopTracking(timeKeeper);
 
-            notesOutput.produce(spectrumState.noteBuckets);
             harmonicsOutput.produce(timeAveragedBuckets);
 
         } catch (InterruptedException e) {
@@ -121,13 +116,13 @@ public class SpectrumManager implements Runnable {
         return false;
     }
 
-    private SpectrumState finish(Buckets noteBuckets) {
+    private Buckets finish() {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("harmonics toBuckets");
         Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
         PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("create SpectrumState");
-        SpectrumState spectrumState = new SpectrumState(noteBuckets, newHarmonicsBuckets);
+        Buckets spectrumState = newHarmonicsBuckets;
         PerformanceTracker.stopTracking(timeKeeper);
 
         return spectrumState;
