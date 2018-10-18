@@ -6,14 +6,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-public class PrecalculatedBucket implements Bucket {
+public class MemoizedBucket implements Bucket {
     private final Bucket bucket;
 
     private Double volume;
     private Set<Frequency> frequencies;
     private Map<Frequency, Double> volumes;
 
-    PrecalculatedBucket(Bucket bucket){
+    MemoizedBucket(Bucket bucket){
         this.bucket = bucket;
     }
 

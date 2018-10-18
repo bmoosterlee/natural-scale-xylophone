@@ -56,7 +56,7 @@ public class BuffersToBuckets implements Runnable {
             Map<Integer, Bucket> compositeBucketMap = new HashMap<>();
 
             for(Integer index : indices) {
-                compositeBucketMap.put(index, new PrecalculatedBucket(new CompositeBucket<>(entryMap.get(index))));
+                compositeBucketMap.put(index, new MemoizedBucket(new CompositeBucket<>(entryMap.get(index))));
             }
             PerformanceTracker.stopTracking(timeKeeper);
 

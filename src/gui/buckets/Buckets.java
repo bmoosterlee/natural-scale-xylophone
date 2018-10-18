@@ -83,7 +83,7 @@ public class Buckets {
             Bucket oldBucket = entries.get(x);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            newBucket = new PrecalculatedBucket(oldBucket.add(bucket));
+            newBucket = new MemoizedBucket(oldBucket.add(bucket));
 
             timeKeeper = PerformanceTracker.startTracking("fill");
         } catch (NullPointerException e) {
@@ -138,7 +138,7 @@ public class Buckets {
         Map<Integer, Bucket> newMap = new HashMap<>();
 
         for(Integer index : indices){
-            newMap.put(index, new PrecalculatedBucket(bucketsData.get(index)));
+            newMap.put(index, new MemoizedBucket(bucketsData.get(index)));
         }
 
         return new Buckets(indices, newMap);
