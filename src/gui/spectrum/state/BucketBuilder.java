@@ -8,9 +8,9 @@ import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
+import main.Pulse;
 import notes.state.VolumeState;
 import time.PerformanceTracker;
-import time.TimeInNanoSeconds;
 import time.TimeKeeper;
 
 import java.util.HashMap;
@@ -20,11 +20,11 @@ import java.util.Set;
 
 public class BucketBuilder implements Runnable {
     private final SpectrumWindow spectrumWindow;
-    private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
+    private final InputPort<Pulse> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Buckets> notesBucketsOutput;
 
-    public BucketBuilder(SpectrumWindow spectrumWindow, BoundedBuffer<TimeInNanoSeconds> frameEndTimeBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
+    public BucketBuilder(SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameEndTimeBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
         this.spectrumWindow = spectrumWindow;
         frameEndTimeInput = new InputPort<>(frameEndTimeBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);

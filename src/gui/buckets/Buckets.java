@@ -83,7 +83,7 @@ public class Buckets {
             Bucket oldBucket = entries.get(x);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            newBucket = oldBucket.add(bucket);
+            newBucket = new PrecalculatedBucket(oldBucket.add(bucket));
 
             timeKeeper = PerformanceTracker.startTracking("fill");
         } catch (NullPointerException e) {

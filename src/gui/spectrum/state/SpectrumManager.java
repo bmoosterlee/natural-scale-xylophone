@@ -1,16 +1,16 @@
 package gui.spectrum.state;
 
 import frequency.Frequency;
-import gui.buckets.*;
+import gui.buckets.AtomicBucket;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
+import main.Pulse;
 import notes.state.VolumeState;
 import time.PerformanceTracker;
-import time.TimeInNanoSeconds;
 import time.TimeKeeper;
 
 import java.util.*;
@@ -19,23 +19,20 @@ public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
     private final HarmonicCalculator harmonicCalculator;
 
-    private BucketHistory bucketHistory;
-
-    private final InputPort<TimeInNanoSeconds> frameEndTimeInput;
+    private final InputPort<Pulse> pulseInput;
     private final InputPort<VolumeState> volumeStateInput;
-    private final OutputPort<Buckets> harmonicsOutput;
-    private Map<Frequency, Double> newPairs;
-    private Set<Frequency> frequencies;
+    private final Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<TimeInNanoSeconds> frameEndTimeInputBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> harmonicsOutputBuffer) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, HarmonicCalculator harmonicCalculator, BoundedBuffer<Pulse> pulseBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         this.spectrumWindow = spectrumWindow;
         this.harmonicCalculator = harmonicCalculator;
 
-        bucketHistory = new PrecalculatedBucketHistory(200);
-
-        frameEndTimeInput = new InputPort<>(frameEndTimeInputBuffer);
+        pulseInput = new InputPort<>(pulseBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
-        harmonicsOutput = new OutputPort<>(harmonicsOutputBuffer);
+        harmonicsOutput = new HashMap<>();
+        for(Integer index : bufferMap.keySet()){
+            harmonicsOutput.put(index, new OutputPort<>(bufferMap.get(index)));
+        }
 
         start();
     }
@@ -53,35 +50,21 @@ public class SpectrumManager implements Runnable {
 
     private void tick() {
         try {
-            TimeInNanoSeconds frameEndTime = frameEndTimeInput.consume();
+            pulseInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-            //todo remove this class as the middleman which creates buckets from the map
             Map<Frequency, Double> volumes = volumeState.volumes;
             Set<Frequency> liveFrequencies = volumes.keySet();
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicCalculator.getHarmonicHierarchyIterator(liveFrequencies, volumes);
-            newPairs = new HashMap<>();
-            frequencies = new HashSet<>();
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
-            int counter = 0;
-            while (TimeInNanoSeconds.now().lessThan(frameEndTime)) {
+            while (pulseInput.isEmpty()) {
                 if (update(harmonicHierarchyIterator)) break;
-                counter++;
-            }
-            System.out.println(counter);
-            if(!TimeInNanoSeconds.now().lessThan(frameEndTime)){
-                System.out.println("ran out of time");
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
-            TimeKeeper timeKeeper1 = PerformanceTracker.startTracking("harmonics toBuckets");
-            Buckets newHarmonicsBuckets = toBuckets(frequencies, newPairs);
-            PerformanceTracker.stopTracking(timeKeeper1);
-
-            harmonicsOutput.produce(newHarmonicsBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -94,34 +77,18 @@ public class SpectrumManager implements Runnable {
             Map.Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
             Frequency frequency = harmonicVolume.getKey().getFrequency();
 
-            if(spectrumWindow.inBounds(frequency)) {
-                Double newValue;
-                try {
-                    newValue = newPairs.get(frequency) + harmonicVolume.getValue();
-                } catch (NullPointerException e) {
-                    frequencies.add(frequency);
-                    newValue = harmonicVolume.getValue();
-                }
-                newPairs.put(frequency, newValue);
-            }
+            AtomicBucket newBucket = new AtomicBucket(frequency, harmonicVolume.getValue());
+            harmonicsOutput.get(spectrumWindow.getX(frequency)).produce(newBucket);
+
         } catch (NoSuchElementException e) {
             return true;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return true;
+        } catch (NullPointerException ignored) {
+
         }
         return false;
-    }
-
-    private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){
-        Set<Integer> indices = new HashSet<>();
-        Map<Integer, Bucket> entries = new HashMap<>();
-
-        for(Frequency frequency : keys){
-            int x = spectrumWindow.getX(frequency);
-
-            AtomicBucket bucket = new AtomicBucket(frequency, map.get(frequency));
-
-            Buckets.fill(indices, entries, x, bucket);
-        }
-        return new Buckets(indices, entries).precalculate();
     }
 
 }

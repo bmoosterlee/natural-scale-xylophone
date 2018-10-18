@@ -21,7 +21,7 @@ public class InputPort<T> {
         int count = 0;
 
         List<T> list = new LinkedList<>();
-        while(buffer.filledSpots.availablePermits() != 0 && count<length){
+        while(!isEmpty() && count<length){
             list.add(buffer.poll());
             count++;
         }
@@ -29,11 +29,15 @@ public class InputPort<T> {
     }
 
     public List<T> flushOrConsume() throws InterruptedException {
-        if(buffer.filledSpots.availablePermits()==0){
+        if(isEmpty()){
             return Collections.singletonList(consume());
         }
         else{
             return flush();
         }
+    }
+
+    public boolean isEmpty() {
+        return buffer.filledSpots.availablePermits()==0;
     }
 }
