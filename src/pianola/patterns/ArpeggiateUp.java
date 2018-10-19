@@ -1,12 +1,13 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
+import pianola.Sequencer;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ArpeggiateUp implements PianolaPattern{
+public class ArpeggiateUp implements PianolaPattern {
     final Sequencer sequencer;
     private final Frequency[] frequencies;
 

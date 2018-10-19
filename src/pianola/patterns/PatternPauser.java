@@ -1,6 +1,7 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
+import pianola.Sequencer;
 
 import java.util.HashSet;
 import java.util.Set;

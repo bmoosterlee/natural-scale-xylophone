@@ -1,10 +1,11 @@
-package pianola;
+package pianola.patterns;
 
 
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
+import pianola.Sequencer;
 
 import java.util.*;
 

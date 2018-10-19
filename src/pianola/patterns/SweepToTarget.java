@@ -1,9 +1,11 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
+import pianola.chordgen.SimpleChordGenerator;
+import pianola.chordgen.StaticGenerator;
 
 class SweepToTarget extends Sweep {
     private Frequency targetFrequency;
@@ -54,7 +56,7 @@ class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(notesBuffer, harmonicsBuffer, targetFrequency, spectrumWindow);
+            return new StaticGenerator(harmonicsBuffer, targetFrequency, spectrumWindow);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);

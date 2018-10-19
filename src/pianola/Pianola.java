@@ -10,6 +10,8 @@ import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.OutputPort;
+import pianola.patterns.PianolaPattern;
+import pianola.patterns.SweepToTargetUpDown;
 import time.Ticker;
 import time.TimeInNanoSeconds;
 

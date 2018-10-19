@@ -1,10 +1,12 @@
-package pianola;
+package pianola.patterns;
 
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import frequency.Frequency;
 import main.BoundedBuffer;
 import main.InputPort;
+import pianola.chordgen.IncrementalChordGenerator;
+import pianola.chordgen.SimpleChordGenerator;
 
 import java.util.*;
 
@@ -16,7 +18,7 @@ public class SimpleArpeggio implements PianolaPattern {
 
     private final InputPort<Buckets> notesInput;
 
-    SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow) {
+    public SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
 
         notesInput = new InputPort<>(notesBuffer);

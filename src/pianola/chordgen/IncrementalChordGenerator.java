@@ -1,11 +1,11 @@
-package pianola;
+package pianola.chordgen;
 
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import main.BoundedBuffer;
 
-class IncrementalChordGenerator extends SimpleChordGenerator {
+public class IncrementalChordGenerator extends SimpleChordGenerator {
     int noteIndex = 0;
 
     public IncrementalChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {

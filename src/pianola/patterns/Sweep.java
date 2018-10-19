@@ -1,10 +1,12 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import main.BoundedBuffer;
 import main.InputPort;
+import pianola.Sequencer;
+import pianola.chordgen.SimpleChordGenerator;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -21,7 +23,7 @@ public class Sweep implements PianolaPattern {
     final SpectrumWindow spectrumWindow;
 
     private final InputPort<Buckets> notesInput;
-    final BoundedBuffer<Buckets> notesBuffer;
+    private final BoundedBuffer<Buckets> notesBuffer;
     final BoundedBuffer<Buckets> harmonicsBuffer;
 
     Sweep(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {

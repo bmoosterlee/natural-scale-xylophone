@@ -1,10 +1,10 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
 
 import java.util.Set;
 
-interface PianolaPattern {
+public interface PianolaPattern {
 
     Set<Frequency> playPattern();
 

@@ -1,4 +1,4 @@
-package pianola;
+package pianola.chordgen;
 
 import frequency.Frequency;
 import gui.buckets.*;
@@ -14,9 +14,9 @@ public class SimpleChordGenerator {
     private final SpectrumWindow spectrumWindow;
     final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
-    BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
+    public BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
     Frequency[] frequencies;
-    final int margin = 80;
+    public final int margin = 80;
     private final int hardLeftBorder;
     private final int hardRightBorder;
     private final int totalMargin;
@@ -57,7 +57,7 @@ public class SimpleChordGenerator {
         }
     }
 
-    void generateChord() {
+    public void generateChord() {
         try {
             Buckets notesBeforeAveraging = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener);
             notesOutput.produce(notesBeforeAveraging);

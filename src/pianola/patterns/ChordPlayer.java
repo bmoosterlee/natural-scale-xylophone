@@ -1,4 +1,4 @@
-package pianola;
+package pianola.patterns;
 
 import frequency.Frequency;
 
@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChordPlayer implements PianolaPattern{
+public class ChordPlayer implements PianolaPattern {
     private final Frequency[] chord;
 
     public ChordPlayer(Frequency[] chord) {
