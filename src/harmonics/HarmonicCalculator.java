@@ -4,6 +4,7 @@ import frequency.Frequency;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
+import main.Pulse;
 import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
@@ -18,12 +19,14 @@ public class HarmonicCalculator implements Runnable {
 
     private int maxHarmonics;
 
+    private final InputPort<Pulse> pulseInput;
     private final InputPort<VolumeState> volumeInput;
     private final OutputPort<Iterator<Map.Entry<Harmonic, Double>>> iteratorOutput;
 
-    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
+    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<Pulse> pulseBuffer, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
         this.maxHarmonics = maxHarmonics;
 
+        pulseInput = new InputPort<>(pulseBuffer);
         volumeInput = new InputPort<>(inputBuffer);
         iteratorOutput = new OutputPort<>(outputBuffer);
 
@@ -43,6 +46,7 @@ public class HarmonicCalculator implements Runnable {
 
     private void tick() {
         try {
+            pulseInput.consume();
             VolumeState volumeState = volumeInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
@@ -52,6 +56,7 @@ public class HarmonicCalculator implements Runnable {
             PerformanceTracker.stopTracking(timeKeeper);
 
             iteratorOutput.produce(harmonicHierarchyIterator);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -18,14 +18,12 @@ import java.util.*;
 public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
 
-    private final InputPort<Pulse> pulseInput;
     private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsInput;
     private final Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> pulseBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    public SpectrumManager(SpectrumWindow spectrumWindow, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         this.spectrumWindow = spectrumWindow;
 
-        pulseInput = new InputPort<>(pulseBuffer);
         harmonicsInput = new InputPort<>(harmonicsBuffer);
         harmonicsOutput = new HashMap<>();
         for(Integer index : bufferMap.keySet()){
@@ -48,11 +46,10 @@ public class SpectrumManager implements Runnable {
 
     private void tick() {
         try {
-            pulseInput.consume();
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
-            while (pulseInput.isEmpty()) {
+            while (harmonicsInput.isEmpty()) {
                 if (update(harmonicHierarchyIterator)) break;
             }
             PerformanceTracker.stopTracking(timeKeeper);

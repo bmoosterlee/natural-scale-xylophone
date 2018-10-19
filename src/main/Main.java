@@ -66,13 +66,13 @@ public class Main {
         new BucketBuilder(spectrumWindow, frameTickBuffer1, volumeStateBuffer4, inputNotesBucketsBuffer);
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(1);
-        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
+        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer3, harmonicsBuffer);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i<width; i++){
             harmonicsMap.put(i, new BoundedBuffer<>(1000));
         }
-        new SpectrumManager(spectrumWindow, frameTickBuffer2, harmonicsBuffer, harmonicsMap);
+        new SpectrumManager(spectrumWindow, harmonicsBuffer, harmonicsMap);
 
         BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BuffersToBuckets(harmonicsMap, frameTickBuffer3, inputHarmonicsBucketsBuffer);
