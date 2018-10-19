@@ -4,16 +4,16 @@ import frequency.Frequency;
 import gui.buckets.AtomicBucket;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
-import harmonics.HarmonicCalculator;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
-import main.Pulse;
-import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
