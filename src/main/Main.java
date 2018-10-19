@@ -8,6 +8,7 @@ import gui.buckets.*;
 import gui.spectrum.SpectrumWindow;
 import gui.spectrum.state.BucketBuilder;
 import gui.spectrum.state.SpectrumManager;
+import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
 import notes.state.AmplitudeCalculator;
 import notes.state.VolumeCalculator;
@@ -21,10 +22,7 @@ import time.TimeInSeconds;
 
 import javax.sound.sampled.LineUnavailableException;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class Main {
 
@@ -67,12 +65,14 @@ public class Main {
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
         new BucketBuilder(spectrumWindow, frameTickBuffer1, volumeStateBuffer4, inputNotesBucketsBuffer);
 
-        HarmonicCalculator harmonicCalculator = new HarmonicCalculator(100);
+        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(1);
+        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
+
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i<width; i++){
             harmonicsMap.put(i, new BoundedBuffer<>(1000));
         }
-        new SpectrumManager(spectrumWindow, harmonicCalculator, frameTickBuffer2, volumeStateBuffer3, harmonicsMap);
+        new SpectrumManager(spectrumWindow, frameTickBuffer2, harmonicsBuffer, harmonicsMap);
 
         BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BuffersToBuckets(harmonicsMap, frameTickBuffer3, inputHarmonicsBucketsBuffer);

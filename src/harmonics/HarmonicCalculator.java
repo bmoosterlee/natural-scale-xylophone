@@ -1,22 +1,64 @@
 package harmonics;
 
 import frequency.Frequency;
+import main.BoundedBuffer;
+import main.InputPort;
+import main.OutputPort;
+import notes.state.VolumeState;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import java.util.*;
 import java.util.Map.Entry;
 
-public class HarmonicCalculator {
+public class HarmonicCalculator implements Runnable {
 
     private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(MemoableIterator::new);
     private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(HashSet::new);
 
     private int maxHarmonics;
 
-    public HarmonicCalculator(int maxHarmonics){
+    private final InputPort<VolumeState> volumeInput;
+    private final OutputPort<Iterator<Map.Entry<Harmonic, Double>>> iteratorOutput;
+
+    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
         this.maxHarmonics = maxHarmonics;
+
+        volumeInput = new InputPort<>(inputBuffer);
+        iteratorOutput = new OutputPort<>(outputBuffer);
+
+        start();
     }
 
-    public Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable) {
+    private void start() {
+        new Thread(this).start();
+    }
+
+    @Override
+    public void run() {
+        while(true){
+            tick();
+        }
+    }
+
+    private void tick() {
+        try {
+            VolumeState volumeState = volumeInput.consume();
+
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
+            Map<Frequency, Double> volumes = volumeState.volumes;
+            Set<Frequency> liveFrequencies = volumes.keySet();
+            Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = getHarmonicHierarchyIterator(liveFrequencies, volumes);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            iteratorOutput.produce(harmonicHierarchyIterator);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> frequencyVolumeTable) {
         CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
         CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, frequencyVolumeTable);
 
@@ -63,5 +105,4 @@ public class HarmonicCalculator {
         catch(NullPointerException ignored){
         }
     }
-
 }
