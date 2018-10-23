@@ -52,6 +52,10 @@ public class AmplitudeCalculator implements Runnable{
                                                     volumeState.volumes);
             PerformanceTracker.stopTracking(timeKeeper);
 
+            if(amplitude==0.){
+                return;
+            }
+
             amplitudeOutput.produce(amplitude);
 
         } catch (InterruptedException e) {
