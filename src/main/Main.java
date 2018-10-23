@@ -42,16 +42,19 @@ public class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleLookahead, sampleRate);
 
+        BoundedBuffer<Long> sampleCountBuffer2 = new BoundedBuffer<>(1);
+        BoundedBuffer<Long> sampleCountBuffer3 = new BoundedBuffer<>(1);
+        new Multiplexer<>(sampleCountBuffer, new HashSet<>(Arrays.asList(sampleCountBuffer2, sampleCountBuffer3)));
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
-        new VolumeCalculator(sampleCountBuffer, newNoteBuffer, volumeStateBuffer, sampleRate);
+        new VolumeCalculator(sampleCountBuffer2, newNoteBuffer, volumeStateBuffer, sampleRate);
 
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer4 = new OverwritableBuffer<>(1);
         new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3, volumeStateBuffer4)));
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(sampleLookahead);
-        new AmplitudeCalculator(volumeStateBuffer2, amplitudeBuffer, sampleRate);
+        new AmplitudeCalculator(sampleCountBuffer3, volumeStateBuffer2, amplitudeBuffer, sampleRate);
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 

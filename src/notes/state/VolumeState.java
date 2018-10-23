@@ -7,11 +7,9 @@ import java.util.Map;
 
 public class VolumeState {
 
-    public final Long sampleCount;
     public final Map<Frequency, Double> volumes;
 
-    VolumeState(Long sampleCount, Map<Frequency, Double> volumes) {
-        this.sampleCount = sampleCount;
+    VolumeState(Map<Frequency, Double> volumes) {
         this.volumes = volumes;
     }
 
@@ -25,6 +23,6 @@ public class VolumeState {
             newVolumes.put(frequency, volume);
         }
 
-        return new VolumeState(sampleCount, newVolumes);
+        return new VolumeState(newVolumes);
     }
 }

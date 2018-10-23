@@ -16,12 +16,14 @@ public class AmplitudeCalculator implements Runnable{
 
     private final SampleRate sampleRate;
 
+    private final InputPort<Long> sampleCountInput;
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Double> amplitudeOutput;
 
-    public AmplitudeCalculator(BoundedBuffer<VolumeState> volumeStateInputBuffer, BoundedBuffer<Double> amplitudeOutputBuffer, SampleRate sampleRate) {
+    public AmplitudeCalculator(BoundedBuffer<Long> sampleCountInputBuffer, BoundedBuffer<VolumeState> volumeStateInputBuffer, BoundedBuffer<Double> amplitudeOutputBuffer, SampleRate sampleRate) {
         this.sampleRate = sampleRate;
 
+        sampleCountInput = new InputPort<>(sampleCountInputBuffer);
         volumeStateInput = new InputPort<>(volumeStateInputBuffer);
         amplitudeOutput = new OutputPort<>(amplitudeOutputBuffer);
 
@@ -41,10 +43,11 @@ public class AmplitudeCalculator implements Runnable{
 
     private void tick() {
         try {
+            Long sampleCount = sampleCountInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
-            double amplitude = calculateAmplitude(  volumeState.sampleCount,
+            double amplitude = calculateAmplitude(  sampleCount,
                                                     volumeState.volumes.keySet(),
                                                     volumeState.volumes);
             PerformanceTracker.stopTracking(timeKeeper);

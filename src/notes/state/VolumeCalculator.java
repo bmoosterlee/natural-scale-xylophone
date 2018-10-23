@@ -62,7 +62,7 @@ public class VolumeCalculator implements Runnable {
             VolumeState currentState = futureVolumes.remove(sampleCount);
 
             if(currentState==null){
-                currentState = new VolumeState(sampleCount, new HashMap<>());
+                currentState = new VolumeState(new HashMap<>());
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
@@ -101,7 +101,7 @@ public class VolumeCalculator implements Runnable {
         if (futureVolumes.containsKey(i)) {
             oldVolumeState = futureVolumes.get(i);
         } else {
-            oldVolumeState = new VolumeState(i, new HashMap<>());
+            oldVolumeState = new VolumeState(new HashMap<>());
         }
 
         return oldVolumeState;
