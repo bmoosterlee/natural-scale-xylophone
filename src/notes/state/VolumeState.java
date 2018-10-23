@@ -13,16 +13,4 @@ public class VolumeState {
         this.volumes = volumes;
     }
 
-    public VolumeState add(Frequency frequency, double volume) {
-        Map<Frequency, Double> newVolumes = new HashMap<>(volumes);
-
-        try {
-            newVolumes.put(frequency, volumes.get(frequency) + volume);
-        }
-        catch(NullPointerException e){
-            newVolumes.put(frequency, volume);
-        }
-
-        return new VolumeState(newVolumes);
-    }
 }
