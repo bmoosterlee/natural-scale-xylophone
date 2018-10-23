@@ -22,7 +22,7 @@ import javax.sound.sampled.LineUnavailableException;
 import java.awt.*;
 import java.util.*;
 
-public class Main {
+class Main {
 
     public static void main(String[] args){
         new PerformanceTracker();

@@ -102,9 +102,10 @@ public class GUI extends JPanel implements Runnable {
     private void renderBuckets(Graphics g, Buckets buckets) {
         Set<Integer> indices = buckets.getIndices();
         for(Integer x : indices){
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("render bucket");
-            int y = (int) (buckets.getValue(x).getVolume() * yScale + margin);
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("render - get bucket volume");
+            Double volume = buckets.getValue(x).getVolume();
             PerformanceTracker.stopTracking(timeKeeper);
+            int y = (int) (volume * yScale + margin);
             g.drawRect(x, HEIGHT - y, 1, y);
         }
     }

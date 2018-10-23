@@ -5,7 +5,7 @@ import main.Observable;
 public class Ticker implements Runnable{
 
     private final Observable<Long> observable = new Observable<>();
-    protected long calculatedTicks = 0L;
+    private long calculatedTicks = 0L;
     private TimeInNanoSeconds timeZero;
     private final TimeInNanoSeconds frameTime;
 
@@ -37,7 +37,7 @@ public class Ticker implements Runnable{
         }
     }
 
-    protected void tick() {
+    private void tick() {
         observable.notify(calculatedTicks);
         calculatedTicks++;
     }

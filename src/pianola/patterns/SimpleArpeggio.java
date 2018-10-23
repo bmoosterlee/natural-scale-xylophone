@@ -12,9 +12,9 @@ import java.util.*;
 
 public class SimpleArpeggio implements PianolaPattern {
     private final int chordSize;
-    final SimpleChordGenerator simpleChordGenerator;
+    private final SimpleChordGenerator simpleChordGenerator;
 
-    ArpeggiateUp arpeggiateUp;
+    private ArpeggiateUp arpeggiateUp;
 
     private final InputPort<Buckets> notesInput;
 
@@ -85,7 +85,7 @@ public class SimpleArpeggio implements PianolaPattern {
         }
     }
 
-    void generateNewChord() {
+    private void generateNewChord() {
         simpleChordGenerator.generateChord();
         Frequency[] newFrequencies = simpleChordGenerator.getFrequencies();
         arpeggiateUp = new ArpeggiateUp(chordSize, 4, newFrequencies);

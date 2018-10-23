@@ -4,7 +4,6 @@ import frequency.Frequency;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
-import sound.SampleRate;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

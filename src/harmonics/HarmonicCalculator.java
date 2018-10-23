@@ -17,7 +17,7 @@ public class HarmonicCalculator implements Runnable {
     private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(MemoableIterator::new);
     private CurrentTable<Set<Harmonic>> harmonicsTable = new CurrentTable<>(HashSet::new);
 
-    private int maxHarmonics;
+    private final int maxHarmonics;
 
     private final InputPort<Pulse> pulseInput;
     private final InputPort<VolumeState> volumeInput;

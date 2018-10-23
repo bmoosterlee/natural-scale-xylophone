@@ -2,7 +2,6 @@ package notes.state;
 
 import frequency.Frequency;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class VolumeState {

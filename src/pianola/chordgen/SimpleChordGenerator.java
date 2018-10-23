@@ -81,7 +81,7 @@ public class SimpleChordGenerator {
         }
     }
 
-    int findCenterFrequency() {
+    private int findCenterFrequency() {
         int average = 0;
         for (int i = 0; i < chordSize; i++) {
             try {

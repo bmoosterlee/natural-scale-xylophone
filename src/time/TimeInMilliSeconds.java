@@ -1,6 +1,6 @@
 package time;
 
-public class TimeInMilliSeconds {
+class TimeInMilliSeconds {
     private final long value;
 
     public TimeInMilliSeconds(long time) {

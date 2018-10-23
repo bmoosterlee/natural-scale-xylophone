@@ -23,7 +23,6 @@ public class Sweep implements PianolaPattern {
     final SpectrumWindow spectrumWindow;
 
     private final InputPort<Buckets> notesInput;
-    private final BoundedBuffer<Buckets> notesBuffer;
     final BoundedBuffer<Buckets> harmonicsBuffer;
 
     Sweep(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
@@ -32,7 +31,6 @@ public class Sweep implements PianolaPattern {
 
         notesInput = new InputPort<>(notesBuffer);
 
-        this.notesBuffer = notesBuffer;
         this.harmonicsBuffer = harmonicsBuffer;
 
         sequencer = new Sequencer(size, 1);

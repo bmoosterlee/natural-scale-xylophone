@@ -68,7 +68,7 @@ class BufferSnapshot {
         try {
             Map<Harmonic, Double> harmonicVolumeTable = getHarmonicVolumeTable();
             PriorityQueue<Harmonic> harmonicHierarchy = getHarmonicHierarchy();
-            return harmonicVolumeTable.get(harmonicHierarchy.toArray(new Harmonic[harmonicHierarchy.size()])[maxHarmonics]);
+            return harmonicVolumeTable.get(harmonicHierarchy.toArray(new Harmonic[0])[maxHarmonics]);
         }
         catch(ArrayIndexOutOfBoundsException e){
             return 0;
