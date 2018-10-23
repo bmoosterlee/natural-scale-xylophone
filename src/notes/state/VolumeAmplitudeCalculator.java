@@ -12,31 +12,32 @@ import sound.SampleRate;
 import time.PerformanceTracker;
 import time.TimeInSeconds;
 import time.TimeKeeper;
+import wave.Wave;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class VolumeCalculator implements Runnable {
+public class VolumeAmplitudeCalculator implements Runnable {
 
     private final SampleRate sampleRate;
     private final DeterministicFunction envelopeFunction;
 
-    private final Map<Long, VolumeState> futureVolumes;
+    private final Map<Long, VolumeAmplitudeState> futureVolumeAmplitudes;
 
     private final InputPort<Long> sampleCountInput;
     private final InputPort<Frequency> newNoteInput;
-    private final OutputPort<VolumeState> volumeStateOutput;
+    private final OutputPort<VolumeAmplitudeState> volumeAmplitudeStateOutput;
 
-    public VolumeCalculator(BoundedBuffer<Long> sampleCountInputBuffer, BoundedBuffer<Frequency> newNoteInputBuffer, BoundedBuffer<VolumeState> volumeStateOutputBuffer, SampleRate sampleRate){
+    public VolumeAmplitudeCalculator(BoundedBuffer<Long> sampleCountInputBuffer, BoundedBuffer<Frequency> newNoteInputBuffer, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateOutputBuffer, SampleRate sampleRate){
         this.sampleRate = sampleRate;
         envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
 
-        futureVolumes = new HashMap<>();
+        futureVolumeAmplitudes = new HashMap<>();
 
         sampleCountInput = new InputPort<>(sampleCountInputBuffer);
         newNoteInput = new InputPort<>(newNoteInputBuffer);
-        volumeStateOutput = new OutputPort<>(volumeStateOutputBuffer);
+        volumeAmplitudeStateOutput = new OutputPort<>(volumeAmplitudeStateOutputBuffer);
 
         start();
     }
@@ -59,14 +60,14 @@ public class VolumeCalculator implements Runnable {
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("calculate volumes");
             addNotes(sampleCount);
 
-            VolumeState currentState = futureVolumes.remove(sampleCount);
+            VolumeAmplitudeState currentState = futureVolumeAmplitudes.remove(sampleCount);
 
             if(currentState==null){
-                currentState = new VolumeState(new HashMap<>());
+                currentState = new VolumeAmplitudeState(new HashMap<>());
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
-            volumeStateOutput.produce(currentState);
+            volumeAmplitudeStateOutput.produce(currentState);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -78,30 +79,35 @@ public class VolumeCalculator implements Runnable {
 
         DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
 
+        Map<Frequency, Wave> waves = new HashMap<>();
+        for(Frequency frequency : newNotes){
+            waves.put(frequency, new Wave(frequency, sampleRate));
+        }
+
         if(!newNotes.isEmpty()) {
             for (Long i = sampleCount; i < envelope.getEndingSampleCount(); i++) {
-                addVolumes(newNotes, i, envelope.getVolume(i));
+                addVolumes(newNotes, i, envelope.getVolume(i), waves);
             }
         }
     }
 
-        VolumeState newVolumeState = getOldVolumeState(i);
-    private void addVolumes(List<Frequency> newNotes, Long i, double volume) {
+    private void addVolumes(List<Frequency> newNotes, Long i, double volume, Map<Frequency, Wave> waves) {
+        VolumeAmplitudeState newVolumeState = getOldVolumeAmplitudeState(i);
 
         for (Frequency frequency : newNotes) {
-            newVolumeState = newVolumeState.add(frequency, volume);
+            newVolumeState = newVolumeState.add(frequency, volume, waves.get(frequency), i);
         }
 
-        futureVolumes.put(i, newVolumeState);
+        futureVolumeAmplitudes.put(i, newVolumeState);
     }
 
-    private VolumeState getOldVolumeState(Long i) {
-        VolumeState oldVolumeState;
+    private VolumeAmplitudeState getOldVolumeAmplitudeState(Long i) {
+        VolumeAmplitudeState oldVolumeState;
 
-        if (futureVolumes.containsKey(i)) {
-            oldVolumeState = futureVolumes.get(i);
+        if (futureVolumeAmplitudes.containsKey(i)) {
+            oldVolumeState = futureVolumeAmplitudes.get(i);
         } else {
-            oldVolumeState = new VolumeState(new HashMap<>());
+            oldVolumeState = new VolumeAmplitudeState(new HashMap<>());
         }
 
         return oldVolumeState;

@@ -10,9 +10,7 @@ import gui.spectrum.state.BucketBuilder;
 import gui.spectrum.state.SpectrumManager;
 import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
-import notes.state.AmplitudeCalculator;
-import notes.state.VolumeCalculator;
-import notes.state.VolumeState;
+import notes.state.*;
 import pianola.Pianola;
 import sound.SampleRate;
 import sound.SoundEnvironment;
@@ -41,24 +39,26 @@ public class Main {
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleLookahead, sampleRate);
-
-        BoundedBuffer<Long> sampleCountBuffer2 = new BoundedBuffer<>(1);
-        BoundedBuffer<Long> sampleCountBuffer3 = new BoundedBuffer<>(1);
-        new Multiplexer<>(sampleCountBuffer, new HashSet<>(Arrays.asList(sampleCountBuffer2, sampleCountBuffer3)));
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
-        new VolumeCalculator(sampleCountBuffer2, newNoteBuffer, volumeStateBuffer, sampleRate);
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(1);
+        new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeAmplitudeStateBuffer, sampleRate);
 
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(1);
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
-        BoundedBuffer<VolumeState> volumeStateBuffer4 = new OverwritableBuffer<>(1);
-        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3, volumeStateBuffer4)));
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(1);
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new BoundedBuffer<>(1);
+        new Multiplexer<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(sampleLookahead);
-        new AmplitudeCalculator(sampleCountBuffer3, volumeStateBuffer2, amplitudeBuffer, sampleRate);
+        new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
         BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameLookahead, frameRate);
+
+        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
+        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
+
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new OverwritableBuffer<>(1);
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
+        new Multiplexer<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
 
         SpectrumWindow spectrumWindow = new SpectrumWindow(width);
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1);
@@ -66,10 +66,10 @@ public class Main {
         BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(1);
         new Multiplexer<>(frameTickBuffer, new HashSet<>(Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3)));
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
-        new BucketBuilder(spectrumWindow, frameTickBuffer1, volumeStateBuffer4, inputNotesBucketsBuffer);
+        new BucketBuilder(spectrumWindow, frameTickBuffer1, volumeStateBuffer3, inputNotesBucketsBuffer);
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(1);
-        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer3, harmonicsBuffer);
+        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer2, harmonicsBuffer);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i<width; i++){
