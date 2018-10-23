@@ -5,11 +5,11 @@ import frequency.Frequency;
 public class Harmonic {
 
     private final int sharedPeriod;
-    private final Frequency frequency;
+    private final Frequency harmonicFrequency;
 
     public Harmonic(Frequency tonic, Fraction harmonicAsFraction){
         sharedPeriod = calculateSharedPeriod(harmonicAsFraction);
-        frequency = calculateFrequency(tonic, harmonicAsFraction);
+        harmonicFrequency = calculateFrequency(tonic, harmonicAsFraction);
     }
 
     public double getVolume(double noteVolume) {
@@ -28,7 +28,7 @@ public class Harmonic {
         return tonic.multiplyBy((double)harmonicAsFraction.numerator).divideBy((double)harmonicAsFraction.denominator);
     }
 
-    public Frequency getFrequency(){
-        return frequency;
+    public Frequency getHarmonicFrequency(){
+        return harmonicFrequency;
     }
 }

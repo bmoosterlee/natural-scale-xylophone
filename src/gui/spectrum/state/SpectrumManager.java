@@ -63,7 +63,7 @@ public class SpectrumManager implements Runnable {
     private boolean update(Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator) {
         try {
             Map.Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
-            Frequency frequency = harmonicVolume.getKey().getFrequency();
+            Frequency frequency = harmonicVolume.getKey().getHarmonicFrequency();
 
             AtomicBucket newBucket = new AtomicBucket(frequency, harmonicVolume.getValue());
             harmonicsOutput.get(spectrumWindow.getX(frequency)).produce(newBucket);
