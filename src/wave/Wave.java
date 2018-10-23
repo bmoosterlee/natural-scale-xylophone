@@ -9,10 +9,14 @@ public class Wave {
     private final Frequency frequency;
     private final double frequencyAngleComponent;
 
-    private Wave(Frequency frequency, SampleRate sampleRate) {
+    public Wave(Frequency frequency, SampleRate sampleRate) {
         this.sampleRate = sampleRate;
         this.frequency = frequency;
-        frequencyAngleComponent = frequency.getValue() * 2.0 * Math.PI;
+        frequencyAngleComponent = calculateFrequencyAngleComponent(frequency);
+    }
+
+    private static double calculateFrequencyAngleComponent(Frequency frequency) {
+        return frequency.getValue() * 2.0 * Math.PI;
     }
 
     public Frequency getFrequency() {
@@ -31,7 +35,7 @@ public class Wave {
     public static double getAmplitude(SampleRate sampleRate, Frequency frequency, Long sampleCount){
         double sampleTime = sampleRate.asTime(sampleCount).getValue();
 
-        double frequencyAngleComponent = frequency.getValue() * 2.0 * Math.PI;
+        double frequencyAngleComponent = calculateFrequencyAngleComponent(frequency);
         double angle = sampleTime * frequencyAngleComponent;
 
         return Math.sin(angle);
