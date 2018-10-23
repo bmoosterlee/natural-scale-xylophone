@@ -3,12 +3,12 @@ package main;
 import java.util.HashSet;
 import java.util.Set;
 
-class Multiplexer<T> implements Runnable{
+class Broadcast<T> implements Runnable{
 
     private final InputPort<T> input;
     private final Set<OutputPort<T>> outputs;
 
-    Multiplexer(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
+    Broadcast(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);
 
         outputs = new HashSet<>();
