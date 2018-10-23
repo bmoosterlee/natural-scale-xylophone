@@ -80,16 +80,16 @@ public class VolumeCalculator implements Runnable {
 
         if(!newNotes.isEmpty()) {
             for (Long i = sampleCount; i < envelope.getEndingSampleCount(); i++) {
-                addVolumes(newNotes, envelope, i);
+                addVolumes(newNotes, i, envelope.getVolume(i));
             }
         }
     }
 
-    private void addVolumes(List<Frequency> newNotes, DeterministicEnvelope envelope, Long i) {
         VolumeState newVolumeState = getOldVolumeState(i);
+    private void addVolumes(List<Frequency> newNotes, Long i, double volume) {
 
         for (Frequency frequency : newNotes) {
-            newVolumeState = newVolumeState.add(frequency, envelope.getVolume(i));
+            newVolumeState = newVolumeState.add(frequency, volume);
         }
 
         futureVolumes.put(i, newVolumeState);
