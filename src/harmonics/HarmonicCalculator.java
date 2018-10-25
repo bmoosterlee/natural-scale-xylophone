@@ -53,7 +53,7 @@ public class HarmonicCalculator implements Runnable {
             pulseInput.consume();
             VolumeState volumeState = volumeInput.consume();
 
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create harmonic hierarchy iterator");
             Map<Frequency, Double> volumes = volumeState.volumes;
             Set<Frequency> liveFrequencies = volumes.keySet();
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = getHarmonicHierarchyIterator(liveFrequencies, volumes);
