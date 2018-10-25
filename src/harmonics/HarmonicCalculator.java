@@ -10,13 +10,13 @@ import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Map.Entry;
 
 public class HarmonicCalculator implements Runnable {
 
-    private CurrentTable<MemoableIterator> iteratorTable = new CurrentTable<>(MemoableIterator::new);
-
-    private HighValueHarmonicsStorage highValueHarmonicsStorage;
+    private NewHarmonicsCalculator newHarmonicsCalculator;
+    private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
 
     private final int maxHarmonics;
 
@@ -27,7 +27,8 @@ public class HarmonicCalculator implements Runnable {
     public HarmonicCalculator(int maxHarmonics, BoundedBuffer<Pulse> pulseBuffer, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
         this.maxHarmonics = maxHarmonics;
 
-        highValueHarmonicsStorage = new HighValueHarmonicsStorage();
+        newHarmonicsCalculator = new NewHarmonicsCalculator();
+        memoizedHighValueHarmonics = new MemoizedHighValueHarmonics();
 
         pulseInput = new InputPort<>(pulseBuffer);
         volumeInput = new InputPort<>(inputBuffer);
@@ -67,45 +68,29 @@ public class HarmonicCalculator implements Runnable {
     }
 
     private Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes) {
-        CurrentTable<MemoableIterator> newIteratorTable = iteratorTable.getNewTable(liveFrequencies);
-        CalculatorSnapshot calculatorSnapshot = new CalculatorSnapshot(liveFrequencies, newIteratorTable, volumes);
+        newHarmonicsCalculator = newHarmonicsCalculator.update(liveFrequencies, volumes);
+        memoizedHighValueHarmonics = memoizedHighValueHarmonics.update(liveFrequencies, volumes);
 
-        highValueHarmonicsStorage = highValueHarmonicsStorage.update(liveFrequencies, volumes);
+        addNewHarmonicsToHarmonicsStorage();
 
-        addNewHarmonicsToHarmonicsStorage(calculatorSnapshot, volumes, maxHarmonics);
-
-        iteratorTable = newIteratorTable;
-
-        return highValueHarmonicsStorage.getHarmonicHierarchyAsList().iterator();
+        return memoizedHighValueHarmonics.getHarmonicHierarchyAsList().iterator();
     }
 
-    private void addNewHarmonicsToHarmonicsStorage(CalculatorSnapshot calculatorSnapshot, Map<Frequency, Double> volumes, int maxHarmonics) {
-        while(getNewHarmonicVolume(calculatorSnapshot, volumes) > highValueHarmonicsStorage.getHarmonicVolume(maxHarmonics)) {
-            addNewHarmonic(calculatorSnapshot, volumes);
+    private void addNewHarmonicsToHarmonicsStorage() {
+        while(newHarmonicsCalculator.getNextHarmonicValue() > memoizedHighValueHarmonics.getHarmonicValue(maxHarmonics)) {
+            addNewHarmonic();
         }
     }
 
-    private double getNewHarmonicVolume(CalculatorSnapshot calculatorSnapshot, Map<Frequency, Double> volumes) {
+    private void addNewHarmonic() {
         try {
-            Frequency highestValueFrequency = calculatorSnapshot.getIteratorHierarchy().peek();
-            Fraction nextHarmonicAsFraction = iteratorTable.get(highestValueFrequency).peek();
+            SimpleImmutableEntry<Frequency, SimpleImmutableEntry<Harmonic, Double>> highestValuePair = newHarmonicsCalculator.next();
 
-            return Harmonic.getHarmonicValue(volumes.get(highestValueFrequency), nextHarmonicAsFraction);
-        }
-        catch(NullPointerException e){
-            return 0.;
-        }
-    }
+            Frequency highestValueFrequency = highestValuePair.getKey();
+            Harmonic highestValueHarmonic = highestValuePair.getValue().getKey();
+            Double highestValue = highestValuePair.getValue().getValue();
 
-    private void addNewHarmonic(CalculatorSnapshot calculatorSnapshot, Map<Frequency, Double> volumes) {
-        try {
-            Frequency highestValueFrequency = calculatorSnapshot.poll();
-            Fraction highestValueHarmonicAsFraction = iteratorTable.get(highestValueFrequency).next();
-
-            Harmonic highestValueHarmonic = new Harmonic(highestValueFrequency, highestValueHarmonicAsFraction);
-            double newHarmonicVolume = highestValueHarmonic.getVolume(volumes.get(highestValueFrequency));
-
-            highValueHarmonicsStorage.addHarmonic(highestValueFrequency, highestValueHarmonic, newHarmonicVolume);
+            memoizedHighValueHarmonics.addHarmonic(highestValueFrequency, highestValueHarmonic, highestValue);
         }
         catch(NullPointerException ignored){
         }
