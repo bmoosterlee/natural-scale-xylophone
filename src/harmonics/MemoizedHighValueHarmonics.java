@@ -21,7 +21,7 @@ class MemoizedHighValueHarmonics {
     }
 
     MemoizedHighValueHarmonics update(Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes) {
-        CurrentTable<Set<Harmonic>> newHarmonicsTable = harmonicsTable.getNewTable(liveFrequencies);
+        CurrentTable<Set<Harmonic>> newHarmonicsTable = harmonicsTable.update(liveFrequencies);
         Map<Harmonic, Double> newVolumes = calculateHarmonicVolumes(liveFrequencies, newHarmonicsTable, volumes);
         PriorityQueue<Harmonic> newHierarchy = buildHierarchy(newVolumes);
 

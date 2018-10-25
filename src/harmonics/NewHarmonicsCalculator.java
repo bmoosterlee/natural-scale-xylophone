@@ -21,7 +21,7 @@ class NewHarmonicsCalculator {
     }
 
     NewHarmonicsCalculator update(Set<Frequency> liveFrequencies, Map<Frequency, Double> newVolumes) {
-        CurrentTable<MemoableIterator> newIterators = iterators.getNewTable(liveFrequencies);
+        CurrentTable<MemoableIterator> newIterators = iterators.update(liveFrequencies);
 
         PriorityQueue<Frequency> newHierarchy = new PriorityQueue<>((o1, o2) -> -Double.compare(
                 Harmonic.getHarmonicValue(newVolumes.get(o1), newIterators.get(o1).peek()),
