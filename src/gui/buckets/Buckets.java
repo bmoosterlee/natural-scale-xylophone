@@ -34,7 +34,7 @@ public class Buckets {
             PerformanceTracker.stopTracking(timeKeeper);
 
             fill(newIndices, newEntries, x, value);
-            
+
             timeKeeper = PerformanceTracker.startTracking("add buckets");
         }
         Buckets newBuckets = new Buckets(newIndices, newEntries);
@@ -46,7 +46,7 @@ public class Buckets {
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> maxima = new HashMap<>();
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
+        Iterator<Entry<Integer, Bucket>> iterator = precalculate().iterator();
         while(iterator.hasNext()){
             Entry<Integer, Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
@@ -85,7 +85,7 @@ public class Buckets {
             Bucket oldBucket = entries.get(x);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            newBucket = new MemoizedBucket(oldBucket.add(newBucket));
+            newBucket = oldBucket.add(newBucket);
 
             timeKeeper = PerformanceTracker.startTracking("fill");
         } catch (NullPointerException ignored) {
