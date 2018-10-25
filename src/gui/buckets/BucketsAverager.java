@@ -48,7 +48,7 @@ public class BucketsAverager implements Runnable {
         try {
             Buckets newBuckets = bucketsInput.consume();
 
-            Buckets averagedBuckets = averageBuckets(newBuckets.precalculate());
+            Buckets averagedBuckets = averageBuckets(newBuckets);
 
             averagedBucketsOutput.produce(averagedBuckets);
 

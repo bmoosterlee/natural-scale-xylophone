@@ -53,7 +53,7 @@ public class BucketBuilder implements Runnable {
             //todo remove this class as the middleman which creates buckets from the map
             Map<Frequency, Double> volumes = volumeState.volumes;
             Set<Frequency> liveFrequencies = volumes.keySet();
-            Buckets noteBuckets = toBuckets(liveFrequencies, volumes).precalculate();
+            Buckets noteBuckets = toBuckets(liveFrequencies, volumes);
             PerformanceTracker.stopTracking(timeKeeper);
 
             notesBucketsOutput.produce(noteBuckets);
@@ -74,6 +74,6 @@ public class BucketBuilder implements Runnable {
 
             Buckets.fill(indices, entries, x, bucket);
         }
-        return new Buckets(indices, entries).precalculate();
+        return new Buckets(indices, entries);
     }
 }

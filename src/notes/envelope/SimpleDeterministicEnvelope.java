@@ -43,10 +43,6 @@ public class SimpleDeterministicEnvelope extends SimpleEnvelope implements Deter
 
     @Override
     public Envelope update(long sampleCount){
-        // precalculate();
-        //todo time to implement the time data structure with the nested lists and a timestamp.
-        //todo we then grab the structure from the precalculated version and return that.
-
         if(isDead(sampleCount)){
             return null;
         }
