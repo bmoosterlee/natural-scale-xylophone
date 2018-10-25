@@ -25,15 +25,17 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add buckets setup");
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add buckets");
         Set<Integer> newIndices = new HashSet<>(getIndices());
         Map<Integer, Bucket> newEntries = new HashMap<>(getBucketsData());
 
         for(Integer x : otherBuckets.getIndices()){
             Bucket value = otherBuckets.getValue(x);
             PerformanceTracker.stopTracking(timeKeeper);
+
             fill(newIndices, newEntries, x, value);
-            timeKeeper = PerformanceTracker.startTracking("add buckets setup");
+            
+            timeKeeper = PerformanceTracker.startTracking("add buckets");
         }
         Buckets newBuckets = new Buckets(newIndices, newEntries);
         PerformanceTracker.stopTracking(timeKeeper);
@@ -77,17 +79,16 @@ public class Buckets {
     public static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("fill");
         newIndices.add(x);
-        Bucket newBucket;
+        Bucket newBucket = bucket;
 
         try {
             Bucket oldBucket = entries.get(x);
             PerformanceTracker.stopTracking(timeKeeper);
 
-            newBucket = new MemoizedBucket(oldBucket.add(bucket));
+            newBucket = new MemoizedBucket(oldBucket.add(newBucket));
 
             timeKeeper = PerformanceTracker.startTracking("fill");
-        } catch (NullPointerException e) {
-            newBucket = bucket;
+        } catch (NullPointerException ignored) {
         }
 
         entries.put(x, newBucket);

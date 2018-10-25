@@ -8,7 +8,9 @@ import time.TimeKeeper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class GUI extends JPanel implements Runnable {
@@ -101,13 +103,20 @@ public class GUI extends JPanel implements Runnable {
 
     private void renderBuckets(Graphics g, Buckets buckets) {
         Set<Integer> indices = buckets.getIndices();
-        for(Integer x : indices){
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("render - get bucket volume");
-            Double volume = buckets.getValue(x).getVolume();
-            PerformanceTracker.stopTracking(timeKeeper);
-            int y = (int) (volume * yScale + margin);
-            g.drawRect(x, HEIGHT - y, 1, y);
+
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("render - get bucket volume");
+        Map<Integer, Double> values = new HashMap<>();
+        for(Integer index : indices) {
+            values.put(index, buckets.getValue(index).getVolume());
         }
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        timeKeeper = PerformanceTracker.startTracking("render - render buckets");
+        for(Integer index : indices){
+            int y = (int) (values.get(index) * yScale + margin);
+            g.drawRect(index, HEIGHT - y, 1, y);
+        }
+        PerformanceTracker.stopTracking(timeKeeper);
     }
 
     private void renderCursorLine(Graphics g, int x) {
