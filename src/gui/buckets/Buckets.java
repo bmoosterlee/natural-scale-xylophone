@@ -11,8 +11,7 @@ public class Buckets {
     private final Map<Integer, Bucket> bucketsData;
 
     public Buckets() {
-        indices = new HashSet<>();
-        bucketsData = new HashMap<>();
+        this(new HashSet<>(), new HashMap<>());
     }
 
     public Buckets(Set<Integer> indices, Map<Integer, Bucket> buckets) {
@@ -29,16 +28,33 @@ public class Buckets {
         Set<Integer> newIndices = new HashSet<>(getIndices());
         Map<Integer, Bucket> newEntries = new HashMap<>(getBucketsData());
 
-        for(Integer x : otherBuckets.getIndices()){
-            Bucket value = otherBuckets.getValue(x);
-            PerformanceTracker.stopTracking(timeKeeper);
+        for(Integer index : otherBuckets.getIndices()){
+            Bucket newBucket = otherBuckets.getValue(index);
 
-            fill(newIndices, newEntries, x, value);
+            try {
+                Bucket oldBucket = newEntries.get(index);
+                newBucket = oldBucket.add(newBucket);
 
-            timeKeeper = PerformanceTracker.startTracking("add buckets");
+            } catch (NullPointerException ignored) {
+                newIndices.add(index);
+            }
+
+            newEntries.put(index, newBucket);
         }
+
         Buckets newBuckets = new Buckets(newIndices, newEntries).memoize();
         PerformanceTracker.stopTracking(timeKeeper);
+
+        return newBuckets;
+    }
+
+    public static Buckets add(Collection<Buckets> bucketsCollection) {
+        Buckets newBuckets = new Buckets();
+
+        for(Buckets buckets : bucketsCollection){
+            newBuckets = newBuckets.add(buckets);
+        }
+
         return newBuckets;
     }
 
@@ -76,31 +92,13 @@ public class Buckets {
         return new Buckets(newIndices, maxima);
     }
 
-    public static void fill(Set<Integer> newIndices, Map<Integer, Bucket> entries, Integer x, Bucket bucket) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("fill");
-        newIndices.add(x);
-        Bucket newBucket = bucket;
-
-        try {
-            Bucket oldBucket = entries.get(x);
-            PerformanceTracker.stopTracking(timeKeeper);
-
-            newBucket = oldBucket.add(newBucket);
-
-            timeKeeper = PerformanceTracker.startTracking("fill");
-        } catch (NullPointerException ignored) {
-        }
-
-        entries.put(x, newBucket);
-        PerformanceTracker.stopTracking(timeKeeper);
-    }
-
     public Buckets multiply(double v) {
         Map<Integer, Bucket> newEntries = new HashMap<>();
 
         for(Integer x : getIndices()){
             newEntries.put(x, getValue(x).multiply(v));
         }
+
         return new Buckets(getIndices(), newEntries);
     }
 
@@ -135,7 +133,7 @@ public class Buckets {
         return bucketsData;
     }
 
-    public Buckets memoize() {
+    private Buckets memoize() {
         Map<Integer, Bucket> newMap = new HashMap<>();
 
         for(Integer index : indices){
@@ -143,5 +141,19 @@ public class Buckets {
         }
 
         return new Buckets(indices, newMap);
+    }
+
+    Buckets transpose(int i) {
+        Set<Integer> newIndices = new HashSet<>();
+        Map<Integer, Bucket> newEntries = new HashMap<>();
+
+        for(Integer index : getIndices()){
+            int transposedIndex = index + i;
+
+            newIndices.add(transposedIndex);
+            newEntries.put(transposedIndex, getValue(index));
+        }
+
+        return new Buckets(newIndices, newEntries);
     }
 }

@@ -63,17 +63,17 @@ public class BucketBuilder implements Runnable {
         }
     }
 
-    private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> map){
+    private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> volumes){
         Set<Integer> indices = new HashSet<>();
         Map<Integer, Bucket> entries = new HashMap<>();
 
         for(Frequency frequency : keys){
             int x = spectrumWindow.getX(frequency);
 
-            AtomicBucket bucket = new AtomicBucket(frequency, map.get(frequency));
-
-            Buckets.fill(indices, entries, x, bucket);
+            indices.add(x);
+            entries.put(x, new AtomicBucket(frequency, volumes.get(frequency)));
         }
+
         return new Buckets(indices, entries);
     }
 }

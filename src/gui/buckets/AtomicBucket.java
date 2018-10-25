@@ -35,8 +35,6 @@ public class AtomicBucket implements Bucket {
         return newBucket;
     }
 
-    public Bucket add(CompositeBucket bucket){return bucket.add(this);}
-
     @Override
     public Bucket multiply(double v) {
         return new AtomicBucket(frequency, volume * v);

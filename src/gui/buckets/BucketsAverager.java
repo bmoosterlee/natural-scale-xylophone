@@ -21,11 +21,10 @@ public class BucketsAverager implements Runnable {
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
         this.averagingWidth = averagingWidth;
 
-        double[] multipliers = new double[averagingWidth];
+        multipliers = new double[averagingWidth];
         for (int i = 1; i < averagingWidth; i++) {
             multipliers[i] = ((double) averagingWidth - i) / averagingWidth;
         }
-        this.multipliers = multipliers;
 
         bucketsInput = new InputPort<>(inputBuffer);
         averagedBucketsOutput = new OutputPort<>(outputBuffer);
@@ -58,38 +57,37 @@ public class BucketsAverager implements Runnable {
     }
 
     private Buckets averageBuckets(Buckets buckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets setup");
-        Set<Integer> newIndices = new HashSet<>();
-        Map<Integer, Bucket> newEntries = new HashMap<>();
-        PerformanceTracker.stopTracking(timeKeeper);
+        Buckets voidBuckets = getVoidBuckets(buckets);
 
-        for(Integer x : buckets.getIndices()){
-            timeKeeper = PerformanceTracker.startTracking("average buckets get volume");
-            Double volume = buckets.getValue(x).getVolume();
-            PerformanceTracker.stopTracking(timeKeeper);
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets multiply and transpose buckets");
+        Set<Buckets> bucketsCollection = new HashSet<>();
+        bucketsCollection.add(buckets);
 
-            for(int i = 1; i< averagingWidth; i++) {
-                timeKeeper = PerformanceTracker.startTracking("average buckets multiply bucket");
-                AtomicBucket residueBucket = new AtomicBucket(volume * multipliers[i]);
-                PerformanceTracker.stopTracking(timeKeeper);
-
-                {
-                    int residueIndex = x - i;
-
-                    Buckets.fill(newIndices, newEntries, residueIndex, residueBucket);
-                }
-                {
-                    int residueIndex = x + i;
-
-                    Buckets.fill(newIndices, newEntries, residueIndex, residueBucket);
-                }
-            }
+        for(int i = 1; i< averagingWidth; i++) {
+            Buckets multipliedBuckets = voidBuckets.multiply(multipliers[i]);
+            bucketsCollection.add(multipliedBuckets.transpose(-i));
+            bucketsCollection.add(multipliedBuckets.transpose(i));
         }
+        PerformanceTracker.stopTracking(timeKeeper);
 
         timeKeeper = PerformanceTracker.startTracking("average buckets construct new buckets");
-        Buckets newBuckets = new Buckets(newIndices, newEntries);
+        Buckets newBuckets = Buckets.add(bucketsCollection);
         PerformanceTracker.stopTracking(timeKeeper);
 
-        return buckets.add(newBuckets);
+        return newBuckets;
+    }
+
+    private Buckets getVoidBuckets(Buckets buckets) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets setup");
+        Set<Integer> indices = buckets.getIndices();
+        Map<Integer, Bucket> voidEntries = new HashMap<>();
+
+        for(Integer x : indices){
+            Double volume = buckets.getValue(x).getVolume();
+            voidEntries.put(x, new AtomicBucket(volume));
+        }
+        Buckets voidBuckets = new Buckets(indices, voidEntries);
+        PerformanceTracker.stopTracking(timeKeeper);
+        return voidBuckets;
     }
 }
