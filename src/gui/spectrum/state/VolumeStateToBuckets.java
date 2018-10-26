@@ -18,14 +18,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class BucketBuilder implements Runnable {
+public class VolumeStateToBuckets implements Runnable {
     private final SpectrumWindow spectrumWindow;
+
     private final InputPort<Pulse> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Buckets> notesBucketsOutput;
 
-    public BucketBuilder(SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameEndTimeBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
+    public VolumeStateToBuckets(SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameEndTimeBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
         this.spectrumWindow = spectrumWindow;
+        
         frameEndTimeInput = new InputPort<>(frameEndTimeBuffer);
         volumeStateInput = new InputPort<>(volumeStateBuffer);
         notesBucketsOutput = new OutputPort<>(notesBucketsBuffer);

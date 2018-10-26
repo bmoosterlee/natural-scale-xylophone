@@ -6,7 +6,7 @@ import gui.GUI;
 import gui.NoteClicker;
 import gui.buckets.*;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.BucketBuilder;
+import gui.spectrum.state.VolumeStateToBuckets;
 import gui.spectrum.state.SpectrumManager;
 import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
@@ -66,7 +66,7 @@ class Main {
         BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(1);
         new Broadcast<>(frameTickBuffer, new HashSet<>(Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3)));
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
-        new BucketBuilder(spectrumWindow, frameTickBuffer1, volumeStateBuffer3, inputNotesBucketsBuffer);
+        new VolumeStateToBuckets(spectrumWindow, frameTickBuffer1, volumeStateBuffer3, inputNotesBucketsBuffer);
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(1);
         new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer2, harmonicsBuffer);
