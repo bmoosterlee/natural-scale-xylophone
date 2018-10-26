@@ -50,13 +50,8 @@ class MemoizedHighValueHarmonics {
 
     void addHarmonic(Frequency highestValueFrequency, Harmonic highestValueHarmonic, double newHarmonicVolume) {
         harmonicsTable.get(highestValueFrequency).add(highestValueHarmonic);
-
-        synchronized (volumes) {
-            volumes.put(highestValueHarmonic, newHarmonicVolume);
-        }
-        synchronized (hierarchy) {
-            hierarchy.add(highestValueHarmonic);
-        }
+        volumes.put(highestValueHarmonic, newHarmonicVolume);
+        hierarchy.add(highestValueHarmonic);
     }
 
     List<Entry<Harmonic, Double>> getHarmonicHierarchyAsList() {
