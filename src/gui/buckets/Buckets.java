@@ -35,7 +35,7 @@ public class Buckets {
                 Bucket oldBucket = newEntries.get(index);
                 newBucket = oldBucket.add(newBucket);
 
-            } catch (NullPointerException ignored) {
+            } catch (NullPointerException e) {
                 newIndices.add(index);
             }
 
