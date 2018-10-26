@@ -21,9 +21,9 @@ public class BucketsAverager implements Runnable {
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
         this.averagingWidth = averagingWidth;
 
-        multipliers = new double[averagingWidth];
-        for (int i = 1; i < averagingWidth; i++) {
-            multipliers[i] = ((double) averagingWidth - i) / averagingWidth;
+        multipliers = new double[this.averagingWidth];
+        for (int i = 1; i < this.averagingWidth; i++) {
+            multipliers[i] = ((double) this.averagingWidth - i) / this.averagingWidth;
         }
 
         bucketsInput = new InputPort<>(inputBuffer);
