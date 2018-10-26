@@ -12,6 +12,8 @@ import harmonics.Harmonic;
 import harmonics.HarmonicCalculator;
 import notes.state.*;
 import pianola.Pianola;
+import pianola.patterns.PianolaPattern;
+import pianola.patterns.SweepToTargetUpDown;
 import sound.SampleRate;
 import sound.SoundEnvironment;
 import time.PerformanceTracker;
@@ -96,7 +98,11 @@ class Main {
         gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
         gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
 
-        new Pianola(spectrumWindow, new TimeInSeconds(1.).toNanoSeconds().divide(4), pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, newNoteBuffer);
+//        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
+//        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
+        PianolaPattern pianolaPattern = new SweepToTargetUpDown(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+//        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
+        new Pianola(pianolaPattern, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
 
         playTestTone(newNoteBuffer, spectrumWindow);

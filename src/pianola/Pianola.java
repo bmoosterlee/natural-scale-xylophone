@@ -6,12 +6,9 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import frequency.Frequency;
-import gui.buckets.Buckets;
-import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.OutputPort;
 import pianola.patterns.PianolaPattern;
-import pianola.patterns.SweepToTargetUpDown;
 import time.Ticker;
 import time.TimeInNanoSeconds;
 
@@ -20,16 +17,12 @@ public class Pianola {
 
     private final OutputPort<Frequency> playedNotes;
 
-    public Pianola(SpectrumWindow spectrumWindow, TimeInNanoSeconds frame_time, BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, BoundedBuffer<Frequency> outputBuffer) {
-
-//        pianolaPattern = new Sweep(this, 8, gui.spectrumWindow.getCenterFrequency());
-//        pianolaPattern = new PatternPauser(8, new SweepToTarget(spectrumManager, 5, gui.spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
-//        pianolaPattern = new SweepToTargetUpDown(notesBuffer, harmonicsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
-        pianolaPattern = new SimpleArpeggio(notesBuffer, harmonicsBuffer,3, spectrumWindow);
+    public Pianola(PianolaPattern pianolaPattern, TimeInNanoSeconds frameTime, BoundedBuffer<Frequency> outputBuffer) {
+        this.pianolaPattern = pianolaPattern;
 
         playedNotes = new OutputPort<>(outputBuffer);
 
-        Ticker ticker = new Ticker(frame_time);
+        Ticker ticker = new Ticker(frameTime);
         ticker.getTickObservable().add(this::tick);
         ticker.start();
     }
