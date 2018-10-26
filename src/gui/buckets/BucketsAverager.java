@@ -57,7 +57,7 @@ public class BucketsAverager implements Runnable {
     }
 
     private Buckets averageBuckets(Buckets buckets) {
-        Buckets voidBuckets = getVoidBuckets(buckets);
+        Buckets voidBuckets = getHollowBuckets(buckets);
 
         TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets multiply and transpose buckets");
         Set<Buckets> bucketsCollection = new HashSet<>();
@@ -77,8 +77,8 @@ public class BucketsAverager implements Runnable {
         return newBuckets;
     }
 
-    private Buckets getVoidBuckets(Buckets buckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets setup");
+    private Buckets getHollowBuckets(Buckets buckets) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets get hollow buckets");
         Set<Integer> indices = buckets.getIndices();
         Map<Integer, Bucket> voidEntries = new HashMap<>();
 
@@ -86,8 +86,10 @@ public class BucketsAverager implements Runnable {
             Double volume = buckets.getValue(x).getVolume();
             voidEntries.put(x, new AtomicBucket(volume));
         }
+
         Buckets voidBuckets = new Buckets(indices, voidEntries);
         PerformanceTracker.stopTracking(timeKeeper);
+
         return voidBuckets;
     }
 }
