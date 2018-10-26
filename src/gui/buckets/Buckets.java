@@ -42,7 +42,7 @@ public class Buckets {
             newEntries.put(index, newBucket);
         }
 
-        Buckets newBuckets = new Buckets(newIndices, newEntries).memoize();
+        Buckets newBuckets = new Buckets(newIndices, newEntries);
         PerformanceTracker.stopTracking(timeKeeper);
 
         return newBuckets;
