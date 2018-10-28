@@ -40,7 +40,7 @@ class Main {
 
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleLookahead, sampleRate);
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate);
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeAmplitudeStateBuffer, sampleRate);
@@ -53,7 +53,7 @@ class Main {
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
-        BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameLookahead, frameRate);
+        BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameRate);
 
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
@@ -87,9 +87,9 @@ class Main {
         BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
         new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
 
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(frameLookahead);
         new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
-        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(frameLookahead);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
@@ -129,8 +129,8 @@ class Main {
         }
     }
 
-    private static BoundedBuffer<Pulse> initializeGUITicker(int lookahead, int franeRate) {
-        BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(lookahead);
+    private static BoundedBuffer<Pulse> initializeGUITicker(int franeRate) {
+        BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(1);
         Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(franeRate));
         frameTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
@@ -149,8 +149,8 @@ class Main {
         return frameEndTimeBuffer;
     }
 
-    private static BoundedBuffer<Long> initializeSampleTicker(int lookahead, SampleRate sampleRate) {
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(lookahead);
+    private static BoundedBuffer<Long> initializeSampleTicker(SampleRate sampleRate) {
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(1);
         Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
         sampleTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
