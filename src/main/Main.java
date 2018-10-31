@@ -100,11 +100,16 @@ class Main {
         gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
         gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
 
+        int pianolaRate = 4;
+        int pianolaLookahead = pianolaRate/4;
+
+        BoundedBuffer<Pulse> pianolaTicker = initializePulseTicker(pianolaRate, pianolaLookahead);
+
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
-        new Pianola(pianolaPattern, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
+        new Pianola(pianolaPattern, pianolaTicker, newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
 
         playTestTone(newNoteBuffer, spectrumWindow);
