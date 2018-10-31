@@ -42,7 +42,7 @@ class Main {
         int inaudibleFrequencyMargin = (int) (width/octaveRange/12/5);
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate);
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead);
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeAmplitudeStateBuffer, sampleRate);
@@ -50,12 +50,12 @@ class Main {
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new BoundedBuffer<>(1);
         new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
-        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(sampleLookahead);
+        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
-        BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameRate);
+        BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameRate, frameLookahead);
 
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
@@ -89,9 +89,9 @@ class Main {
         BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
         new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
 
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(frameLookahead);
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BucketsAverager(inaudibleFrequencyMargin, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
-        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(frameLookahead);
+        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
@@ -131,8 +131,8 @@ class Main {
         }
     }
 
-    private static BoundedBuffer<Pulse> initializeGUITicker(int franeRate) {
-        BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(1);
+    private static BoundedBuffer<Pulse> initializeGUITicker(int franeRate, int frameLookahead) {
+        BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(frameLookahead);
         Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(franeRate));
         frameTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
@@ -151,8 +151,8 @@ class Main {
         return frameEndTimeBuffer;
     }
 
-    private static BoundedBuffer<Long> initializeSampleTicker(SampleRate sampleRate) {
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(1);
+    private static BoundedBuffer<Long> initializeSampleTicker(SampleRate sampleRate, int sampleLookahead) {
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(sampleLookahead);
         Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
         sampleTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
