@@ -55,7 +55,7 @@ class Main {
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
-        BoundedBuffer<Pulse> frameTickBuffer = initializeGUITicker(frameRate, frameLookahead);
+        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead);
 
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
@@ -131,11 +131,11 @@ class Main {
         }
     }
 
-    private static BoundedBuffer<Pulse> initializeGUITicker(int frameRate, int frameLookahead) {
-        BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(frameLookahead);
+    private static BoundedBuffer<Pulse> initializePulseTicker(int frameRate, int frameLookahead) {
+        BoundedBuffer<Pulse> outputBuffer = new BoundedBuffer<>(frameLookahead);
         Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
         frameTicker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
+            private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(outputBuffer);
             private final Pulse pulse = new Pulse();
 
             @Override
@@ -148,7 +148,7 @@ class Main {
             }
         });
         frameTicker.start();
-        return frameEndTimeBuffer;
+        return outputBuffer;
     }
 
     private static BoundedBuffer<Long> initializeSampleTicker(SampleRate sampleRate, int sampleLookahead) {
