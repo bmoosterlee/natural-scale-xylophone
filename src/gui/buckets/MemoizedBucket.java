@@ -1,6 +1,8 @@
 package gui.buckets;
 
 import frequency.Frequency;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -19,7 +21,11 @@ public class MemoizedBucket implements Bucket {
 
     @Override
     public Bucket add(Bucket bucket) {
-        return new CompositeBucket<>(Arrays.asList(this, bucket));
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add bucket");
+        CompositeBucket<Bucket> compositeBucket = new CompositeBucket<>(Arrays.asList(this, bucket));
+        PerformanceTracker.stopTracking(timeKeeper);
+
+        return compositeBucket;
     }
 
     @Override
