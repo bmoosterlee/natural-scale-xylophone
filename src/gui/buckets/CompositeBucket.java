@@ -1,6 +1,8 @@
 package gui.buckets;
 
 import frequency.Frequency;
+import time.PerformanceTracker;
+import time.TimeKeeper;
 
 import java.util.*;
 
@@ -13,19 +15,15 @@ public class CompositeBucket<T extends Bucket> implements Bucket {
 
     @Override
     public Bucket add(Bucket bucket) {
+        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add bucket");
         Set<Bucket> newBuckets = new HashSet<>(buckets);
 
         newBuckets.add(bucket);
 
-        return new CompositeBucket<>(newBuckets);
-    }
+        CompositeBucket<Bucket> compositeBucket = new CompositeBucket<>(newBuckets);
+        PerformanceTracker.stopTracking(timeKeeper);
 
-    public Bucket add(CompositeBucket<Bucket> bucket) {
-        Set<Bucket> newBuckets = new HashSet<>(buckets);
-
-        newBuckets.addAll(bucket.buckets);
-
-        return new CompositeBucket<>(newBuckets);
+        return compositeBucket;
     }
 
     @Override
