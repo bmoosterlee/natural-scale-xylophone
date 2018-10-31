@@ -131,9 +131,9 @@ class Main {
         }
     }
 
-    private static BoundedBuffer<Pulse> initializeGUITicker(int franeRate, int frameLookahead) {
+    private static BoundedBuffer<Pulse> initializeGUITicker(int frameRate, int frameLookahead) {
         BoundedBuffer<Pulse> frameEndTimeBuffer = new BoundedBuffer<>(frameLookahead);
-        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(franeRate));
+        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
         frameTicker.getTickObservable().add(new Observer<>() {
             private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(frameEndTimeBuffer);
             private final Pulse pulse = new Pulse();
