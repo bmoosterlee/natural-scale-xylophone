@@ -16,12 +16,12 @@ public class SweepToTargetUpDown implements PianolaPattern {
     private final SweepToTarget sweep;
     private final Frequency[] frequencies;
 
-    public SweepToTargetUpDown(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
+    public SweepToTargetUpDown(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         sequencer = new Sequencer(size, 1);
 
         halvedSize = (int) (Math.ceil(size/2.)+1);
         frequencies = new Frequency[halvedSize];
-        sweep = new SweepToTarget(notesBuffer, harmonicsBuffer, halvedSize, centerFrequency, multiplier, spectrumWindow);
+        sweep = new SweepToTarget(notesBuffer, harmonicsBuffer, halvedSize, centerFrequency, multiplier, spectrumWindow, inaudibleFrequencyMargin);
     }
 
     @Override

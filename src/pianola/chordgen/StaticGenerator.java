@@ -7,8 +7,8 @@ import main.BoundedBuffer;
 
 public class StaticGenerator extends SimpleChordGenerator {
 
-    public StaticGenerator(BoundedBuffer<Buckets> harmonicsBuffer, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
-        super(harmonicsBuffer, 1, centerFrequency, 0, 0, 0, 3, spectrumWindow);
+    public StaticGenerator(BoundedBuffer<Buckets> harmonicsBuffer, Frequency centerFrequency, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+        super(harmonicsBuffer, 1, centerFrequency, 0, 0, 0, 3, spectrumWindow, inaudibleFrequencyMargin);
         frequencies = new Frequency[]{centerFrequency};
     }
 

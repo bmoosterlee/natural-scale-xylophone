@@ -27,7 +27,7 @@ public class SimpleChordGenerator {
 
     private final InputPort<Buckets> harmonicsInput;
 
-    public SimpleChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow) {
+    public SimpleChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
@@ -39,13 +39,13 @@ public class SimpleChordGenerator {
         notesOutput = new OutputPort<>(notesAveragerInputBuffer);
 
         BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(1);
-        new BucketsAverager(20, notesAveragerInputBuffer, notesAveragerOutputBuffer);
+        new BucketsAverager(2* inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
 
         notesInput = new InputPort<>(notesAveragerOutputBuffer);
 
 
         BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(1);
-        new BucketsAverager(10, harmonicsBuffer, harmonicsAveragerBuffer);
+        new BucketsAverager(inaudibleFrequencyMargin, harmonicsBuffer, harmonicsAveragerBuffer);
         harmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
 
         frequencies = new Frequency[chordSize];

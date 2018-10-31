@@ -24,10 +24,13 @@ public class Sweep implements PianolaPattern {
 
     private final InputPort<Buckets> notesInput;
     final BoundedBuffer<Buckets> harmonicsBuffer;
+    protected int inaudibleFrequencyMargin;
 
-    Sweep(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow) {
+    Sweep(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         this.spectrumWindow = spectrumWindow;
         this.size = size;
+
+        this.inaudibleFrequencyMargin = inaudibleFrequencyMargin;
 
         notesInput = new InputPort<>(notesBuffer);
 
@@ -55,7 +58,10 @@ public class Sweep implements PianolaPattern {
                 centerFrequency,
                 totalMargin,
                 spectrumWindow.getX(spectrumWindow.lowerBound),
-                spectrumWindow.getX(spectrumWindow.upperBound.divideBy(2.0)), 3, spectrumWindow);
+                spectrumWindow.getX(spectrumWindow.upperBound.divideBy(2.0)),
+                3,
+                spectrumWindow,
+                inaudibleFrequencyMargin);
     }
 
     public Set<Frequency> playPattern() {
@@ -121,6 +127,9 @@ public class Sweep implements PianolaPattern {
                                   previousFrequency,
                                   totalMargin,
                 spectrumWindow.getX(previousFrequency),
-                spectrumWindow.getX(spectrumWindow.upperBound), 1, spectrumWindow);
+                spectrumWindow.getX(spectrumWindow.upperBound),
+                1,
+                spectrumWindow,
+                inaudibleFrequencyMargin);
     }
 }

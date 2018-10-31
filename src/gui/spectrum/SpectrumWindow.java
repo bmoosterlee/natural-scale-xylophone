@@ -13,14 +13,13 @@ public class SpectrumWindow {
     //todo these indices
 
     private final Frequency centerFrequency = new Frequency(2 * 261.63);
-    private final double octaveRange = 3.;
     public final Frequency lowerBound;
     public final Frequency upperBound;
     private final double logFrequencyMultiplier;
     private final double logFrequencyAdditive;
     private final double xMultiplier;
 
-    public SpectrumWindow(int width) {
+    public SpectrumWindow(int width, double octaveRange) {
         this.width = width;
 
         lowerBound = centerFrequency.divideBy(Math.pow(2, octaveRange / 2));

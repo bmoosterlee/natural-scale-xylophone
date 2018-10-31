@@ -13,8 +13,8 @@ class SweepToTarget extends Sweep {
     private int keyWidth;
     private final double multiplier;
 
-    public SweepToTarget(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow) {
-        super(notesBuffer, harmonicsBuffer, size, centerFrequency, spectrumWindow);
+    public SweepToTarget(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+        super(notesBuffer, harmonicsBuffer, size, centerFrequency, spectrumWindow, inaudibleFrequencyMargin);
 
         this.multiplier = multiplier;
 
@@ -39,7 +39,9 @@ class SweepToTarget extends Sweep {
                 totalMargin,
                 spectrumWindow.getX(spectrumWindow.lowerBound),
                 spectrumWindow.getX(spectrumWindow.upperBound.divideBy(multiplier)),
-                2, spectrumWindow);
+                2,
+                spectrumWindow,
+                inaudibleFrequencyMargin);
     }
 
     @Override
@@ -56,7 +58,11 @@ class SweepToTarget extends Sweep {
     @Override
     protected SimpleChordGenerator findNextSweepGenerator() {
         if(sequencer.i == sequencer.notesPerMeasure-1){
-            return new StaticGenerator(harmonicsBuffer, targetFrequency, spectrumWindow);
+            return new StaticGenerator(
+                    harmonicsBuffer,
+                    targetFrequency,
+                    spectrumWindow,
+                    inaudibleFrequencyMargin);
         }
         else {
             int center = (sourceAsInt + keyWidth * sequencer.i);
@@ -69,7 +75,9 @@ class SweepToTarget extends Sweep {
                     totalMargin,
                     left,
                     right,
-                    0, spectrumWindow);
+                    0,
+                    spectrumWindow,
+                    inaudibleFrequencyMargin);
         }
     }
 }

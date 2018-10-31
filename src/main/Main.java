@@ -38,6 +38,8 @@ class Main {
         int frameLookahead = frameRate / 4;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 
+        double octaveRange = 3.;
+        int inaudibleFrequencyMargin = (int) (width/octaveRange/12/5);
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate);
@@ -62,7 +64,7 @@ class Main {
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
         new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
 
-        SpectrumWindow spectrumWindow = new SpectrumWindow(width);
+        SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1);
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(1);
@@ -88,7 +90,7 @@ class Main {
         new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
 
         BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(frameLookahead);
-        new BucketsAverager(10, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
+        new BucketsAverager(inaudibleFrequencyMargin, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(frameLookahead);
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
         new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
@@ -100,7 +102,7 @@ class Main {
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
-        PianolaPattern pianolaPattern = new SweepToTargetUpDown(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow);
+        PianolaPattern pianolaPattern = new SweepToTargetUpDown(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
         new Pianola(pianolaPattern, new TimeInSeconds(1.).toNanoSeconds().divide(4), newNoteBuffer);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,

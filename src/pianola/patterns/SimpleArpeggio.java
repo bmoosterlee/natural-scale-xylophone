@@ -18,7 +18,7 @@ public class SimpleArpeggio implements PianolaPattern {
 
     private final InputPort<Buckets> notesInput;
 
-    public SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow) {
+    public SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         this.chordSize = chordSize;
 
         notesInput = new InputPort<>(notesBuffer);
@@ -31,7 +31,7 @@ public class SimpleArpeggio implements PianolaPattern {
                      spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
                                     spectrumWindow.getX(centerFrequency),
                                 spectrumWindow.getX(centerFrequency.divideBy(4.0)),
-                                spectrumWindow.getX(centerFrequency.multiplyBy(4.0)), 3, spectrumWindow);
+                                spectrumWindow.getX(centerFrequency.multiplyBy(4.0)), 3, spectrumWindow, inaudibleFrequencyMargin);
         try {
             generateNewChord();
         }
