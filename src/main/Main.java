@@ -55,14 +55,14 @@ class Main {
 
         initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
 
-        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead);
-
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
 
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new OverwritableBuffer<>(1);
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
         new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+
+        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead);
 
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1);
