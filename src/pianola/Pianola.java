@@ -7,37 +7,56 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import frequency.Frequency;
 import main.BoundedBuffer;
+import main.InputPort;
 import main.OutputPort;
+import main.Pulse;
 import pianola.patterns.PianolaPattern;
-import time.Ticker;
 import time.TimeInNanoSeconds;
 
-public class Pianola {
+public class Pianola implements Runnable{
     private final PianolaPattern pianolaPattern;
 
+    private final InputPort<Pulse> pulseInput;
     private final OutputPort<Frequency> playedNotes;
 
-    public Pianola(PianolaPattern pianolaPattern, TimeInNanoSeconds frameTime, BoundedBuffer<Frequency> outputBuffer) {
+    public Pianola(PianolaPattern pianolaPattern, BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> outputBuffer) {
         this.pianolaPattern = pianolaPattern;
 
+        pulseInput = new InputPort<>(inputBuffer);
         playedNotes = new OutputPort<>(outputBuffer);
 
-        Ticker ticker = new Ticker(frameTime);
-        ticker.getTickObservable().add(this::tick);
-        ticker.start();
+        start();
     }
-    
-    private void tick(long startTime) {
-        for(Frequency frequency : pianolaPattern.playPattern()){
-            try {
-                playedNotes.produce(frequency);
-            }
-            catch(NullPointerException ignored){
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    private void start() {
+        new Thread(this).start();
+    }
+
+
+    @Override
+    public void run() {
+        while(true){
+            tick();
         }
     }
 
+    private void tick() {
+        try {
+            pulseInput.consume();
+
+            for(Frequency frequency : pianolaPattern.playPattern()){
+                try {
+                    playedNotes.produce(frequency);
+                }
+                catch(NullPointerException ignored){
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
