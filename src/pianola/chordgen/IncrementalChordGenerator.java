@@ -8,8 +8,8 @@ import main.BoundedBuffer;
 public class IncrementalChordGenerator extends SimpleChordGenerator {
     private int noteIndex = 0;
 
-    public IncrementalChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
-        super(harmonicsBuffer, chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, repetitionDampener, spectrumWindow, inaudibleFrequencyMargin);
+    public IncrementalChordGenerator(int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, SpectrumWindow spectrumWindow) {
+        super(chordSize, centerFrequency, totalMargin, hardLeftBorder, hardRightBorder, spectrumWindow);
     }
 
     @Override

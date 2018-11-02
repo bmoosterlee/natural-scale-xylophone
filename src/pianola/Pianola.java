@@ -6,23 +6,44 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import frequency.Frequency;
+import gui.buckets.*;
 import main.BoundedBuffer;
 import main.InputPort;
 import main.OutputPort;
 import main.Pulse;
 import pianola.patterns.PianolaPattern;
-import time.TimeInNanoSeconds;
 
 public class Pianola implements Runnable{
     private final PianolaPattern pianolaPattern;
 
+    private final InputPort<Buckets> notesInput;
+    private BucketHistory noteHistory;
+    private final int repetitionDampener;
+    private final OutputPort<Buckets> averagerInput;
+
     private final InputPort<Pulse> pulseInput;
+    private final InputPort<Buckets> preparedNotesInput;
+    private final InputPort<Buckets> preparedHarmonicsInput;
     private final OutputPort<Frequency> playedNotes;
 
-    public Pianola(PianolaPattern pianolaPattern, BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> outputBuffer) {
+    public Pianola(PianolaPattern pianolaPattern, BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> outputBuffer, BoundedBuffer<Buckets> pianolaNotesBucketsBuffer, BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
 
+        repetitionDampener = 3;
+        noteHistory = new PrecalculatedBucketHistory(50);
+
+        BoundedBuffer<Buckets> notesAveragerInputBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(1);
+        new BucketsAverager(2* inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
+        averagerInput = new OutputPort<>(notesAveragerInputBuffer);
+
+        BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(1);
+        new BucketsAverager(inaudibleFrequencyMargin, pianolaHarmonicsBucketsBuffer, harmonicsAveragerBuffer);
+
         pulseInput = new InputPort<>(inputBuffer);
+        notesInput = new InputPort<>(pianolaNotesBucketsBuffer);
+        preparedNotesInput = new InputPort<>(notesAveragerOutputBuffer);
+        preparedHarmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
         playedNotes = new OutputPort<>(outputBuffer);
 
         start();
@@ -44,14 +65,26 @@ public class Pianola implements Runnable{
         try {
             pulseInput.consume();
 
-            for(Frequency frequency : pianolaPattern.playPattern()){
+            Buckets origNoteBuckets;
+            try {
+                origNoteBuckets = notesInput.consume();
+            }
+            catch(NullPointerException e){
+                origNoteBuckets = new Buckets();
+            }
+            noteHistory = noteHistory.addNewBuckets(origNoteBuckets);
+
+            Buckets notesBeforeAveraging = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener);
+            averagerInput.produce(notesBeforeAveraging);
+
+            Buckets noteBuckets = preparedNotesInput.consume();
+            Buckets harmonicsBuckets = preparedHarmonicsInput.consume();
+
+            for(Frequency frequency : pianolaPattern.playPattern(noteBuckets, harmonicsBuckets)){
                 try {
                     playedNotes.produce(frequency);
                 }
-                catch(NullPointerException ignored){
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                catch(NullPointerException ignored) {
                 }
             }
 

@@ -5,7 +5,6 @@ import gui.buckets.*;
 import gui.spectrum.SpectrumWindow;
 import main.BoundedBuffer;
 import main.InputPort;
-import main.OutputPort;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -14,39 +13,18 @@ public class SimpleChordGenerator {
     private final SpectrumWindow spectrumWindow;
     final int chordSize;
     //todo keep own harmonicsbuckets. To save time, we can copy it from the gui.
-    public BucketHistory noteHistory = new PrecalculatedBucketHistory(50);
     Frequency[] frequencies;
     public final int margin = 80;
     private final int hardLeftBorder;
     private final int hardRightBorder;
     private final int totalMargin;
-    private final int repetitionDampener;
 
-    private final OutputPort<Buckets> notesOutput;
-    private final InputPort<Buckets> notesInput;
-
-    private final InputPort<Buckets> harmonicsInput;
-
-    public SimpleChordGenerator(BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, int repetitionDampener, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+    public SimpleChordGenerator(int chordSize, Frequency centerFrequency, int totalMargin, int hardLeftBorder, int hardRightBorder, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
         this.totalMargin = totalMargin;
         this.hardLeftBorder = hardLeftBorder;
         this.hardRightBorder = hardRightBorder;
         this.spectrumWindow = spectrumWindow;
-        this.repetitionDampener = repetitionDampener;
-
-        BoundedBuffer<Buckets> notesAveragerInputBuffer = new BoundedBuffer<>(1);
-        notesOutput = new OutputPort<>(notesAveragerInputBuffer);
-
-        BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(1);
-        new BucketsAverager(2* inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
-
-        notesInput = new InputPort<>(notesAveragerOutputBuffer);
-
-
-        BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(1);
-        new BucketsAverager(inaudibleFrequencyMargin, harmonicsBuffer, harmonicsAveragerBuffer);
-        harmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
 
         frequencies = new Frequency[chordSize];
 
@@ -57,28 +35,17 @@ public class SimpleChordGenerator {
         }
     }
 
-    public void generateChord() {
-        try {
-            Buckets notesBeforeAveraging = noteHistory.getTimeAveragedBuckets().multiply(repetitionDampener);
-            notesOutput.produce(notesBeforeAveraging);
-            Buckets noteBuckets = notesInput.consume();
+    public void generateChord(Buckets noteBuckets, Buckets harmonicsBuckets) {
+        Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
 
-            Buckets harmonicsBuckets = harmonicsInput.consume();
+        int average = findCenterFrequency();
+        Buckets centerMaximaBuckets = maximaBuckets.clip(average-totalMargin/2, average+totalMargin/2);
 
-            Buckets maximaBuckets = findBucketMaxima(noteBuckets, harmonicsBuckets);
+        Borders borders = new Borders().invoke();
+        Integer[] leftBorders = borders.getLeftBorders();
+        Integer[] rightBorders = borders.getRightBorders();
 
-            int average = findCenterFrequency();
-            Buckets centerMaximaBuckets = maximaBuckets.clip(average-totalMargin/2, average+totalMargin/2);
-
-            Borders borders = new Borders().invoke();
-            Integer[] leftBorders = borders.getLeftBorders();
-            Integer[] rightBorders = borders.getRightBorders();
-
-            updateNotes(centerMaximaBuckets, leftBorders, rightBorders);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        updateNotes(centerMaximaBuckets, leftBorders, rightBorders);
     }
 
     private int findCenterFrequency() {

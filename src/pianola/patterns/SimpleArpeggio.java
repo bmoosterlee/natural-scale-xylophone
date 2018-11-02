@@ -1,14 +1,13 @@
 package pianola.patterns;
 
-import gui.spectrum.SpectrumWindow;
-import gui.buckets.Buckets;
 import frequency.Frequency;
-import main.BoundedBuffer;
-import main.InputPort;
+import gui.buckets.Buckets;
+import gui.spectrum.SpectrumWindow;
 import pianola.chordgen.IncrementalChordGenerator;
 import pianola.chordgen.SimpleChordGenerator;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SimpleArpeggio implements PianolaPattern {
     private final int chordSize;
@@ -16,48 +15,30 @@ public class SimpleArpeggio implements PianolaPattern {
 
     private ArpeggiateUp arpeggiateUp;
 
-    private final InputPort<Buckets> notesInput;
-
-    public SimpleArpeggio(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int chordSize, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+    public SimpleArpeggio(int chordSize, SpectrumWindow spectrumWindow) {
         this.chordSize = chordSize;
-
-        notesInput = new InputPort<>(notesBuffer);
 
         Frequency centerFrequency = spectrumWindow.getCenterFrequency();
         simpleChordGenerator = new IncrementalChordGenerator(
-                                harmonicsBuffer,
-                                chordSize,
+                chordSize,
                 centerFrequency.divideBy(2.0),
                      spectrumWindow.getX(centerFrequency.multiplyBy(1.5)) -
                                     spectrumWindow.getX(centerFrequency),
                                 spectrumWindow.getX(centerFrequency.divideBy(4.0)),
-                                spectrumWindow.getX(centerFrequency.multiplyBy(4.0)), 3, spectrumWindow, inaudibleFrequencyMargin);
-        try {
-            generateNewChord();
-        }
-        catch(NullPointerException ignored){
-
-        }
+                                spectrumWindow.getX(centerFrequency.multiplyBy(4.0)), spectrumWindow);
     }
 
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Set<Frequency> frequencies = new HashSet<>();
 
         try {
-            updateNoteBuckets();
-        }
-        catch(NullPointerException ignored){
-
-        }
-
-        try {
             if (arpeggiateUp.sequencer.j == 0 && arpeggiateUp.sequencer.i == 0) {
-                generateNewChord();
+                generateNewChord(noteBuckets, harmonicsBuckets);
             }
         }
         catch(NullPointerException e){
             try {
-                generateNewChord();
+                generateNewChord(noteBuckets, harmonicsBuckets);
             }
             catch(NullPointerException ignored){
 
@@ -65,7 +46,7 @@ public class SimpleArpeggio implements PianolaPattern {
         }
 
         try {
-            frequencies.addAll(arpeggiateUp.playPattern());
+            frequencies.addAll(arpeggiateUp.playPattern(noteBuckets, harmonicsBuckets));
         }
         catch(NullPointerException ignored){
 
@@ -74,19 +55,8 @@ public class SimpleArpeggio implements PianolaPattern {
         return frequencies;
     }
 
-    private void updateNoteBuckets() {
-        try {
-            Buckets notes = notesInput.consume();
-
-            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(notes);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void generateNewChord() {
-        simpleChordGenerator.generateChord();
+    private void generateNewChord(Buckets noteBuckets, Buckets harmonicsBuckets) {
+        simpleChordGenerator.generateChord(noteBuckets, harmonicsBuckets);
         Frequency[] newFrequencies = simpleChordGenerator.getFrequencies();
         arpeggiateUp = new ArpeggiateUp(chordSize, 4, newFrequencies);
     }

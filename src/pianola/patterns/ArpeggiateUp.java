@@ -1,6 +1,7 @@
 package pianola.patterns;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 import pianola.Sequencer;
 
 import java.util.Collections;
@@ -17,7 +18,7 @@ public class ArpeggiateUp implements PianolaPattern {
     }
 
     @Override
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Frequency frequency = frequencies[sequencer.i];
 
         sequencer.tick();

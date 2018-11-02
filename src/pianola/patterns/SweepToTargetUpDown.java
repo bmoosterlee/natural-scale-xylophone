@@ -4,7 +4,6 @@ package pianola.patterns;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
-import main.BoundedBuffer;
 import pianola.Sequencer;
 
 import java.util.*;
@@ -16,22 +15,22 @@ public class SweepToTargetUpDown implements PianolaPattern {
     private final SweepToTarget sweep;
     private final Frequency[] frequencies;
 
-    public SweepToTargetUpDown(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+    public SweepToTargetUpDown(int size, Frequency centerFrequency, double multiplier, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         sequencer = new Sequencer(size, 1);
 
         halvedSize = (int) (Math.ceil(size/2.)+1);
         frequencies = new Frequency[halvedSize];
-        sweep = new SweepToTarget(notesBuffer, harmonicsBuffer, halvedSize, centerFrequency, multiplier, spectrumWindow, inaudibleFrequencyMargin);
+        sweep = new SweepToTarget(halvedSize, centerFrequency, multiplier, spectrumWindow, inaudibleFrequencyMargin);
     }
 
     @Override
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         HashSet<Frequency> frequencySet;
         try {
             Frequency frequency;
 
             if (sequencer.i < halvedSize) {
-                frequency = sweep.playPattern().iterator().next();
+                frequency = sweep.playPattern(noteBuckets, harmonicsBuckets).iterator().next();
                 frequencies[sequencer.i] = frequency;
             } else {
                 int i = (halvedSize - 1) - (sequencer.i - (halvedSize - 1));

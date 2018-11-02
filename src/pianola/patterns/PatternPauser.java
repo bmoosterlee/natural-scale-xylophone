@@ -1,6 +1,7 @@
 package pianola.patterns;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 import pianola.Sequencer;
 
 import java.util.HashSet;
@@ -18,11 +19,11 @@ public class PatternPauser implements PianolaPattern {
     }
 
     @Override
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Set<Frequency> frequencies;
 
         if(sequencer.i<patternSize){
-            frequencies = pianolaPattern.playPattern();
+            frequencies = pianolaPattern.playPattern(noteBuckets, harmonicsBuckets);
         }
         else{
             frequencies = new HashSet<>();

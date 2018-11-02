@@ -1,6 +1,7 @@
 package pianola.patterns;
 
 import frequency.Frequency;
+import gui.buckets.Buckets;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,7 +15,7 @@ public class ChordPlayer implements PianolaPattern {
     }
 
     @Override
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Set<Frequency> frequencies = new HashSet<>();
 
         Collections.addAll(frequencies, chord);

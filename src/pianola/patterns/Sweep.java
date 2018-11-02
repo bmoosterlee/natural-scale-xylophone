@@ -4,7 +4,6 @@ import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
 import main.BoundedBuffer;
-import main.InputPort;
 import pianola.Sequencer;
 import pianola.chordgen.SimpleChordGenerator;
 
@@ -22,19 +21,13 @@ public class Sweep implements PianolaPattern {
     final Sequencer sequencer;
     final SpectrumWindow spectrumWindow;
 
-    private final InputPort<Buckets> notesInput;
-    final BoundedBuffer<Buckets> harmonicsBuffer;
     protected int inaudibleFrequencyMargin;
 
-    Sweep(BoundedBuffer<Buckets> notesBuffer, BoundedBuffer<Buckets> harmonicsBuffer, int size, Frequency centerFrequency, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+    Sweep(int size, Frequency centerFrequency, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         this.spectrumWindow = spectrumWindow;
         this.size = size;
 
         this.inaudibleFrequencyMargin = inaudibleFrequencyMargin;
-
-        notesInput = new InputPort<>(notesBuffer);
-
-        this.harmonicsBuffer = harmonicsBuffer;
 
         sequencer = new Sequencer(size, 1);
 
@@ -43,45 +36,35 @@ public class Sweep implements PianolaPattern {
 
         simpleChordGenerator =
                 getSimpleChordGenerator(centerFrequency);
-        try {
-            generateNewChord();
-        }
-        catch(NullPointerException ignored){
-
-        }
     }
 
     SimpleChordGenerator getSimpleChordGenerator(Frequency centerFrequency) {
         return new SimpleChordGenerator(
-                harmonicsBuffer,
                 1,
                 centerFrequency,
                 totalMargin,
                 spectrumWindow.getX(spectrumWindow.lowerBound),
                 spectrumWindow.getX(spectrumWindow.upperBound.divideBy(2.0)),
-                3,
-                spectrumWindow,
-                inaudibleFrequencyMargin);
+                spectrumWindow
+        );
     }
 
-    public Set<Frequency> playPattern() {
+    public Set<Frequency> playPattern(Buckets noteBuckets, Buckets harmonicsBuckets) {
         Set<Frequency> frequencies = new HashSet<>();
-
-        updateNoteBuckets();
 
         try {
             if (sequencer.isResetting()) {
-                generateNewChord();
-                frequencies.addAll(new ChordPlayer(simpleChordGenerator.getFrequencies()).playPattern());
+                generateNewChord(noteBuckets, harmonicsBuckets);
+                frequencies.addAll(new ChordPlayer(simpleChordGenerator.getFrequencies()).playPattern(noteBuckets, harmonicsBuckets));
             }
             else {
-                moveRight();
-                frequencies.addAll(new ChordPlayer(sweepGenerator.getFrequencies()).playPattern());
+                moveRight(noteBuckets, harmonicsBuckets);
+                frequencies.addAll(new ChordPlayer(sweepGenerator.getFrequencies()).playPattern(noteBuckets, harmonicsBuckets));
             }
             sequencer.tick();
         } catch (NullPointerException e) {
             try {
-                generateNewChord();
+                generateNewChord(noteBuckets, harmonicsBuckets);
             } catch (NullPointerException ignored) {
 
             }
@@ -90,46 +73,26 @@ public class Sweep implements PianolaPattern {
         return frequencies;
     }
 
-    private void updateNoteBuckets() {
-        try {
-            Buckets origNoteBuckets;
-            try {
-                origNoteBuckets = notesInput.consume();
-            }
-            catch(NullPointerException e){
-                origNoteBuckets = new Buckets();
-            }
-
-            simpleChordGenerator.noteHistory = simpleChordGenerator.noteHistory.addNewBuckets(origNoteBuckets);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    void generateNewChord() {
-        simpleChordGenerator.generateChord();
+    void generateNewChord(Buckets noteBuckets, Buckets harmonicsBuckets) {
+        simpleChordGenerator.generateChord(noteBuckets, harmonicsBuckets);
         sweepGenerator = simpleChordGenerator;
     }
 
-    void moveRight() {
+    void moveRight(Buckets noteBuckets, Buckets harmonicsBuckets) {
         sweepGenerator = findNextSweepGenerator();
-        sweepGenerator.noteHistory = simpleChordGenerator.noteHistory;
-        sweepGenerator.generateChord();
+        sweepGenerator.generateChord(noteBuckets, harmonicsBuckets);
     }
 
     SimpleChordGenerator findNextSweepGenerator() {
         Frequency previousFrequency = spectrumWindow.getFrequency(spectrumWindow.getX(sweepGenerator.getFrequencies()[0]) +
                 simpleChordGenerator.margin + 1);
         return new SimpleChordGenerator(
-                harmonicsBuffer,
                 1,
                                   previousFrequency,
                                   totalMargin,
                 spectrumWindow.getX(previousFrequency),
                 spectrumWindow.getX(spectrumWindow.upperBound),
-                1,
-                spectrumWindow,
-                inaudibleFrequencyMargin);
+                spectrumWindow
+        );
     }
 }
