@@ -41,20 +41,33 @@ class Main {
         double octaveRange = 3.;
         int inaudibleFrequencyMargin = (int) (width/octaveRange/12/5);
 
+        int pianolaRate = 4;
+        int pianolaLookahead = pianolaRate / 4;
+
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead);
+        SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
+
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(32);
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(1);
-        new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeAmplitudeStateBuffer, sampleRate);
-
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new BoundedBuffer<>(1);
-        new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
-        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1);
-        new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
+        initalizeSoundPipeline(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, newNoteBuffer, volumeAmplitudeStateBuffer3);
 
-        initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
+        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        initializeSpectrumPipeline(frameRate, frameLookahead, width, spectrumWindow, volumeAmplitudeStateBuffer3, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
 
+        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
+        new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
+        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
+        new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
+        initializeGUIPipeline(width, inaudibleFrequencyMargin, spectrumWindow, newNoteBuffer, guiNotesBucketsBuffer, guiHarmonicsBucketsBuffer);
+        initializePianolaPipeline(pianolaRate, pianolaLookahead, inaudibleFrequencyMargin, spectrumWindow, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer);
+
+        playTestTone(newNoteBuffer, spectrumWindow);
+    }
+
+    private static void initializeSpectrumPipeline(int frameRate, int frameLookahead, int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer) {
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(1);
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
 
@@ -64,45 +77,37 @@ class Main {
 
         BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead);
 
-        SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1);
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(1);
         BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(1);
         new Broadcast<>(frameTickBuffer, new HashSet<>(Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3)));
-        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(1);
-        new VolumeStateToBuckets(spectrumWindow, frameTickBuffer1, volumeStateBuffer3, inputNotesBucketsBuffer);
+        new VolumeStateToBuckets(spectrumWindow, frameTickBuffer1, volumeStateBuffer2, inputNotesBucketsBuffer);
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(1);
-        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer2, harmonicsBuffer);
+        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer3, harmonicsBuffer);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
-        for(Integer i = 0; i<width; i++){
+        for(Integer i = 0; i< width; i++){
             harmonicsMap.put(i, new BoundedBuffer<>(1000));
         }
         new SpectrumManager(spectrumWindow, harmonicsBuffer, harmonicsMap);
 
         BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BuffersToBuckets(harmonicsMap, frameTickBuffer3, inputHarmonicsBucketsBuffer);
-        BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BucketHistoryComponent(200, inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
-        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(1);
-        new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
+    }
 
+    private static void initializeGUIPipeline(int width, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> guiNotesBucketsBuffer, BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer) {
         BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(1);
         new BucketsAverager(inaudibleFrequencyMargin, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
-        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(1);
-        new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(1);
         GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer, width);
 
         gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
         gui.addMouseMotionListener(new CursorMover(cursorXBuffer));
+    }
 
-        int pianolaRate = 4;
-        int pianolaLookahead = pianolaRate/4;
-
+    private static void initializePianolaPipeline(int pianolaRate, int pianolaLookahead, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> pianolaNotesBucketsBuffer, BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer) {
         BoundedBuffer<Pulse> pianolaTicker = initializePulseTicker(pianolaRate, pianolaLookahead);
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
@@ -111,8 +116,19 @@ class Main {
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
         new Pianola(pianolaPattern, pianolaTicker, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, inaudibleFrequencyMargin);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
+    }
 
-        playTestTone(newNoteBuffer, spectrumWindow);
+    private static void initalizeSoundPipeline(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3) {
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead);
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(1);
+        new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeAmplitudeStateBuffer, sampleRate);
+
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(1);
+        new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
+        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1);
+        new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
+
+        initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
     }
 
     private static void playTestTone(BoundedBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
