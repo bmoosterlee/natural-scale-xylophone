@@ -3,12 +3,12 @@ package main;
 import java.util.HashSet;
 import java.util.Set;
 
-class Broadcast<T> implements Runnable{
+public class Broadcast<T> implements Runnable{
 
     private final InputPort<T> input;
     private final Set<OutputPort<T>> outputs;
 
-    Broadcast(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
+    public Broadcast(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);
 
         outputs = new HashSet<>();

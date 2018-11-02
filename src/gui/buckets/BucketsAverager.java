@@ -1,33 +1,91 @@
 package gui.buckets;
 
 import main.BoundedBuffer;
+import main.Broadcast;
 import main.InputPort;
 import main.OutputPort;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BucketsAverager implements Runnable {
     private final int averagingWidth;
     private final double[] multipliers;
 
     private final InputPort<Buckets> bucketsInput;
-    private final OutputPort<Buckets> averagedBucketsOutput;
+    private final OutputPort<Buckets> adderInput;
+    private final OutputPort<Buckets> multiplierInput;
 
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
         this.averagingWidth = averagingWidth;
 
-        multipliers = new double[this.averagingWidth];
+        multipliers = new double[this.averagingWidth-1];
         for (int i = 1; i < this.averagingWidth; i++) {
-            multipliers[i] = ((double) this.averagingWidth - i) / this.averagingWidth;
+            multipliers[i-1] = ((double) this.averagingWidth - i) / this.averagingWidth;
         }
 
+        BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(1);
+        multiplierInput = new OutputPort<>(hollowBucketsBuffer);
+
+        BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[this.averagingWidth-1];
+        BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[this.averagingWidth-1];
+
+        for(int i = 0; i < this.averagingWidth-1; i++) {
+            BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>(1);
+            BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(1);
+            new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
+
+            multiplierInputBuffers[i] = multiplierInputBuffer;
+            multiplierOutputBuffers[i] = multiplierOutputBuffer;
+        }
+
+        new Broadcast<>(hollowBucketsBuffer, new HashSet<>(Arrays.asList(multiplierInputBuffers)));
+
+        BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[this.averagingWidth-1];
+        for(int i = 0; i < this.averagingWidth-1; i++) {
+            multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(1);
+        }
+
+        BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[this.averagingWidth-1];
+        for(int i = 0; i < this.averagingWidth-1; i++) {
+            multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(1);
+        }
+
+        for(int i = 0; i < this.averagingWidth-1; i++) {
+            new Broadcast(multiplierOutputBuffers[i], new HashSet(Arrays.asList(multiplierOutputBuffersPositive[i], multiplierOutputBuffersNegative[i])));
+        }
+
+        OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth-1)*2];
+
+        Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+        BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(1);
+        adderInput = new OutputPort<>(firstAdderBuffer);
+        adderBuffers.add(firstAdderBuffer);
+
+        for(int i = 0; i< averagingWidth-1; i++) {
+            BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
+            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(1);
+
+            new Transposer(transposerInputBuffer, transposerOutputBuffer, (i+1));
+            transposerInputs[i] = new OutputPort<>(transposerInputBuffer);
+
+            adderBuffers.add(transposerOutputBuffer);
+        }
+
+        for(int i = 0; i< averagingWidth-1; i++) {
+            BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
+            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(1);
+
+            new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i+1));
+            transposerInputs[averagingWidth-1+i] = new OutputPort<>(transposerInputBuffer);
+
+            adderBuffers.add(transposerOutputBuffer);
+        }
+
+        new Adder(adderBuffers, outputBuffer);
+
         bucketsInput = new InputPort<>(inputBuffer);
-        averagedBucketsOutput = new OutputPort<>(outputBuffer);
 
         start();
     }
@@ -47,38 +105,14 @@ public class BucketsAverager implements Runnable {
         try {
             Buckets newBuckets = bucketsInput.consume();
 
-            Buckets averagedBuckets = averageBuckets(newBuckets);
-
-            averagedBucketsOutput.produce(averagedBuckets);
+            averageBuckets(newBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private Buckets averageBuckets(Buckets buckets) {
-        Buckets voidBuckets = getHollowBuckets(buckets);
-
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets multiply and transpose buckets");
-        Set<Buckets> bucketsCollection = new HashSet<>();
-        bucketsCollection.add(buckets);
-
-        for(int i = 1; i< averagingWidth; i++) {
-            Buckets multipliedBuckets = voidBuckets.multiply(multipliers[i]);
-            bucketsCollection.add(multipliedBuckets.transpose(-i));
-            bucketsCollection.add(multipliedBuckets.transpose(i));
-        }
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("average buckets construct new buckets");
-        Buckets newBuckets = Buckets.add(bucketsCollection);
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        return newBuckets;
-    }
-
     private Buckets getHollowBuckets(Buckets buckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets get hollow buckets");
         Set<Integer> indices = buckets.getIndices();
         Map<Integer, Bucket> voidEntries = new HashMap<>();
 
@@ -87,9 +121,21 @@ public class BucketsAverager implements Runnable {
             voidEntries.put(x, new AtomicBucket(volume));
         }
 
-        Buckets voidBuckets = new Buckets(indices, voidEntries);
-        PerformanceTracker.stopTracking(timeKeeper);
+        return new Buckets(indices, voidEntries);
+    }
 
-        return voidBuckets;
+    private void averageBuckets(Buckets buckets) {
+        try {
+            TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
+            Buckets voidBuckets = getHollowBuckets(buckets);
+            PerformanceTracker.stopTracking(timeKeeper);
+
+            adderInput.produce(buckets);
+
+            multiplierInput.produce(voidBuckets);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
