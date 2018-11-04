@@ -28,16 +28,19 @@ public class Pianola implements Runnable{
 
     public Pianola(PianolaPattern pianolaPattern, BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> outputBuffer, BoundedBuffer<Buckets> pianolaNotesBucketsBuffer, BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
+        
+        int count = 0;
+        int capacity = 1000;
 
         repetitionDampener = 3;
         noteHistory = new PrecalculatedBucketHistory(50);
 
-        BoundedBuffer<Buckets> notesAveragerInputBuffer = new BoundedBuffer<>(1);
-        BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> notesAveragerInputBuffer = new BoundedBuffer<>(capacity, "Pianola" + String.valueOf(count)); count++;
+        BoundedBuffer<Buckets> notesAveragerOutputBuffer = new BoundedBuffer<>(capacity, "Pianola" + String.valueOf(count)); count++;
         new BucketsAverager(2* inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
         averagerInput = new OutputPort<>(notesAveragerInputBuffer);
 
-        BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> harmonicsAveragerBuffer = new BoundedBuffer<>(capacity, "Pianola" + String.valueOf(count)); count++;
         new BucketsAverager(inaudibleFrequencyMargin, pianolaHarmonicsBucketsBuffer, harmonicsAveragerBuffer);
 
         pulseInput = new InputPort<>(inputBuffer);

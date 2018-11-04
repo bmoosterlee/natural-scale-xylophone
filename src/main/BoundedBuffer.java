@@ -5,6 +5,8 @@ import java.util.concurrent.Semaphore;
 
 public class BoundedBuffer<T> {
 
+    private String name;
+
     final ConcurrentLinkedQueue<T> buffer;
     final Semaphore emptySpots;
     final Semaphore filledSpots;
@@ -22,7 +24,19 @@ public class BoundedBuffer<T> {
         }
     }
 
+    public BoundedBuffer(int capacity, String name){
+        this(capacity);
+        this.name = name;
+    }
+
     void offer(T packet) throws InterruptedException {
+        if(isFull()) {
+            String fixedName = name;
+            if(fixedName==null){
+                fixedName = "unnamed";
+            }
+            System.out.println(fixedName + " is clogged up.");
+        }
         emptySpots.acquire();
         buffer.offer(packet);
         filledSpots.release();
@@ -33,5 +47,13 @@ public class BoundedBuffer<T> {
         T item = buffer.poll();
         emptySpots.release();
         return item;
+    }
+
+    public boolean isEmpty() {
+        return filledSpots.availablePermits()==0;
+    }
+
+    public boolean isFull() {
+        return emptySpots.availablePermits()==0;
     }
 }

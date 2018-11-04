@@ -20,20 +20,23 @@ public class BucketsAverager implements Runnable {
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
         this.averagingWidth = averagingWidth;
 
+        int capacity = 10000;
+        int count = 0;
+
         multipliers = new double[this.averagingWidth-1];
         for (int i = 1; i < this.averagingWidth; i++) {
             multipliers[i-1] = ((double) this.averagingWidth - i) / this.averagingWidth;
         }
 
-        BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
         multiplierInput = new OutputPort<>(hollowBucketsBuffer);
 
         BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[this.averagingWidth-1];
         BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[this.averagingWidth-1];
 
         for(int i = 0; i < this.averagingWidth-1; i++) {
-            BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>(1);
-            BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(1);
+            BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>( capacity, "BucketsAverager" + String.valueOf(count)); count++;
+            BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
             new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
 
             multiplierInputBuffers[i] = multiplierInputBuffer;
@@ -44,12 +47,12 @@ public class BucketsAverager implements Runnable {
 
         BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[this.averagingWidth-1];
         for(int i = 0; i < this.averagingWidth-1; i++) {
-            multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(1);
+            multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
         }
 
         BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[this.averagingWidth-1];
         for(int i = 0; i < this.averagingWidth-1; i++) {
-            multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(1);
+            multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
         }
 
         for(int i = 0; i < this.averagingWidth-1; i++) {
@@ -59,13 +62,13 @@ public class BucketsAverager implements Runnable {
         OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth-1)*2];
 
         Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
-        BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(1);
+        BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
         adderInput = new OutputPort<>(firstAdderBuffer);
         adderBuffers.add(firstAdderBuffer);
 
         for(int i = 0; i< averagingWidth-1; i++) {
             BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
-            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(1);
+            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
 
             new Transposer(transposerInputBuffer, transposerOutputBuffer, (i+1));
             transposerInputs[i] = new OutputPort<>(transposerInputBuffer);
@@ -75,7 +78,7 @@ public class BucketsAverager implements Runnable {
 
         for(int i = 0; i< averagingWidth-1; i++) {
             BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
-            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(1);
+            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
 
             new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i+1));
             transposerInputs[averagingWidth-1+i] = new OutputPort<>(transposerInputBuffer);

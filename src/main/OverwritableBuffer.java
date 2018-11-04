@@ -6,6 +6,10 @@ class OverwritableBuffer<T> extends BoundedBuffer<T>{
         super(capacity);
     }
 
+    public OverwritableBuffer(int capacity, String name) {
+        super(capacity, name);
+    }
+
     @Override
     void offer(T packet) throws InterruptedException {
         if(emptySpots.availablePermits()==0){

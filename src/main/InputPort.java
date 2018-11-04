@@ -38,6 +38,6 @@ public class InputPort<T> {
     }
 
     public boolean isEmpty() {
-        return buffer.filledSpots.availablePermits()==0;
+        return buffer.isEmpty();
     }
 }
