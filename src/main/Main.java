@@ -132,6 +132,9 @@ class Main {
     private static void initalizeSoundPipeline(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3) {
         BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "Sample ticker");
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
+        BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
+        new NoteTimestamper(sampleCountBuffer, newNoteBuffer, timeStampedNewNotesBuffer);
+        new VolumeAmplitudeCalculator(timeStampedNewNotesBuffer, volumeAmplitudeStateBuffer, sampleRate);
 
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "volume state to signal");
         new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));

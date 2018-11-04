@@ -14,6 +14,7 @@ import time.TimeInSeconds;
 import time.TimeKeeper;
 import wave.Wave;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,18 +26,16 @@ public class VolumeAmplitudeCalculator implements Runnable {
 
     private final Map<Long, VolumeAmplitudeState> futureVolumeAmplitudes;
 
-    private final InputPort<Long> sampleCountInput;
-    private final InputPort<Frequency> newNoteInput;
+    private final InputPort<TimestampedFrequencies> timestampedNewNotesInput;
     private final OutputPort<VolumeAmplitudeState> volumeAmplitudeStateOutput;
 
-    public VolumeAmplitudeCalculator(BoundedBuffer<Long> sampleCountInputBuffer, BoundedBuffer<Frequency> newNoteInputBuffer, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateOutputBuffer, SampleRate sampleRate){
+    public VolumeAmplitudeCalculator(BoundedBuffer<TimestampedFrequencies> timestampedNewNotesBuffer, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateOutputBuffer, SampleRate sampleRate){
         this.sampleRate = sampleRate;
         envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
 
         futureVolumeAmplitudes = new HashMap<>();
 
-        sampleCountInput = new InputPort<>(sampleCountInputBuffer);
-        newNoteInput = new InputPort<>(newNoteInputBuffer);
+        timestampedNewNotesInput = new InputPort<>(timestampedNewNotesBuffer);
         volumeAmplitudeStateOutput = new OutputPort<>(volumeAmplitudeStateOutputBuffer);
 
         start();
@@ -55,10 +54,12 @@ public class VolumeAmplitudeCalculator implements Runnable {
 
     private void tick() {
         try {
-            Long sampleCount = sampleCountInput.consume();
+            TimestampedFrequencies timestampedNewNotes = timestampedNewNotesInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("calculate volumes");
-            addNotes(sampleCount);
+            long sampleCount = timestampedNewNotes.getSampleCount();
+
+            addNotes(sampleCount, timestampedNewNotes.getFrequencies());
 
             VolumeAmplitudeState currentState = futureVolumeAmplitudes.remove(sampleCount);
 
@@ -74,9 +75,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
         }
     }
 
-    private void addNotes(Long sampleCount) throws InterruptedException {
-        List<Frequency> newNotes = newNoteInput.flush();
-
+    private void addNotes(Long sampleCount, Collection<Frequency> newNotes) {
         DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
 
         Map<Frequency, Wave> waves = new HashMap<>();
@@ -91,7 +90,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
         }
     }
 
-    private void addVolumes(List<Frequency> newNotes, Long i, double volume, Map<Frequency, Wave> waves) {
+    private void addVolumes(Collection<Frequency> newNotes, Long i, double volume, Map<Frequency, Wave> waves) {
         VolumeAmplitudeState newVolumeState = getOldVolumeAmplitudeState(i);
 
         for (Frequency frequency : newNotes) {
