@@ -120,7 +120,6 @@ public class VolumeAmplitudeCalculator implements Runnable {
     }
 
     private void finish(long sampleCount) {
-
         try {
             Collection<EnvelopeForFrequency> currentUnfinishedSlices = unfinishedSlices.remove(sampleCount);
 
@@ -139,7 +138,6 @@ public class VolumeAmplitudeCalculator implements Runnable {
             catch(NullPointerException e){
                 waveOutputPort.produce(new HashMap<>());
             }
-
             Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = sumValuesPerFrequencyInputPort.consume();
 
             updateFinishedSlices(sampleCount, newVolumeAmplitudes);
