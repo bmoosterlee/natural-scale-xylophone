@@ -28,7 +28,8 @@ public class VolumeAmplitudeCalculator implements Runnable {
     private final OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
     private final OutputPort<Long> sampleCountOutputPort;
     private final OutputPort<Map<Frequency, Wave>> waveOutputPort;
-    private final InputPort<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyInputPort;
+    private final OutputPort<VolumeAmplitudeState> oldStateOutputPort;
+    private final InputPort<VolumeAmplitudeState> newStateInputPort;
 
     public VolumeAmplitudeCalculator(BoundedBuffer<TimestampedNewNotesWithEnvelope> inputBuffer, BoundedBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         this.sampleRate = sampleRate;
@@ -67,7 +68,15 @@ public class VolumeAmplitudeCalculator implements Runnable {
 
         BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(10000, "sumValuesPerFrequency - output");
         new PipeComponent<>(calculateValuesPerFrequencyOutputBuffer, sumValuesPerFrequencyOutputBuffer, VolumeAmplitudeCalculator::sumValuesPerFrequency);
-        sumValuesPerFrequencyInputPort = new InputPort<>(sumValuesPerFrequencyOutputBuffer);
+
+        BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new BoundedBuffer<>(10000, "oldState");
+        oldStateOutputPort = new OutputPort<>(oldStateBuffer);
+        BoundedBuffer<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>> pair3Buffer = new BoundedBuffer<>(10000, "pair3");
+        new Pairer<>(oldStateBuffer, sumValuesPerFrequencyOutputBuffer, pair3Buffer);
+
+        BoundedBuffer<VolumeAmplitudeState> newStateBuffer = new BoundedBuffer<>(10000, "newState");
+        newStateInputPort = new InputPort<>(newStateBuffer);
+        new PipeComponent<>(pair3Buffer, newStateBuffer, input -> input.getKey().add(input.getValue()));
 
         start();
     }
@@ -121,6 +130,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
     private VolumeAmplitudeState finish(long sampleCount) {
         try {
             Collection<EnvelopeForFrequency> currentUnfinishedSlices = unfinishedSlices.remove(sampleCount);
+            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
 
             try {
                 groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlices);
@@ -130,7 +140,6 @@ public class VolumeAmplitudeCalculator implements Runnable {
             }
 
             sampleCountOutputPort.produce(sampleCount);
-            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
             try {
                 waveOutputPort.produce(currentUnfinishedSliceWaves);
             }
@@ -138,28 +147,24 @@ public class VolumeAmplitudeCalculator implements Runnable {
                 waveOutputPort.produce(new HashMap<>());
             }
 
-            Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = sumValuesPerFrequencyInputPort.consume();
+            VolumeAmplitudeState oldVolumeState = finishedSlices.remove(sampleCount);
 
-            return totalFinishedSlices(sampleCount, newVolumeAmplitudes);
+            try {
+                oldStateOutputPort.produce(oldVolumeState);
+            }
+            catch(NullPointerException e){
+                oldStateOutputPort.produce(new VolumeAmplitudeState(sampleCount, new HashMap<>()));
+            }
+
+            VolumeAmplitudeState result = newStateInputPort.consume();
+
+            return result;
 
         } catch (InterruptedException e) {
             e.printStackTrace();
 
             return null;
         }
-    }
-
-    private VolumeAmplitudeState totalFinishedSlices(long sampleCount, Map<Frequency, VolumeAmplitude> newVolumeAmplitudes) {
-        VolumeAmplitudeState oldVolumeState = finishedSlices.remove(sampleCount);
-        VolumeAmplitudeState totalVolumeState;
-        try {
-            totalVolumeState = oldVolumeState.add(newVolumeAmplitudes);
-        }
-        catch(NullPointerException e){
-            totalVolumeState = new VolumeAmplitudeState(sampleCount, newVolumeAmplitudes);
-        }
-
-        return totalVolumeState;
     }
 
     private static Map<Frequency, VolumeAmplitude> sumValuesPerFrequency(Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections) {
