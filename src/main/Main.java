@@ -50,7 +50,7 @@ class Main {
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new BoundedBuffer<>(capacity, String.valueOf(count));
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new OverwritableBuffer<>(1, String.valueOf(count));
         count++;
         initalizeSoundPipeline(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, newNoteBuffer, volumeAmplitudeStateBuffer3);
 
@@ -71,28 +71,28 @@ class Main {
     }
 
     private static void initializeSpectrumPipeline(int frameRate, int frameLookahead, int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer) {
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
-        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer3, volumeStateBuffer);
-
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new OverwritableBuffer<>(capacity);
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(capacity);
-        new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
-
         BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
-
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(capacity, String.valueOf(count));
+        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer4 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        new Broadcast<>(frameTickBuffer, new HashSet<>(Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3)));
-        new VolumeStateToBuckets(spectrumWindow, frameTickBuffer1, volumeStateBuffer2, inputNotesBucketsBuffer);
+        new TimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer3, volumeAmplitudeStateBuffer4);
+        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
+        count++;
+        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer4, volumeStateBuffer);
+
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new OverwritableBuffer<>(1);
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
+        new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+
+        new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, inputNotesBucketsBuffer);
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        new HarmonicCalculator(100, frameTickBuffer2, volumeStateBuffer3, harmonicsBuffer);
+        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i< width; i++){
@@ -103,7 +103,7 @@ class Main {
         BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         //todo find all uses of history component and check whether we can eliminate the conversion from buffers to buckets.
-        new BuffersToBuckets(harmonicsMap, frameTickBuffer3, inputHarmonicsBucketsBuffer);
+        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
         new BucketHistoryComponent(200, inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
     }
 

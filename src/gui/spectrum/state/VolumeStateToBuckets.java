@@ -21,14 +21,12 @@ import java.util.Set;
 public class VolumeStateToBuckets implements Runnable {
     private final SpectrumWindow spectrumWindow;
 
-    private final InputPort<Pulse> frameEndTimeInput;
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Buckets> notesBucketsOutput;
 
-    public VolumeStateToBuckets(SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameEndTimeBuffer, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
+    public VolumeStateToBuckets(SpectrumWindow spectrumWindow, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
         this.spectrumWindow = spectrumWindow;
-        
-        frameEndTimeInput = new InputPort<>(frameEndTimeBuffer);
+
         volumeStateInput = new InputPort<>(volumeStateBuffer);
         notesBucketsOutput = new OutputPort<>(notesBucketsBuffer);
 
@@ -48,7 +46,6 @@ public class VolumeStateToBuckets implements Runnable {
 
     private void tick(){
         try {
-            frameEndTimeInput.consume();
             VolumeState volumeState = volumeStateInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");

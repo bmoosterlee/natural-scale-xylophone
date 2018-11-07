@@ -46,10 +46,8 @@ public class EnvelopeWaveBuilder implements Runnable {
             TimestampedFrequencies timestampedNewNotes = input.consume();
 
             long sampleCount = timestampedNewNotes.getSampleCount();
-            Collection<Frequency> newNotes = timestampedNewNotes.getFrequencies();
-
             DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
-
+            Collection<Frequency> newNotes = timestampedNewNotes.getFrequencies();
             TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
 
             output.produce(timestampedNewNotesWithEnvelope);

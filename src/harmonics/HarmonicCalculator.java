@@ -20,17 +20,15 @@ public class HarmonicCalculator implements Runnable {
 
     private final int maxHarmonics;
 
-    private final InputPort<Pulse> pulseInput;
     private final InputPort<VolumeState> volumeInput;
     private final OutputPort<Iterator<Map.Entry<Harmonic, Double>>> iteratorOutput;
 
-    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<Pulse> pulseBuffer, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
+    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
         this.maxHarmonics = maxHarmonics;
 
         newHarmonicsCalculator = new NewHarmonicsCalculator();
         memoizedHighValueHarmonics = new MemoizedHighValueHarmonics();
 
-        pulseInput = new InputPort<>(pulseBuffer);
         volumeInput = new InputPort<>(inputBuffer);
         iteratorOutput = new OutputPort<>(outputBuffer);
 
@@ -50,7 +48,6 @@ public class HarmonicCalculator implements Runnable {
 
     private void tick() {
         try {
-            pulseInput.consume();
             VolumeState volumeState = volumeInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("create harmonic hierarchy iterator");
