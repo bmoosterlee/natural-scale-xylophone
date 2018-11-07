@@ -93,8 +93,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("calculate volumes");
             addNewNotes(sampleCount, envelope, newNotes);
-            finish(sampleCount);
-            VolumeAmplitudeState currentState = finishedSlices.remove(sampleCount);
+            VolumeAmplitudeState currentState = finish(sampleCount);
 
 //            precalculateInBackground();
             PerformanceTracker.stopTracking(timeKeeper);
@@ -110,7 +109,8 @@ public class VolumeAmplitudeCalculator implements Runnable {
         while(input.isEmpty()){
             try {
                 Long futureSampleCount = unfinishedSlices.keySet().iterator().next();
-                finish(futureSampleCount);
+                VolumeAmplitudeState finishedSlice = finish(futureSampleCount);
+                finishedSlices.put(futureSampleCount, finishedSlice);
             }
             catch(NoSuchElementException e){
                 break;
@@ -118,7 +118,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
         }
     }
 
-    private void finish(long sampleCount) {
+    private VolumeAmplitudeState finish(long sampleCount) {
         try {
             Collection<EnvelopeForFrequency> currentUnfinishedSlices = unfinishedSlices.remove(sampleCount);
 
@@ -137,16 +137,19 @@ public class VolumeAmplitudeCalculator implements Runnable {
             catch(NullPointerException e){
                 waveOutputPort.produce(new HashMap<>());
             }
+
             Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = sumValuesPerFrequencyInputPort.consume();
 
-            updateFinishedSlices(sampleCount, newVolumeAmplitudes);
+            return totalFinishedSlices(sampleCount, newVolumeAmplitudes);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
+
+            return null;
         }
     }
 
-    private void updateFinishedSlices(long sampleCount, Map<Frequency, VolumeAmplitude> newVolumeAmplitudes) {
+    private VolumeAmplitudeState totalFinishedSlices(long sampleCount, Map<Frequency, VolumeAmplitude> newVolumeAmplitudes) {
         VolumeAmplitudeState oldVolumeState = finishedSlices.remove(sampleCount);
         VolumeAmplitudeState totalVolumeState;
         try {
@@ -156,7 +159,7 @@ public class VolumeAmplitudeCalculator implements Runnable {
             totalVolumeState = new VolumeAmplitudeState(sampleCount, newVolumeAmplitudes);
         }
 
-        finishedSlices.put(sampleCount, totalVolumeState);
+        return totalVolumeState;
     }
 
     private static Map<Frequency, VolumeAmplitude> sumValuesPerFrequency(Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections) {
