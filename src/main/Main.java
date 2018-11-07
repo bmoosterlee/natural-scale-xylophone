@@ -84,8 +84,8 @@ class Main {
         count++;
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer4, volumeStateBuffer);
 
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new OverwritableBuffer<>(1);
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new OverwritableBuffer<>(1);
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity);
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity);
         new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
 
         new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, inputNotesBucketsBuffer);
