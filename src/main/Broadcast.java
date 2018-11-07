@@ -1,14 +1,15 @@
 package main;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 public class Broadcast<T> implements Runnable{
 
     private final InputPort<T> input;
-    private final Set<OutputPort<T>> outputs;
+    private final Collection<OutputPort<T>> outputs;
 
-    public Broadcast(BoundedBuffer<T> inputBuffer, Set<BoundedBuffer<T>> outputBuffers) {
+    public Broadcast(BoundedBuffer<T> inputBuffer, Collection<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);
 
         outputs = new HashSet<>();
