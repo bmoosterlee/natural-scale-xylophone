@@ -170,14 +170,19 @@ public class VolumeAmplitudeCalculator implements Runnable {
     }
 
     private static Map<Frequency, Collection<VolumeAmplitude>> calculateValuesPerFrequency(EnvelopeWaveSlice envelopeWaveSlice) {
-        Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections = new HashMap<>();
-        for (Frequency frequency : envelopeWaveSlice.getEnvelopesPerFrequency().keySet()) {
-            Collection<Envelope> envelopeWaves = envelopeWaveSlice.getEnvelopesPerFrequency().get(frequency);
-            Collection<VolumeAmplitude> volumeAmplitudes = new LinkedList<>();
+        long sampleCount = envelopeWaveSlice.getSampleCount();
+        Map<Frequency, Collection<Envelope>> envelopesPerFrequency = envelopeWaveSlice.getEnvelopesPerFrequency();
+        Map<Frequency, Wave> wavesPerFrequency = envelopeWaveSlice.getWavesPerFrequency();
 
-            for(Envelope envelope : envelopeWaves) {
-                double volume = envelope.getVolume(envelopeWaveSlice.getSampleCount());
-                double amplitude = envelopeWaveSlice.getWavesPerFrequency().get(frequency).getAmplitude(envelopeWaveSlice.getSampleCount());
+        Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections = new HashMap<>();
+        for (Frequency frequency : envelopesPerFrequency.keySet()) {
+            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
+            Wave wave = wavesPerFrequency.get(frequency);
+            double amplitude = wave.getAmplitude(sampleCount);
+
+            Collection<VolumeAmplitude> volumeAmplitudes = new LinkedList<>();
+            for(Envelope envelope : envelopes) {
+                double volume = envelope.getVolume(sampleCount);
                 VolumeAmplitude volumeAmplitude = new VolumeAmplitude(volume, amplitude);
                 volumeAmplitudes.add(volumeAmplitude);
             }
