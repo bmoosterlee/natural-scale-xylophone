@@ -2,19 +2,18 @@ package notes.state;
 
 import frequency.Frequency;
 import notes.envelope.DeterministicEnvelope;
-import wave.Wave;
 
-import java.util.Map;
+import java.util.Collection;
 
-public class TimestampedEnvelopeWaves {
+public class TimestampedNewNotesWithEnvelope {
     private final Long sampleCount;
     private final DeterministicEnvelope envelope;
-    private final Map<Frequency, Wave> waves;
+    private final Collection<Frequency> frequencies;
 
-    public TimestampedEnvelopeWaves(Long sampleCount, DeterministicEnvelope envelope, Map<Frequency, Wave> waves) {
+    public TimestampedNewNotesWithEnvelope(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
         this.sampleCount = sampleCount;
         this.envelope = envelope;
-        this.waves = waves;
+        this.frequencies = frequencies;
     }
 
     public long getSampleCount() {
@@ -25,7 +24,7 @@ public class TimestampedEnvelopeWaves {
         return envelope;
     }
 
-    public Map<Frequency, Wave> getWaves() {
-        return waves;
+    public Collection<Frequency> getFrequencies() {
+        return frequencies;
     }
 }

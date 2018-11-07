@@ -1,32 +1,73 @@
 package notes.state;
 
 import frequency.Frequency;
-import main.BoundedBuffer;
-import main.InputPort;
-import main.OutputPort;
+import main.*;
 import notes.envelope.DeterministicEnvelope;
 import notes.envelope.Envelope;
+import sound.SampleRate;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 import wave.Wave;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 
 public class VolumeAmplitudeCalculator implements Runnable {
+    private final SampleRate sampleRate;
 
-    private final Map<Long, EnvelopeWaveState> futureEnvelopeWaveStates;
+    private final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
+    private final Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
+    private final Map<Long, VolumeAmplitudeState> finishedSlices;
 
-    private final InputPort<TimestampedEnvelopeWaves> input;
+    private final InputPort<TimestampedNewNotesWithEnvelope> input;
     private final OutputPort<VolumeAmplitudeState> output;
 
-    public VolumeAmplitudeCalculator(BoundedBuffer<TimestampedEnvelopeWaves> input, BoundedBuffer<VolumeAmplitudeState> output){
-        futureEnvelopeWaveStates = new HashMap<>();
+    private final OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>> addNewNotesOutputPort;
+    private final InputPort<Collection<EnvelopeForFrequency>> addNewNotesInputPort;
+    private final OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
+    private final OutputPort<Long> sampleCountOutputPort;
+    private final OutputPort<Map<Frequency, Wave>> waveOutputPort;
+    private final InputPort<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyInputPort;
 
-        this.input = new InputPort<>(input);
-        this.output = new OutputPort<>(output);
+    public VolumeAmplitudeCalculator(BoundedBuffer<TimestampedNewNotesWithEnvelope> inputBuffer, BoundedBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
+        this.sampleRate = sampleRate;
+
+        unfinishedSlices = new HashMap<>();
+        unfinishedSlicesWaves = new HashMap<>();
+        finishedSlices = new HashMap<>();
+
+        this.input = new InputPort<>(inputBuffer);
+        this.output = new OutputPort<>(outputBuffer);
+
+        SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = PipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), 10000, "addNewNotes");
+        addNewNotesOutputPort = addNewNotesPorts.getKey();
+        addNewNotesInputPort = addNewNotesPorts.getValue();
+
+        BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(10000, "groupEnvelopesByFrequency - input");
+        groupEnvelopesByFrequencyOutputPort = new OutputPort<>(groupEnvelopesByFrequencyInputBuffer);
+        BoundedBuffer<Map<Frequency, Collection<Envelope>>> groupEnvelopesByFrequencyOutputBuffer = new BoundedBuffer<>(10000, "groupEnvelopesByFrequency - output");
+        new PipeComponent<>(groupEnvelopesByFrequencyInputBuffer, groupEnvelopesByFrequencyOutputBuffer, VolumeAmplitudeCalculator::groupEnvelopesByFrequency);
+
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(10000, "calculateValuesPerFrequency - sampleCount");
+        sampleCountOutputPort = new OutputPort<>(sampleCountBuffer);
+        BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(10000, "calculateValuesPerFrequency - waves");
+        waveOutputPort = new OutputPort<>(waveBuffer);
+
+        BoundedBuffer<SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>> pair1Buffer = new BoundedBuffer<>(10000, "pair1");
+        new Pairer<>(groupEnvelopesByFrequencyOutputBuffer, waveBuffer, pair1Buffer);
+        BoundedBuffer<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>> pair2Buffer = new BoundedBuffer<>(10000, "pair2");
+        new Pairer<>(sampleCountBuffer, pair1Buffer, pair2Buffer);
+
+        BoundedBuffer<EnvelopeWaveSlice> pairToParamObjectOutputBuffer = new BoundedBuffer<>(10000, "pair to paramObject - output");
+        new PipeComponent<>(pair2Buffer, pairToParamObjectOutputBuffer, input -> new EnvelopeWaveSlice(input.getKey(), input.getValue().getKey(), input.getValue().getValue()));
+
+        BoundedBuffer<Map<Frequency, Collection<VolumeAmplitude>>> calculateValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(10000, "calculateValuesPerFrequency - output");
+        new PipeComponent<>(pairToParamObjectOutputBuffer, calculateValuesPerFrequencyOutputBuffer, VolumeAmplitudeCalculator::calculateValuesPerFrequency);
+
+        BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(10000, "sumValuesPerFrequency - output");
+        new PipeComponent<>(calculateValuesPerFrequencyOutputBuffer, sumValuesPerFrequencyOutputBuffer, VolumeAmplitudeCalculator::sumValuesPerFrequency);
+        sumValuesPerFrequencyInputPort = new InputPort<>(sumValuesPerFrequencyOutputBuffer);
 
         start();
     }
@@ -44,22 +85,18 @@ public class VolumeAmplitudeCalculator implements Runnable {
 
     private void tick() {
         try {
-            TimestampedEnvelopeWaves timestampedNewNotes = input.consume();
+            TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = input.consume();
 
-            long sampleCount = timestampedNewNotes.getSampleCount();
-            DeterministicEnvelope envelope = timestampedNewNotes.getEnvelope();
-            Map<Frequency, Wave> waves = timestampedNewNotes.getWaves();
+            long sampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
+            DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
+            Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("calculate volumes");
-            addEnvelopeWaves(sampleCount, waves.keySet(), envelope, waves);
+            addNewNotes(sampleCount, envelope, newNotes);
+            finish(sampleCount);
+            VolumeAmplitudeState currentState = finishedSlices.remove(sampleCount);
 
-            VolumeAmplitudeState currentState;
-            try {
-                currentState = futureEnvelopeWaveStates.remove(sampleCount).calculateValue();
-            }
-            catch(NullPointerException e){
-                currentState = new VolumeAmplitudeState(new HashMap<>());
-            }
+//            precalculateInBackground();
             PerformanceTracker.stopTracking(timeKeeper);
 
             output.produce(currentState);
@@ -69,34 +106,190 @@ public class VolumeAmplitudeCalculator implements Runnable {
         }
     }
 
-    private void addEnvelopeWaves(Long sampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope, Map<Frequency, Wave> waves) {
-        if(!newNotes.isEmpty()) {
-            for (Long i = sampleCount; i < envelope.getEndingSampleCount(); i++) {
-                addEnvelopeWaves(newNotes, i, envelope, waves);
+    private void precalculateInBackground() {
+        Iterator<Long> unfinishedSlicesIterator = unfinishedSlices.keySet().iterator();
+        while(input.isEmpty()){
+            try {
+                Long futureSampleCount = unfinishedSlicesIterator.next();
+                finish(futureSampleCount);
+            }
+            catch(NoSuchElementException e){
+                break;
             }
         }
     }
 
-    private void addEnvelopeWaves(Collection<Frequency> newNotes, Long sampleCount, Envelope envelope, Map<Frequency, Wave> waves) {
-        EnvelopeWaveState newVolumeState = getOldVolumeAmplitudeState(sampleCount);
+    private void finish(long sampleCount) {
 
-        for (Frequency frequency : newNotes) {
-            newVolumeState = newVolumeState.add(frequency, envelope, waves.get(frequency));
+        try {
+            Collection<EnvelopeForFrequency> currentUnfinishedSlices = unfinishedSlices.remove(sampleCount);
+
+            try {
+                groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlices);
+            }
+            catch(NullPointerException e){
+                groupEnvelopesByFrequencyOutputPort.produce(new LinkedList<>());
+            }
+
+            sampleCountOutputPort.produce(sampleCount);
+            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
+            try {
+                waveOutputPort.produce(currentUnfinishedSliceWaves);
+            }
+            catch(NullPointerException e){
+                waveOutputPort.produce(new HashMap<>());
+            }
+
+            Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = sumValuesPerFrequencyInputPort.consume();
+
+            updateFinishedSlices(sampleCount, newVolumeAmplitudes);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-
-        futureEnvelopeWaveStates.put(sampleCount, newVolumeState);
     }
 
-    private EnvelopeWaveState getOldVolumeAmplitudeState(Long sampleCount) {
-        EnvelopeWaveState oldVolumeState;
-
-        if (futureEnvelopeWaveStates.containsKey(sampleCount)) {
-            oldVolumeState = futureEnvelopeWaveStates.get(sampleCount);
-        } else {
-            oldVolumeState = new EnvelopeWaveState(sampleCount, new HashMap<>());
+    private void updateFinishedSlices(long sampleCount, Map<Frequency, VolumeAmplitude> newVolumeAmplitudes) {
+        VolumeAmplitudeState oldVolumeState = finishedSlices.remove(sampleCount);
+        VolumeAmplitudeState totalVolumeState;
+        try {
+            totalVolumeState = oldVolumeState.add(newVolumeAmplitudes);
+        }
+        catch(NullPointerException e){
+            totalVolumeState = new VolumeAmplitudeState(sampleCount, newVolumeAmplitudes);
         }
 
-        return oldVolumeState;
+        finishedSlices.put(sampleCount, totalVolumeState);
+    }
+
+    private static Map<Frequency, VolumeAmplitude> sumValuesPerFrequency(Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections) {
+        Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = new HashMap<>();
+        for(Frequency frequency : newVolumeAmplitudeCollections.keySet()) {
+            Collection<VolumeAmplitude> volumeAmplitudeCollection = newVolumeAmplitudeCollections.get(frequency);
+            VolumeAmplitude totalVolumeAmplitude = VolumeAmplitude.sum(volumeAmplitudeCollection);
+            newVolumeAmplitudes.put(frequency, totalVolumeAmplitude);
+        }
+        return newVolumeAmplitudes;
+    }
+
+    private static Map<Frequency, Collection<VolumeAmplitude>> calculateValuesPerFrequency(EnvelopeWaveSlice envelopeWaveSlice) {
+        Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections = new HashMap<>();
+        for (Frequency frequency : envelopeWaveSlice.getEnvelopesPerFrequency().keySet()) {
+            Collection<Envelope> envelopeWaves = envelopeWaveSlice.getEnvelopesPerFrequency().get(frequency);
+            Collection<VolumeAmplitude> volumeAmplitudes = new LinkedList<>();
+
+            for(Envelope envelope : envelopeWaves) {
+                double volume = envelope.getVolume(envelopeWaveSlice.getSampleCount());
+                double amplitude = envelopeWaveSlice.getWavesPerFrequency().get(frequency).getAmplitude(envelopeWaveSlice.getSampleCount());
+                VolumeAmplitude volumeAmplitude = new VolumeAmplitude(volume, amplitude);
+                volumeAmplitudes.add(volumeAmplitude);
+            }
+
+            newVolumeAmplitudeCollections.put(frequency, volumeAmplitudes);
+        }
+        return newVolumeAmplitudeCollections;
+    }
+
+    private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
+        Map<Frequency, Collection<Envelope>> currentUnfinishedSlicesPerFrequency = new HashMap<>();
+        if(envelopesForFrequencies!=null) {
+            for (EnvelopeForFrequency envelopeForFrequency : envelopesForFrequencies) {
+                Frequency frequency = envelopeForFrequency.getFrequency();
+                Envelope envelope = envelopeForFrequency.getEnvelope();
+                Collection<Envelope> envelopesForFrequency = currentUnfinishedSlicesPerFrequency.get(frequency);
+                try {
+                    envelopesForFrequency.add(envelope);
+                } catch (NullPointerException e) {
+                    envelopesForFrequency = new LinkedList<>();
+                    envelopesForFrequency.add(envelope);
+                    currentUnfinishedSlicesPerFrequency.put(frequency, envelopesForFrequency);
+                }
+            }
+        }
+        return currentUnfinishedSlicesPerFrequency;
+    }
+
+    //todo there might be duplicate frequencies added at a timestamp. Group by frequency as well.
+    //todo combine unfinishedSlice and unfinishedSliceWaves into one object
+    private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes) {
+        Collection<EnvelopeForFrequency> newNotesWithEnvelopes;
+        try {
+            addNewNotesOutputPort.produce(new SimpleImmutableEntry<>(envelope, newNotes));
+            newNotesWithEnvelopes = addNewNotesInputPort.consume();
+
+            Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotes);
+
+            long endingSampleCount = envelope.getEndingSampleCount();
+            addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
+            addNewWaves(sampleCount, endingSampleCount, newNotes, newNoteWaves);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Collection<EnvelopeForFrequency> toEnvelopesForFrequencies(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
+        Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
+        for(Frequency frequency : frequencies){
+            newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
+        }
+        return newNotesWithEnvelopes;
+    }
+
+    private void addNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, Map<Frequency, Wave> newNoteWaves) {
+        if(newNotes.isEmpty()){
+            return;
+        }
+        for (Long i = sampleCount; i < endingSampleCount; i++) {
+            Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
+            for(Frequency frequency : newNotes){
+                Wave wave = newNoteWaves.get(frequency);
+                try{
+                    oldUnfinishedSliceWaves.putIfAbsent(frequency, wave);
+                }
+                catch(NullPointerException e){
+                    Map<Frequency, Wave> newUnfinishedSliceWaves = new HashMap<>();
+                    newUnfinishedSliceWaves.put(frequency, wave);
+                    unfinishedSlicesWaves.put(i, newUnfinishedSliceWaves);
+                }
+            }
+        }
+    }
+
+    private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
+        if(newNotesWithEnvelopes.isEmpty()){
+            return;
+        }
+        for (Long i = sampleCount; i < endingSampleCount; i++) {
+            Collection<EnvelopeForFrequency> oldUnfinishedSlice = unfinishedSlices.get(i);
+            try {
+                oldUnfinishedSlice.addAll(newNotesWithEnvelopes);
+            } catch (NullPointerException e) {
+                Collection<EnvelopeForFrequency> newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
+                unfinishedSlices.put(i, newUnfinishedSlice);
+            }
+        }
+    }
+
+    private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes) {
+        Map<Frequency, Wave> newNoteWaves = new HashMap<>();
+        Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
+        for (Long i : unfinishedSlicesWaves.keySet()) {
+            Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
+
+            Set<Frequency> foundWaveFrequencies = new HashSet<>(missingWaveFrequencies);
+            foundWaveFrequencies.retainAll(oldUnfinishedSliceWaves.keySet());
+
+            for (Frequency frequency : foundWaveFrequencies) {
+                newNoteWaves.put(frequency, oldUnfinishedSliceWaves.get(frequency));
+            }
+
+            missingWaveFrequencies.removeAll(foundWaveFrequencies);
+        }
+        for(Frequency frequency : missingWaveFrequencies){
+            Wave newWave = new Wave(frequency, sampleRate);
+            newNoteWaves.put(frequency, newWave);
+        }
+        return newNoteWaves;
     }
 
 }

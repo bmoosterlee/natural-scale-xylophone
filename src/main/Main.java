@@ -134,9 +134,9 @@ class Main {
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
         BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
         new NoteTimestamper(sampleCountBuffer, newNoteBuffer, timeStampedNewNotesBuffer);
-        BoundedBuffer<TimestampedEnvelopeWaves> timestampedEnvelopeWavesBuffer = new BoundedBuffer<>(capacity, "envelope wave builder");
+        BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedEnvelopeWavesBuffer = new BoundedBuffer<>(capacity, "envelope wave builder");
         new EnvelopeWaveBuilder(timeStampedNewNotesBuffer, timestampedEnvelopeWavesBuffer, sampleRate);
-        new VolumeAmplitudeCalculator(timestampedEnvelopeWavesBuffer, volumeAmplitudeStateBuffer);
+        new VolumeAmplitudeCalculator(timestampedEnvelopeWavesBuffer, volumeAmplitudeStateBuffer, sampleRate);
 
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "volume state to signal");
         new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));

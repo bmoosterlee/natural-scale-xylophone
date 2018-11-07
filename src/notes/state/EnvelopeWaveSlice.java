@@ -1,27 +1,32 @@
 package notes.state;
 
+import frequency.Frequency;
 import notes.envelope.Envelope;
 import wave.Wave;
 
-//todo move to composite volume. Do this by having a volume object which either has atomic volume (value) or composite volume (set)
+import java.util.Collection;
+import java.util.Map;
+
 public class EnvelopeWaveSlice {
     private final long sampleCount;
-    private final Envelope envelope;
-    private final Wave wave;
+    private final Map<Frequency, Collection<Envelope>> envelopesPerFrequency;
+    private final Map<Frequency, Wave> wavesPerFrequency;
 
-    EnvelopeWaveSlice(long samplecount, Envelope envelope, Wave wave) {
-        this.sampleCount = samplecount;
-        this.envelope = envelope;
-        this.wave = wave;
+    public EnvelopeWaveSlice(long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency, Map<Frequency, Wave> wavesPerFrequency) {
+        this.sampleCount = sampleCount;
+        this.envelopesPerFrequency = envelopesPerFrequency;
+        this.wavesPerFrequency = wavesPerFrequency;
     }
 
-    public EnvelopeWaveSlice add(Envelope newEnvelope) {
-        return new EnvelopeWaveSlice(sampleCount, envelope.add(newEnvelope), wave);
+    public long getSampleCount() {
+        return sampleCount;
     }
 
-    //todo place calculateValue calls in envelope and wave as well.
-    //todo this way we can calculate immediately when necessary.
-    VolumeAmplitude calculateValue(){
-        return new VolumeAmplitude(envelope.getVolume(sampleCount), wave.getAmplitude(sampleCount));
+    public Map<Frequency, Collection<Envelope>> getEnvelopesPerFrequency() {
+        return envelopesPerFrequency;
+    }
+
+    public Map<Frequency, Wave> getWavesPerFrequency() {
+        return wavesPerFrequency;
     }
 }
