@@ -107,10 +107,9 @@ public class VolumeAmplitudeCalculator implements Runnable {
     }
 
     private void precalculateInBackground() {
-        Iterator<Long> unfinishedSlicesIterator = unfinishedSlices.keySet().iterator();
         while(input.isEmpty()){
             try {
-                Long futureSampleCount = unfinishedSlicesIterator.next();
+                Long futureSampleCount = unfinishedSlices.keySet().iterator().next();
                 finish(futureSampleCount);
             }
             catch(NoSuchElementException e){
