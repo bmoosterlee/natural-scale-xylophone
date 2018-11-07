@@ -28,9 +28,7 @@ public class AtomicBucket implements Bucket {
 
     @Override
     public Bucket add(Bucket bucket) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add bucket");
         Bucket newBucket = new CompositeBucket<>(Arrays.asList(this, bucket));
-        PerformanceTracker.stopTracking(timeKeeper);
 
         return newBucket;
     }

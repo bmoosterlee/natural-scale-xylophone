@@ -15,13 +15,11 @@ public class CompositeBucket<T extends Bucket> implements Bucket {
 
     @Override
     public Bucket add(Bucket bucket) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add bucket");
         Set<Bucket> newBuckets = new HashSet<>(buckets);
 
         newBuckets.add(bucket);
 
         CompositeBucket<Bucket> compositeBucket = new CompositeBucket<>(newBuckets);
-        PerformanceTracker.stopTracking(timeKeeper);
 
         return compositeBucket;
     }

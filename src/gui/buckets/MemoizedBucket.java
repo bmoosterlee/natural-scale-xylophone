@@ -21,10 +21,7 @@ public class MemoizedBucket implements Bucket {
 
     @Override
     public Bucket add(Bucket bucket) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add bucket");
         CompositeBucket<Bucket> compositeBucket = new CompositeBucket<>(Arrays.asList(this, bucket));
-        PerformanceTracker.stopTracking(timeKeeper);
-
         return compositeBucket;
     }
 

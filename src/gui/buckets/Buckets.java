@@ -24,7 +24,6 @@ public class Buckets {
     }
 
     public Buckets add(Buckets otherBuckets) {
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("add buckets");
         Set<Integer> newIndices = new HashSet<>(getIndices());
         Map<Integer, Bucket> newEntries = new HashMap<>(getBucketsData());
 
@@ -43,7 +42,6 @@ public class Buckets {
         }
 
         Buckets newBuckets = new Buckets(newIndices, newEntries);
-        PerformanceTracker.stopTracking(timeKeeper);
 
         return newBuckets;
     }

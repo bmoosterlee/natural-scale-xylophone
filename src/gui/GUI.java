@@ -62,6 +62,7 @@ public class GUI extends JPanel implements Runnable {
             Buckets notes = newNotes.consume();
             java.util.List<Integer> newCursorXs = newCursorX.flush();
 
+            TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("getCursorX");
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("getCursorX");
             int x = getCurrentX(newCursorXs);
             PerformanceTracker.stopTracking(timeKeeper);
@@ -77,6 +78,7 @@ public class GUI extends JPanel implements Runnable {
             timeKeeper = PerformanceTracker.startTracking("render cursor");
             renderCursorLine(g, x);
             PerformanceTracker.stopTracking(timeKeeper);
+            PerformanceTracker.stopTracking(totalTimeKeeper);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

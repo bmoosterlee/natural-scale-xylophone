@@ -47,6 +47,7 @@ public class SoundEnvironment implements Runnable{
         try {
             Double amplitude = sampleAmplitudeInput.consume();
 
+            TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("sound environment play amplitude");
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("fit amplitude");
             byte fittedAmplitude = fitAmplitude(amplitude);
             PerformanceTracker.stopTracking(timeKeeper);
@@ -54,6 +55,7 @@ public class SoundEnvironment implements Runnable{
             timeKeeper = PerformanceTracker.startTracking("write to buffer");
             writeToBuffer(fittedAmplitude);
             PerformanceTracker.stopTracking(timeKeeper);
+            PerformanceTracker.stopTracking(totalTimeKeeper);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
