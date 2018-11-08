@@ -36,7 +36,7 @@ public class PrecalculatedBucketHistoryComponent extends Component {
 
         int capacity = 1;
 
-        BoundedBuffer<Buckets> multipliedBucketsBuffer = new BoundedBuffer<>(capacity, "buckets history - multiply")
+        BoundedBuffer<Buckets> multipliedBucketsBuffer = new BoundedBuffer<>(capacity, "buckets history - multiply");
         new PipeComponent<>(inputBuffer2, multipliedBucketsBuffer, input -> input.multiply(multiplier));
 
         BoundedBuffer<Buckets> preparedBucketsBuffer1 = new BoundedBuffer<>(capacity, "history - preparedBuckets 1");
@@ -76,15 +76,14 @@ public class PrecalculatedBucketHistoryComponent extends Component {
     protected void tick() {
         try {
             inputPort.consume();
-            Buckets newBuckets = inputPort.consume();
-            Buckets result = addNewBuckets(newBuckets);
+            Buckets result = addNewBuckets();
             outputPort.produce(result);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private Buckets addNewBuckets(Buckets newBuckets) {
+    private Buckets addNewBuckets() {
         try {
             historyOutputPort.produce(history);
             timeAverageOutputPort.produce(timeAverage);
