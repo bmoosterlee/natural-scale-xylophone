@@ -73,18 +73,18 @@ class Main {
         playTestTone(newNoteBuffer, spectrumWindow);
     }
 
-    private static void initializeSpectrumPipeline(int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer, BoundedBuffer<Pulse> frameTickBuffer) {
+    private static void initializeSpectrumPipeline(int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer, BoundedBuffer<Pulse> frameTickBuffer) {
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer4 = new BoundedBuffer<>(capacity, String.valueOf(count));
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer3, volumeAmplitudeStateBuffer4);
+        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer, volumeAmplitudeStateBuffer2);
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer4, volumeStateBuffer);
+        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer2, volumeStateBuffer);
 
         BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "VolumeState 2");
         BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "VolumeState 3");
