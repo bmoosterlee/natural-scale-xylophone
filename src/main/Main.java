@@ -81,7 +81,7 @@ class Main {
         new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3));
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer4 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        new TimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer3, volumeAmplitudeStateBuffer4);
+        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer3, volumeAmplitudeStateBuffer4);
         BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer4, volumeStateBuffer);
