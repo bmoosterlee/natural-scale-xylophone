@@ -50,8 +50,7 @@ class Main {
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        count++;
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = initalizeSoundPipeline(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, newNoteBuffer);
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = initalizeSoundPipeline(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, newNoteBuffer);
 
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - note buckets");
         BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
@@ -59,7 +58,7 @@ class Main {
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1, "frame tick 1");
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(1, "frame tick 2");
         new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
-        initializeSpectrumPipeline(width, spectrumWindow, volumeAmplitudeStateBuffer3, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer, frameTickBuffer1);
+        initializeSpectrumPipeline(width, spectrumWindow, volumeAmplitudeStateBuffer, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer, frameTickBuffer1);
 
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(capacity);
