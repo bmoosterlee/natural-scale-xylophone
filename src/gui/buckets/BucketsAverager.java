@@ -1,9 +1,9 @@
 package gui.buckets;
 
-import main.BoundedBuffer;
-import main.Broadcast;
-import main.InputPort;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.Broadcast;
+import component.InputPort;
+import component.OutputPort;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

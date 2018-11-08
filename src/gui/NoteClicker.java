@@ -2,8 +2,8 @@ package gui;
 
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
-import main.BoundedBuffer;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.OutputPort;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

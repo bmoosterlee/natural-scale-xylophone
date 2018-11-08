@@ -1,4 +1,4 @@
-package main;
+package component;
 
 public abstract class Component implements Runnable {
 

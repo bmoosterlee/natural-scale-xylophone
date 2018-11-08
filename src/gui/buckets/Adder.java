@@ -1,8 +1,8 @@
 package gui.buckets;
 
-import main.BoundedBuffer;
-import main.InputPort;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.InputPort;
+import component.OutputPort;
 
 import java.util.HashSet;
 import java.util.Set;

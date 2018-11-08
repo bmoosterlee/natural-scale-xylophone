@@ -1,10 +1,9 @@
 package harmonics;
 
 import frequency.Frequency;
-import main.BoundedBuffer;
-import main.InputPort;
-import main.OutputPort;
-import main.Pulse;
+import component.BoundedBuffer;
+import component.InputPort;
+import component.OutputPort;
 import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;

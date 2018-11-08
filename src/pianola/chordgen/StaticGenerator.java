@@ -3,7 +3,6 @@ package pianola.chordgen;
 import frequency.Frequency;
 import gui.buckets.Buckets;
 import gui.spectrum.SpectrumWindow;
-import main.BoundedBuffer;
 
 public class StaticGenerator extends SimpleChordGenerator {
 

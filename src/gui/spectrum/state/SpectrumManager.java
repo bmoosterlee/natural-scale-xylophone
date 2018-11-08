@@ -4,9 +4,9 @@ import frequency.Frequency;
 import gui.buckets.AtomicBucket;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
-import main.BoundedBuffer;
-import main.InputPort;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.InputPort;
+import component.OutputPort;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

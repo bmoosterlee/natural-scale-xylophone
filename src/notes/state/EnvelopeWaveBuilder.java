@@ -1,9 +1,9 @@
 package notes.state;
 
 import frequency.Frequency;
-import main.BoundedBuffer;
-import main.InputPort;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.InputPort;
+import component.OutputPort;
 import notes.envelope.DeterministicEnvelope;
 import notes.envelope.SimpleDeterministicEnvelope;
 import notes.envelope.functions.DeterministicFunction;

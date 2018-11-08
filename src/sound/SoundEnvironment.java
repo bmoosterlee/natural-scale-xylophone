@@ -1,7 +1,7 @@
 package sound;
 
-import main.BoundedBuffer;
-import main.InputPort;
+import component.BoundedBuffer;
+import component.InputPort;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

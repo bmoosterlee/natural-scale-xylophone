@@ -1,9 +1,9 @@
 package gui;
 
 import gui.buckets.Buckets;
-import main.BoundedBuffer;
-import main.InputPort;
-import main.PipeComponent;
+import component.BoundedBuffer;
+import component.InputPort;
+import component.PipeComponent;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

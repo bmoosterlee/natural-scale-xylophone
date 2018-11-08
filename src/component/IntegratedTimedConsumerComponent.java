@@ -1,4 +1,6 @@
-package main;
+package component;
+
+import main.Pulse;
 
 public class IntegratedTimedConsumerComponent<T> extends Component{
     private final InputPort<Pulse> timeInputPort;

@@ -1,5 +1,6 @@
 package main;
 
+import component.*;
 import frequency.Frequency;
 import gui.CursorMover;
 import gui.GUI;

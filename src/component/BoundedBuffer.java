@@ -1,4 +1,4 @@
-package main;
+package component;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;

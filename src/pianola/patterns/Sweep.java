@@ -3,7 +3,6 @@ package pianola.patterns;
 import frequency.Frequency;
 import gui.spectrum.SpectrumWindow;
 import gui.buckets.Buckets;
-import main.BoundedBuffer;
 import pianola.Sequencer;
 import pianola.chordgen.SimpleChordGenerator;
 

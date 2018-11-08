@@ -1,7 +1,7 @@
 package notes.state;
 
+import component.*;
 import frequency.Frequency;
-import main.*;
 import notes.envelope.DeterministicEnvelope;
 import notes.envelope.Envelope;
 import sound.SampleRate;

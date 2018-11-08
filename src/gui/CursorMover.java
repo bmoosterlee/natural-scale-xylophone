@@ -1,9 +1,9 @@
 package gui;
 
-import main.BoundedBuffer;
-import main.OutputPort;
+import component.BoundedBuffer;
+import component.OutputPort;
 import main.Pulse;
-import main.TimedConsumerComponent;
+import component.TimedConsumerComponent;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;

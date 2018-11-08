@@ -3,8 +3,6 @@ package pianola.chordgen;
 import frequency.Frequency;
 import gui.buckets.*;
 import gui.spectrum.SpectrumWindow;
-import main.BoundedBuffer;
-import main.InputPort;
 
 import java.util.*;
 import java.util.Map.Entry;
