@@ -1,5 +1,11 @@
 package gui.buckets;
 
+import component.CallableWithArguments;
+import component.InputPort;
+import component.OutputPort;
+import component.PipeComponent;
+
+import java.util.AbstractMap;
 import java.util.LinkedList;
 
 public class PrecalculatedBucketHistory implements BucketHistory {
@@ -8,14 +14,12 @@ public class PrecalculatedBucketHistory implements BucketHistory {
 
     private final double multiplier;
     private final Buckets timeAverage;
+    private OutputPort<Buckets> multiplierOutputPort;
+    private InputPort<Buckets> multiplierInputPort;
+
 
     public PrecalculatedBucketHistory(int size) {
-        history = new LinkedList<>();
-        this.size = size;
-
-        timeAverage = new Buckets();
-
-        multiplier = 1. / size;
+        this(size, new LinkedList<>(), 1. / size, new Buckets());
     }
 
     private PrecalculatedBucketHistory(int size, LinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
@@ -23,34 +27,38 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         this.history = history;
         this.multiplier = multiplier;
         this.timeAverage = timeAverage;
+
+        AbstractMap.SimpleImmutableEntry<OutputPort<Buckets>, InputPort<Buckets>> addNewBucketsMultiplier = PipeComponent.methodToComponentPorts(input -> input.multiply(multiplier), 1, "buckets history - multiply");
+        multiplierOutputPort = addNewBucketsMultiplier.getKey();
+        multiplierInputPort = addNewBucketsMultiplier.getValue();
     }
 
     @Override
     public BucketHistory addNewBuckets(Buckets newBuckets) {
-        LinkedList<Buckets> newHistory = new LinkedList<>(history);
-        Buckets newTimeAverage = timeAverage;
+        try {
+            multiplierOutputPort.produce(newBuckets);
+            Buckets preparedNewBuckets = multiplierInputPort.consume();
 
-        if (history.size() >= size) {
-            Buckets removed = newHistory.pollFirst();
-            newTimeAverage = newTimeAverage.subtract(removed);
+            LinkedList<Buckets> newHistory = new LinkedList<>(history);
+            Buckets newTimeAverage = timeAverage;
+            if (history.size() >= size) {
+                Buckets removed = newHistory.pollFirst();
+                newTimeAverage = newTimeAverage.subtract(removed);
+            }
+            newHistory.addLast(preparedNewBuckets);
+            newTimeAverage = newTimeAverage.add(preparedNewBuckets);
+
+            return new PrecalculatedBucketHistory(size, newHistory, multiplier, newTimeAverage);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-        Buckets added = newBuckets.multiply(multiplier);
-
-        newHistory.addLast(added);
-        newTimeAverage = newTimeAverage.add(added);
-
-        return new PrecalculatedBucketHistory(size, newHistory, multiplier, newTimeAverage);
+        return null;
     }
 
     @Override
     public Buckets getTimeAveragedBuckets() {
-        if (history.isEmpty()) {
-            return new Buckets();
-        }
-        else {
-            return timeAverage;
-        }
+        return timeAverage;
     }
 
 }

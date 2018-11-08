@@ -1,10 +1,11 @@
 package gui.buckets;
 
 import component.BoundedBuffer;
+import component.Component;
 import component.InputPort;
 import component.OutputPort;
 
-public class BucketHistoryComponent implements Runnable{
+public class BucketHistoryComponent extends Component {
     private BucketHistory bucketHistory;
 
     private final InputPort<Buckets> newBucketsInput;
@@ -19,18 +20,7 @@ public class BucketHistoryComponent implements Runnable{
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             Buckets newBuckets = newBucketsInput.consume();
 
