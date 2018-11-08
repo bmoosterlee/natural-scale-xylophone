@@ -55,7 +55,11 @@ class Main {
 
         BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - note buckets");
         BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
-        BoundedBuffer<Pulse> frameTickBuffer = initializeSpectrumPipeline(frameRate, frameLookahead, width, spectrumWindow, volumeAmplitudeStateBuffer3, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
+        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
+        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1, "frame tick 1");
+        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(1, "frame tick 2");
+        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
+        initializeSpectrumPipeline(width, spectrumWindow, volumeAmplitudeStateBuffer3, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer, frameTickBuffer1);
 
         BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
         BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(capacity);
@@ -63,21 +67,18 @@ class Main {
         BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "gui - harmonics buckets");
         BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(capacity);
         new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
-        initializeGUIPipeline(width, inaudibleFrequencyMargin, spectrumWindow, frameTickBuffer, newNoteBuffer, guiNotesBucketsBuffer, guiHarmonicsBucketsBuffer);
+        initializeGUIPipeline(width, inaudibleFrequencyMargin, spectrumWindow, frameTickBuffer2, newNoteBuffer, guiNotesBucketsBuffer, guiHarmonicsBucketsBuffer);
         initializePianolaPipeline(pianolaRate, pianolaLookahead, inaudibleFrequencyMargin, spectrumWindow, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer);
 
         playTestTone(newNoteBuffer, spectrumWindow);
     }
 
-    private static BoundedBuffer<Pulse> initializeSpectrumPipeline(int frameRate, int frameLookahead, int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer) {
-        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
+    private static void initializeSpectrumPipeline(int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer, BoundedBuffer<Pulse> frameTickBuffer) {
         BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
-        BoundedBuffer<Pulse> frameTickBuffer3 = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
-        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2, frameTickBuffer3));
+        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer4 = new BoundedBuffer<>(capacity, String.valueOf(count));
         count++;
         new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer3, volumeAmplitudeStateBuffer4);
@@ -105,8 +106,6 @@ class Main {
         //todo find all uses of history component and check whether we can eliminate the conversion from buffers to buckets.
         new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
         new BucketHistoryComponent(200, inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
-
-        return frameTickBuffer3;
     }
 
     private static void initializeGUIPipeline(int width, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> guiNotesBucketsBuffer, BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer) {
