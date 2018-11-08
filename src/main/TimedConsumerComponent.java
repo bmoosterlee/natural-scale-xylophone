@@ -1,14 +1,10 @@
 package main;
 
-public class TimedConsumerComponent<T> extends Component{
+public abstract class TimedConsumerComponent extends Component{
     private final InputPort<Pulse> timeInputPort;
-    private final InputPort<T> inputPort;
-    private final OutputPort<T> outputPort;
 
-    public TimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, BoundedBuffer<T> outputBuffer){
+    public TimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer){
         timeInputPort = new InputPort<>(timeBuffer);
-        inputPort = new InputPort<>(inputBuffer);
-        outputPort = new OutputPort<>(outputBuffer);
 
         start();
     }
@@ -17,10 +13,12 @@ public class TimedConsumerComponent<T> extends Component{
     protected void tick() {
         try {
             timeInputPort.consume();
-            T result = inputPort.consume();
-            outputPort.produce(result);
+            timedTick();
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
+
+    protected abstract void timedTick();
 }
