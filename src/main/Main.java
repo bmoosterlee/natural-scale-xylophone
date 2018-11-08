@@ -101,8 +101,7 @@ class Main {
         }
         new SpectrumManager(spectrumWindow, harmonicsBuffer, harmonicsMap);
 
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Input harmonics buffer");
         //todo find all uses of history component and check whether we can eliminate the conversion from buffers to buckets.
         new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
         new BucketHistoryComponent(200, inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer);
@@ -111,8 +110,7 @@ class Main {
     }
 
     private static void initializeGUIPipeline(int width, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> guiNotesBucketsBuffer, BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer) {
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Gui averaged harmonics buffer");
         new BucketsAverager(inaudibleFrequencyMargin, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
         GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer, width);
