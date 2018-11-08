@@ -30,6 +30,9 @@ public class BoundedBuffer<T> {
     }
 
     void offer(T packet) throws InterruptedException {
+        if(packet == null){
+            throw new NullPointerException();
+        }
         if(isFull()) {
             String fixedName = name;
             if(fixedName==null){
