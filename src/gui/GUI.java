@@ -3,6 +3,7 @@ package gui;
 import gui.buckets.Buckets;
 import main.BoundedBuffer;
 import main.InputPort;
+import main.PipeComponent;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -11,31 +12,42 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class GUI extends JPanel implements Runnable {
     private final int HEIGHT = 600;
     private final double yScale = HEIGHT * 0.95;
     private final double margin = HEIGHT * 0.05;
 
-    private final InputPort<Buckets> newHarmonics;
-    private final InputPort<Buckets> newNotes;
+    private final InputPort<Map<Integer, Integer>> newHarmonics;
+    private final InputPort<Map<Integer, Integer>> newNotes;
     private final InputPort<Integer> newCursorX;
 
     private int oldCursorX;
 
     public GUI(BoundedBuffer<Buckets> newHarmonicsBuffer, BoundedBuffer<Buckets> newNotesBuffer, BoundedBuffer<Integer> newCursorXBuffer, int width){
+        int capacity = 10;
+        BoundedBuffer<Map<Integer, Double>> harmonicsVolumesOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to volumes");
+        new PipeComponent<>(newHarmonicsBuffer, harmonicsVolumesOutputBuffer, GUI::bucketsToVolumes);
 
-        JFrame frame = new JFrame("FrameDemo");
+        BoundedBuffer<Map<Integer, Double>> noteVolumesOutputBuffer = new BoundedBuffer<>(capacity, "notes to volumes");
+        new PipeComponent<>(newNotesBuffer, noteVolumesOutputBuffer, GUI::bucketsToVolumes);
+
+        BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to ys");
+        new PipeComponent<>(harmonicsVolumesOutputBuffer, harmonicsYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
+
+        BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer = new BoundedBuffer<>(capacity, "notes to ys");
+        new PipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
+
+        newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
+        newNotes = new InputPort<>(noteYsOutputBuffer);
+        newCursorX = new InputPort<>(newCursorXBuffer);
+
+        JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setPreferredSize(new Dimension(width, HEIGHT));
         frame.setContentPane(this);
         frame.pack();
         frame.setVisible(true);
-
-        newHarmonics = new InputPort<>(newHarmonicsBuffer);
-        newNotes = new InputPort<>(newNotesBuffer);
-        newCursorX = new InputPort<>(newCursorXBuffer);
 
         start();
     }
@@ -58,26 +70,17 @@ public class GUI extends JPanel implements Runnable {
     @Override
     public void paintComponent(Graphics g){
         try {
-            Buckets harmonics = newHarmonics.consume();
-            Buckets notes = newNotes.consume();
+            Map<Integer, Integer> harmonics = newHarmonics.consume();
+            Map<Integer, Integer> notes = newNotes.consume();
             java.util.List<Integer> newCursorXs = newCursorX.flush();
 
-            TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("getCursorX");
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("getCursorX");
+            TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
             int x = getCurrentX(newCursorXs);
-            PerformanceTracker.stopTracking(timeKeeper);
 
-            timeKeeper = PerformanceTracker.startTracking("super paintComponent");
             super.paintComponent(g);
-            PerformanceTracker.stopTracking(timeKeeper);
-
             renderHarmonicsBuckets(g, harmonics);
-
             renderNoteBuckets(g, notes);
-
-            timeKeeper = PerformanceTracker.startTracking("render cursor");
             renderCursorLine(g, x);
-            PerformanceTracker.stopTracking(timeKeeper);
             PerformanceTracker.stopTracking(totalTimeKeeper);
 
         } catch (InterruptedException e) {
@@ -97,28 +100,34 @@ public class GUI extends JPanel implements Runnable {
         return x;
     }
 
-    private void renderNoteBuckets(Graphics g, Buckets buckets) {
+    private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
         g.setColor(Color.blue);
 
-        renderBuckets(g, buckets);
+        renderBuckets(g, ys);
     }
 
-    private void renderBuckets(Graphics g, Buckets buckets) {
-        Set<Integer> indices = buckets.getIndices();
-
-        TimeKeeper timeKeeper = PerformanceTracker.startTracking("render - get bucket volume");
-        Map<Integer, Double> values = new HashMap<>();
-        for(Integer index : indices) {
-            values.put(index, buckets.getValue(index).getVolume());
-        }
-        PerformanceTracker.stopTracking(timeKeeper);
-
-        timeKeeper = PerformanceTracker.startTracking("render - render buckets");
-        for(Integer index : indices){
-            int y = (int) (values.get(index) * yScale + margin);
+    private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
+        for(Integer index : ys.keySet()){
+            int y = ys.get(index);
             g.drawRect(index, HEIGHT - y, 1, y);
         }
-        PerformanceTracker.stopTracking(timeKeeper);
+    }
+
+    private static Map<Integer, Integer> volumesToYs(Map<Integer, Double> volumes, double yScale, double margin) {
+        Map<Integer, Integer> yValues = new HashMap<>();
+        for(Integer index : volumes.keySet()) {
+            int y = (int) (volumes.get(index) * yScale + margin);
+            yValues.put(index, y);
+        }
+        return yValues;
+    }
+
+    private static Map<Integer, Double> bucketsToVolumes(Buckets buckets) {
+        Map<Integer, Double> volumes = new HashMap<>();
+        for(Integer index : buckets.getIndices()) {
+            volumes.put(index, buckets.getValue(index).getVolume());
+        }
+        return volumes;
     }
 
     private void renderCursorLine(Graphics g, int x) {
@@ -127,9 +136,9 @@ public class GUI extends JPanel implements Runnable {
         g.drawRect(x, 0, 1, HEIGHT);
     }
 
-    private void renderHarmonicsBuckets(Graphics g, Buckets buckets) {
+    private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
         g.setColor(Color.gray);
 
-        renderBuckets(g, buckets);
+        renderBuckets(g, ys);
     }
 }
