@@ -8,22 +8,22 @@ import java.util.LinkedList;
 
 public class PrecalculatedBucketHistory implements BucketHistory {
     private final int size;
-    private final LinkedList<Buckets> history;
+    private final ImmutableLinkedList<Buckets> history;
 
     private final double multiplier;
     private final Buckets timeAverage;
     private OutputPort<Buckets> multiplierOutputPort;
-    private OutputPort<LinkedList<Buckets>> historyOutputPort;
-    private InputPort<LinkedList<Buckets>> newHistoryInputPort;
+    private OutputPort<ImmutableLinkedList<Buckets>> historyOutputPort;
+    private InputPort<ImmutableLinkedList<Buckets>> newHistoryInputPort;
     private OutputPort<Buckets> timeAverageOutputPort;
     private InputPort<Buckets> newtimeAverageInputPort;
 
 
     public PrecalculatedBucketHistory(int size) {
-        this(size, new LinkedList<>(), 1. / size, new Buckets());
+        this(size, new ImmutableLinkedList<>(), 1. / size, new Buckets());
     }
 
-    private PrecalculatedBucketHistory(int size, LinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
+    private PrecalculatedBucketHistory(int size, ImmutableLinkedList<Buckets> history, double multiplier, Buckets timeAverage) {
         this.size = size;
         this.history = history;
         this.multiplier = multiplier;
@@ -38,9 +38,9 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         BoundedBuffer<Buckets> preparedBucketsBuffer2 = new BoundedBuffer<>(capacity, "history - preparedBuckets 2");
         new Broadcast<>(addNewBucketsMultiplier.getValue(), Arrays.asList(preparedBucketsBuffer1, preparedBucketsBuffer2));
 
-        BoundedBuffer<LinkedList<Buckets>> historyInputBuffer = new BoundedBuffer<>(capacity, "history - input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<LinkedList<Buckets>, Buckets>> pair1 = Pairer.PairerWithOutputBuffer(historyInputBuffer, preparedBucketsBuffer1, capacity, "history - pairer");
-        BoundedBuffer<LinkedList<Buckets>> newHistoryBuffer = new BoundedBuffer<>(capacity, "history - output");
+        BoundedBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new BoundedBuffer<>(capacity, "history - input");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = Pairer.PairerWithOutputBuffer(historyInputBuffer, preparedBucketsBuffer1, capacity, "history - pairer");
+        BoundedBuffer<ImmutableLinkedList<Buckets>> newHistoryBuffer = new BoundedBuffer<>(capacity, "history - output");
         new PipeComponent<>(pair1, newHistoryBuffer, input -> addToHistory(input.getKey(), input.getValue()));
 
         historyOutputPort = new OutputPort<>(historyInputBuffer);
@@ -58,17 +58,17 @@ public class PrecalculatedBucketHistory implements BucketHistory {
     @Override
     public BucketHistory addNewBuckets(Buckets newBuckets) {
         try {
-            LinkedList<Buckets> history = new LinkedList<>(this.history);
-
             multiplierOutputPort.produce(newBuckets);
             historyOutputPort.produce(history);
             timeAverageOutputPort.produce(timeAverage);
 
-            LinkedList<Buckets> newHistory = newHistoryInputPort.consume();
+            ImmutableLinkedList<Buckets> newHistory = newHistoryInputPort.consume();
             Buckets newTimeAverage = newtimeAverageInputPort.consume();
 
-            if (this.history.size() >= size) {
-                Buckets removed = newHistory.pollFirst();
+            if (history.size() >= size) {
+                AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = newHistory.poll();
+                newHistory = poll.getKey();
+                Buckets removed = poll.getValue();
                 newTimeAverage = newTimeAverage.subtract(removed);
             }
 
@@ -85,10 +85,8 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         return newTimeAverage;
     }
 
-    private static LinkedList<Buckets> addToHistory(LinkedList<Buckets> history, Buckets preparedNewBuckets) {
-        LinkedList<Buckets> newHistory = new LinkedList<>(history);
-        newHistory.addLast(preparedNewBuckets);
-        return newHistory;
+    private static ImmutableLinkedList<Buckets> addToHistory(ImmutableLinkedList<Buckets> history, Buckets preparedNewBuckets) {
+        return history.add(preparedNewBuckets);
     }
 
     @Override
