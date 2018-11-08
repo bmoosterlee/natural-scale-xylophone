@@ -27,4 +27,10 @@ public class Pairer<K, V> extends Component {
             e.printStackTrace();
         }
     }
+
+    public static <K, V> BoundedBuffer<SimpleImmutableEntry<K, V>> PairerWithOutputBuffer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, int capacity, String name){
+        BoundedBuffer<SimpleImmutableEntry<K,V>> outputBuffer = new BoundedBuffer<>(capacity, name);
+        new Pairer<>(inputBuffer1, inputBuffer2, outputBuffer);
+        return outputBuffer;
+    }
 }
