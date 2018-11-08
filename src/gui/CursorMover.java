@@ -2,15 +2,20 @@ package gui;
 
 import main.BoundedBuffer;
 import main.OutputPort;
+import main.Pulse;
+import main.TimedConsumerComponent;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public class CursorMover implements MouseMotionListener {
+public class CursorMover extends TimedConsumerComponent implements MouseMotionListener {
+    private Integer storedX;
+
     private final OutputPort<Integer> cursorX;
 
-    public CursorMover(BoundedBuffer<Integer> cursorXBuffer) {
-        cursorX = new OutputPort<>(cursorXBuffer);
+    public CursorMover(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Integer> outputBuffer) {
+        super(inputBuffer);
+        cursorX = new OutputPort<>(outputBuffer);
     }
 
     @Override
@@ -20,8 +25,20 @@ public class CursorMover implements MouseMotionListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+        if(storedX==null) {
+            storedX = e.getX();
+        }
+    }
+
+    @Override
+    protected void timedTick() {
         try {
-            cursorX.produce(e.getX());
+            try {
+                cursorX.produce(storedX);
+            }
+            catch(NullPointerException ignored){
+            }
+            storedX = null;
         } catch (InterruptedException e1) {
             e1.printStackTrace();
         }
