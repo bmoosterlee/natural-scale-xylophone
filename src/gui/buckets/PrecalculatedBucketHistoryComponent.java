@@ -11,7 +11,6 @@ public class PrecalculatedBucketHistoryComponent extends Component {
     private ImmutableLinkedList<Buckets> history;
     private  Buckets timeAverage;
 
-    private final InputPort<Buckets> inputPort;
     private final OutputPort<Buckets> outputPort;
 
     private OutputPort<ImmutableLinkedList<Buckets>> historyOutputPort;
@@ -28,16 +27,12 @@ public class PrecalculatedBucketHistoryComponent extends Component {
         this.history = new ImmutableLinkedList<>();
         this.timeAverage = new Buckets();
 
-        BoundedBuffer<Buckets> inputBuffer1 = new BoundedBuffer<>(1, "history input 1");
-        BoundedBuffer<Buckets> inputBuffer2 = new BoundedBuffer<>(1, "history input 2");
-        new Broadcast<>(inputBuffer, Arrays.asList(inputBuffer1, inputBuffer2));
-        inputPort = new InputPort<>(inputBuffer1);
         outputPort = new OutputPort<>(outputBuffer);
 
         int capacity = 1;
 
         BoundedBuffer<Buckets> multipliedBucketsBuffer = new BoundedBuffer<>(capacity, "buckets history - multiply");
-        new PipeComponent<>(inputBuffer2, multipliedBucketsBuffer, input -> input.multiply(multiplier));
+        new PipeComponent<>(inputBuffer, multipliedBucketsBuffer, input -> input.multiply(multiplier));
 
         BoundedBuffer<Buckets> preparedBucketsBuffer1 = new BoundedBuffer<>(capacity, "history - preparedBuckets 1");
         BoundedBuffer<Buckets> preparedBucketsBuffer2 = new BoundedBuffer<>(capacity, "history - preparedBuckets 2");
@@ -75,7 +70,6 @@ public class PrecalculatedBucketHistoryComponent extends Component {
     @Override
     protected void tick() {
         try {
-            inputPort.consume();
             Buckets result = addNewBuckets();
             outputPort.produce(result);
         } catch (InterruptedException e) {
@@ -100,6 +94,9 @@ public class PrecalculatedBucketHistoryComponent extends Component {
 
                 newHistory = poll.getKey();
                 newTimeAverage = conditionalInputPort.consume();
+            }
+            else{
+
             }
 
             history = newHistory;
