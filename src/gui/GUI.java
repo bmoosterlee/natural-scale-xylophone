@@ -23,8 +23,6 @@ public class GUI extends TickingComponent {
 
     private final GUIPanel guiPanel;
 
-    private final InputPort<Map<Integer, Integer>> newHarmonics;
-    private final InputPort<Map<Integer, Integer>> newNotes;
     private final InputPort<Integer> newCursorX;
 
     private int oldCursorX;
@@ -58,14 +56,11 @@ public class GUI extends TickingComponent {
         BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer = new BoundedBuffer<>(capacity, "notes to ys");
         new PipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
 
-        guiPanel = new GUIPanel();
+        guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
         guiPanel.addMouseListener(new NoteClicker(outputBuffer, spectrumWindow));
-
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
         guiPanel.addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
 
-        newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
-        newNotes = new InputPort<>(noteYsOutputBuffer);
         newCursorX = new InputPort<>(cursorXBuffer);
 
         JFrame frame = new JFrame("Natural scale xylophone");
@@ -80,6 +75,17 @@ public class GUI extends TickingComponent {
 
     @Override
     protected void tick() {
+        try {
+            List<Integer> newCursorXs = newCursorX.flush();
+            try {
+                oldCursorX = newCursorXs.get(0);
+            }
+            catch(IndexOutOfBoundsException ignored){
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         guiPanel.repaint();
     }
 
@@ -101,17 +107,19 @@ public class GUI extends TickingComponent {
     }
 
     private class GUIPanel extends JPanel {
+        private final InputPort<Map<Integer, Integer>> newNotes;
+        private final InputPort<Map<Integer, Integer>> newHarmonics;
+
+        GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer){
+            newNotes = new InputPort<>(noteYsOutputBuffer);
+            newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
+        }
+
         @Override
         public void paintComponent(Graphics g){
             try {
-                Map<Integer, Integer> harmonics = newHarmonics.consume();
                 Map<Integer, Integer> notes = newNotes.consume();
-                List<Integer> newCursorXs = newCursorX.flush();
-                try {
-                    oldCursorX = newCursorXs.get(0);
-                }
-                catch(IndexOutOfBoundsException ignored){
-                }
+                Map<Integer, Integer> harmonics = newHarmonics.consume();
 
                 TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
                 super.paintComponent(g);
