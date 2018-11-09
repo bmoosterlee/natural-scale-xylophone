@@ -2,8 +2,9 @@ package component;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 
-public class Broadcast<T> implements Runnable{
+public class Broadcast<T> extends Tickable{
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
@@ -19,22 +20,25 @@ public class Broadcast<T> implements Runnable{
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
+    @Override
+    protected void tick() {
+        try {
+            T item = input.consume();
+            for(OutputPort<T> output : outputs){
+                output.produce(item);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void run() {
-        while(true){
-            try {
-                T item = input.consume();
-
-                for(OutputPort<T> output : outputs){
-                    output.produce(item);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    public static <T> Collection<BoundedBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
+        Collection<BoundedBuffer<T>> results = new LinkedList<>();
+        for(int i = 0; i<size; i++){
+            results.add(new BoundedBuffer<>(1, "broadcast"));
         }
+        new Broadcast<>(inputBuffer, results);
+        return results;
     }
 
 }
