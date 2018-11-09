@@ -2,7 +2,7 @@ package gui;
 
 import component.BoundedBuffer;
 import component.OutputPort;
-import main.Pulse;
+import component.Pulse;
 import component.TimedConsumerComponent;
 
 import java.awt.event.MouseEvent;

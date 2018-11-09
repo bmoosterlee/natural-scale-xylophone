@@ -1,8 +1,8 @@
 package pianola.chordgen;
 
 import frequency.Frequency;
-import gui.spectrum.SpectrumWindow;
-import gui.buckets.Buckets;
+import spectrum.SpectrumWindow;
+import spectrum.buckets.Buckets;
 
 public class IncrementalChordGenerator extends SimpleChordGenerator {
     private int noteIndex = 0;

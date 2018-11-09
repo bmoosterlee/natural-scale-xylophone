@@ -2,10 +2,10 @@ package gui;
 
 import component.*;
 import frequency.Frequency;
-import gui.buckets.Buckets;
-import gui.buckets.BucketsAverager;
-import gui.spectrum.SpectrumWindow;
-import main.Pulse;
+import spectrum.buckets.Buckets;
+import spectrum.buckets.BucketsAverager;
+import spectrum.SpectrumWindow;
+import component.Pulse;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

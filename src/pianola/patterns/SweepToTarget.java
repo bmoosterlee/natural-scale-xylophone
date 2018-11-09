@@ -1,8 +1,8 @@
 package pianola.patterns;
 
 import frequency.Frequency;
-import gui.buckets.Buckets;
-import gui.spectrum.SpectrumWindow;
+import spectrum.buckets.Buckets;
+import spectrum.SpectrumWindow;
 import pianola.chordgen.SimpleChordGenerator;
 import pianola.chordgen.StaticGenerator;
 

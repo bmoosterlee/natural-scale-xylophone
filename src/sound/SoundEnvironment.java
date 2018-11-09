@@ -2,8 +2,7 @@ package sound;
 
 import component.BoundedBuffer;
 import component.InputPort;
-import notes.state.VolumeAmplitudeState;
-import notes.state.VolumeAmplitudeStateToSignal;
+import mixer.state.VolumeAmplitudeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 

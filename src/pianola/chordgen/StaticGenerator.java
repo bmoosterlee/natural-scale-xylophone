@@ -1,8 +1,8 @@
 package pianola.chordgen;
 
 import frequency.Frequency;
-import gui.buckets.Buckets;
-import gui.spectrum.SpectrumWindow;
+import spectrum.buckets.Buckets;
+import spectrum.SpectrumWindow;
 
 public class StaticGenerator extends SimpleChordGenerator {
 

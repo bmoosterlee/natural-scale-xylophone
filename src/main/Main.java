@@ -3,10 +3,11 @@ package main;
 import component.*;
 import frequency.Frequency;
 import gui.GUI;
-import gui.buckets.*;
-import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.SpectrumManager;
-import notes.state.*;
+import spectrum.buckets.*;
+import mixer.Mixer;
+import spectrum.SpectrumWindow;
+import spectrum.SpectrumBuilder;
+import mixer.state.*;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
@@ -21,6 +22,31 @@ import java.awt.*;
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
+/*
+The main components are:
+GUI             - Takes in user input and note and harmonic spectra, sends out notes, renders
+Mixer           - Takes in notes, sends out volumes
+SoundEnvironment- Takes in volumes, plays sound
+SpectrumBuilder - Takes in volumes, sends out note and harmonic spectra
+Pianola         - Takes in note and harmonic spectra, and sends out notes
+
+The component edges are:
+GUI -> Mixer                        - sending notes
+Mixer -> SoundEnvironment           - sending volumes
+SoundEnvironment -> SpectrumBuilder - sending volumes
+SpectrumBuilder -> GUI              - sending note and harmonic spectra
+SpectrumBuilder -> Pianola          - sending note and harmonic spectra
+Pianola -> Mixer                    - sending notes
+
+The IO side effects are:
+GUI                 - Takes in user input, renders
+SoundEnvironment    - plays sound
+
+The tickers for the components are:
+Frame ticker    - notifies the GUI to render a new frame
+Sample ticker   - notifies the Mixer to sample volumes
+Pianola ticker  - notifies the Pianola to play new notes
+*/
 class Main {
 
     public static void main(String[] args){
@@ -49,7 +75,7 @@ class Main {
         BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "sample ticker");
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
         BoundedBuffer<VolumeAmplitudeState> volumeBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
-        new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeBuffer, sampleRate);
+        new Mixer(sampleCountBuffer, newNoteBuffer, volumeBuffer, sampleRate);
 
         BoundedBuffer<VolumeAmplitudeState> soundVolumeBuffer = new BoundedBuffer<>(capacity, "volume state to signal");
         BoundedBuffer<VolumeAmplitudeState> spectrumVolumeBuffer = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
@@ -63,7 +89,7 @@ class Main {
 
         BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
         BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(capacity, "spectrum buffer");
-        new SpectrumManager(frameTickBuffer, spectrumVolumeBuffer, spectrumBuffer, width, spectrumWindow);
+        new SpectrumBuilder(frameTickBuffer, spectrumVolumeBuffer, spectrumBuffer, width, spectrumWindow);
 
         BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> guiSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
         BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> pianolaSpectrumBuffer = new OverwritableBuffer<>(capacity);

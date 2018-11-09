@@ -1,7 +1,5 @@
 package component;
 
-import main.Pulse;
-
 public abstract class TimedConsumerComponent extends Component{
     private final InputPort<Pulse> timeInputPort;
 

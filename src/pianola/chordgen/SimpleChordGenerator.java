@@ -1,8 +1,8 @@
 package pianola.chordgen;
 
 import frequency.Frequency;
-import gui.buckets.*;
-import gui.spectrum.SpectrumWindow;
+import spectrum.buckets.*;
+import spectrum.SpectrumWindow;
 
 import java.util.*;
 import java.util.Map.Entry;

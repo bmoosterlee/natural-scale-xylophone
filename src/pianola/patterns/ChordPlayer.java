@@ -1,7 +1,7 @@
 package pianola.patterns;
 
 import frequency.Frequency;
-import gui.buckets.Buckets;
+import spectrum.buckets.Buckets;
 
 import java.util.Collections;
 import java.util.HashSet;

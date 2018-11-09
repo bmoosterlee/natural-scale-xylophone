@@ -1,7 +1,7 @@
 package gui;
 
 import frequency.Frequency;
-import gui.spectrum.SpectrumWindow;
+import spectrum.SpectrumWindow;
 import component.BoundedBuffer;
 import component.OutputPort;
 
