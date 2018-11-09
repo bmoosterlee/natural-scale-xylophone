@@ -112,9 +112,9 @@ public class GUI extends Tickable {
         private final InputPort<Map<Integer, Integer>> newNotes;
         private final InputPort<Map<Integer, Integer>> newHarmonics;
 
-        GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer){
-            newNotes = new InputPort<>(noteYsOutputBuffer);
-            newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
+        GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer){
+            newNotes = new InputPort<>(noteSpectrumBuffer);
+            newHarmonics = new InputPort<>(harmonicSpectrumBuffer);
         }
 
         @Override
