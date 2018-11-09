@@ -5,32 +5,12 @@ import component.*;
 import java.util.AbstractMap;
 import java.util.Arrays;
 
-public class PrecalculatedBucketHistoryComponent extends Component {
-    private final int size;
+public class PrecalculatedBucketHistoryComponent {
 
-    private ImmutableLinkedList<Buckets> history;
-    private  Buckets timeAverage;
-
-    private final OutputPort<Buckets> outputPort;
-
-    private OutputPort<ImmutableLinkedList<Buckets>> historyOutputPort;
-    private InputPort<ImmutableLinkedList<Buckets>> newHistoryInputPort;
-    private OutputPort<Buckets> timeAverageOutputPort;
-    private InputPort<Buckets> newtimeAverageInputPort;
-    private OutputPort<Buckets> conditionalOutputPort1;
-    private OutputPort<Buckets> conditionalOutputPort2;
-    private InputPort<Buckets> conditionalInputPort;
-
-    private PrecalculatedBucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size) {
-        this.size = size;
-        double multiplier = 1. / size;
-        this.history = new ImmutableLinkedList<>();
-        this.timeAverage = new Buckets();
-
-        outputPort = new OutputPort<>(outputBuffer);
-
+    public PrecalculatedBucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size) {
         int capacity = 1;
 
+        double multiplier = 1. / size;
         BoundedBuffer<Buckets> multipliedBucketsBuffer = new BoundedBuffer<>(capacity, "buckets history - multiply");
         new PipeComponent<>(inputBuffer, multipliedBucketsBuffer, input -> input.multiply(multiplier));
 
@@ -38,76 +18,73 @@ public class PrecalculatedBucketHistoryComponent extends Component {
         BoundedBuffer<Buckets> preparedBucketsBuffer2 = new BoundedBuffer<>(capacity, "history - preparedBuckets 2");
         new Broadcast<>(multipliedBucketsBuffer, Arrays.asList(preparedBucketsBuffer1, preparedBucketsBuffer2));
 
-        BoundedBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new BoundedBuffer<>(capacity, "history - input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = Pairer.PairerWithOutputBuffer(historyInputBuffer, preparedBucketsBuffer1, capacity, "history - pairer");
+        BoundedBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new BoundedBuffer<>(capacity, "history - input");
+        OutputPort<ImmutableLinkedList<Buckets>> historyOutputPort = new OutputPort<>(historyBuffer);
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = Pairer.PairerWithOutputBuffer(historyBuffer, preparedBucketsBuffer1, capacity, "history - pairer");
         BoundedBuffer<ImmutableLinkedList<Buckets>> newHistoryBuffer = new BoundedBuffer<>(capacity, "history - output");
         new PipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
 
-        historyOutputPort = new OutputPort<>(historyInputBuffer);
-        newHistoryInputPort = new InputPort<>(newHistoryBuffer);
-
         BoundedBuffer<Buckets> timeAverageBuffer = new BoundedBuffer<>(capacity, "history - time average input");
+        OutputPort<Buckets> timeAverageOutputPort = new OutputPort<>(timeAverageBuffer);
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = Pairer.PairerWithOutputBuffer(timeAverageBuffer, preparedBucketsBuffer2, capacity, "history - pairer2");
         BoundedBuffer<Buckets> newTimeAverageBuffer = new BoundedBuffer<>(capacity, "history - new time average");
         new PipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
 
-        timeAverageOutputPort = new OutputPort<>(timeAverageBuffer);
-        newtimeAverageInputPort = new InputPort<>(newTimeAverageBuffer);
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> removerPair = Pairer.PairerWithOutputBuffer(newHistoryBuffer, newTimeAverageBuffer, capacity, "remover - input");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> removerOutputBuffer = new BoundedBuffer<>(capacity, "remover - output");
+        CallableWithArguments<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> oldHistoryRemover = new CallableWithArguments<>() {
+            private final OutputPort<Buckets> conditionalSubtractOutputPort1;
+            private final OutputPort<Buckets> conditionalSubtractOutputPort2;
+            private final InputPort<Buckets> conditionalSubtractInputPort;
 
-        BoundedBuffer<Buckets> conditionalInputBuffer1 = new BoundedBuffer<>(capacity, "history - conditional input 1");
-        BoundedBuffer<Buckets> conditionalInputBuffer2 = new BoundedBuffer<>(capacity, "history - conditional input 2");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = Pairer.PairerWithOutputBuffer(conditionalInputBuffer1, conditionalInputBuffer2, capacity, "history - pairer2");
-        BoundedBuffer<Buckets> conditionalOutputBuffer = new BoundedBuffer<>(capacity, "history - conditional output");
-        new PipeComponent<>(pair3, conditionalOutputBuffer, input -> input.getKey().subtract(input.getValue()));
+            {
+                BoundedBuffer<Buckets> subtractInputBuffer1 = new BoundedBuffer<>(capacity, "history - conditional input 1");
+                BoundedBuffer<Buckets> subtractInputBuffer2 = new BoundedBuffer<>(capacity, "history - conditional input 2");
+                BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> subtractInputBuffer = Pairer.PairerWithOutputBuffer(subtractInputBuffer1, subtractInputBuffer2, capacity, "history - pairer2");
+                BoundedBuffer<Buckets> subtractOutputBuffer = new BoundedBuffer<>(capacity, "history - conditional output");
+                new PipeComponent<>(subtractInputBuffer, subtractOutputBuffer, input -> input.getKey().subtract(input.getValue()));
 
-        conditionalOutputPort1 = new OutputPort<>(conditionalInputBuffer1);
-        conditionalOutputPort2 = new OutputPort<>(conditionalInputBuffer2);
-        conditionalInputPort = new InputPort<>(conditionalOutputBuffer);
+                conditionalSubtractOutputPort1 = new OutputPort<>(subtractInputBuffer1);
+                conditionalSubtractOutputPort2 = new OutputPort<>(subtractInputBuffer2);
+                conditionalSubtractInputPort = new InputPort<>(subtractOutputBuffer);
+            }
 
-        start();
-    }
+            @Override
+            public AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> call(AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> input) {
+                ImmutableLinkedList<Buckets> newHistory = input.getKey();
+                Buckets newTimeAverage = input.getValue();
+                try {
+                    if (newHistory.size() >= size) {
+                        conditionalSubtractOutputPort1.produce(newTimeAverage);
 
-    @Override
-    protected void tick() {
+                        AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = newHistory.poll();
+                        Buckets removed = poll.getValue();
+                        conditionalSubtractOutputPort2.produce(removed);
+
+                        newHistory = poll.getKey();
+                        newTimeAverage = conditionalSubtractInputPort.consume();
+                    }
+                    return new AbstractMap.SimpleImmutableEntry<>(newHistory, newTimeAverage);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+        new PipeComponent<>(removerPair, removerOutputBuffer, oldHistoryRemover);
+
+        BoundedBuffer<Buckets> outputTimeAverageBuffer = new BoundedBuffer<>(capacity, "output time average");
+        new Unpairer<>(removerOutputBuffer, historyBuffer, outputTimeAverageBuffer);
+
+        new Broadcast<>(outputTimeAverageBuffer, Arrays.asList(outputBuffer, timeAverageBuffer));
+
         try {
-            Buckets result = addNewBuckets();
-            outputPort.produce(result);
+            historyOutputPort.produce(new ImmutableLinkedList<>());
+            timeAverageOutputPort.produce(new Buckets());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
 
-    private Buckets addNewBuckets() {
-        try {
-            historyOutputPort.produce(history);
-            timeAverageOutputPort.produce(timeAverage);
-
-            ImmutableLinkedList<Buckets> newHistory = newHistoryInputPort.consume();
-            Buckets newTimeAverage = newtimeAverageInputPort.consume();
-            
-            if (history.size() >= size) {
-                conditionalOutputPort1.produce(newTimeAverage);
-
-                AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = newHistory.poll();
-                Buckets removed = poll.getValue();
-                conditionalOutputPort2.produce(removed);
-
-                newHistory = poll.getKey();
-                newTimeAverage = conditionalInputPort.consume();
-            }
-            else{
-
-            }
-
-            history = newHistory;
-            timeAverage = newTimeAverage;
-
-            return timeAverage;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
 }
