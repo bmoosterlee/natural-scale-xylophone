@@ -8,26 +8,26 @@ import component.OutputPort;
 public class BucketHistoryComponent extends Component {
     private BucketHistory bucketHistory;
 
-    private final InputPort<Buckets> newBucketsInput;
-    private final OutputPort<Buckets> timeAveragedBucketsOutput;
+    private final InputPort<Buckets> inputPort;
+    private final OutputPort<Buckets> outputPort;
 
-    public BucketHistoryComponent(int size, BoundedBuffer<Buckets> newBucketsBuffer, BoundedBuffer<Buckets> timeAveragedBucketsBuffer){
+    public BucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size){
         bucketHistory = new PrecalculatedBucketHistory(size);
 
-        newBucketsInput = new InputPort<>(newBucketsBuffer);
-        timeAveragedBucketsOutput = new OutputPort<>(timeAveragedBucketsBuffer);
+        inputPort = new InputPort<>(inputBuffer);
+        outputPort = new OutputPort<>(outputBuffer);
 
         start();
     }
 
     protected void tick() {
         try {
-            Buckets newBuckets = newBucketsInput.consume();
+            Buckets newBuckets = inputPort.consume();
 
             bucketHistory = bucketHistory.addNewBuckets(newBuckets);
             Buckets timeAveragedBuckets = bucketHistory.getTimeAveragedBuckets();
 
-            timeAveragedBucketsOutput.produce(timeAveragedBuckets);
+            outputPort.produce(timeAveragedBuckets);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
