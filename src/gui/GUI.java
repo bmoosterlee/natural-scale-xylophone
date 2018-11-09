@@ -34,27 +34,22 @@ public class GUI extends Tickable {
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(1, "gui - spectrum 2");
         new Broadcast<>(inputBuffer, Arrays.asList(tickSpectrumBuffer, spectrumBuffer));
 
-        BoundedBuffer<Pulse> frameTickBuffer = new BoundedBuffer<>(1, "gui - frame tick");
-        new TickablePipeComponent<>(tickSpectrumBuffer, frameTickBuffer, input -> new Pulse());
+        BoundedBuffer<Pulse> frameTickBuffer = tickSpectrumBuffer.performMethod(input -> new Pulse());
 
         BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(1, "gui - note spectrum");
         BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(1, "gui - harmonic spectrum");
         new Unpairer<>(spectrumBuffer, noteSpectrumBuffer, harmonicSpectrumBuffer);
 
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Gui averaged harmonics buffer");
-        new BucketsAverager(inaudibleFrequencyMargin, harmonicSpectrumBuffer, guiAveragedHarmonicsBucketsBuffer);
+        BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer =
+                harmonicSpectrumBuffer
+                    .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
+                    .performMethod(GUI::bucketsToVolumes)
+                    .performMethod(input -> volumesToYs(input, yScale, margin));
 
-        BoundedBuffer<Map<Integer, Double>> harmonicsVolumesOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to volumes");
-        new TickablePipeComponent<>(guiAveragedHarmonicsBucketsBuffer, harmonicsVolumesOutputBuffer, GUI::bucketsToVolumes);
-
-        BoundedBuffer<Map<Integer, Double>> noteVolumesOutputBuffer = new BoundedBuffer<>(capacity, "notes to volumes");
-        new TickablePipeComponent<>(noteSpectrumBuffer, noteVolumesOutputBuffer, GUI::bucketsToVolumes);
-
-        BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to ys");
-        new TickablePipeComponent<>(harmonicsVolumesOutputBuffer, harmonicsYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
-
-        BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer = new BoundedBuffer<>(capacity, "notes to ys");
-        new TickablePipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
+        BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
+                noteSpectrumBuffer
+                    .performMethod(GUI::bucketsToVolumes)
+                    .performMethod(input -> volumesToYs(input, yScale, margin));
 
         guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
         NoteClicker noteClicker = new NoteClicker(outputBuffer, spectrumWindow);
