@@ -43,4 +43,11 @@ public class TickablePipeComponent<K, V> extends Tickable {
         InputPort<V> inputPort = new InputPort<>(outputBuffer);
         return new AbstractMap.SimpleImmutableEntry<>(outputPort, inputPort);
     }
+
+    public static <K, V> BoundedBuffer<V> methodToComponentWithOutputBuffer(BoundedBuffer<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
+        BoundedBuffer<V> outputBuffer = new BoundedBuffer<>(capacity, name);
+        new TickablePipeComponent<>(inputBuffer, outputBuffer, method);
+        return outputBuffer;
+    }
+
 }

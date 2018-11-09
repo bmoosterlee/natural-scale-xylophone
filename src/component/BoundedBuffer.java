@@ -67,4 +67,8 @@ public class BoundedBuffer<T> {
     public OutputPort<T> createOutputPort(){
         return new OutputPort<>(this);
     }
+
+    public <V> BoundedBuffer<V> performMethod(CallableWithArguments<T, V> method){
+        return TickablePipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
+    }
 }
