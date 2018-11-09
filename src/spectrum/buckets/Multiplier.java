@@ -3,8 +3,9 @@ package spectrum.buckets;
 import component.BoundedBuffer;
 import component.InputPort;
 import component.OutputPort;
+import component.Tickable;
 
-public class Multiplier implements Runnable {
+public class Multiplier extends Tickable {
 
     private final double multiplier;
 
@@ -20,18 +21,7 @@ public class Multiplier implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             Buckets buckets = input.consume();
 
