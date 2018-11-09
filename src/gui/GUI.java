@@ -1,17 +1,18 @@
 package gui;
 
+import component.*;
+import frequency.Frequency;
 import gui.buckets.Buckets;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.PipeComponent;
+import gui.buckets.BucketsAverager;
+import gui.spectrum.SpectrumWindow;
+import main.Pulse;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class GUI extends JPanel implements Runnable {
     private final int HEIGHT = 600;
@@ -24,13 +25,28 @@ public class GUI extends JPanel implements Runnable {
 
     private int oldCursorX;
 
-    public GUI(BoundedBuffer<Buckets> newHarmonicsBuffer, BoundedBuffer<Buckets> newNotesBuffer, BoundedBuffer<Integer> newCursorXBuffer, int width){
-        int capacity = 10;
+    public GUI(BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, BoundedBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+        int capacity = 100;
+
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> tickSpectrumBuffer = new BoundedBuffer<>(1, "gui - spectrum 1");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(1, "gui - spectrum 2");
+        new Broadcast<>(inputBuffer, Arrays.asList(tickSpectrumBuffer, spectrumBuffer));
+
+        BoundedBuffer<Pulse> frameTickBuffer = new BoundedBuffer<>(1, "gui - frame tick");
+        new PipeComponent<>(tickSpectrumBuffer, frameTickBuffer, input -> new Pulse());
+
+        BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(1, "gui - note spectrum");
+        BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(1, "gui - harmonic spectrum");
+        new Unpairer<>(spectrumBuffer, noteSpectrumBuffer, harmonicSpectrumBuffer);
+
+        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Gui averaged harmonics buffer");
+        new BucketsAverager(inaudibleFrequencyMargin, harmonicSpectrumBuffer, guiAveragedHarmonicsBucketsBuffer);
+
         BoundedBuffer<Map<Integer, Double>> harmonicsVolumesOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to volumes");
-        new PipeComponent<>(newHarmonicsBuffer, harmonicsVolumesOutputBuffer, GUI::bucketsToVolumes);
+        new PipeComponent<>(guiAveragedHarmonicsBucketsBuffer, harmonicsVolumesOutputBuffer, GUI::bucketsToVolumes);
 
         BoundedBuffer<Map<Integer, Double>> noteVolumesOutputBuffer = new BoundedBuffer<>(capacity, "notes to volumes");
-        new PipeComponent<>(newNotesBuffer, noteVolumesOutputBuffer, GUI::bucketsToVolumes);
+        new PipeComponent<>(noteSpectrumBuffer, noteVolumesOutputBuffer, GUI::bucketsToVolumes);
 
         BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer = new BoundedBuffer<>(capacity, "harmonics to ys");
         new PipeComponent<>(harmonicsVolumesOutputBuffer, harmonicsYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
@@ -38,9 +54,14 @@ public class GUI extends JPanel implements Runnable {
         BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer = new BoundedBuffer<>(capacity, "notes to ys");
         new PipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
 
+        addMouseListener(new NoteClicker(outputBuffer, spectrumWindow));
+
+        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
+        addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
+
         newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
         newNotes = new InputPort<>(noteYsOutputBuffer);
-        newCursorX = new InputPort<>(newCursorXBuffer);
+        newCursorX = new InputPort<>(cursorXBuffer);
 
         JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

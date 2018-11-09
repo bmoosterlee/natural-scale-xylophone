@@ -1,19 +1,22 @@
 package gui.spectrum.state;
 
+import component.*;
 import frequency.Frequency;
 import gui.buckets.AtomicBucket;
+import gui.buckets.Buckets;
+import gui.buckets.BuffersToBuckets;
+import gui.buckets.PrecalculatedBucketHistoryComponent;
 import gui.spectrum.SpectrumWindow;
 import harmonics.Harmonic;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
+import harmonics.HarmonicCalculator;
+import main.Pulse;
+import notes.state.VolumeAmplitudeState;
+import notes.state.VolumeAmplitudeToVolumeFilter;
+import notes.state.VolumeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class SpectrumManager implements Runnable {
     private final SpectrumWindow spectrumWindow;
@@ -21,13 +24,46 @@ public class SpectrumManager implements Runnable {
     private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsInput;
     private final Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput;
 
-    public SpectrumManager(SpectrumWindow spectrumWindow, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    public SpectrumManager(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets,Buckets>> outputBuffer, int width, SpectrumWindow spectrumWindow) {
         this.spectrumWindow = spectrumWindow;
+
+        int capacity = 1;
+
+        BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - note buckets");
+        BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
+        new Pairer<>(noteSpectrumBuffer, harmonicSpectrumBuffer, outputBuffer);
+
+        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity,"spectrum frame tick 1");
+        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, "spectrum frame tick 2");
+        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
+
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "spectrum volume amplitude");
+        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, inputBuffer, volumeAmplitudeStateBuffer2);
+        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, "spectrum volume");
+        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer2, volumeStateBuffer);
+
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "volumeState 2");
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "volumeState 3");
+        new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
+
+        new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, noteSpectrumBuffer);
+
+        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
+        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
+
+        Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
+        for(Integer i = 0; i< width; i++){
+            harmonicsMap.put(i, new BoundedBuffer<>(1000, "harmonics bucket"));
+        }
+
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1, "Input harmonics buffer");
+        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
+        new PrecalculatedBucketHistoryComponent(inputHarmonicsBucketsBuffer, harmonicSpectrumBuffer, 200);
 
         harmonicsInput = new InputPort<>(harmonicsBuffer);
         harmonicsOutput = new HashMap<>();
-        for(Integer index : bufferMap.keySet()){
-            harmonicsOutput.put(index, new OutputPort<>(bufferMap.get(index)));
+        for(Integer index : harmonicsMap.keySet()){
+            harmonicsOutput.put(index, new OutputPort<>(harmonicsMap.get(index)));
         }
 
         start();

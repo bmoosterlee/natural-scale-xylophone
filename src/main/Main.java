@@ -2,15 +2,10 @@ package main;
 
 import component.*;
 import frequency.Frequency;
-import gui.CursorMover;
 import gui.GUI;
-import gui.NoteClicker;
 import gui.buckets.*;
 import gui.spectrum.SpectrumWindow;
-import gui.spectrum.state.VolumeStateToBuckets;
 import gui.spectrum.state.SpectrumManager;
-import harmonics.Harmonic;
-import harmonics.HarmonicCalculator;
 import notes.state.*;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
@@ -24,9 +19,9 @@ import time.TimeInSeconds;
 import javax.sound.sampled.LineUnavailableException;
 import java.awt.*;
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 class Main {
-    private static int capacity = 100000;
 
     public static void main(String[] args){
         new PerformanceTracker();
@@ -49,100 +44,43 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
+        int capacity = 10;
+
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "sample ticker");
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = initalizeSoundPipeline(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, newNoteBuffer);
+        BoundedBuffer<VolumeAmplitudeState> volumeBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
+        new VolumeAmplitudeCalculator(sampleCountBuffer, newNoteBuffer, volumeBuffer, sampleRate);
 
-        BoundedBuffer<Buckets> inputNotesBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - note buckets");
-        BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
-        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
-        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(1, "frame tick 1");
-        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(1, "frame tick 2");
-        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
-        initializeSpectrumPipeline(width, spectrumWindow, volumeAmplitudeStateBuffer, inputNotesBucketsBuffer, timeAveragedHarmonicsBucketsBuffer, frameTickBuffer1);
+        BoundedBuffer<VolumeAmplitudeState> soundVolumeBuffer = new BoundedBuffer<>(capacity, "volume state to signal");
+        BoundedBuffer<VolumeAmplitudeState> spectrumVolumeBuffer = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
+        new Broadcast<>(volumeBuffer, new HashSet<>(Arrays.asList(soundVolumeBuffer, spectrumVolumeBuffer)));
 
-        BoundedBuffer<Buckets> guiNotesBucketsBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
-        BoundedBuffer<Buckets> pianolaNotesBucketsBuffer = new OverwritableBuffer<>(capacity);
-        new Broadcast<>(inputNotesBucketsBuffer, new HashSet<>(Arrays.asList(guiNotesBucketsBuffer, pianolaNotesBucketsBuffer)));
-        BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "gui - harmonics buckets");
-        BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer = new OverwritableBuffer<>(capacity);
-        new Broadcast<>(timeAveragedHarmonicsBucketsBuffer, new HashSet<>(Arrays.asList(guiHarmonicsBucketsBuffer, pianolaHarmonicsBucketsBuffer)));
-        initializeGUIPipeline(width, inaudibleFrequencyMargin, spectrumWindow, frameTickBuffer2, newNoteBuffer, guiNotesBucketsBuffer, guiHarmonicsBucketsBuffer);
-        initializePianolaPipeline(pianolaRate, pianolaLookahead, inaudibleFrequencyMargin, spectrumWindow, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer);
-
-        playTestTone(newNoteBuffer, spectrumWindow);
-    }
-
-    private static void initializeSpectrumPipeline(int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer, BoundedBuffer<Pulse> frameTickBuffer) {
-        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity,"spectrum frame tick 1");
-        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, "spectrum frame tick 2");
-        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
-
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "spectrum volume amplitude");
-        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer, volumeAmplitudeStateBuffer2);
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, "spectrum volume");
-        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer2, volumeStateBuffer);
-
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "volumeState 2");
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "volumeState 3");
-        new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
-
-        new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, inputNotesBucketsBuffer);
-
-        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
-        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
-
-        Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
-        for(Integer i = 0; i< width; i++){
-            harmonicsMap.put(i, new BoundedBuffer<>(1000, "harmonics bucket"));
+        try {
+            new SoundEnvironment(soundVolumeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
         }
-        new SpectrumManager(spectrumWindow, harmonicsBuffer, harmonicsMap);
 
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Input harmonics buffer");
-        //todo find all uses of history component and check whether we can eliminate the conversion from buffers to buckets.
-        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
-        new PrecalculatedBucketHistoryComponent(inputHarmonicsBucketsBuffer, timeAveragedHarmonicsBucketsBuffer, 200);
-    }
+        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(capacity, "spectrum buffer");
+        new SpectrumManager(frameTickBuffer, spectrumVolumeBuffer, spectrumBuffer, width, spectrumWindow);
 
-    private static void initializeGUIPipeline(int width, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> guiNotesBucketsBuffer, BoundedBuffer<Buckets> guiHarmonicsBucketsBuffer) {
-        BoundedBuffer<Buckets> guiAveragedHarmonicsBucketsBuffer = new BoundedBuffer<>(capacity, "Gui averaged harmonics buffer");
-        new BucketsAverager(inaudibleFrequencyMargin, guiHarmonicsBucketsBuffer, guiAveragedHarmonicsBucketsBuffer);
-        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
-        GUI gui = new GUI(guiAveragedHarmonicsBucketsBuffer, guiNotesBucketsBuffer, cursorXBuffer, width);
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> guiSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> pianolaSpectrumBuffer = new OverwritableBuffer<>(capacity);
+        new Broadcast<>(spectrumBuffer, new HashSet<>(Arrays.asList(guiSpectrumBuffer, pianolaSpectrumBuffer)));
 
-        gui.addMouseListener(new NoteClicker(newNoteBuffer, spectrumWindow));
-        gui.addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
-    }
+        new GUI(guiSpectrumBuffer, newNoteBuffer, spectrumWindow, width, inaudibleFrequencyMargin);
 
-    private static void initializePianolaPipeline(int pianolaRate, int pianolaLookahead, int inaudibleFrequencyMargin, SpectrumWindow spectrumWindow, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<Buckets> pianolaNotesBucketsBuffer, BoundedBuffer<Buckets> pianolaHarmonicsBucketsBuffer) {
         BoundedBuffer<Pulse> pianolaTicker = initializePulseTicker(pianolaRate, pianolaLookahead, "Pianola ticker");
-
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
-        new Pianola(pianolaPattern, pianolaTicker, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, inaudibleFrequencyMargin);
+        new Pianola(pianolaPattern, pianolaTicker, pianolaSpectrumBuffer, newNoteBuffer, inaudibleFrequencyMargin);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
         //todo and plays harmonically complimentary notes near the notes being played. Use a higher frame rate preferably
-    }
 
-    private static BoundedBuffer<VolumeAmplitudeState> initalizeSoundPipeline(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Frequency> newNoteBuffer) {
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "sample ticker");
-        BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
-        new NoteTimestamper(sampleCountBuffer, newNoteBuffer, timeStampedNewNotesBuffer);
-        BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer = new BoundedBuffer<>(capacity, "envelope wave builder");
-        new EnvelopeWaveBuilder(timeStampedNewNotesBuffer, timestampedNewNotesEnvelopeBuffer, sampleRate);
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
-        new VolumeAmplitudeCalculator(timestampedNewNotesEnvelopeBuffer, volumeAmplitudeStateBuffer, sampleRate);
-
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "volume state to signal");
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
-        new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
-        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(capacity, "sound environment - signal");
-        new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
-
-        initializeSoundEnvironment(SAMPLE_SIZE_IN_BITS, sampleRate, amplitudeBuffer);
-
-        return volumeAmplitudeStateBuffer3;
+        playTestTone(newNoteBuffer, spectrumWindow);
     }
 
     private static void playTestTone(BoundedBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
@@ -154,14 +92,6 @@ class Main {
         try {
             new OutputPort<>(newNoteBuffer).produce(spectrumWindow.getCenterFrequency());
         } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void initializeSoundEnvironment(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Double> amplitudeBuffer) {
-        try {
-            new SoundEnvironment(amplitudeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
-        } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
     }

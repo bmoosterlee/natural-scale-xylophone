@@ -2,6 +2,8 @@ package sound;
 
 import component.BoundedBuffer;
 import component.InputPort;
+import notes.state.VolumeAmplitudeState;
+import notes.state.VolumeAmplitudeStateToSignal;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -18,16 +20,19 @@ public class SoundEnvironment implements Runnable{
 
     private final InputPort<Double> sampleAmplitudeInput;
 
-    public SoundEnvironment(BoundedBuffer<Double> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) throws LineUnavailableException {
+    public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) throws LineUnavailableException {
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
-        sampleAmplitudeInput = new InputPort<>(inputBuffer);
 
         AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
         sourceDataLine = AudioSystem.getSourceDataLine(af);
         sourceDataLine.open();
         sourceDataLine.start();
+
+        BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1, "sound environment - signal");
+        new VolumeAmplitudeStateToSignal(inputBuffer, amplitudeBuffer);
+        sampleAmplitudeInput = new InputPort<>(amplitudeBuffer);
 
         start();
     }

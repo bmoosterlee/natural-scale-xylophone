@@ -36,16 +36,22 @@ public class VolumeAmplitudeCalculator implements Runnable {
     private final OutputPort<VolumeAmplitudeState> oldStateOutputPortPrecalc;
     private final InputPort<VolumeAmplitudeState> newStateInputPortPrecalc;
 
-    public VolumeAmplitudeCalculator(BoundedBuffer<TimestampedNewNotesWithEnvelope> inputBuffer, BoundedBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
+    public VolumeAmplitudeCalculator(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, BoundedBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         this.sampleRate = sampleRate;
+
+        int capacity = 10;
 
         unfinishedSlices = new HashMap<>();
         unfinishedSlicesWaves = new HashMap<>();
         finishedSlices = new HashMap<>();
 
-        this.input = new InputPort<>(inputBuffer);
+        BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
+        new NoteTimestamper(sampleCountBuffer, noteInputBuffer, timeStampedNewNotesBuffer);
 
-        int capacity = 10;
+        BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer = new BoundedBuffer<>(1, "envelope wave builder");
+        new EnvelopeWaveBuilder(timeStampedNewNotesBuffer, timestampedNewNotesEnvelopeBuffer, sampleRate);
+        input = new InputPort<>(timestampedNewNotesEnvelopeBuffer);
+
         {
             SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = PipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
             addNewNotesOutputPort = addNewNotesPorts.getKey();
@@ -58,15 +64,15 @@ public class VolumeAmplitudeCalculator implements Runnable {
             BoundedBuffer<Map<Frequency, Collection<Envelope>>> groupEnvelopesByFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequency - output");
             new PipeComponent<>(groupEnvelopesByFrequencyInputBuffer, groupEnvelopesByFrequencyOutputBuffer, VolumeAmplitudeCalculator::groupEnvelopesByFrequency);
 
-            BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
-            sampleCountOutputPort = new OutputPort<>(sampleCountBuffer);
+            BoundedBuffer<Long> sampleCountBuffer2 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
+            sampleCountOutputPort = new OutputPort<>(sampleCountBuffer2);
             BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - waves");
             waveOutputPort = new OutputPort<>(waveBuffer);
 
             BoundedBuffer<SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>> pair1Buffer = new BoundedBuffer<>(capacity, "pair1");
             new Pairer<>(groupEnvelopesByFrequencyOutputBuffer, waveBuffer, pair1Buffer);
             BoundedBuffer<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>> pair2Buffer = new BoundedBuffer<>(capacity, "pair2");
-            new Pairer<>(sampleCountBuffer, pair1Buffer, pair2Buffer);
+            new Pairer<>(sampleCountBuffer2, pair1Buffer, pair2Buffer);
 
             BoundedBuffer<EnvelopeWaveSlice> pairToParamObjectOutputBuffer = new BoundedBuffer<>(capacity, "pair to paramObject - output");
             new PipeComponent<>(pair2Buffer, pairToParamObjectOutputBuffer, input -> new EnvelopeWaveSlice(input.getKey(), input.getValue().getKey(), input.getValue().getValue()));
@@ -91,15 +97,15 @@ public class VolumeAmplitudeCalculator implements Runnable {
             BoundedBuffer<Map<Frequency, Collection<Envelope>>> groupEnvelopesByFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - output");
             new PipeComponent<>(groupEnvelopesByFrequencyInputBuffer, groupEnvelopesByFrequencyOutputBuffer, VolumeAmplitudeCalculator::groupEnvelopesByFrequency);
 
-            BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
-            sampleCountOutputPortPrecalc = new OutputPort<>(sampleCountBuffer);
+            BoundedBuffer<Long> sampleCountBuffer3 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
+            sampleCountOutputPortPrecalc = new OutputPort<>(sampleCountBuffer3);
             BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - waves");
             waveOutputPortPrecalc = new OutputPort<>(waveBuffer);
 
             BoundedBuffer<SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>> pair1Buffer = new BoundedBuffer<>(capacity, "pair1Precalc");
             new Pairer<>(groupEnvelopesByFrequencyOutputBuffer, waveBuffer, pair1Buffer);
             BoundedBuffer<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>> pair2Buffer = new BoundedBuffer<>(capacity, "pair2Precalc");
-            new Pairer<>(sampleCountBuffer, pair1Buffer, pair2Buffer);
+            new Pairer<>(sampleCountBuffer3, pair1Buffer, pair2Buffer);
 
             BoundedBuffer<EnvelopeWaveSlice> pairToParamObjectOutputBuffer = new BoundedBuffer<>(capacity, "pair to paramObjectPrecalc - output");
             new PipeComponent<>(pair2Buffer, pairToParamObjectOutputBuffer, input -> new EnvelopeWaveSlice(input.getKey(), input.getValue().getKey(), input.getValue().getValue()));
