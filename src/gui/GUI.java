@@ -1,7 +1,7 @@
 package gui;
 
 import component.*;
-import component.Component;
+import component.TickingComponent;
 import frequency.Frequency;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
@@ -15,7 +15,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GUI extends Component {
+public class GUI extends TickingComponent {
 
     private final int height = 600;
     private final double yScale = height * 0.95;

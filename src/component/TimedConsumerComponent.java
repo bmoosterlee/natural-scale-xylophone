@@ -1,6 +1,6 @@
 package component;
 
-public abstract class TimedConsumerComponent extends Component{
+public abstract class TimedConsumerComponent extends TickingComponent {
     private final InputPort<Pulse> timeInputPort;
 
     public TimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer){

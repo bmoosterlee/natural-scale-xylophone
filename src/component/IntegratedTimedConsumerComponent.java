@@ -1,6 +1,6 @@
 package component;
 
-public class IntegratedTimedConsumerComponent<T> extends Component{
+public class IntegratedTimedConsumerComponent<T> extends TickingComponent {
     private final InputPort<Pulse> timeInputPort;
     private final InputPort<T> inputPort;
     private final OutputPort<T> outputPort;

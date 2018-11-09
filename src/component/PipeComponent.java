@@ -2,7 +2,7 @@ package component;
 
 import java.util.AbstractMap;
 
-public class PipeComponent<K, V> extends Component {
+public class PipeComponent<K, V> extends TickingComponent {
 
     protected final InputPort<K> input;
     protected final OutputPort<V> output;

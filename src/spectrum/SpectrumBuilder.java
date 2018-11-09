@@ -17,7 +17,7 @@ import time.TimeKeeper;
 
 import java.util.*;
 
-public class SpectrumBuilder extends Component {
+public class SpectrumBuilder extends TickingComponent {
     private final SpectrumWindow spectrumWindow;
 
     private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsInput;
