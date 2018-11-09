@@ -17,7 +17,7 @@ import time.TimeKeeper;
 
 import java.util.*;
 
-public class SpectrumBuilder implements Runnable {
+public class SpectrumBuilder extends Component {
     private final SpectrumWindow spectrumWindow;
 
     private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsInput;
@@ -68,24 +68,14 @@ public class SpectrumBuilder implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
     @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsInput.consume();
 
             TimeKeeper timeKeeper = PerformanceTracker.startTracking("build spectrum snapshot");
             while (harmonicsInput.isEmpty()) {
-                if (update(harmonicHierarchyIterator)) break;
+                if (!update(harmonicHierarchyIterator)) break;
             }
             PerformanceTracker.stopTracking(timeKeeper);
 
@@ -104,14 +94,14 @@ public class SpectrumBuilder implements Runnable {
             harmonicsOutput.get(spectrumWindow.getX(frequency)).produce(newBucket);
 
         } catch (NoSuchElementException e) {
-            return true;
+            return false;
         } catch (InterruptedException e) {
             e.printStackTrace();
-            return true;
+            return false;
         } catch (NullPointerException ignored) {
-            //Harmonic is out of bounds during the call to harmonicsOutput.get
+            //harmonic is out of bounds during the call to harmonicsOutput.get
         }
-        return false;
+        return true;
     }
 
 }
