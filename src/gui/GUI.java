@@ -1,6 +1,7 @@
 package gui;
 
 import component.*;
+import component.Component;
 import frequency.Frequency;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
@@ -14,10 +15,13 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GUI extends JPanel implements Runnable {
+public class GUI extends Component {
+
     private final int HEIGHT = 600;
     private final double yScale = HEIGHT * 0.95;
     private final double margin = HEIGHT * 0.05;
+
+    private final GUIPanel guiPanel;
 
     private final InputPort<Map<Integer, Integer>> newHarmonics;
     private final InputPort<Map<Integer, Integer>> newNotes;
@@ -54,10 +58,11 @@ public class GUI extends JPanel implements Runnable {
         BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer = new BoundedBuffer<>(capacity, "notes to ys");
         new PipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
 
-        addMouseListener(new NoteClicker(outputBuffer, spectrumWindow));
+        guiPanel = new GUIPanel();
+        guiPanel.addMouseListener(new NoteClicker(outputBuffer, spectrumWindow));
 
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
-        addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
+        guiPanel.addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
 
         newHarmonics = new InputPort<>(harmonicsYsOutputBuffer);
         newNotes = new InputPort<>(noteYsOutputBuffer);
@@ -65,73 +70,17 @@ public class GUI extends JPanel implements Runnable {
 
         JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setPreferredSize(new Dimension(width, HEIGHT));
-        frame.setContentPane(this);
+        guiPanel.setPreferredSize(new Dimension(width, HEIGHT));
+        frame.setContentPane(guiPanel);
         frame.pack();
         frame.setVisible(true);
 
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
     @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
-        repaint();
-    }
-
-    @Override
-    public void paintComponent(Graphics g){
-        try {
-            Map<Integer, Integer> harmonics = newHarmonics.consume();
-            Map<Integer, Integer> notes = newNotes.consume();
-            java.util.List<Integer> newCursorXs = newCursorX.flush();
-
-            TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
-            int x = getCurrentX(newCursorXs);
-
-            super.paintComponent(g);
-            renderHarmonicsBuckets(g, harmonics);
-            renderNoteBuckets(g, notes);
-            renderCursorLine(g, x);
-            PerformanceTracker.stopTracking(totalTimeKeeper);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private int getCurrentX(List<Integer> newCursorXs) {
-        int x;
-        try {
-            x = newCursorXs.get(0);
-            oldCursorX = x;
-        }
-        catch(IndexOutOfBoundsException ignored){
-            x = oldCursorX;
-        }
-        return x;
-    }
-
-    private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
-        g.setColor(Color.blue);
-
-        renderBuckets(g, ys);
-    }
-
-    private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
-        for(Integer index : ys.keySet()){
-            int y = ys.get(index);
-            g.drawRect(index, HEIGHT - y, 1, y);
-        }
+    protected void tick() {
+        guiPanel.repaint();
     }
 
     private static Map<Integer, Integer> volumesToYs(Map<Integer, Double> volumes, double yScale, double margin) {
@@ -151,15 +100,54 @@ public class GUI extends JPanel implements Runnable {
         return volumes;
     }
 
-    private void renderCursorLine(Graphics g, int x) {
-        g.setColor(Color.green);
+    private class GUIPanel extends JPanel {
+        @Override
+        public void paintComponent(Graphics g){
+            try {
+                Map<Integer, Integer> harmonics = newHarmonics.consume();
+                Map<Integer, Integer> notes = newNotes.consume();
+                List<Integer> newCursorXs = newCursorX.flush();
+                try {
+                    oldCursorX = newCursorXs.get(0);
+                }
+                catch(IndexOutOfBoundsException ignored){
+                }
 
-        g.drawRect(x, 0, 1, HEIGHT);
-    }
+                TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
+                super.paintComponent(g);
+                guiPanel.renderHarmonicsBuckets(g, harmonics);
+                guiPanel.renderNoteBuckets(g, notes);
+                guiPanel.renderCursorLine(g, oldCursorX);
+                PerformanceTracker.stopTracking(totalTimeKeeper);
 
-    private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
-        g.setColor(Color.gray);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        renderBuckets(g, ys);
+        private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
+            for(Integer index : ys.keySet()){
+                int y = ys.get(index);
+                g.drawRect(index, HEIGHT - y, 1, y);
+            }
+        }
+
+        private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
+            g.setColor(Color.gray);
+
+            renderBuckets(g, ys);
+        }
+
+        private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
+            g.setColor(Color.blue);
+
+            renderBuckets(g, ys);
+        }
+
+        private void renderCursorLine(Graphics g, int x) {
+            g.setColor(Color.green);
+
+            g.drawRect(x, 0, 1, HEIGHT);
+        }
     }
 }
