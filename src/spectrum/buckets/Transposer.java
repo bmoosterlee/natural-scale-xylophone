@@ -3,8 +3,9 @@ package spectrum.buckets;
 import component.BoundedBuffer;
 import component.InputPort;
 import component.OutputPort;
+import component.Tickable;
 
-public class Transposer implements Runnable {
+public class Transposer extends Tickable {
 
     private final int transposition;
 
@@ -20,23 +21,10 @@ public class Transposer implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             Buckets buckets = input.consume();
-
             Buckets transposedBuckets = buckets.transpose(transposition);
-
             output.produce(transposedBuckets);
 
         } catch (InterruptedException e) {
