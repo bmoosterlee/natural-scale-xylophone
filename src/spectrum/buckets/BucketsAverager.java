@@ -1,144 +1,156 @@
 package spectrum.buckets;
 
-import component.BoundedBuffer;
-import component.Broadcast;
-import component.InputPort;
-import component.OutputPort;
+import component.*;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import java.util.*;
 
-public class BucketsAverager implements Runnable {
-    private final int averagingWidth;
-    private final double[] multipliers;
+public class BucketsAverager extends Tickable {
+    private final CallableWithArguments<Buckets, Buckets> averager;
 
-    private final InputPort<Buckets> bucketsInput;
-    private final OutputPort<Buckets> adderInput;
-    private final OutputPort<Buckets> multiplierInput;
+    private final InputPort<Buckets> inputPort;
+    private final OutputPort<Buckets> outputPort;
 
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
-        this.averagingWidth = averagingWidth;
+        averager = average(averagingWidth);
 
-        int capacity = 10000;
-        int count = 0;
-
-        multipliers = new double[this.averagingWidth-1];
-        for (int i = 1; i < this.averagingWidth; i++) {
-            multipliers[i-1] = ((double) this.averagingWidth - i) / this.averagingWidth;
-        }
-
-        BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-        multiplierInput = new OutputPort<>(hollowBucketsBuffer);
-
-        BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[this.averagingWidth-1];
-        BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[this.averagingWidth-1];
-
-        for(int i = 0; i < this.averagingWidth-1; i++) {
-            BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>( capacity, "BucketsAverager" + String.valueOf(count)); count++;
-            BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-            new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
-
-            multiplierInputBuffers[i] = multiplierInputBuffer;
-            multiplierOutputBuffers[i] = multiplierOutputBuffer;
-        }
-
-        new Broadcast<>(hollowBucketsBuffer, new HashSet<>(Arrays.asList(multiplierInputBuffers)));
-
-        BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[this.averagingWidth-1];
-        for(int i = 0; i < this.averagingWidth-1; i++) {
-            multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-        }
-
-        BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[this.averagingWidth-1];
-        for(int i = 0; i < this.averagingWidth-1; i++) {
-            multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-        }
-
-        for(int i = 0; i < this.averagingWidth-1; i++) {
-            new Broadcast(multiplierOutputBuffers[i], new HashSet(Arrays.asList(multiplierOutputBuffersPositive[i], multiplierOutputBuffersNegative[i])));
-        }
-
-        OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth-1)*2];
-
-        Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
-        BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-        adderInput = new OutputPort<>(firstAdderBuffer);
-        adderBuffers.add(firstAdderBuffer);
-
-        for(int i = 0; i< averagingWidth-1; i++) {
-            BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
-            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-
-            new Transposer(transposerInputBuffer, transposerOutputBuffer, (i+1));
-            transposerInputs[i] = new OutputPort<>(transposerInputBuffer);
-
-            adderBuffers.add(transposerOutputBuffer);
-        }
-
-        for(int i = 0; i< averagingWidth-1; i++) {
-            BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
-            BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count)); count++;
-
-            new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i+1));
-            transposerInputs[averagingWidth-1+i] = new OutputPort<>(transposerInputBuffer);
-
-            adderBuffers.add(transposerOutputBuffer);
-        }
-
-        new Adder(adderBuffers, outputBuffer);
-
-        bucketsInput = new InputPort<>(inputBuffer);
+        inputPort = new InputPort<>(inputBuffer);
+        outputPort = outputBuffer.createOutputPort();
 
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick(){
+    protected void tick(){
         try {
-            Buckets newBuckets = bucketsInput.consume();
-
-            averageBuckets(newBuckets);
-
+            Buckets newBuckets = inputPort.consume();
+            Buckets result = averager.call(newBuckets);
+            outputPort.produce(result);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private Buckets getHollowBuckets(Buckets buckets) {
-        Set<Integer> indices = buckets.getIndices();
-        Map<Integer, Bucket> voidEntries = new HashMap<>();
+    public static CallableWithArguments<Buckets, Buckets> average(int averagingWidth){
+        return new CallableWithArguments<>() {
+            final OutputPort<Buckets> adderInput;
+            final OutputPort<Buckets> multiplierInput;
+            final InputPort<Buckets> adderInputPort;
 
-        for(Integer x : indices){
-            Double volume = buckets.getValue(x).getVolume();
-            voidEntries.put(x, new AtomicBucket(volume));
-        }
+            {
+                int capacity = 10000;
+                int count = 0;
 
-        return new Buckets(indices, voidEntries);
-    }
+                double[] multipliers = new double[averagingWidth - 1];
+                for (int i = 1; i < averagingWidth; i++) {
+                    multipliers[i - 1] = ((double) averagingWidth - i) / averagingWidth;
+                }
 
-    private void averageBuckets(Buckets buckets) {
-        try {
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
-            Buckets voidBuckets = getHollowBuckets(buckets);
-            PerformanceTracker.stopTracking(timeKeeper);
+                BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                count++;
+                multiplierInput = new OutputPort<>(hollowBucketsBuffer);
 
-            adderInput.produce(buckets);
+                BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[averagingWidth - 1];
+                BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[averagingWidth - 1];
 
-            multiplierInput.produce(voidBuckets);
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                    BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                    new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+                    multiplierInputBuffers[i] = multiplierInputBuffer;
+                    multiplierOutputBuffers[i] = multiplierOutputBuffer;
+                }
+
+                new Broadcast<>(hollowBucketsBuffer, new HashSet<>(Arrays.asList(multiplierInputBuffers)));
+
+                BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[averagingWidth - 1];
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                }
+
+                BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[averagingWidth - 1];
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                }
+
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    new Broadcast(multiplierOutputBuffers[i], new HashSet(Arrays.asList(multiplierOutputBuffersPositive[i], multiplierOutputBuffersNegative[i])));
+                }
+
+                OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth - 1) * 2];
+
+                Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+                BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                count++;
+                adderInput = new OutputPort<>(firstAdderBuffer);
+                adderBuffers.add(firstAdderBuffer);
+
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
+                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+
+                    new Transposer(transposerInputBuffer, transposerOutputBuffer, (i + 1));
+                    transposerInputs[i] = new OutputPort<>(transposerInputBuffer);
+
+                    adderBuffers.add(transposerOutputBuffer);
+                }
+
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
+                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+
+                    new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i + 1));
+                    transposerInputs[averagingWidth - 1 + i] = new OutputPort<>(transposerInputBuffer);
+
+                    adderBuffers.add(transposerOutputBuffer);
+                }
+
+                BoundedBuffer<Buckets> adderOutputBuffer = new BoundedBuffer<>(capacity, "buckets averager - adder output");
+                new Adder(adderBuffers, adderOutputBuffer);
+
+                adderInputPort = adderOutputBuffer.createInputPort();
+            }
+
+            private Buckets getHollowBuckets(Buckets buckets) {
+                Set<Integer> indices = buckets.getIndices();
+                Map<Integer, Bucket> voidEntries = new HashMap<>();
+
+                for (Integer x : indices) {
+                    Double volume = buckets.getValue(x).getVolume();
+                    voidEntries.put(x, new AtomicBucket(volume));
+                }
+
+                return new Buckets(indices, voidEntries);
+            }
+
+            private Buckets averageBuckets(Buckets buckets) {
+                try {
+                    TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
+                    Buckets voidBuckets = getHollowBuckets(buckets);
+                    PerformanceTracker.stopTracking(timeKeeper);
+
+                    adderInput.produce(buckets);
+                    multiplierInput.produce(voidBuckets);
+
+                    Buckets result = adderInputPort.consume();
+                    return result;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public Buckets call(Buckets input) {
+                return averageBuckets(input);
+            }
+        };
     }
 }
