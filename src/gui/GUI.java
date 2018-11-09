@@ -57,9 +57,11 @@ public class GUI extends Tickable {
         new TickablePipeComponent<>(noteVolumesOutputBuffer, noteYsOutputBuffer, input -> volumesToYs(input, yScale, margin));
 
         guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
-        guiPanel.addMouseListener(new NoteClicker(outputBuffer, spectrumWindow));
+        NoteClicker noteClicker = new NoteClicker(outputBuffer, spectrumWindow);
+        guiPanel.addMouseListener(noteClicker);
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
-        guiPanel.addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
+        CursorMover cursorMover = new CursorMover(frameTickBuffer, cursorXBuffer);
+        guiPanel.addMouseMotionListener(cursorMover);
 
         newCursorX = cursorXBuffer.createInputPort();
 
