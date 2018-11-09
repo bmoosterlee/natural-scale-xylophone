@@ -1,5 +1,7 @@
 package component;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -70,5 +72,13 @@ public class BoundedBuffer<T> {
 
     public <V> BoundedBuffer<V> performMethod(CallableWithArguments<T, V> method){
         return TickablePipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
+    }
+
+    public static <K, V> Collection<BoundedBuffer<V>> forEach(Collection<BoundedBuffer<K>> inputBuffers, CallableWithArguments<K, V> method){
+        Collection<BoundedBuffer<V>> results = new LinkedList<>();
+        for(BoundedBuffer<K> inputBuffer : inputBuffers){
+            results.add(inputBuffer.performMethod(method));
+        }
+        return results;
     }
 }
