@@ -17,9 +17,9 @@ import java.util.List;
 
 public class GUI extends Component {
 
-    private final int HEIGHT = 600;
-    private final double yScale = HEIGHT * 0.95;
-    private final double margin = HEIGHT * 0.05;
+    private final int height = 600;
+    private final double yScale = height * 0.95;
+    private final double margin = height * 0.05;
 
     private final GUIPanel guiPanel;
 
@@ -70,7 +70,7 @@ public class GUI extends Component {
 
         JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        guiPanel.setPreferredSize(new Dimension(width, HEIGHT));
+        guiPanel.setPreferredSize(new Dimension(width, height));
         frame.setContentPane(guiPanel);
         frame.pack();
         frame.setVisible(true);
@@ -115,9 +115,9 @@ public class GUI extends Component {
 
                 TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
                 super.paintComponent(g);
-                guiPanel.renderHarmonicsBuckets(g, harmonics);
-                guiPanel.renderNoteBuckets(g, notes);
-                guiPanel.renderCursorLine(g, oldCursorX);
+                renderHarmonicsBuckets(g, harmonics);
+                renderNoteBuckets(g, notes);
+                renderCursorLine(g, oldCursorX);
                 PerformanceTracker.stopTracking(totalTimeKeeper);
 
             } catch (InterruptedException e) {
@@ -128,7 +128,7 @@ public class GUI extends Component {
         private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
             for(Integer index : ys.keySet()){
                 int y = ys.get(index);
-                g.drawRect(index, HEIGHT - y, 1, y);
+                g.drawRect(index, height - y, 1, y);
             }
         }
 
@@ -147,7 +147,7 @@ public class GUI extends Component {
         private void renderCursorLine(Graphics g, int x) {
             g.setColor(Color.green);
 
-            g.drawRect(x, 0, 1, HEIGHT);
+            g.drawRect(x, 0, 1, height);
         }
     }
 }
