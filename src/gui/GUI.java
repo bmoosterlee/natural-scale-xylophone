@@ -61,7 +61,7 @@ public class GUI extends Tickable {
         BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
         guiPanel.addMouseMotionListener(new CursorMover(frameTickBuffer, cursorXBuffer));
 
-        newCursorX = new InputPort<>(cursorXBuffer);
+        newCursorX = cursorXBuffer.createInputPort();
 
         JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

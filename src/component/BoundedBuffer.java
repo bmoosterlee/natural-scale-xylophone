@@ -59,4 +59,12 @@ public class BoundedBuffer<T> {
     public boolean isFull() {
         return emptySpots.availablePermits()==0;
     }
+
+    public InputPort<T> createInputPort(){
+        return new InputPort<>(this);
+    }
+
+    public OutputPort<T> createOutputPort(){
+        return new OutputPort<>(this);
+    }
 }
