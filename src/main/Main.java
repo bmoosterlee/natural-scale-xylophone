@@ -123,7 +123,7 @@ class Main {
         BoundedBuffer<Pulse> outputBuffer = new BoundedBuffer<>(frameLookahead, name);
         BoundedBuffer<Long> tickBuffer = new BoundedBuffer<>(frameLookahead, name);
         new Ticker(tickBuffer, new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
-        new PipeComponent<>(tickBuffer, outputBuffer, input -> new Pulse());
+        new TickablePipeComponent<>(tickBuffer, outputBuffer, input -> new Pulse());
         return outputBuffer;
     }
 
