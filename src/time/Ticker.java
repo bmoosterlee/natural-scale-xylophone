@@ -1,26 +1,26 @@
 package time;
 
-import main.Observable;
+import component.BoundedBuffer;
+import component.Component;
+import component.OutputPort;
 
-public class Ticker implements Runnable{
+public class Ticker extends Component {
 
-    private final Observable<Long> observable = new Observable<>();
     private long calculatedTicks = 0L;
-    private TimeInNanoSeconds timeZero;
     private final TimeInNanoSeconds frameTime;
 
-    public Ticker(TimeInNanoSeconds frameTime){
-        this.frameTime = frameTime;
-    }
+    private final OutputPort<Long> outputPort;
 
-    public void start(){
-        new Thread(this).start();
+    public Ticker(BoundedBuffer<Long> outputBuffer, TimeInNanoSeconds frameTime){
+        this.frameTime = frameTime;
+
+        outputPort = new OutputPort<>(outputBuffer);
+
+        start();
     }
 
     @Override
     public void run() {
-        timeZero = TimeInNanoSeconds.now();
-
         while(true) {
             TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
             
@@ -37,17 +37,14 @@ public class Ticker implements Runnable{
         }
     }
 
-    private void tick() {
-        observable.notify(calculatedTicks);
-        calculatedTicks++;
-    }
-
-    protected long getExpectedTickCount() {
-        return TimeInNanoSeconds.now().subtract(timeZero).divide(frameTime);
-    }
-
-    public TimeInNanoSeconds getFrameEndTime(TimeInNanoSeconds startTime){
-        return startTime.add(frameTime);
+    @Override
+    protected void tick() {
+        try {
+            outputPort.produce(calculatedTicks);
+            calculatedTicks++;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
@@ -56,7 +53,4 @@ public class Ticker implements Runnable{
         return frameTime.subtract(timePassed);
     }
 
-    public Observable<Long> getTickObservable() {
-        return observable;
-    }
 }

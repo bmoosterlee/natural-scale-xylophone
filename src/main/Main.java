@@ -72,7 +72,8 @@ class Main {
 
         int capacity = 10;
 
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "sample ticker");
+        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(sampleLookahead, "sample ticker");
+        new Ticker(sampleCountBuffer, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
         BoundedBuffer<VolumeAmplitudeState> volumeBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
         new Mixer(sampleCountBuffer, newNoteBuffer, volumeBuffer, sampleRate);
@@ -124,41 +125,10 @@ class Main {
 
     private static BoundedBuffer<Pulse> initializePulseTicker(int frameRate, int frameLookahead, String name) {
         BoundedBuffer<Pulse> outputBuffer = new BoundedBuffer<>(frameLookahead, name);
-        Ticker frameTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
-        frameTicker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<Pulse> frameEndTimeOutput = new OutputPort<>(outputBuffer);
-            private final Pulse pulse = new Pulse();
-
-            @Override
-            public void notify(Long event) {
-                try {
-                    frameEndTimeOutput.produce(pulse);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        frameTicker.start();
+        BoundedBuffer<Long> tickBuffer = new BoundedBuffer<>(frameLookahead, name);
+        new Ticker(tickBuffer, new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
+        new PipeComponent<>(tickBuffer, outputBuffer, input -> new Pulse());
         return outputBuffer;
-    }
-
-    private static BoundedBuffer<Long> initializeSampleTicker(SampleRate sampleRate, int sampleLookahead, String name) {
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(sampleLookahead, name);
-        Ticker sampleTicker = new Ticker(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
-        sampleTicker.getTickObservable().add(new Observer<>() {
-            private final OutputPort<Long> longOutputPort = new OutputPort<>(sampleCountBuffer);
-
-            @Override
-            public void notify(Long event) {
-                try {
-                    longOutputPort.produce(event);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        sampleTicker.start();
-        return sampleCountBuffer;
     }
 
 }
