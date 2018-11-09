@@ -17,7 +17,6 @@ import time.PerformanceTracker;
 import time.Ticker;
 import time.TimeInSeconds;
 
-import javax.sound.sampled.LineUnavailableException;
 import java.awt.*;
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
@@ -82,11 +81,7 @@ class Main {
         BoundedBuffer<VolumeAmplitudeState> spectrumVolumeBuffer = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
         new Broadcast<>(volumeBuffer, new HashSet<>(Arrays.asList(soundVolumeBuffer, spectrumVolumeBuffer)));
 
-        try {
-            new SoundEnvironment(soundVolumeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
+        new SoundEnvironment(soundVolumeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
 
         BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
         BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(capacity, "spectrum buffer");

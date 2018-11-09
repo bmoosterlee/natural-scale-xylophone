@@ -19,14 +19,25 @@ public class SoundEnvironment implements Runnable{
 
     private final InputPort<Double> sampleAmplitudeInput;
 
-    public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) throws LineUnavailableException {
+    public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
         sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
         marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
 
         AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
-        sourceDataLine = AudioSystem.getSourceDataLine(af);
-        sourceDataLine.open();
+        SourceDataLine newSourceDataLine;
+        try {
+            newSourceDataLine = AudioSystem.getSourceDataLine(af);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+            newSourceDataLine = null;
+        }
+        sourceDataLine = newSourceDataLine;
+        try {
+            sourceDataLine.open();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
         sourceDataLine.start();
 
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1, "sound environment - signal");
