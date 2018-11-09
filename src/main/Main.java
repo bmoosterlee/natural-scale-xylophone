@@ -26,7 +26,6 @@ import java.awt.*;
 import java.util.*;
 
 class Main {
-    private static int count = 0;
     private static int capacity = 100000;
 
     public static void main(String[] args){
@@ -74,26 +73,22 @@ class Main {
     }
 
     private static void initializeSpectrumPipeline(int width, SpectrumWindow spectrumWindow, BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer, BoundedBuffer<Buckets> inputNotesBucketsBuffer, BoundedBuffer<Buckets> timeAveragedHarmonicsBucketsBuffer, BoundedBuffer<Pulse> frameTickBuffer) {
-        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
-        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity,"spectrum frame tick 1");
+        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, "spectrum frame tick 2");
         new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "spectrum volume amplitude");
         new IntegratedTimedConsumerComponent<>(frameTickBuffer1, volumeAmplitudeStateBuffer, volumeAmplitudeStateBuffer2);
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, "spectrum volume");
         new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer2, volumeStateBuffer);
 
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "VolumeState 2");
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "VolumeState 3");
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "volumeState 2");
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "volumeState 3");
         new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
 
         new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, inputNotesBucketsBuffer);
 
-        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, String.valueOf(count));
-        count++;
+        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
         new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
@@ -127,10 +122,11 @@ class Main {
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
         new Pianola(pianolaPattern, pianolaTicker, newNoteBuffer, pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, inaudibleFrequencyMargin);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
+        //todo and plays harmonically complimentary notes near the notes being played. Use a higher frame rate preferably
     }
 
     private static BoundedBuffer<VolumeAmplitudeState> initalizeSoundPipeline(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, BoundedBuffer<Frequency> newNoteBuffer) {
-        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "Sample ticker");
+        BoundedBuffer<Long> sampleCountBuffer = initializeSampleTicker(sampleRate, sampleLookahead, "sample ticker");
         BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
         new NoteTimestamper(sampleCountBuffer, newNoteBuffer, timeStampedNewNotesBuffer);
         BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer = new BoundedBuffer<>(capacity, "envelope wave builder");
@@ -139,7 +135,7 @@ class Main {
         new VolumeAmplitudeCalculator(timestampedNewNotesEnvelopeBuffer, volumeAmplitudeStateBuffer, sampleRate);
 
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "volume state to signal");
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new OverwritableBuffer<>(1, String.valueOf(count));
+        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer3 = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
         new Broadcast<>(volumeAmplitudeStateBuffer, new HashSet<>(Arrays.asList(volumeAmplitudeStateBuffer2, volumeAmplitudeStateBuffer3)));
         BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(capacity, "sound environment - signal");
         new VolumeAmplitudeStateToSignal(volumeAmplitudeStateBuffer2, amplitudeBuffer);
