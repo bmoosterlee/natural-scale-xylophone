@@ -76,7 +76,7 @@ class Main {
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
-        new Pianola(pianolaPattern, pianolaTicker, pianolaSpectrumBuffer, newNoteBuffer, inaudibleFrequencyMargin);
+        new Pianola(pianolaTicker, pianolaSpectrumBuffer, newNoteBuffer, pianolaPattern, inaudibleFrequencyMargin);
         //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
         //todo and plays harmonically complimentary notes near the notes being played. Use a higher frame rate preferably
 

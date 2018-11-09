@@ -29,7 +29,7 @@ public class Pianola implements Runnable{
     private final InputPort<Buckets> preparedHarmonicsInput;
     private final OutputPort<Frequency> playedNotes;
 
-    public Pianola(PianolaPattern pianolaPattern, BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, BoundedBuffer<Frequency> outputBuffer, int inaudibleFrequencyMargin) {
+    public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, BoundedBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
         
         int count = 0;
