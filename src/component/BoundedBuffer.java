@@ -81,4 +81,8 @@ public class BoundedBuffer<T> {
         }
         return results;
     }
+
+    public Collection<BoundedBuffer<T>> broadcast(int size) {
+        return Broadcast.broadcast(this, size);
+    }
 }
