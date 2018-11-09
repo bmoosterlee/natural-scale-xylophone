@@ -1,11 +1,11 @@
 package spectrum.buckets;
 
 import component.BoundedBuffer;
-import component.TickingComponent;
+import component.Tickable;
 import component.InputPort;
 import component.OutputPort;
 
-public class BucketHistoryComponent extends TickingComponent {
+public class BucketHistoryComponent extends Tickable {
     private BucketHistory bucketHistory;
 
     private final InputPort<Buckets> inputPort;

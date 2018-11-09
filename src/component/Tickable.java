@@ -1,6 +1,6 @@
 package component;
 
-public abstract class TickingComponent implements Runnable, Component {
+public abstract class Tickable implements Runnable {
 
     protected void start(){
         new Thread(this).start();

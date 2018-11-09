@@ -1,10 +1,10 @@
 package time;
 
 import component.BoundedBuffer;
-import component.TickingComponent;
+import component.Tickable;
 import component.OutputPort;
 
-public class Ticker extends TickingComponent {
+public class Ticker extends Tickable {
 
     private long calculatedTicks = 0L;
     private final TimeInNanoSeconds frameTime;

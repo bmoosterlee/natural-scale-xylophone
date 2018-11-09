@@ -2,7 +2,7 @@ package component;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class Pairer<K, V> extends TickingComponent {
+public class Pairer<K, V> extends Tickable {
 
     private final InputPort<K> inputPort1;
     private final InputPort<V> inputPort2;

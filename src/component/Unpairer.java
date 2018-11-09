@@ -2,7 +2,7 @@ package component;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class Unpairer<K, V> extends TickingComponent {
+public class Unpairer<K, V> extends Tickable {
 
     private final InputPort<SimpleImmutableEntry<K, V>> inputPort;
     private final OutputPort<K> outputPort1;
