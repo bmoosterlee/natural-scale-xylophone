@@ -1,26 +1,34 @@
 package component;
 
-public class IntegratedTimedConsumerComponent<T> extends Tickable {
-    private final InputPort<Pulse> timeInputPort;
-    private final InputPort<T> inputPort;
-    private final OutputPort<T> outputPort;
+public class IntegratedTimedConsumerComponent<T> extends TickablePipeComponent<Pulse, T> {
 
     public IntegratedTimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, BoundedBuffer<T> outputBuffer){
-        timeInputPort = new InputPort<>(timeBuffer);
-        inputPort = new InputPort<>(inputBuffer);
-        outputPort = new OutputPort<>(outputBuffer);
-
-        start();
+        super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
     }
 
-    @Override
-    protected void tick() {
-        try {
-            timeInputPort.consume();
-            T result = inputPort.consume();
-            outputPort.produce(result);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public static <T> CallableWithArguments<Pulse, T> consumeFrom(BoundedBuffer<T> inputBuffer){
+        return new CallableWithArguments<>() {
+            final InputPort<T> inputPort;
+
+            {
+                inputPort = new InputPort<>(inputBuffer);
+            }
+
+
+            private T consume() {
+                try {
+                    return inputPort.consume();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public T call(Pulse input) {
+                return consume();
+            }
+        };
     }
+
 }
