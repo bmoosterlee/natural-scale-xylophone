@@ -1,29 +1,25 @@
 package spectrum;
 
+import component.*;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;
 import spectrum.buckets.Buckets;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
 import mixer.state.VolumeState;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class VolumeStateToBuckets implements Runnable {
-    private final SpectrumWindow spectrumWindow;
+public class VolumeStateToBuckets extends Tickable {
+    private final CallableWithArguments<VolumeState, Buckets> bucketBuilder;
 
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Buckets> notesBucketsOutput;
 
-    public VolumeStateToBuckets(SpectrumWindow spectrumWindow, BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer) {
-        this.spectrumWindow = spectrumWindow;
+    public VolumeStateToBuckets(BoundedBuffer<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
+        bucketBuilder = toBuckets(spectrumWindow);
 
         volumeStateInput = new InputPort<>(volumeStateBuffer);
         notesBucketsOutput = new OutputPort<>(notesBucketsBuffer);
@@ -31,27 +27,11 @@ public class VolumeStateToBuckets implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick(){
+    protected void tick(){
         try {
             VolumeState volumeState = volumeStateInput.consume();
 
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create spectrum snapshot");
-            //todo remove this class as the middleman which creates buckets from the map
-            Map<Frequency, Double> volumes = volumeState.volumes;
-            Set<Frequency> liveFrequencies = volumes.keySet();
-            Buckets noteBuckets = toBuckets(liveFrequencies, volumes);
-            PerformanceTracker.stopTracking(timeKeeper);
+            Buckets noteBuckets = bucketBuilder.call(volumeState);
 
             notesBucketsOutput.produce(noteBuckets);
 
@@ -60,7 +40,21 @@ public class VolumeStateToBuckets implements Runnable {
         }
     }
 
-    private Buckets toBuckets(Set<Frequency> keys, Map<Frequency, Double> volumes){
+    public static CallableWithArguments<VolumeState, Buckets> toBuckets(SpectrumWindow spectrumWindow){
+        return new CallableWithArguments<>() {
+            SpectrumWindow spectrumWindow1 = spectrumWindow;
+
+            @Override
+            public Buckets call(VolumeState input) {
+                return toBuckets(input, spectrumWindow1);
+            }
+        };
+    }
+
+    public static Buckets toBuckets(VolumeState volumeState, SpectrumWindow spectrumWindow){
+        Map<Frequency, Double> volumes = volumeState.volumes;
+        Set<Frequency> keys = volumes.keySet();
+
         Set<Integer> indices = new HashSet<>();
         Map<Integer, Bucket> entries = new HashMap<>();
 
