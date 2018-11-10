@@ -3,6 +3,7 @@ package component;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -30,6 +31,18 @@ public class BoundedBuffer<T> {
     public BoundedBuffer(int capacity, String name){
         this(capacity);
         this.name = name;
+    }
+
+    public List<T> flush() throws InterruptedException {
+        int length = filledSpots.availablePermits();
+        int count = 0;
+
+        List<T> list = new LinkedList<>();
+        while(!isEmpty() && count<length){
+            list.add(poll());
+            count++;
+        }
+        return list;
     }
 
     void offer(T packet) throws InterruptedException {
