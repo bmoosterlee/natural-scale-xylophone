@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
 
-    public BuffersToBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap, BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> bucketsBuffer) {
+    public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap, BoundedBuffer<Buckets> bucketsBuffer) {
         super(tickBuffer, bucketsBuffer, toBuckets(bufferMap));
     }
 
