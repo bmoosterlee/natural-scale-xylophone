@@ -1,6 +1,5 @@
 package mixer.state;
 
-import component.Tickable;
 import frequency.Frequency;
 import component.BoundedBuffer;
 import component.InputPort;
@@ -9,7 +8,7 @@ import component.OutputPort;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VolumeAmplitudeToVolumeFilter extends Tickable {
+public class VolumeAmplitudeToVolumeFilter implements Runnable{
 
     private final InputPort<VolumeAmplitudeState> volumeAmplitudeStateInput;
     private final OutputPort<VolumeState> volumeStateOutput;
@@ -21,26 +20,31 @@ public class VolumeAmplitudeToVolumeFilter extends Tickable {
         start();
     }
 
-    protected void tick() {
+    private void start() {
+        new Thread(this).start();
+    }
+
+    @Override
+    public void run() {
+        while(true){
+            tick();
+        }
+    }
+
+    private void tick() {
         try {
             VolumeAmplitudeState volumeAmplitudeState = volumeAmplitudeStateInput.consume();
 
-            VolumeState result = filter(volumeAmplitudeState);
+            Map<Frequency, Double> volumeMap = new HashMap<>();
 
-            volumeStateOutput.produce(result);
+            for(Frequency frequency : volumeAmplitudeState.volumeAmplitudes.keySet()){
+                volumeMap.put(frequency, volumeAmplitudeState.volumeAmplitudes.get(frequency).volume);
+            }
+
+            volumeStateOutput.produce(new VolumeState(volumeMap));
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public static VolumeState filter(VolumeAmplitudeState volumeAmplitudeState) {
-        Map<Frequency, Double> volumeMap = new HashMap<>();
-
-        for(Frequency frequency : volumeAmplitudeState.volumeAmplitudes.keySet()){
-            volumeMap.put(frequency, volumeAmplitudeState.volumeAmplitudes.get(frequency).volume);
-        }
-
-        return new VolumeState(volumeMap);
     }
 }
