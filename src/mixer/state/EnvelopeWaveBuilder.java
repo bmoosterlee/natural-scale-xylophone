@@ -1,9 +1,7 @@
 package mixer.state;
 
+import component.*;
 import frequency.Frequency;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.SimpleDeterministicEnvelope;
 import mixer.envelope.functions.DeterministicFunction;
@@ -13,16 +11,14 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeWaveBuilder implements Runnable {
-    private final SampleRate sampleRate;
-    private final DeterministicFunction envelopeFunction;
+public class EnvelopeWaveBuilder extends Tickable {
+    private CallableWithArguments<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> builder;
 
     private final InputPort<TimestampedFrequencies> input;
     private final OutputPort<TimestampedNewNotesWithEnvelope> output;
 
     public EnvelopeWaveBuilder(BoundedBuffer<TimestampedFrequencies> inputBuffer, BoundedBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
-        this.sampleRate = sampleRate;
-        envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
+        builder = buildEnvelopeWave(sampleRate);
 
         input = new InputPort<>(inputBuffer);
         output = new OutputPort<>(outputBuffer);
@@ -30,32 +26,31 @@ public class EnvelopeWaveBuilder implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             TimestampedFrequencies timestampedNewNotes = input.consume();
-
-            long sampleCount = timestampedNewNotes.getSampleCount();
-            DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
-            Collection<Frequency> newNotes = timestampedNewNotes.getFrequencies();
-            TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
-
-            output.produce(timestampedNewNotesWithEnvelope);
+            TimestampedNewNotesWithEnvelope result = builder.call(timestampedNewNotes);
+            output.produce(result);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    public static CallableWithArguments<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelopeWave(SampleRate sampleRate1){
+        return new CallableWithArguments<>() {
+            private final SampleRate sampleRate = sampleRate1;
+            private final DeterministicFunction envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
+
+            @Override
+            public TimestampedNewNotesWithEnvelope call(TimestampedFrequencies input) {
+                long sampleCount = input.getSampleCount();
+                DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
+                Collection<Frequency> newNotes = input.getFrequencies();
+                TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
+                return timestampedNewNotesWithEnvelope;
+            }
+        };
+    }
 
 }
