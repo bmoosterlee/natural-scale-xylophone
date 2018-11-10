@@ -1,9 +1,6 @@
 package spectrum.buckets;
 
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
-import component.Pulse;
+import component.*;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
@@ -12,60 +9,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BuffersToBuckets implements Runnable {
+public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
 
-    private final InputPort<Pulse> tickInput;
-    private final Map<Integer, InputPort<AtomicBucket>> inputMap;
-    private final OutputPort<Buckets> bucketsOutput;
-
-    public BuffersToBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap, BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> bucketsBuffer){
-        inputMap = new HashMap<>();
-        for(Integer index : bufferMap.keySet()){
-            inputMap.put(index, new InputPort<>(bufferMap.get(index)));
-        }
-
-        tickInput = new InputPort<>(tickBuffer);
-        bucketsOutput = new OutputPort<>(bucketsBuffer);
-
-        start();
+    public BuffersToBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap, BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> bucketsBuffer) {
+        super(tickBuffer, bucketsBuffer, toBuckets(bufferMap));
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
+    public static CallableWithArguments<Pulse, Buckets> toBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+        return new CallableWithArguments<>() {
+            final Map<Integer, InputPort<AtomicBucket>> inputMap;
 
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
-        try {
-            tickInput.consume();
-
-            Set<Integer> indices = inputMap.keySet();
-            Map<Integer, List<AtomicBucket>> entryMap = new HashMap<>();
-
-            for(Integer index : indices) {
-                entryMap.put(index, inputMap.get(index).flush());
+            {
+                inputMap = new HashMap<>();
+                for (Integer index : bufferMap.keySet()) {
+                    inputMap.put(index, new InputPort<>(bufferMap.get(index)));
+                }
             }
 
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("convert atomic buckets to composite");
-            Map<Integer, Bucket> compositeBucketMap = new HashMap<>();
+            private Buckets toBuckets() {
+                try {
+                    Set<Integer> indices = inputMap.keySet();
+                    Map<Integer, List<AtomicBucket>> entryMap = new HashMap<>();
 
-            for(Integer index : indices) {
-                compositeBucketMap.put(index, new MemoizedBucket(new CompositeBucket<>(entryMap.get(index))));
+                    for (Integer index : indices) {
+                        entryMap.put(index, inputMap.get(index).flush());
+                    }
+
+                    TimeKeeper timeKeeper = PerformanceTracker.startTracking("convert atomic buckets to composite");
+                    Map<Integer, Bucket> compositeBucketMap = new HashMap<>();
+
+                    for (Integer index : indices) {
+                        compositeBucketMap.put(index, new MemoizedBucket(new CompositeBucket<>(entryMap.get(index))));
+                    }
+                    PerformanceTracker.stopTracking(timeKeeper);
+
+                    return new Buckets(indices, compositeBucketMap);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
-            PerformanceTracker.stopTracking(timeKeeper);
 
-            Buckets newBuckets = new Buckets(indices, compositeBucketMap);
-
-            bucketsOutput.produce(newBuckets);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            @Override
+            public Buckets call(Pulse input) {
+                return toBuckets();
+            }
+        };
     }
 }
