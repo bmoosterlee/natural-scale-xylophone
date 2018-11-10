@@ -1,5 +1,6 @@
 package component;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -84,5 +85,13 @@ public class BoundedBuffer<T> {
 
     public Collection<BoundedBuffer<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
+    }
+
+    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
+        return Pairer.PairerWithOutputBuffer(this, other, 1, "pairWith");
+    }
+
+    public void relayTo(BoundedBuffer<T> outputBuffer) {
+        new TickablePipeComponent<>(this, outputBuffer, input -> input);
     }
 }
