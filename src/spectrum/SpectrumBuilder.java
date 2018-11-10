@@ -32,18 +32,17 @@ public class SpectrumBuilder extends Tickable {
         BoundedBuffer<Pulse> frameTickBuffer1 = tickBroadcast[0];
         BoundedBuffer<Pulse> frameTickBuffer2 = tickBroadcast[1];
 
-        BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "spectrum volume amplitude");
-        new IntegratedTimedConsumerComponent<>(frameTickBuffer1, inputBuffer, volumeAmplitudeStateBuffer2);
-
         BoundedBuffer<VolumeState>[] volumeBroadcast =
-            volumeAmplitudeStateBuffer2
+            frameTickBuffer1
+            .performMethod(IntegratedTimedConsumerComponent.consumeFrom(inputBuffer))
             .performMethod(VolumeAmplitudeToVolumeFilter::filter)
             .broadcast(2).toArray(new BoundedBuffer[0]);
         BoundedBuffer<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
         BoundedBuffer<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
 
-        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
-        new HarmonicCalculator(volumeStateBuffer3, harmonicsBuffer, 100);
+        BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer =
+                volumeStateBuffer3
+                .performMethod(HarmonicCalculator.calculateHarmonics(100));
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i< width; i++){
@@ -56,8 +55,9 @@ public class SpectrumBuilder extends Tickable {
             harmonicsOutput.put(index, new OutputPort<>(harmonicsMap.get(index)));
         }
 
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1, "Input harmonics buffer");
-        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer =
+            frameTickBuffer2
+            .performMethod(BuffersToBuckets.toBuckets(harmonicsMap));
         BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
         new PrecalculatedBucketHistoryComponent(inputHarmonicsBucketsBuffer, harmonicSpectrumBuffer, 200);
 
