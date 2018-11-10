@@ -5,24 +5,28 @@ import java.util.Map.Entry;
 
 public class Buckets {
     private final Set<Integer> indices;
-    private final Map<Integer, Bucket> bucketsData;
+    private final Map<Integer, ? extends Bucket> bucketsData;
 
     public Buckets() {
         this(new HashSet<>(), new HashMap<>());
     }
 
-    public Buckets(Set<Integer> indices, Map<Integer, Bucket> buckets) {
+    public Buckets(Set<Integer> indices, Map<Integer, ? extends Bucket> buckets) {
         this.indices = indices;
         this.bucketsData = buckets;
     }
 
+    public Buckets(Map<Integer, ? extends Bucket> map) {
+        this(map.keySet(), map);
+    }
+
     public Bucket getValue(int i) {
-        return getBucketsData().get(i);
+        return bucketsData.get(i);
     }
 
     public Buckets add(Buckets otherBuckets) {
         Set<Integer> newIndices = new HashSet<>(getIndices());
-        Map<Integer, Bucket> newEntries = new HashMap<>(getBucketsData());
+        Map<Integer, Bucket> newEntries = new HashMap<>(bucketsData);
 
         for(Integer index : otherBuckets.getIndices()){
             Bucket newBucket = otherBuckets.getValue(index);
@@ -57,9 +61,9 @@ public class Buckets {
         Set<Integer> newIndices = new HashSet<>();
         Map<Integer, Bucket> maxima = new HashMap<>();
 
-        Iterator<Entry<Integer, Bucket>> iterator = iterator();
+        Iterator<? extends Entry<Integer, ? extends Bucket>> iterator = iterator();
         while(iterator.hasNext()){
-            Entry<Integer, Bucket> Entry = iterator.next();
+            Entry<Integer, ? extends Bucket> Entry = iterator.next();
             Integer x = Entry.getKey();
 
             Bucket center = Entry.getValue();
@@ -97,8 +101,8 @@ public class Buckets {
         return new Buckets(getIndices(), newEntries);
     }
 
-    public Iterator<Entry<Integer, Bucket>> iterator() {
-        return getBucketsData().entrySet().iterator();
+    public Iterator<? extends Entry<Integer, ? extends Bucket>> iterator() {
+        return bucketsData.entrySet().iterator();
     }
 
     public Buckets clip(int start, int end) {
@@ -122,10 +126,6 @@ public class Buckets {
 
     public Set<Integer> getIndices() {
         return indices;
-    }
-
-    private Map<Integer, Bucket> getBucketsData() {
-        return bucketsData;
     }
 
     private Buckets memoize() {
