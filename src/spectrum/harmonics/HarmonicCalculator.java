@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class HarmonicCalculator extends TickablePipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>> {
 
-    public HarmonicCalculator(int maxHarmonics, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
+    public HarmonicCalculator(BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 

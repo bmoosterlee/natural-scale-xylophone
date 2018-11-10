@@ -43,7 +43,7 @@ public class SpectrumBuilder extends Tickable {
         BoundedBuffer<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
-        new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
+        new HarmonicCalculator(volumeStateBuffer3, harmonicsBuffer, 100);
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for(Integer i = 0; i< width; i++){
