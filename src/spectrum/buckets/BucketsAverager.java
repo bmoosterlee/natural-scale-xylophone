@@ -15,7 +15,7 @@ public class BucketsAverager extends Tickable {
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
         averager = average(averagingWidth);
 
-        inputPort = inputBuffer.createInputPort();
+        inputPort = new InputPort<>(inputBuffer);
         outputPort = outputBuffer.createOutputPort();
 
         start();
@@ -34,7 +34,7 @@ public class BucketsAverager extends Tickable {
     public static CallableWithArguments<Buckets, Buckets> average(int averagingWidth){
         return new CallableWithArguments<>() {
             final OutputPort<Buckets> adderInput;
-            final OutputPort<Buckets> hollowBucketsInput;
+            final OutputPort<Buckets> multiplierInput;
             final InputPort<Buckets> adderInputPort;
 
             {
@@ -48,54 +48,70 @@ public class BucketsAverager extends Tickable {
 
                 BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                 count++;
-                hollowBucketsInput = hollowBucketsBuffer.createOutputPort();
+                multiplierInput = new OutputPort<>(hollowBucketsBuffer);
 
-                BoundedBuffer<Buckets>[] multiplierInputBuffers = hollowBucketsBuffer.broadcast(averagingWidth - 1).toArray(new BoundedBuffer[0]);
-
+                BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[averagingWidth - 1];
                 BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[averagingWidth - 1];
+
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    int finalI = i;
-                    multiplierOutputBuffers[i] = multiplierInputBuffers[i].performMethod(input -> input.multiply(multipliers[finalI]));
+                    BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                    BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+                    new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
+
+                    multiplierInputBuffers[i] = multiplierInputBuffer;
+                    multiplierOutputBuffers[i] = multiplierOutputBuffer;
                 }
+
+                new Broadcast<>(hollowBucketsBuffer, new HashSet<>(Arrays.asList(multiplierInputBuffers)));
 
                 BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[averagingWidth - 1];
                 for (int i = 0; i < averagingWidth - 1; i++) {
                     multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                 }
+
                 BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[averagingWidth - 1];
                 for (int i = 0; i < averagingWidth - 1; i++) {
                     multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                 }
+
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    new Broadcast<>(multiplierOutputBuffers[i], Arrays.asList(multiplierOutputBuffersPositive[i], multiplierOutputBuffersNegative[i]));
+                    new Broadcast(multiplierOutputBuffers[i], new HashSet(Arrays.asList(multiplierOutputBuffersPositive[i], multiplierOutputBuffersNegative[i])));
                 }
 
-                Set<BoundedBuffer<Buckets>> transposedBuffers = new HashSet<>();
-                for (int i = 0; i < averagingWidth - 1; i++) {
-                    int finalI = i;
-                    BoundedBuffer<Buckets> transposerOutputBuffer =
-                            multiplierOutputBuffersPositive[i]
-                                    .performMethod(input -> input.transpose(finalI + 1));
+                OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth - 1) * 2];
 
-                    transposedBuffers.add(transposerOutputBuffer);
-                }
-                for (int i = 0; i < averagingWidth - 1; i++) {
-                    int finalI = i;
-                    BoundedBuffer<Buckets> transposerOutputBuffer =
-                            multiplierOutputBuffersNegative[i]
-                                    .performMethod(input -> input.transpose(-(finalI + 1)));
-
-                    transposedBuffers.add(transposerOutputBuffer);
-                }
-
+                Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
                 BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                 count++;
-                adderInput = firstAdderBuffer.createOutputPort();
-                Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+                adderInput = new OutputPort<>(firstAdderBuffer);
                 adderBuffers.add(firstAdderBuffer);
-                adderBuffers.addAll(transposedBuffers);
+
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
+                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+
+                    new Transposer(transposerInputBuffer, transposerOutputBuffer, (i + 1));
+                    transposerInputs[i] = new OutputPort<>(transposerInputBuffer);
+
+                    adderBuffers.add(transposerOutputBuffer);
+                }
+
+                for (int i = 0; i < averagingWidth - 1; i++) {
+                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
+                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    count++;
+
+                    new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i + 1));
+                    transposerInputs[averagingWidth - 1 + i] = new OutputPort<>(transposerInputBuffer);
+
+                    adderBuffers.add(transposerOutputBuffer);
+                }
+
                 BoundedBuffer<Buckets> adderOutputBuffer = new BoundedBuffer<>(capacity, "buckets averager - adder output");
                 new Adder(adderBuffers, adderOutputBuffer);
 
@@ -117,14 +133,13 @@ public class BucketsAverager extends Tickable {
             private Buckets averageBuckets(Buckets buckets) {
                 try {
                     TimeKeeper timeKeeper = PerformanceTracker.startTracking("average buckets");
-                    Buckets hollowBuckets = getHollowBuckets(buckets);
+                    Buckets voidBuckets = getHollowBuckets(buckets);
                     PerformanceTracker.stopTracking(timeKeeper);
 
                     adderInput.produce(buckets);
-                    hollowBucketsInput.produce(hollowBuckets);
+                    multiplierInput.produce(voidBuckets);
 
                     Buckets result = adderInputPort.consume();
-
                     return result;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
