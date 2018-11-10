@@ -28,24 +28,19 @@ public class SpectrumBuilder extends Tickable {
 
         int capacity = 1;
 
-        BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - note buckets");
-        BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
-        new Pairer<>(noteSpectrumBuffer, harmonicSpectrumBuffer, outputBuffer);
-
-        BoundedBuffer<Pulse> frameTickBuffer1 = new BoundedBuffer<>(capacity,"spectrum frame tick 1");
-        BoundedBuffer<Pulse> frameTickBuffer2 = new BoundedBuffer<>(capacity, "spectrum frame tick 2");
-        new Broadcast<>(frameTickBuffer, Arrays.asList(frameTickBuffer1, frameTickBuffer2));
+        BoundedBuffer<Pulse>[] tickBroadcast = frameTickBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+        BoundedBuffer<Pulse> frameTickBuffer1 = tickBroadcast[0];
+        BoundedBuffer<Pulse> frameTickBuffer2 = tickBroadcast[1];
 
         BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer2 = new BoundedBuffer<>(capacity, "spectrum volume amplitude");
         new IntegratedTimedConsumerComponent<>(frameTickBuffer1, inputBuffer, volumeAmplitudeStateBuffer2);
-        BoundedBuffer<VolumeState> volumeStateBuffer = new BoundedBuffer<>(capacity, "spectrum volume");
-        new VolumeAmplitudeToVolumeFilter(volumeAmplitudeStateBuffer2, volumeStateBuffer);
 
-        BoundedBuffer<VolumeState> volumeStateBuffer2 = new BoundedBuffer<>(capacity, "volumeState 2");
-        BoundedBuffer<VolumeState> volumeStateBuffer3 = new BoundedBuffer<>(capacity, "volumeState 3");
-        new Broadcast<>(volumeStateBuffer, new HashSet<>(Arrays.asList(volumeStateBuffer2, volumeStateBuffer3)));
-
-        new VolumeStateToBuckets(spectrumWindow, volumeStateBuffer2, noteSpectrumBuffer);
+        BoundedBuffer<VolumeState>[] volumeBroadcast =
+            volumeAmplitudeStateBuffer2
+            .performMethod(VolumeAmplitudeToVolumeFilter::filter)
+            .broadcast(2).toArray(new BoundedBuffer[0]);
+        BoundedBuffer<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
+        BoundedBuffer<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
 
         BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> harmonicsBuffer = new BoundedBuffer<>(capacity, "spectrum harmonics");
         new HarmonicCalculator(100, volumeStateBuffer3, harmonicsBuffer);
@@ -55,15 +50,21 @@ public class SpectrumBuilder extends Tickable {
             harmonicsMap.put(i, new BoundedBuffer<>(1000, "harmonics bucket"));
         }
 
-        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1, "Input harmonics buffer");
-        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
-        new PrecalculatedBucketHistoryComponent(inputHarmonicsBucketsBuffer, harmonicSpectrumBuffer, 200);
-
         harmonicsInput = new InputPort<>(harmonicsBuffer);
         harmonicsOutput = new HashMap<>();
         for(Integer index : harmonicsMap.keySet()){
             harmonicsOutput.put(index, new OutputPort<>(harmonicsMap.get(index)));
         }
+
+        BoundedBuffer<Buckets> inputHarmonicsBucketsBuffer = new BoundedBuffer<>(1, "Input harmonics buffer");
+        new BuffersToBuckets(harmonicsMap, frameTickBuffer2, inputHarmonicsBucketsBuffer);
+        BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "spectrum - harmonics buckets");
+        new PrecalculatedBucketHistoryComponent(inputHarmonicsBucketsBuffer, harmonicSpectrumBuffer, 200);
+
+        volumeStateBuffer2
+        .performMethod(VolumeStateToBuckets.toBuckets(spectrumWindow))
+        .pairWith(harmonicSpectrumBuffer)
+        .relayTo(outputBuffer);
 
         start();
     }
