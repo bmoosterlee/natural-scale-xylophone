@@ -19,10 +19,4 @@ public class Flusher<T> extends TickablePipeComponent<Pulse, List<T>> {
         };
     }
 
-    public static <T> BoundedBuffer<List<T>> flush(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer){
-        BoundedBuffer<List<T>> outputBuffer = new BoundedBuffer<>(1, "flush - output");
-        new Flusher<>(timeInputBuffer, inputBuffer, outputBuffer);
-        return outputBuffer;
-    }
-
 }
