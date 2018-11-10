@@ -6,7 +6,7 @@ public class TickablePipeComponent<K, V> extends Tickable {
 
     protected final InputPort<K> input;
     protected final OutputPort<V> output;
-    protected final CallableWithArguments<K, V> method;
+    private final CallableWithArguments<K, V> method;
 
     public TickablePipeComponent(BoundedBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
         this.method = method;
