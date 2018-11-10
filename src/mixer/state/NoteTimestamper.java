@@ -1,48 +1,20 @@
 package mixer.state;
 
+import component.*;
 import frequency.Frequency;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
 
-import java.util.List;
+import java.util.AbstractMap;
+import java.util.Collection;
 
-public class NoteTimestamper implements Runnable {
-
-    private final InputPort<Long> sampleCountInput;
-    private final InputPort<Frequency> newNoteInput;
-    private final OutputPort<TimestampedFrequencies> output;
+public class NoteTimestamper implements Component {
 
     public NoteTimestamper(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, BoundedBuffer<TimestampedFrequencies> outputBuffer) {
-        sampleCountInput = new InputPort<>(sampleCountBuffer);
-        newNoteInput = new InputPort<>(newNoteBuffer);
-        output = new OutputPort<>(outputBuffer);
-
-        start();
+        BoundedBuffer<Long>[] broadcast = sampleCountBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+        broadcast[0]
+                .pairWith(Flusher.flush(broadcast[1]
+                        .performMethod(input -> new Pulse()), newNoteBuffer))
+                .performMethod(input -> new TimestampedFrequencies(input.getKey(), input.getValue()))
+                .relayTo(outputBuffer);
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
-        try {
-            Long sampleCount = sampleCountInput.consume();
-            List<Frequency> newNotes = newNoteInput.flush();
-
-            TimestampedFrequencies timestampedFrequencies = new TimestampedFrequencies(sampleCount, newNotes);
-
-            output.produce(timestampedFrequencies);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 }
