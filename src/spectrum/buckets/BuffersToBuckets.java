@@ -1,59 +1,87 @@
 package spectrum.buckets;
 
 import component.*;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
 
-    public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap, BoundedBuffer<Buckets> bucketsBuffer) {
-        super(tickBuffer, bucketsBuffer, toBuckets(bufferMap));
+    public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, BoundedBuffer<Buckets> outputBuffer) {
+        super(tickBuffer, outputBuffer, toBuckets(inputMap));
     }
 
     public static CallableWithArguments<Pulse, Buckets> toBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         return new CallableWithArguments<>() {
-            final Map<Integer, InputPort<AtomicBucket>> inputMap;
+            private OutputPort<Pulse> methodInputPort;
+            private InputPort<Buckets> methodOutputPort;
 
             {
-                inputMap = new HashMap<>();
+                BoundedBuffer<Pulse> methodInput = new BoundedBuffer<>(1, "BuffersToBuckets - input");
+                methodInputPort = methodInput.createOutputPort();
+
+                Iterator<BoundedBuffer<Pulse>> frameTickIterator = methodInput.broadcast(bufferMap.size()).iterator();
+                Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
                 for (Integer index : bufferMap.keySet()) {
-                    inputMap.put(index, new InputPort<>(bufferMap.get(index)));
+                    frameTickers.put(index, frameTickIterator.next());
                 }
+
+                Map<Integer, CallableWithArguments<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
+                for (Integer index : bufferMap.keySet()) {
+                    flushers.put(index, Flusher.flush(bufferMap.get(index)));
+                }
+
+                methodOutputPort =
+                    collect(
+                        forEach(
+                            forEach(frameTickers, flushers),
+                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1))))
+                    .performMethod(Buckets::new).createInputPort();
             }
 
-            private Buckets toBuckets() {
+            @Override
+            public Buckets call(Pulse input) {
                 try {
-                    Set<Integer> indices = inputMap.keySet();
-                    Map<Integer, List<AtomicBucket>> entryMap = new HashMap<>();
+                    methodInputPort.produce(input);
 
-                    for (Integer index : indices) {
-                        entryMap.put(index, inputMap.get(index).flush());
-                    }
+                    Buckets result = methodOutputPort.consume();
 
-                    TimeKeeper timeKeeper = PerformanceTracker.startTracking("convert atomic buckets to composite");
-                    Map<Integer, Bucket> compositeBucketMap = new HashMap<>();
-
-                    for (Integer index : indices) {
-                        compositeBucketMap.put(index, new MemoizedBucket(new CompositeBucket<>(entryMap.get(index))));
-                    }
-                    PerformanceTracker.stopTracking(timeKeeper);
-
-                    return new Buckets(indices, compositeBucketMap);
+                    return result;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 return null;
             }
-
-            @Override
-            public Buckets call(Pulse input) {
-                return toBuckets();
-            }
         };
+    }
+
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, CallableWithArguments<K, V>> methods) {
+        Map<I, BoundedBuffer<V>> output = new HashMap<>();
+        for (I index : input.keySet()) {
+            output.put(index, input.get(index).performMethod(methods.get(index)));
+        }
+        return output;
+    }
+
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, CallableWithArguments<K, V> method) {
+        Map<I, BoundedBuffer<V>> output = new HashMap<>();
+        for (I index : input.keySet()) {
+            output.put(index, input.get(index).performMethod(method));
+        }
+        return output;
+    }
+
+    public static <I, K> BoundedBuffer<Map<I, K>> collect(Map<I, BoundedBuffer<K>> input){
+        try {
+            Map<I, K> map = new HashMap<>();
+            for (I index : input.keySet()) {
+                map.put(index, input.get(index).createInputPort().consume());
+            }
+            BoundedBuffer<Map<I, K>> output = new BoundedBuffer<>(1, "collect");
+            output.createOutputPort().produce(map);
+        }
+        catch(InterruptedException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 }
