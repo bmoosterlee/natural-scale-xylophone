@@ -1,5 +1,6 @@
 package spectrum.harmonics;
 
+import component.Tickable;
 import frequency.Frequency;
 import component.BoundedBuffer;
 import component.InputPort;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Map.Entry;
 
-public class HarmonicCalculator implements Runnable {
+public class HarmonicCalculator extends Tickable {
 
     private NewHarmonicsCalculator newHarmonicsCalculator;
     private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
@@ -34,18 +35,7 @@ public class HarmonicCalculator implements Runnable {
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             VolumeState volumeState = volumeInput.consume();
 
