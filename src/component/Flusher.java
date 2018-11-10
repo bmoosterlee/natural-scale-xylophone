@@ -1,32 +1,26 @@
 package component;
 
-import java.util.Collection;
 import java.util.List;
 
-public class Flusher<T> extends TimedConsumerComponent {
+public class Flusher<T> extends TickablePipeComponent {
 
-    private final InputPort<T> inputPort;
-    private final OutputPort<Collection<T>> outputPort;
-
-    public Flusher(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, BoundedBuffer<Collection<T>> outputBuffer) {
-        super(timeInputBuffer);
-        inputPort = inputBuffer.createInputPort();
-        outputPort = outputBuffer.createOutputPort();
+    public Flusher(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, BoundedBuffer<List<T>> outputBuffer) {
+        super(timeInputBuffer, outputBuffer, flush(inputBuffer));
     }
 
-    @Override
-    protected void timedTick() {
-        try {
-            List<T> input = inputPort.flush();
-            outputPort.produce(input);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+    public static <T> CallableWithArguments<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
+        return input -> {
+            try {
+                return inputBuffer.flush();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        };
     }
 
-    public static <T> BoundedBuffer<Collection<T>> flush(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer){
-        BoundedBuffer<Collection<T>> outputBuffer = new BoundedBuffer<>(1, "flush - output");
+    public static <T> BoundedBuffer<List<T>> flush(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer){
+        BoundedBuffer<List<T>> outputBuffer = new BoundedBuffer<>(1, "flush - output");
         new Flusher<>(timeInputBuffer, inputBuffer, outputBuffer);
         return outputBuffer;
     }
