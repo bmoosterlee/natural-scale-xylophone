@@ -1,84 +1,77 @@
 package spectrum.harmonics;
 
-import component.Tickable;
-import frequency.Frequency;
 import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
+import component.CallableWithArguments;
+import component.TickablePipeComponent;
+import frequency.Frequency;
 import mixer.state.VolumeState;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
-public class HarmonicCalculator extends Tickable {
-
-    private NewHarmonicsCalculator newHarmonicsCalculator;
-    private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
-
-    private final int maxHarmonics;
-
-    private final InputPort<VolumeState> volumeInput;
-    private final OutputPort<Iterator<Map.Entry<Harmonic, Double>>> iteratorOutput;
+public class HarmonicCalculator extends TickablePipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>> {
 
     public HarmonicCalculator(int maxHarmonics, BoundedBuffer<VolumeState> inputBuffer, BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>> outputBuffer){
-        this.maxHarmonics = maxHarmonics;
-
-        newHarmonicsCalculator = new NewHarmonicsCalculator();
-        memoizedHighValueHarmonics = new MemoizedHighValueHarmonics();
-
-        volumeInput = new InputPort<>(inputBuffer);
-        iteratorOutput = new OutputPort<>(outputBuffer);
-
-        start();
+         super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 
-    protected void tick() {
-        try {
-            VolumeState volumeState = volumeInput.consume();
+    public static CallableWithArguments<VolumeState, Iterator<Map.Entry<Harmonic, Double>>> calculateHarmonics(int maxHarmonics1){
+        return new CallableWithArguments<>() {
+            private NewHarmonicsCalculator newHarmonicsCalculator;
+            private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
 
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("create harmonic hierarchy iterator");
-            Map<Frequency, Double> volumes = volumeState.volumes;
-            Set<Frequency> liveFrequencies = volumes.keySet();
-            Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = getHarmonicHierarchyIterator(liveFrequencies, volumes);
-            PerformanceTracker.stopTracking(timeKeeper);
+            private final int maxHarmonics;
 
-            iteratorOutput.produce(harmonicHierarchyIterator);
+            {
+                this.maxHarmonics = maxHarmonics1;
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+                newHarmonicsCalculator = new NewHarmonicsCalculator();
+                memoizedHighValueHarmonics = new MemoizedHighValueHarmonics();
+            }
 
+            private Iterator<Entry<Harmonic, Double>> calculateHarmonics(VolumeState volumeState) {
+                Map<Frequency, Double> volumes = volumeState.volumes;
+                Set<Frequency> liveFrequencies = volumes.keySet();
+                Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator = getHarmonicHierarchyIterator(liveFrequencies, volumes);
+                return harmonicHierarchyIterator;
+            }
+
+            private Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes) {
+                newHarmonicsCalculator = newHarmonicsCalculator.update(liveFrequencies, volumes);
+                memoizedHighValueHarmonics = memoizedHighValueHarmonics.update(liveFrequencies, volumes);
+
+                addNewHarmonicsToHarmonicsStorage();
+
+                return memoizedHighValueHarmonics.getHarmonicHierarchyAsList().iterator();
+            }
+
+            private void addNewHarmonicsToHarmonicsStorage() {
+                while (newHarmonicsCalculator.getNextHarmonicValue() > memoizedHighValueHarmonics.getHarmonicValue(maxHarmonics)) {
+                    addNewHarmonic();
+                }
+            }
+
+            private void addNewHarmonic() {
+                try {
+                    SimpleImmutableEntry<Frequency, SimpleImmutableEntry<Harmonic, Double>> highestValuePair = newHarmonicsCalculator.next();
+
+                    Frequency highestValueFrequency = highestValuePair.getKey();
+                    Harmonic highestValueHarmonic = highestValuePair.getValue().getKey();
+                    Double highestValue = highestValuePair.getValue().getValue();
+
+                    memoizedHighValueHarmonics.addHarmonic(highestValueFrequency, highestValueHarmonic, highestValue);
+                } catch (NullPointerException ignored) {
+                }
+            }
+
+            @Override
+            public Iterator<Entry<Harmonic, Double>> call(VolumeState input) {
+                return calculateHarmonics(input);
+            }
+        };
     }
 
-    private Iterator<Entry<Harmonic, Double>> getHarmonicHierarchyIterator(Set<Frequency> liveFrequencies, Map<Frequency, Double> volumes) {
-        newHarmonicsCalculator = newHarmonicsCalculator.update(liveFrequencies, volumes);
-        memoizedHighValueHarmonics = memoizedHighValueHarmonics.update(liveFrequencies, volumes);
-
-        addNewHarmonicsToHarmonicsStorage();
-
-        return memoizedHighValueHarmonics.getHarmonicHierarchyAsList().iterator();
-    }
-
-    private void addNewHarmonicsToHarmonicsStorage() {
-        while(newHarmonicsCalculator.getNextHarmonicValue() > memoizedHighValueHarmonics.getHarmonicValue(maxHarmonics)) {
-            addNewHarmonic();
-        }
-    }
-
-    private void addNewHarmonic() {
-        try {
-            SimpleImmutableEntry<Frequency, SimpleImmutableEntry<Harmonic, Double>> highestValuePair = newHarmonicsCalculator.next();
-
-            Frequency highestValueFrequency = highestValuePair.getKey();
-            Harmonic highestValueHarmonic = highestValuePair.getValue().getKey();
-            Double highestValue = highestValuePair.getValue().getValue();
-
-            memoizedHighValueHarmonics.addHarmonic(highestValueFrequency, highestValueHarmonic, highestValue);
-        }
-        catch(NullPointerException ignored){
-        }
-    }
 }
