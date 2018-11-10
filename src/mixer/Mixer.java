@@ -13,7 +13,7 @@ import mixer.state.Wave;
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class Mixer implements Runnable {
+public class Mixer extends Tickable {
     private final SampleRate sampleRate;
 
     private final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
@@ -48,9 +48,10 @@ public class Mixer implements Runnable {
         BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = new BoundedBuffer<>(capacity, "note timestamper");
         new NoteTimestamper(sampleCountBuffer, noteInputBuffer, timeStampedNewNotesBuffer);
 
-        BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer = new BoundedBuffer<>(1, "envelope wave builder");
-        new EnvelopeWaveBuilder(timeStampedNewNotesBuffer, timestampedNewNotesEnvelopeBuffer, sampleRate);
-        input = new InputPort<>(timestampedNewNotesEnvelopeBuffer);
+        BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer =
+                timeStampedNewNotesBuffer
+                        .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate));
+        input = timestampedNewNotesEnvelopeBuffer.createInputPort();
 
         {
             SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = TickablePipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
@@ -59,88 +60,77 @@ public class Mixer implements Runnable {
         }
 
         {
-            BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequency - input");
-            groupEnvelopesByFrequencyOutputPort = new OutputPort<>(groupEnvelopesByFrequencyInputBuffer);
-            BoundedBuffer<Map<Frequency, Collection<Envelope>>> groupEnvelopesByFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequency - output");
-            new TickablePipeComponent<>(groupEnvelopesByFrequencyInputBuffer, groupEnvelopesByFrequencyOutputBuffer, Mixer::groupEnvelopesByFrequency);
-
             BoundedBuffer<Long> sampleCountBuffer2 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
-            sampleCountOutputPort = new OutputPort<>(sampleCountBuffer2);
+            sampleCountOutputPort = sampleCountBuffer2.createOutputPort();
+            BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequency - input");
+            groupEnvelopesByFrequencyOutputPort = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
             BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - waves");
-            waveOutputPort = new OutputPort<>(waveBuffer);
+            waveOutputPort = waveBuffer.createOutputPort();
 
-            BoundedBuffer<SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>> pair1Buffer = new BoundedBuffer<>(capacity, "pair1");
-            new Pairer<>(groupEnvelopesByFrequencyOutputBuffer, waveBuffer, pair1Buffer);
-            BoundedBuffer<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>> pair2Buffer = new BoundedBuffer<>(capacity, "pair2");
-            new Pairer<>(sampleCountBuffer2, pair1Buffer, pair2Buffer);
-
-            BoundedBuffer<EnvelopeWaveSlice> pairToParamObjectOutputBuffer = new BoundedBuffer<>(capacity, "pair to paramObject - output");
-            new TickablePipeComponent<>(pair2Buffer, pairToParamObjectOutputBuffer, input -> new EnvelopeWaveSlice(input.getKey(), input.getValue().getKey(), input.getValue().getValue()));
-
-            BoundedBuffer<Map<Frequency, Collection<VolumeAmplitude>>> calculateValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - output");
-            new TickablePipeComponent<>(pairToParamObjectOutputBuffer, calculateValuesPerFrequencyOutputBuffer, Mixer::calculateValuesPerFrequency);
-
-            BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "sumValuesPerFrequency - output");
-            new TickablePipeComponent<>(calculateValuesPerFrequencyOutputBuffer, sumValuesPerFrequencyOutputBuffer, Mixer::sumValuesPerFrequency);
+            BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer =
+                sampleCountBuffer2
+                .pairWith(
+                    groupEnvelopesByFrequencyInputBuffer
+                    .performMethod(Mixer::groupEnvelopesByFrequency)
+                    .pairWith(waveBuffer))
+                .performMethod(
+                    input1 -> new EnvelopeWaveSlice(
+                        input1.getKey(),
+                        input1.getValue().getKey(),
+                        input1.getValue().getValue()))
+                .performMethod(Mixer::calculateValuesPerFrequency)
+                .performMethod(Mixer::sumValuesPerFrequency);
 
             BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new BoundedBuffer<>(capacity, "oldState");
-            oldStateOutputPort = new OutputPort<>(oldStateBuffer);
-            BoundedBuffer<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>> pair3Buffer = new BoundedBuffer<>(capacity, "pair3");
-            new Pairer<>(oldStateBuffer, sumValuesPerFrequencyOutputBuffer, pair3Buffer);
+            oldStateOutputPort = oldStateBuffer.createOutputPort();
 
-            new TickablePipeComponent<>(pair3Buffer, outputBuffer, input -> input.getKey().add(input.getValue()));
+            oldStateBuffer
+            .pairWith(sumValuesPerFrequencyOutputBuffer)
+            .performMethod(input ->
+                input.getKey()
+                .add(input.getValue()))
+            .relayTo(outputBuffer);
         }
 
         {
-            BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - input");
-            groupEnvelopesByFrequencyOutputPortPrecalc = new OutputPort<>(groupEnvelopesByFrequencyInputBuffer);
-            BoundedBuffer<Map<Frequency, Collection<Envelope>>> groupEnvelopesByFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - output");
-            new TickablePipeComponent<>(groupEnvelopesByFrequencyInputBuffer, groupEnvelopesByFrequencyOutputBuffer, Mixer::groupEnvelopesByFrequency);
-
             BoundedBuffer<Long> sampleCountBuffer3 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
-            sampleCountOutputPortPrecalc = new OutputPort<>(sampleCountBuffer3);
+            sampleCountOutputPortPrecalc = sampleCountBuffer3.createOutputPort();
+            BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - input");
+            groupEnvelopesByFrequencyOutputPortPrecalc = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
             BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - waves");
-            waveOutputPortPrecalc = new OutputPort<>(waveBuffer);
+            waveOutputPortPrecalc = waveBuffer.createOutputPort();
 
-            BoundedBuffer<SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>> pair1Buffer = new BoundedBuffer<>(capacity, "pair1Precalc");
-            new Pairer<>(groupEnvelopesByFrequencyOutputBuffer, waveBuffer, pair1Buffer);
-            BoundedBuffer<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>> pair2Buffer = new BoundedBuffer<>(capacity, "pair2Precalc");
-            new Pairer<>(sampleCountBuffer3, pair1Buffer, pair2Buffer);
-
-            BoundedBuffer<EnvelopeWaveSlice> pairToParamObjectOutputBuffer = new BoundedBuffer<>(capacity, "pair to paramObjectPrecalc - output");
-            new TickablePipeComponent<>(pair2Buffer, pairToParamObjectOutputBuffer, input -> new EnvelopeWaveSlice(input.getKey(), input.getValue().getKey(), input.getValue().getValue()));
-
-            BoundedBuffer<Map<Frequency, Collection<VolumeAmplitude>>> calculateValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - output");
-            new TickablePipeComponent<>(pairToParamObjectOutputBuffer, calculateValuesPerFrequencyOutputBuffer, Mixer::calculateValuesPerFrequency);
-
-            BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer = new BoundedBuffer<>(capacity, "sumValuesPerFrequencyPrecalc - output");
-            new TickablePipeComponent<>(calculateValuesPerFrequencyOutputBuffer, sumValuesPerFrequencyOutputBuffer, Mixer::sumValuesPerFrequency);
+            BoundedBuffer<Map<Frequency, VolumeAmplitude>> sumValuesPerFrequencyOutputBuffer =
+                sampleCountBuffer3
+                .pairWith(
+                    groupEnvelopesByFrequencyInputBuffer
+                    .performMethod(Mixer::groupEnvelopesByFrequency)
+                    .pairWith(waveBuffer))
+                .performMethod(
+                    input1 -> new EnvelopeWaveSlice(
+                        input1.getKey(),
+                        input1.getValue().getKey(),
+                        input1.getValue().getValue()))
+                .performMethod(Mixer::calculateValuesPerFrequency)
+                .performMethod(Mixer::sumValuesPerFrequency);
 
             BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new BoundedBuffer<>(capacity, "oldStatePrecalc");
-            oldStateOutputPortPrecalc = new OutputPort<>(oldStateBuffer);
-            BoundedBuffer<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>> pair3Buffer = new BoundedBuffer<>(capacity, "pair3Precalc");
-            new Pairer<>(oldStateBuffer, sumValuesPerFrequencyOutputBuffer, pair3Buffer);
+            oldStateOutputPortPrecalc = oldStateBuffer.createOutputPort();
 
-            BoundedBuffer<VolumeAmplitudeState> newStateBuffer = new BoundedBuffer<>(capacity, "newStatePrecalc");
-            newStateInputPortPrecalc = new InputPort<>(newStateBuffer);
-            new TickablePipeComponent<>(pair3Buffer, newStateBuffer, input -> input.getKey().add(input.getValue()));
+            newStateInputPortPrecalc =
+                oldStateBuffer
+                .pairWith(sumValuesPerFrequencyOutputBuffer)
+                .performMethod(
+                    input1 ->
+                        input1.getKey()
+                        .add(input1.getValue()))
+                .createInputPort();
         }
 
         start();
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
+    protected void tick() {
         try {
             TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = input.consume();
 
@@ -153,7 +143,10 @@ public class Mixer implements Runnable {
             PerformanceTracker.stopTracking(timeKeeper);
 
             timeKeeper = PerformanceTracker.startTracking("calculate volumes");
-            finish(sampleCount);
+            Collection<EnvelopeForFrequency> currentFinishedSlice = unfinishedSlices.remove(sampleCount);
+            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
+            VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(sampleCount);
+            finish(sampleCount, currentFinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
             PerformanceTracker.stopTracking(timeKeeper);
 
 //            precalculateInBackground();
@@ -167,7 +160,10 @@ public class Mixer implements Runnable {
         while(input.isEmpty()){
             try {
                 Long futureSampleCount = unfinishedSlices.keySet().iterator().next();
-                VolumeAmplitudeState finishedSlice = finishPrecalc(futureSampleCount);
+                Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedSlices.remove(futureSampleCount);
+                Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(futureSampleCount);
+                VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(futureSampleCount);
+                VolumeAmplitudeState finishedSlice = precalculate(futureSampleCount, currentUnfinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
                 finishedSlices.put(futureSampleCount, finishedSlice);
             }
             catch(NoSuchElementException e){
@@ -176,11 +172,9 @@ public class Mixer implements Runnable {
         }
     }
 
-    private void finish(long sampleCount) {
+    private void finish(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeAmplitudeState oldFinishedSlice) {
         try {
-            Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedSlices.remove(sampleCount);
-            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
-            VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(sampleCount);
+            sampleCountOutputPort.produce(sampleCount);
 
             try {
                 groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
@@ -189,7 +183,6 @@ public class Mixer implements Runnable {
                 groupEnvelopesByFrequencyOutputPort.produce(new LinkedList<>());
             }
 
-            sampleCountOutputPort.produce(sampleCount);
             try {
                 waveOutputPort.produce(currentUnfinishedSliceWaves);
             }
@@ -208,11 +201,9 @@ public class Mixer implements Runnable {
         }
     }
 
-    private VolumeAmplitudeState finishPrecalc(long sampleCount) {
+    private VolumeAmplitudeState precalculate(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeAmplitudeState oldFinishedSlice) {
         try {
-            Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedSlices.remove(sampleCount);
-            Map<Frequency, Wave> currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
-            VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(sampleCount);
+            sampleCountOutputPortPrecalc.produce(sampleCount);
 
             try {
                 groupEnvelopesByFrequencyOutputPortPrecalc.produce(currentUnfinishedSlice);
@@ -221,7 +212,6 @@ public class Mixer implements Runnable {
                 groupEnvelopesByFrequencyOutputPortPrecalc.produce(new LinkedList<>());
             }
 
-            sampleCountOutputPortPrecalc.produce(sampleCount);
             try {
                 waveOutputPortPrecalc.produce(currentUnfinishedSliceWaves);
             }
@@ -352,13 +342,13 @@ public class Mixer implements Runnable {
             return;
         }
         for (Long i = sampleCount; i < endingSampleCount; i++) {
-            Collection<EnvelopeForFrequency> oldUnfinishedSlice = unfinishedSlices.get(i);
+            Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSlices.remove(i);
             try {
-                oldUnfinishedSlice.addAll(newNotesWithEnvelopes);
+                newUnfinishedSlice.addAll(newNotesWithEnvelopes);
             } catch (NullPointerException e) {
-                Collection<EnvelopeForFrequency> newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
-                unfinishedSlices.put(i, newUnfinishedSlice);
+                newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
             }
+            unfinishedSlices.put(i, newUnfinishedSlice);
         }
     }
 
