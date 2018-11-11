@@ -19,10 +19,10 @@ public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
                 BoundedBuffer<Pulse> methodInput = new BoundedBuffer<>(1, "BuffersToBuckets - input");
                 methodInputPort = methodInput.createOutputPort();
 
-                Iterator<BoundedBuffer<Pulse>> frameTickIterator = methodInput.broadcast(bufferMap.size()).iterator();
+                LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(methodInput.broadcast(bufferMap.size()));
                 Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
                 for (Integer index : bufferMap.keySet()) {
-                    frameTickers.put(index, frameTickIterator.next());
+                    frameTickers.put(index, frameTickBroadcast.poll());
                 }
 
                 Map<Integer, CallableWithArguments<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
