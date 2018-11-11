@@ -1,56 +1,40 @@
 package time;
 
-import component.BoundedBuffer;
-import component.Tickable;
-import component.OutputPort;
+import component.*;
 
-public class Ticker extends Tickable {
+import java.util.concurrent.Callable;
 
-    private long calculatedTicks = 0L;
-    private final TimeInNanoSeconds frameTime;
+public class Ticker extends TickableOutputComponent<Pulse> {
 
-    private final OutputPort<Long> outputPort;
-
-    public Ticker(BoundedBuffer<Long> outputBuffer, TimeInNanoSeconds frameTime){
-        this.frameTime = frameTime;
-
-        outputPort = new OutputPort<>(outputBuffer);
-
-        start();
+    public Ticker(BoundedBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
+        super(outputBuffer, build(frameTime));
     }
 
-    @Override
-    public void run() {
-        while(true) {
-            TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
-            
-            tick();
+    public static Callable<Pulse> build(TimeInNanoSeconds frameTime) {
+        return new Callable<>() {
 
-            long timeLeftInFrame = getTimeLeftInFrame(startTime).toMilliSeconds().getValue();
-            if(timeLeftInFrame>0){
-                try {
-                    Thread.sleep(timeLeftInFrame);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
+                TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
+                TimeInNanoSeconds timePassed = currentTime.subtract(startTime);
+                return frameTime.subtract(timePassed);
             }
-        }
-    }
 
-    @Override
-    protected void tick() {
-        try {
-            outputPort.produce(calculatedTicks);
-            calculatedTicks++;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+            @Override
+            public Pulse call() {
+                TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
 
-    private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
-        TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
-        TimeInNanoSeconds timePassed = currentTime.subtract(startTime);
-        return frameTime.subtract(timePassed);
+                long timeLeftInFrame = getTimeLeftInFrame(startTime).toMilliSeconds().getValue();
+                if (timeLeftInFrame > 0) {
+                    try {
+                        Thread.sleep(timeLeftInFrame);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                return new Pulse();
+            }
+        };
     }
 
 }
