@@ -119,11 +119,11 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
                 BoundedBuffer<Pulse> frameTickBuffer =
                         spectrumBroadcast[0]
                                 .performMethod(input -> new Pulse());
-                BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
-                CursorMover cursorMover = new CursorMover(frameTickBuffer, cursorXBuffer);
-                guiPanel.addMouseMotionListener(cursorMover);
 
-                newCursorX = cursorXBuffer.createInputPort();
+                newCursorX =
+                    frameTickBuffer
+                    .performMethod(CursorMover.build(guiPanel))
+                    .createInputPort();
 
                 JFrame frame = new JFrame("Natural scale xylophone");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

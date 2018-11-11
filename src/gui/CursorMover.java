@@ -1,46 +1,50 @@
 package gui;
 
-import component.BoundedBuffer;
-import component.OutputPort;
-import component.Pulse;
-import component.TimedConsumerComponent;
+import component.*;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public class CursorMover extends TimedConsumerComponent implements MouseMotionListener {
-    private Integer storedX;
+public class CursorMover extends TickablePipeComponent<Pulse, Integer> {
 
-    private final OutputPort<Integer> cursorX;
-
-    public CursorMover(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Integer> outputBuffer) {
-        super(inputBuffer);
-        cursorX = new OutputPort<>(outputBuffer);
+    public CursorMover(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Integer> outputBuffer, JPanel guiPanel) {
+        super(inputBuffer, outputBuffer, build(guiPanel));
     }
 
-    @Override
-    public void mouseDragged(MouseEvent e) {
+    public static CallableWithArguments<Pulse, Integer> build(JPanel guiPanel) {
+        return new CallableWithArguments<>() {
+            private Integer storedX;
 
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        if(storedX==null) {
-            storedX = e.getX();
-        }
-    }
-
-    @Override
-    protected void timedTick() {
-        try {
-            try {
-                cursorX.produce(storedX);
+            {
+                guiPanel.addMouseMotionListener(new CursorListener());
             }
-            catch(NullPointerException ignored){
+
+            class CursorListener implements MouseMotionListener {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+
+                }
+
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    if (storedX == null) {
+                        storedX = e.getX();
+                    }
+                }
             }
-            storedX = null;
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
+
+            private Integer sendCursor() {
+                Integer oldX = storedX;
+                storedX = null;
+                return oldX;
+            }
+
+            @Override
+            public Integer call(Pulse input) {
+                return sendCursor();
+            }
+        };
     }
+
 }
