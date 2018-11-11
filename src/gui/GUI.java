@@ -37,10 +37,10 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
                 private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
                 private final InputPort<Integer> newCursorXPort;
 
-                GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer, BoundedBuffer<Integer> cursorXBuffer) {
-                    newNotesPort = new InputPort<>(noteSpectrumBuffer);
-                    newHarmonicsPort = new InputPort<>(harmonicSpectrumBuffer);
-                    newCursorXPort = new InputPort<>(cursorXBuffer);
+                GUIPanel(InputPort<Map<Integer, Integer>> newNotesPort, InputPort<Map<Integer, Integer>> newHarmonicsPort, InputPort<Integer> newCursorXPort) {
+                    this.newNotesPort = newNotesPort;
+                    this.newHarmonicsPort = newHarmonicsPort;
+                    this.newCursorXPort = newCursorXPort;
                 }
 
                 @Override
@@ -101,17 +101,20 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
                 BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - harmonic spectrum");
                 new Unpairer<>(spectrumBroadcast.poll(), noteSpectrumBuffer, harmonicSpectrumBuffer);
 
-                BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
-                        noteSpectrumBuffer
-                                .performMethod(GUI::bucketsToVolumes)
-                                .performMethod(input -> volumesToYs(input, yScale, margin));
-                BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer =
-                        harmonicSpectrumBuffer
-                                .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
-                                .performMethod(GUI::bucketsToVolumes)
-                                .performMethod(input -> volumesToYs(input, yScale, margin));
                 BoundedBuffer<Integer> cursorXBuffer = new BoundedBuffer<>(capacity, "cursorX - output");
-                guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer, cursorXBuffer);
+                InputPort<Map<Integer, Integer>> newNotesPort =
+                    noteSpectrumBuffer
+                    .performMethod(GUI::bucketsToVolumes)
+                    .performMethod(input2 -> volumesToYs(input2, yScale, margin))
+                    .createInputPort();
+                InputPort<Map<Integer, Integer>> newHarmonicsPort =
+                    harmonicSpectrumBuffer
+                    .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
+                    .performMethod(GUI::bucketsToVolumes)
+                    .performMethod(input2 -> volumesToYs(input2, yScale, margin))
+                    .createInputPort();
+                InputPort<Integer> newCursorXPort = cursorXBuffer.createInputPort();
+                guiPanel = new GUIPanel(newNotesPort, newHarmonicsPort, newCursorXPort);
 
                 methodOutputPort =
                     TickableOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
