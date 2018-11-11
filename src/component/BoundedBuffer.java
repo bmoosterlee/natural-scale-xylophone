@@ -93,18 +93,6 @@ public class BoundedBuffer<T> {
         new TickableInputComponent<>(this, method);
     }
 
-    public <V> BoundedBuffer<V> performOutputMethod(Callable<V> method){
-        return TickableOutputComponent.buildOutputBuffer(method, 1, "performOutputMethod");
-    }
-
-    public static <K, V> Collection<BoundedBuffer<V>> forEach(Collection<BoundedBuffer<K>> inputBuffers, CallableWithArguments<K, V> method){
-        Collection<BoundedBuffer<V>> results = new LinkedList<>();
-        for(BoundedBuffer<K> inputBuffer : inputBuffers){
-            results.add(inputBuffer.performMethod(method));
-        }
-        return results;
-    }
-
     public Collection<BoundedBuffer<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
     }
