@@ -111,10 +111,11 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
                                 .performMethod(input -> volumesToYs(input, yScale, margin));
                 guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
 
-                BoundedBuffer<Frequency> methodOutputBuffer = new BoundedBuffer<>(1, "gui - method output");
-                methodOutputPort = methodOutputBuffer.createInputPort();
-                NoteClicker noteClicker = new NoteClicker(methodOutputBuffer, spectrumWindow);
-                guiPanel.addMouseListener(noteClicker);
+                methodOutputPort =
+                    TickableOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
+                    1,
+                    "note clicker - output")
+                    .createInputPort();
 
                 BoundedBuffer<Pulse> frameTickBuffer =
                         spectrumBroadcast[0]
