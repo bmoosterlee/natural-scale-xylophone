@@ -2,25 +2,26 @@ package component;
 
 public class OverwritableBuffer<T> extends BoundedBuffer<T>{
 
-    public OverwritableBuffer(int capacity) {
-        super(capacity);
-    }
-
     public OverwritableBuffer(int capacity, String name) {
-        super(capacity, name);
+        super(capacity, new OverwritableStrategy<>(capacity, name));
     }
 
-    @Override
-    void offer(T packet) throws InterruptedException {
-        if(emptySpots.availablePermits()==0){
-            buffer.offer(packet);
-            buffer.poll();
+    private static class OverwritableStrategy<T> extends BoundedStrategy<T> {
+        OverwritableStrategy(int capacity, String name) {
+            super(capacity, name);
         }
-        else{
-            emptySpots.acquire();
-            buffer.offer(packet);
-            filledSpots.release();
+
+        @Override
+        public void offer(T packet) throws InterruptedException {
+            if(getEmptySpots().availablePermits()==0){
+                getBuffer().offer(packet);
+                getBuffer().poll();
+            }
+            else{
+                getEmptySpots().acquire();
+                getBuffer().offer(packet);
+                getFilledSpots().release();
+            }
         }
     }
-
 }

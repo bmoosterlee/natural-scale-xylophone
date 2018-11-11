@@ -2,79 +2,46 @@ package component;
 
 import java.util.AbstractMap;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
 public class BoundedBuffer<T> {
 
-    private String name;
+    private final BoundedStrategy<T> boundedStrategy;
 
-    final ConcurrentLinkedQueue<T> buffer;
-    final Semaphore emptySpots;
-    final Semaphore filledSpots;
+    public BoundedBuffer(int capacity, String name){
+        this(capacity, new BoundedStrategy<>(capacity, name));
+    }
 
-    public BoundedBuffer(int capacity){
-        buffer = new ConcurrentLinkedQueue<>();
-
-        emptySpots = new Semaphore(capacity);
-        filledSpots = new Semaphore(capacity);
+    public BoundedBuffer(int capacity, BoundedStrategy<T> strategy){
+        boundedStrategy = strategy;
 
         try {
-            filledSpots.acquire(capacity);
+            boundedStrategy.getFilledSpots().acquire(capacity);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public BoundedBuffer(int capacity, String name){
-        this(capacity);
-        this.name = name;
-    }
-
     public List<T> flush() throws InterruptedException {
-        int length = filledSpots.availablePermits();
-        int count = 0;
-
-        List<T> list = new LinkedList<>();
-        while(!isEmpty() && count<length){
-            list.add(poll());
-            count++;
-        }
-        return list;
+        return boundedStrategy.flush();
     }
 
     void offer(T packet) throws InterruptedException {
-        if(packet == null){
-            throw new NullPointerException();
-        }
-        if(isFull()) {
-            String fixedName = name;
-            if(fixedName==null){
-                fixedName = "unnamed";
-            }
-            System.out.println(fixedName + " is clogged up.");
-        }
-        emptySpots.acquire();
-        buffer.offer(packet);
-        filledSpots.release();
+        boundedStrategy.offer(packet);
     }
 
     T poll() throws InterruptedException {
-        filledSpots.acquire();
-        T item = buffer.poll();
-        emptySpots.release();
-        return item;
+        return boundedStrategy.poll();
     }
 
     public boolean isEmpty() {
-        return filledSpots.availablePermits()==0;
+        return boundedStrategy.isEmpty();
     }
 
     public boolean isFull() {
-        return emptySpots.availablePermits()==0;
+        return boundedStrategy.isFull();
     }
 
     public InputPort<T> createInputPort(){
