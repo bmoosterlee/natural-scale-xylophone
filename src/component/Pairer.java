@@ -4,12 +4,12 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<K, V>> {
 
-    public Pairer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, BoundedBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
+    public Pairer(BufferInterface<K> inputBuffer1, BufferInterface<V> inputBuffer2, BoundedBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
         super(inputBuffer1, outputBuffer, build(inputBuffer2));
 
     }
 
-    public static <K, V> CallableWithArguments<K, SimpleImmutableEntry<K, V>> build(BoundedBuffer<V> inputBuffer2){
+    protected static <K, V> CallableWithArguments<K, SimpleImmutableEntry<K, V>> build(BufferInterface<V> inputBuffer2){
         return new CallableWithArguments<>() {
             private final InputPort<V> inputPort2;
 

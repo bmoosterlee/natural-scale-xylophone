@@ -2,9 +2,9 @@ package component;
 
 public class OutputPort<T> {
 
-    private final BoundedBuffer<T> buffer;
+    private final BufferInterface<T> buffer;
 
-    public OutputPort(BoundedBuffer<T> buffer){
+    public OutputPort(BufferInterface<T> buffer){
         this.buffer = buffer;
     }
 

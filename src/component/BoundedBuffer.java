@@ -3,10 +3,8 @@ package component;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
 
-public class BoundedBuffer<T> {
+public class BoundedBuffer<T> implements BufferInterface<T> {
 
     private final BoundedStrategy<T> boundedStrategy;
 
@@ -24,51 +22,69 @@ public class BoundedBuffer<T> {
         }
     }
 
+    @Override
     public List<T> flush() throws InterruptedException {
         return boundedStrategy.flush();
     }
 
-    void offer(T packet) throws InterruptedException {
+    @Override
+    public void offer(T packet) throws InterruptedException {
         boundedStrategy.offer(packet);
     }
 
-    T poll() throws InterruptedException {
+    @Override
+    public T poll() throws InterruptedException {
         return boundedStrategy.poll();
     }
 
+    @Override
     public boolean isEmpty() {
         return boundedStrategy.isEmpty();
     }
 
+    @Override
     public boolean isFull() {
         return boundedStrategy.isFull();
     }
 
+    @Override
     public InputPort<T> createInputPort(){
         return new InputPort<>(this);
     }
 
+    @Override
     public OutputPort<T> createOutputPort(){
         return new OutputPort<>(this);
     }
 
-    public <V> BoundedBuffer<V> performMethod(CallableWithArguments<T, V> method){
-        return TickablePipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
+    @Override
+    public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
+        return TickablePipeComponentChain.methodToComponentWithOutputBuffer(new BufferChainLink<>(this, null), method, 1, "performMethod");
     }
 
+    //todo use chain link
+    @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new TickableInputComponent<>(this, method);
+        new TickableInputComponentChain<>(new BufferChainLink<>(this, null), method);
     }
 
-    public Collection<BoundedBuffer<T>> broadcast(int size) {
+    @Override
+    public Collection<BufferInterface<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
     }
 
-    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
-        return performMethod(Pairer.build(other));
+    @Override
+    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
+        return performMethod(Pairer.build(other)).breakChain();
     }
 
-    public BoundedBuffer<T> relayTo(BoundedBuffer<T> outputBuffer) {
+    @Override
+    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
+        return performMethod(Pairer.build(other.breakChain())).breakChain();
+    }
+
+    @Override
+    public BufferInterface<T> relayTo(BoundedBuffer<T> outputBuffer) {
         new TickablePipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }

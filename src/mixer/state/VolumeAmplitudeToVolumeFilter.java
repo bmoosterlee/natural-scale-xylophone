@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class VolumeAmplitudeToVolumeFilter extends TickablePipeComponent<VolumeAmplitudeState, VolumeState> {
 
-    public VolumeAmplitudeToVolumeFilter(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer, BoundedBuffer<VolumeState> volumeStateBuffer) {
+    public VolumeAmplitudeToVolumeFilter(BufferInterface<VolumeAmplitudeState> volumeAmplitudeStateBuffer, BoundedBuffer<VolumeState> volumeStateBuffer) {
         super(volumeAmplitudeStateBuffer, volumeStateBuffer, VolumeAmplitudeToVolumeFilter::filter);
     }
 

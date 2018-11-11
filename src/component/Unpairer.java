@@ -1,16 +1,15 @@
 package component;
 
-import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Unpairer<K, V> extends TickablePipeComponent<SimpleImmutableEntry<K, V>, V> {
 
-    public Unpairer(BoundedBuffer<SimpleImmutableEntry<K, V>> inputBuffer, BoundedBuffer<K> outputBuffer1, BoundedBuffer<V> outputBuffer2){
+    public Unpairer(BufferInterface<SimpleImmutableEntry<K,V>> inputBuffer, BoundedBuffer<K> outputBuffer1, BoundedBuffer<V> outputBuffer2){
         super(inputBuffer, outputBuffer2, build(outputBuffer1));
     }
 
 
-    public static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(BoundedBuffer<K> outputBuffer1){
+    protected static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(BoundedBuffer<K> outputBuffer1){
         return new CallableWithArguments<>() {
             private final OutputPort<K> outputPort1;
 

@@ -1,9 +1,6 @@
 package spectrum.buckets;
 
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
-import component.Tickable;
+import component.*;
 
 public class Multiplier extends Tickable {
 
@@ -12,7 +9,7 @@ public class Multiplier extends Tickable {
     private final InputPort<Buckets> input;
     private final OutputPort<Buckets> output;
 
-    public Multiplier(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, double multiplier) {
+    public Multiplier(BufferInterface<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, double multiplier) {
         this.multiplier = multiplier;
 
         input = new InputPort<>(inputBuffer);

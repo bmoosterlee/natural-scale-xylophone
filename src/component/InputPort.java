@@ -5,9 +5,9 @@ import java.util.List;
 
 public class InputPort<T> {
 
-    private final BoundedBuffer<T> buffer;
+    private final BufferInterface<T> buffer;
 
-    public InputPort(BoundedBuffer<T> buffer){
+    public InputPort(BufferInterface<T> buffer){
         this.buffer = buffer;
     }
 

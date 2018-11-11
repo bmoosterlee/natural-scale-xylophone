@@ -1,11 +1,8 @@
 package gui;
 
-import component.InputPort;
-import component.TickableOutputComponent;
+import component.*;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
-import component.BoundedBuffer;
-import component.OutputPort;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -24,7 +21,7 @@ public class NoteClicker extends TickableOutputComponent<Frequency> {
             private final InputPort<Frequency> methodOutputPort;
 
             {
-                BoundedBuffer<Frequency> clickedFrequencies = new BoundedBuffer<>(1, "clickedFrequencies");
+                BufferInterface<Frequency> clickedFrequencies = new BoundedBuffer<>(1, "clickedFrequencies");
                 methodInputPort = clickedFrequencies.createOutputPort();
                 methodOutputPort = clickedFrequencies.createInputPort();
 

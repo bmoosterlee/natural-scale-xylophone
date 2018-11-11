@@ -69,7 +69,7 @@ class Main {
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        LinkedList<BoundedBuffer<VolumeAmplitudeState>> volumeBroadcast =
+        LinkedList<BufferInterface<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
                 TickableOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
@@ -82,7 +82,7 @@ class Main {
         volumeBroadcast.poll()
         .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
+        LinkedList<BufferInterface<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
             new LinkedList<>(
                 TickableOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")

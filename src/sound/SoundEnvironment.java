@@ -13,7 +13,7 @@ import java.util.List;
 
 public class SoundEnvironment extends TickableInputComponent<VolumeAmplitudeState> {
 
-    public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
+    public SoundEnvironment(BufferInterface<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
         super(inputBuffer, build(SAMPLE_SIZE_IN_BITS, sampleRate));
     }
 
@@ -46,7 +46,7 @@ public class SoundEnvironment extends TickableInputComponent<VolumeAmplitudeStat
                 }
                 sourceDataLine.start();
 
-                BoundedBuffer<VolumeAmplitudeState> methodInputBuffer = new BoundedBuffer<>(1, "sound environment - input");
+                BufferInterface<VolumeAmplitudeState> methodInputBuffer = new BoundedBuffer<>(1, "sound environment - input");
                 methodInput = methodInputBuffer.createOutputPort();
 
                 BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1, "sound environment - signal");

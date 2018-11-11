@@ -12,7 +12,7 @@ public class BucketsAverager extends Tickable {
     private final InputPort<Buckets> inputPort;
     private final OutputPort<Buckets> outputPort;
 
-    public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
+    public BucketsAverager(int averagingWidth, BufferInterface<Buckets> inputBuffer, BufferInterface<Buckets> outputBuffer) {
         averager = average(averagingWidth);
 
         inputPort = new InputPort<>(inputBuffer);
@@ -50,11 +50,11 @@ public class BucketsAverager extends Tickable {
                 count++;
                 multiplierInput = new OutputPort<>(hollowBucketsBuffer);
 
-                BoundedBuffer<Buckets>[] multiplierInputBuffers = new BoundedBuffer[averagingWidth - 1];
-                BoundedBuffer<Buckets>[] multiplierOutputBuffers = new BoundedBuffer[averagingWidth - 1];
+                BufferInterface<Buckets>[] multiplierInputBuffers = new BufferInterface[averagingWidth - 1];
+                BufferInterface<Buckets>[] multiplierOutputBuffers = new BufferInterface[averagingWidth - 1];
 
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    BoundedBuffer<Buckets> multiplierInputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    BufferInterface<Buckets> multiplierInputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                     BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
@@ -84,7 +84,7 @@ public class BucketsAverager extends Tickable {
 
                 OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth - 1) * 2];
 
-                Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+                Set<BufferInterface<Buckets>> adderBuffers = new HashSet<>();
                 BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                 count++;
                 adderInput = new OutputPort<>(firstAdderBuffer);

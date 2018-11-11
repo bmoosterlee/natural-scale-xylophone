@@ -3,11 +3,10 @@ package spectrum.buckets;
 import component.*;
 
 import java.util.AbstractMap;
-import java.util.Arrays;
 
 public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<Buckets, Buckets> {
 
-    public PrecalculatedBucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size) {
+    public PrecalculatedBucketHistoryComponent(BufferInterface<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size) {
         super(inputBuffer, outputBuffer, recordHistory(size));
     }
 
@@ -24,12 +23,12 @@ public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<B
                 BoundedBuffer<Buckets> inputBuffer = new BoundedBuffer<>(capacity, "buckets history - input");
                 methodInput = inputBuffer.createOutputPort();
 
-                BoundedBuffer<Buckets>[] preparedBucketsBroadcast =
+                BufferInterface<Buckets>[] preparedBucketsBroadcast =
                     inputBuffer
                     .performMethod(input1 -> input1.multiply(multiplier))
-                    .broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Buckets> preparedBucketsBuffer1 = preparedBucketsBroadcast[0];
-                BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast[1];
+                    .broadcast(2).toArray(new BufferInterface[0]);
+                BufferInterface<Buckets> preparedBucketsBuffer1 = preparedBucketsBroadcast[0];
+                BufferInterface<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast[1];
 
                 BoundedBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new BoundedBuffer<>(capacity, "history - input");
 
@@ -39,8 +38,8 @@ public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<B
                     private final InputPort<Buckets> conditionalSubtractInputPort;
 
                     {
-                        BoundedBuffer<Buckets> subtractInputBuffer1 = new BoundedBuffer<>(capacity, "history - conditional input 1");
-                        BoundedBuffer<Buckets> subtractInputBuffer2 = new BoundedBuffer<>(capacity, "history - conditional input 2");
+                        BufferInterface<Buckets> subtractInputBuffer1 = new BoundedBuffer<>(capacity, "history - conditional input 1");
+                        BufferInterface<Buckets> subtractInputBuffer2 = new BoundedBuffer<>(capacity, "history - conditional input 2");
 
                         conditionalSubtractOutputPort1 = subtractInputBuffer1.createOutputPort();
                         conditionalSubtractOutputPort2 = subtractInputBuffer2.createOutputPort();
@@ -77,10 +76,10 @@ public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<B
                     }
                 };
 
-                BoundedBuffer<Buckets> outputTimeAverageBuffer = new BoundedBuffer<>(capacity, "output time average");
-                BoundedBuffer<Buckets>[] outputTimeAverageBroadcast = outputTimeAverageBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Buckets> outputBuffer = outputTimeAverageBroadcast[0];
-                BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast[1];
+                BufferInterface<Buckets> outputTimeAverageBuffer = new BoundedBuffer<>(capacity, "output time average");
+                BufferInterface<Buckets>[] outputTimeAverageBroadcast = outputTimeAverageBuffer.broadcast(2).toArray(new BufferInterface[0]);
+                BufferInterface<Buckets> outputBuffer = outputTimeAverageBroadcast[0];
+                BufferInterface<Buckets> timeAverageBuffer = outputTimeAverageBroadcast[1];
 
                 historyBuffer
                 .pairWith(preparedBucketsBuffer1)

@@ -16,11 +16,11 @@ import mixer.state.VolumeState;
 import java.util.*;
 
 public class SpectrumBuilder extends TickablePipeComponent {
-    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
+    public SpectrumBuilder(BufferInterface<Pulse> frameTickBuffer, BufferInterface<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
         super(frameTickBuffer, outputBuffer, build(inputBuffer, spectrumWindow, width));
     }
 
-    public static CallableWithArguments<Pulse, AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> build(BoundedBuffer<VolumeAmplitudeState> inputBuffer, SpectrumWindow spectrumWindow1, int width) {
+    public static CallableWithArguments<Pulse, AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> build(BufferInterface<VolumeAmplitudeState> inputBuffer, SpectrumWindow spectrumWindow1, int width) {
         return new CallableWithArguments<>() {
             private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsInput;
             private final Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput;
@@ -32,26 +32,26 @@ public class SpectrumBuilder extends TickablePipeComponent {
             {
                 this.spectrumWindow = spectrumWindow1;
 
-                BoundedBuffer<Pulse> relayFrameTickBuffer = new BoundedBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
+                BufferInterface<Pulse> relayFrameTickBuffer = new BoundedBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
                 methodInput = relayFrameTickBuffer.createOutputPort();
-                BoundedBuffer<Pulse>[] tickBroadcast = relayFrameTickBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Pulse> frameTickBuffer1 = tickBroadcast[0];
-                BoundedBuffer<Pulse> frameTickBuffer2 = tickBroadcast[1];
+                BufferInterface<Pulse>[] tickBroadcast = relayFrameTickBuffer.broadcast(2).toArray(new BufferInterface[0]);
+                BufferInterface<Pulse> frameTickBuffer1 = tickBroadcast[0];
+                BufferInterface<Pulse> frameTickBuffer2 = tickBroadcast[1];
 
-                BoundedBuffer<VolumeState>[] volumeBroadcast =
+                BufferInterface<VolumeState>[] volumeBroadcast =
                         frameTickBuffer1
                                 .performMethod(IntegratedTimedConsumerComponent.consumeFrom(inputBuffer))
                                 .performMethod(VolumeAmplitudeToVolumeFilter::filter)
-                                .broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
-                BoundedBuffer<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
+                                .broadcast(2).toArray(new BufferInterface[0]);
+                BufferInterface<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
+                BufferInterface<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
 
                 harmonicsInput =
                         volumeStateBuffer3
                                 .performMethod(HarmonicCalculator.calculateHarmonics(100))
                                 .createInputPort();
 
-                Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
+                Map<Integer, BufferInterface<AtomicBucket>> harmonicsMap = new HashMap<>();
                 for (Integer i = 0; i < width; i++) {
                     harmonicsMap.put(i, new BoundedBuffer<>(1000, "harmonics bucket"));
                 }

@@ -1,9 +1,6 @@
 package spectrum.buckets;
 
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
-import component.Tickable;
+import component.*;
 
 public class Transposer extends Tickable {
 
@@ -12,7 +9,7 @@ public class Transposer extends Tickable {
     private final InputPort<Buckets> input;
     private final OutputPort<Buckets> output;
 
-    public Transposer(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int transposition) {
+    public Transposer(BufferInterface<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int transposition) {
         this.transposition = transposition;
 
         input = new InputPort<>(inputBuffer);

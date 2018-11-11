@@ -17,7 +17,7 @@ public class EnvelopeWaveBuilder extends Tickable {
     private final InputPort<TimestampedFrequencies> input;
     private final OutputPort<TimestampedNewNotesWithEnvelope> output;
 
-    public EnvelopeWaveBuilder(BoundedBuffer<TimestampedFrequencies> inputBuffer, BoundedBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
+    public EnvelopeWaveBuilder(BufferInterface<TimestampedFrequencies> inputBuffer, BoundedBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
         builder = buildEnvelopeWave(sampleRate);
 
         input = new InputPort<>(inputBuffer);

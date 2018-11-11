@@ -1,9 +1,6 @@
 package spectrum.buckets;
 
-import component.BoundedBuffer;
-import component.Tickable;
-import component.InputPort;
-import component.OutputPort;
+import component.*;
 
 public class BucketHistoryComponent extends Tickable {
     private BucketHistory bucketHistory;
@@ -11,7 +8,7 @@ public class BucketHistoryComponent extends Tickable {
     private final InputPort<Buckets> inputPort;
     private final OutputPort<Buckets> outputPort;
 
-    public BucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size){
+    public BucketHistoryComponent(BufferInterface<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int size){
         bucketHistory = new PrecalculatedBucketHistory(size);
 
         inputPort = new InputPort<>(inputBuffer);
