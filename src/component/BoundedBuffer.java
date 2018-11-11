@@ -110,7 +110,7 @@ public class BoundedBuffer<T> {
     }
 
     public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
-        return Pairer.PairerWithOutputBuffer(this, other, 1, "pairWith");
+        return performMethod(Pairer.build(other));
     }
 
     public BoundedBuffer<T> relayTo(BoundedBuffer<T> outputBuffer) {

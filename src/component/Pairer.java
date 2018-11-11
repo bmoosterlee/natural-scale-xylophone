@@ -17,9 +17,21 @@ public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<
                 inputPort2 = new InputPort<>(inputBuffer2);
             }
 
-    public static <K, V> BoundedBuffer<SimpleImmutableEntry<K, V>> PairerWithOutputBuffer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, int capacity, String name){
-        BoundedBuffer<SimpleImmutableEntry<K,V>> outputBuffer = new BoundedBuffer<>(capacity, name);
-        new Pairer<>(inputBuffer1, inputBuffer2, outputBuffer);
-        return outputBuffer;
+            private SimpleImmutableEntry<K, V> pair(K consumed1) {
+                try {
+                    V consumed2 = inputPort2.consume();
+                    return new SimpleImmutableEntry<>(consumed1, consumed2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public SimpleImmutableEntry<K, V> call(K input) {
+                return pair(input);
+            }
+        };
     }
+
 }

@@ -40,7 +40,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         new Broadcast<>(addNewBucketsMultiplier.getValue(), Arrays.asList(preparedBucketsBuffer1, preparedBucketsBuffer2));
 
         BoundedBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new BoundedBuffer<>(capacity, "history - input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = Pairer.PairerWithOutputBuffer(historyInputBuffer, preparedBucketsBuffer1, capacity, "history - pairer");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = historyInputBuffer.pairWith(preparedBucketsBuffer1);
         BoundedBuffer<ImmutableLinkedList<Buckets>> newHistoryBuffer = new BoundedBuffer<>(capacity, "history - output");
         new TickablePipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
 
@@ -48,7 +48,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         newHistoryInputPort = new InputPort<>(newHistoryBuffer);
 
         BoundedBuffer<Buckets> timeAverageBuffer = new BoundedBuffer<>(capacity, "history - time average input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = Pairer.PairerWithOutputBuffer(timeAverageBuffer, preparedBucketsBuffer2, capacity, "history - pairer2");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = timeAverageBuffer.pairWith(preparedBucketsBuffer2);
         BoundedBuffer<Buckets> newTimeAverageBuffer = new BoundedBuffer<>(capacity, "history - new time average");
         new TickablePipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
 
@@ -57,7 +57,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
 
         BoundedBuffer<Buckets> conditionalInputBuffer1 = new BoundedBuffer<>(capacity, "history - conditional input 1");
         BoundedBuffer<Buckets> conditionalInputBuffer2 = new BoundedBuffer<>(capacity, "history - conditional input 2");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = Pairer.PairerWithOutputBuffer(conditionalInputBuffer1, conditionalInputBuffer2, capacity, "history - pairer2");
+        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = conditionalInputBuffer1.pairWith(conditionalInputBuffer2);
         BoundedBuffer<Buckets> conditionalOutputBuffer = new BoundedBuffer<>(capacity, "history - conditional output");
         new TickablePipeComponent<>(pair3, conditionalOutputBuffer, input -> input.getKey().subtract(input.getValue()));
 
