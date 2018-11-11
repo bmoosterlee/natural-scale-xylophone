@@ -71,29 +71,32 @@ class Main {
         int capacity = 10;
 
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        BoundedBuffer<VolumeAmplitudeState>[] volumeBroadcast =
-            TickableOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
-                sampleLookahead,
-            "sample ticker - output")
-            .performMethod(Counter.build())
-            .performMethod(Mixer.build(newNoteBuffer, sampleRate)).broadcast(2).toArray(new BoundedBuffer[0]);
+        LinkedList<BoundedBuffer<VolumeAmplitudeState>> volumeBroadcast =
+            new LinkedList<>(
+                TickableOutputComponent.buildOutputBuffer(
+                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
+                    sampleLookahead,
+                    "sample ticker - output")
+                .performMethod(Counter.build())
+                .performMethod(Mixer.build(newNoteBuffer, sampleRate))
+                .broadcast(2));
 
-        volumeBroadcast[0]
+        volumeBroadcast.poll()
         .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast =
-            TickableOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
-            .performMethod(
-                SpectrumBuilder.build(
-                    volumeBroadcast[1]
-                    .relayTo(new OverwritableBuffer<>(1, "sound - volume amplitude state out")),
-                    spectrumWindow,
-                    width))
-            .broadcast(2).toArray(new BoundedBuffer[0]);
+        LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
+            new LinkedList<>(
+                TickableOutputComponent.buildOutputBuffer(
+                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
+                .performMethod(
+                    SpectrumBuilder.build(
+                        volumeBroadcast.poll()
+                        .relayTo(new OverwritableBuffer<>(1, "sound - volume amplitude state out")),
+                        spectrumWindow,
+                        width))
+                .broadcast(2));
 
-        spectrumBroadcast[0]
+        spectrumBroadcast.poll()
         .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin))
         .relayTo(newNoteBuffer);
 
@@ -108,7 +111,7 @@ class Main {
             "Pianola ticker")
         .performMethod(
             Pianola.build(
-                spectrumBroadcast[1]
+                spectrumBroadcast.poll()
                 .relayTo(new OverwritableBuffer<>(capacity)),
                 pianolaPattern,
                 inaudibleFrequencyMargin))
