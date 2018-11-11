@@ -4,6 +4,7 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
@@ -90,6 +91,10 @@ public class BoundedBuffer<T> {
 
     public void performInputMethod(CallableWithArgument<T> method){
         new TickableInputComponent<>(this, method);
+    }
+
+    public <V> BoundedBuffer<V> performOutputMethod(Callable<V> method){
+        return TickableOutputComponent.buildOutputBuffer(method, 1, "performOutputMethod");
     }
 
     public static <K, V> Collection<BoundedBuffer<V>> forEach(Collection<BoundedBuffer<K>> inputBuffers, CallableWithArguments<K, V> method){
