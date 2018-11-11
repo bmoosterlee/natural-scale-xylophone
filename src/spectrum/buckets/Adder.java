@@ -1,7 +1,7 @@
 package spectrum.buckets;
 
 import component.SimpleBuffer;
-import component.BufferInterface;
+import component.BoundedBuffer;
 import component.InputPort;
 import component.OutputPort;
 
@@ -13,9 +13,9 @@ public class Adder implements Runnable {
     private final Set<InputPort<Buckets>> inputs;
     private final OutputPort<Buckets> output;
 
-    public Adder(Set<BufferInterface<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
+    public Adder(Set<BoundedBuffer<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
         inputs = new HashSet<>();
-        for(BufferInterface<Buckets> inputBuffer : inputBuffers){
+        for(BoundedBuffer<Buckets> inputBuffer : inputBuffers){
             inputs.add(new InputPort<>(inputBuffer));
         }
 

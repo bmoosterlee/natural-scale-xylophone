@@ -4,11 +4,11 @@ import java.util.List;
 
 public class Flusher<T> extends TickablePipeComponent<Pulse, List<T>> {
 
-    public Flusher(BufferInterface<Pulse> timeInputBuffer, BufferInterface<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
+    public Flusher(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
         super(timeInputBuffer, outputBuffer, flush(inputBuffer));
     }
 
-    public static <T> CallableWithArguments<Pulse, List<T>> flush(BufferInterface<T> inputBuffer){
+    public static <T> CallableWithArguments<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
         return input -> {
             try {
                 return inputBuffer.flush();

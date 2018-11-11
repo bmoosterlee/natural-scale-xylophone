@@ -4,7 +4,7 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 
-public class SimpleBuffer<T> implements BufferInterface<T> {
+public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     private final BoundedStrategy<T> boundedStrategy;
 
@@ -69,12 +69,12 @@ public class SimpleBuffer<T> implements BufferInterface<T> {
     }
 
     @Override
-    public Collection<BufferInterface<T>> broadcast(int size) {
+    public Collection<BoundedBuffer<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
     }
 
     @Override
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return performMethod(Pairer.build(other)).breakChain();
     }
 
@@ -84,7 +84,7 @@ public class SimpleBuffer<T> implements BufferInterface<T> {
     }
 
     @Override
-    public BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer) {
+    public BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
         new TickablePipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }

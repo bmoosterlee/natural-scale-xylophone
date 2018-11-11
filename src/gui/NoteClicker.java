@@ -21,7 +21,7 @@ public class NoteClicker extends TickableOutputComponent<Frequency> {
             private final InputPort<Frequency> methodOutputPort;
 
             {
-                BufferInterface<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "clickedFrequencies");
+                BoundedBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "clickedFrequencies");
                 methodInputPort = clickedFrequencies.createOutputPort();
                 methodOutputPort = clickedFrequencies.createInputPort();
 

@@ -5,20 +5,20 @@ import frequency.Frequency;
 
 public class NoteTimestamper extends TickablePipeComponent {
 
-    public NoteTimestamper(BufferInterface<Long> sampleCountBuffer, BufferInterface<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
+    public NoteTimestamper(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
         super(sampleCountBuffer, outputBuffer, NoteTimestamper.build(newNoteBuffer));
     }
 
-    public static CallableWithArguments<Long, TimestampedFrequencies> build(BufferInterface<Frequency> newNoteBuffer) {
+    public static CallableWithArguments<Long, TimestampedFrequencies> build(BoundedBuffer<Frequency> newNoteBuffer) {
         return new CallableWithArguments<>() {
             final OutputPort<Long> methodInputPort;
             final InputPort<TimestampedFrequencies> methodOutputPort;
 
             {
-                BufferInterface<Long> sampleCountBuffer = new SimpleBuffer<>(1, "noteTimestamper - input");
+                BoundedBuffer<Long> sampleCountBuffer = new SimpleBuffer<>(1, "noteTimestamper - input");
                 methodInputPort = sampleCountBuffer.createOutputPort();
 
-                BufferInterface<Long>[] broadcast = sampleCountBuffer.broadcast(2).toArray(new BufferInterface[0]);
+                BoundedBuffer<Long>[] broadcast = sampleCountBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
                 methodOutputPort =
                 broadcast[0]
                 .pairWith(

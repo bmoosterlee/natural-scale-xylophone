@@ -1,6 +1,6 @@
 package sound;
 
-import component.BufferInterface;
+import component.BoundedBuffer;
 import frequency.Frequency;
 import component.SimpleBuffer;
 import component.InputPort;
@@ -18,7 +18,7 @@ public class VolumeAmplitudeStateToSignal implements Runnable{
     private final InputPort<VolumeAmplitudeState> volumeAmplitudeStateInput;
     private final OutputPort<Double> amplitudeOutput;
 
-    public VolumeAmplitudeStateToSignal(BufferInterface<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
+    public VolumeAmplitudeStateToSignal(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
 
         volumeAmplitudeStateInput = new InputPort<>(volumeAmplitudeStateInputBuffer);
         amplitudeOutput = new OutputPort<>(amplitudeOutputBuffer);

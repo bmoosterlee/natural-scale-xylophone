@@ -4,7 +4,7 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 
-public class BufferChainLink<T> implements BufferInterface<T>{
+public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
     final TickablePipeComponentChain<? extends Object, T> previousComponent;
@@ -64,7 +64,7 @@ public class BufferChainLink<T> implements BufferInterface<T>{
         new TickableInputComponentChain<>(this, method);
     }
 
-    public Collection<BufferInterface<T>> broadcast(int size) {
+    public Collection<BoundedBuffer<T>> broadcast(int size) {
         return breakChain().broadcast(size);
     }
 
@@ -73,15 +73,15 @@ public class BufferChainLink<T> implements BufferInterface<T>{
     }
 
     @Override
-    public BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer) {
+    public BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
         return null;
     }
 
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return breakChain().pairWith(other);
     }
 
-    public void relayTo(BufferInterface<T> outputBuffer) {
+    public void relayTo(BoundedBuffer<T> outputBuffer) {
         new TickablePipeComponentChain<>(this, outputBuffer, input -> input);
     }
 }

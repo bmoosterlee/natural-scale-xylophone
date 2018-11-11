@@ -2,7 +2,7 @@ package component;
 
 public class Counter extends TickablePipeComponent<Pulse, Long> {
 
-    public Counter(BufferInterface<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
+    public Counter(BoundedBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
         super(inputBuffer, outputBuffer, build());
     }
 

@@ -4,7 +4,7 @@ public class TickablePipeComponentChain<K, V> extends TickablePipeComponent{
 
     private final TickablePipeComponentChain previousComponent;
 
-    public TickablePipeComponentChain(BufferChainLink<K> inputBuffer, BufferInterface<V> outputBuffer, CallableWithArguments<K, V> method){
+    public TickablePipeComponentChain(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
         super(inputBuffer, outputBuffer, method);
 
         previousComponent = inputBuffer.previousComponent;

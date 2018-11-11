@@ -19,11 +19,11 @@ import java.util.Set;
 
 public class Pianola extends TickablePipeComponent<Pulse, Frequency>{
 
-    public Pianola(BufferInterface<Pulse> tickBuffer, BufferInterface<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         super(tickBuffer, outputBuffer, build(spectrumBuffer, pianolaPattern,inaudibleFrequencyMargin));
     }
 
-    public static CallableWithArguments<Pulse, Frequency> build(BufferInterface<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin){
+    public static CallableWithArguments<Pulse, Frequency> build(BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin){
         return new CallableWithArguments<>() {
             private final InputPort<Buckets> notesInput;
             private BucketHistory noteHistory;
@@ -50,18 +50,18 @@ public class Pianola extends TickablePipeComponent<Pulse, Frequency>{
 
                 SimpleBuffer<Buckets> notesAveragerInputBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
                 count++;
-                BufferInterface<Buckets> notesAveragerOutputBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
+                BoundedBuffer<Buckets> notesAveragerOutputBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
                 count++;
                 new BucketsAverager(2 * inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
                 averagerInput = new OutputPort<>(notesAveragerInputBuffer);
 
-                BufferInterface<Buckets> harmonicsAveragerBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
+                BoundedBuffer<Buckets> harmonicsAveragerBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
                 count++;
                 new BucketsAverager(inaudibleFrequencyMargin, harmonicSpectrumBuffer, harmonicsAveragerBuffer);
 
-                BufferInterface<Collection<Frequency>> patternOutput = new SimpleBuffer<>(1, "pianola - output");
+                BoundedBuffer<Collection<Frequency>> patternOutput = new SimpleBuffer<>(1, "pianola - output");
                 outputPort = patternOutput.createOutputPort();
-                BufferInterface<Frequency> methodOutput = toBuffer(patternOutput);
+                BoundedBuffer<Frequency> methodOutput = toBuffer(patternOutput);
                 methodOutputPort = methodOutput.createInputPort();
 
                 notesInput = new InputPort<>(noteSpectrumBuffer);
@@ -102,8 +102,8 @@ public class Pianola extends TickablePipeComponent<Pulse, Frequency>{
         };
     }
 
-    public static <T> BufferInterface<T> toBuffer(BufferInterface<Collection<T>> input){
-        BufferInterface<T> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
+    public static <T> BoundedBuffer<T> toBuffer(BoundedBuffer<Collection<T>> input){
+        BoundedBuffer<T> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
         InputPort<Collection<T>> inputPort = input.createInputPort();
         OutputPort<T> outputPort = outputBuffer.createOutputPort();
 

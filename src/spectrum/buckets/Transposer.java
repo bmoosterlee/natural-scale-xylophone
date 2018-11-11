@@ -9,7 +9,7 @@ public class Transposer extends Tickable {
     private final InputPort<Buckets> input;
     private final OutputPort<Buckets> output;
 
-    public Transposer(BufferInterface<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int transposition) {
+    public Transposer(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int transposition) {
         this.transposition = transposition;
 
         input = new InputPort<>(inputBuffer);

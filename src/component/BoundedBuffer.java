@@ -4,7 +4,7 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 
-public interface BufferInterface<T> {
+public interface BoundedBuffer<T> {
     List<T> flush() throws InterruptedException;
 
     void offer(T packet) throws InterruptedException;
@@ -23,11 +23,11 @@ public interface BufferInterface<T> {
 
     void performInputMethod(CallableWithArgument<T> method);
 
-    Collection<BufferInterface<T>> broadcast(int size);
+    Collection<BoundedBuffer<T>> broadcast(int size);
 
-    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other);
+    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other);
 
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
 
-    BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer);
+    BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer);
 }

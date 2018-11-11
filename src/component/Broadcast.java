@@ -9,11 +9,11 @@ public class Broadcast<T> extends Tickable{
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
 
-    public Broadcast(BufferInterface<T> inputBuffer, Collection<BufferInterface<T>> outputBuffers) {
+    public Broadcast(BoundedBuffer<T> inputBuffer, Collection<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);
 
         outputs = new HashSet<>();
-        for(BufferInterface<T> buffer : outputBuffers){
+        for(BoundedBuffer<T> buffer : outputBuffers){
             outputs.add(new OutputPort<>(buffer));
         }
 
@@ -32,8 +32,8 @@ public class Broadcast<T> extends Tickable{
         }
     }
 
-    protected static <T> Collection<BufferInterface<T>> broadcast(BufferInterface<T> inputBuffer, int size){
-        Collection<BufferInterface<T>> results = new LinkedList<>();
+    protected static <T> Collection<BoundedBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
+        Collection<BoundedBuffer<T>> results = new LinkedList<>();
         for(int i = 0; i<size; i++){
             results.add(new SimpleBuffer<>(1, "broadcast"));
         }

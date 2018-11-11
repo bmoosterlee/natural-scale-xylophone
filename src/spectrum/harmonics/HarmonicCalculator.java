@@ -1,7 +1,7 @@
 package spectrum.harmonics;
 
 import component.SimpleBuffer;
-import component.BufferInterface;
+import component.BoundedBuffer;
 import component.CallableWithArguments;
 import component.TickablePipeComponent;
 import frequency.Frequency;
@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class HarmonicCalculator extends TickablePipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>> {
 
-    public HarmonicCalculator(BufferInterface<VolumeState> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
+    public HarmonicCalculator(BoundedBuffer<VolumeState> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 

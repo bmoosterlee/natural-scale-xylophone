@@ -8,7 +8,7 @@ public class BucketHistoryComponent extends Tickable {
     private final InputPort<Buckets> inputPort;
     private final OutputPort<Buckets> outputPort;
 
-    public BucketHistoryComponent(BufferInterface<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size){
+    public BucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size){
         bucketHistory = new PrecalculatedBucketHistory(size);
 
         inputPort = new InputPort<>(inputBuffer);
