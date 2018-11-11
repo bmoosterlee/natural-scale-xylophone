@@ -1,89 +1,161 @@
 package gui;
 
 import component.*;
-import component.Tickable;
 import frequency.Frequency;
+import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
-import spectrum.SpectrumWindow;
-import component.Pulse;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class GUI extends Tickable {
+public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
 
-    private final int height = 600;
-    private final double yScale = height * 0.95;
-    private final double margin = height * 0.05;
-
-    private final GUIPanel guiPanel;
-
-    private final InputPort<Integer> newCursorX;
-
-    private int oldCursorX;
-
-    public GUI(BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, BoundedBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
-        int capacity = 100;
-
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> tickSpectrumBuffer = new BoundedBuffer<>(1, "gui - spectrum 1");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(1, "gui - spectrum 2");
-        new Broadcast<>(inputBuffer, Arrays.asList(tickSpectrumBuffer, spectrumBuffer));
-
-        BoundedBuffer<Pulse> frameTickBuffer = tickSpectrumBuffer.performMethod(input -> new Pulse());
-
-        BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(1, "gui - note spectrum");
-        BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(1, "gui - harmonic spectrum");
-        new Unpairer<>(spectrumBuffer, noteSpectrumBuffer, harmonicSpectrumBuffer);
-
-        BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer =
-                harmonicSpectrumBuffer
-                    .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
-                    .performMethod(GUI::bucketsToVolumes)
-                    .performMethod(input -> volumesToYs(input, yScale, margin));
-
-        BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
-                noteSpectrumBuffer
-                    .performMethod(GUI::bucketsToVolumes)
-                    .performMethod(input -> volumesToYs(input, yScale, margin));
-
-        guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
-        NoteClicker noteClicker = new NoteClicker(outputBuffer, spectrumWindow);
-        guiPanel.addMouseListener(noteClicker);
-        BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
-        CursorMover cursorMover = new CursorMover(frameTickBuffer, cursorXBuffer);
-        guiPanel.addMouseMotionListener(cursorMover);
-
-        newCursorX = cursorXBuffer.createInputPort();
-
-        JFrame frame = new JFrame("Natural scale xylophone");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        guiPanel.setPreferredSize(new Dimension(width, height));
-        frame.setContentPane(guiPanel);
-        frame.pack();
-        frame.setVisible(true);
-
-        start();
+    public GUI(BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, BoundedBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+        super(inputBuffer, outputBuffer, build(spectrumWindow, width, inaudibleFrequencyMargin));
     }
 
-    @Override
-    protected void tick() {
-        try {
-            List<Integer> newCursorXs = newCursorX.flush();
-            try {
-                oldCursorX = newCursorXs.get(0);
-            }
-            catch(IndexOutOfBoundsException ignored){
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public static CallableWithArguments<SimpleImmutableEntry<Buckets, Buckets>, Frequency> build(SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+        return new CallableWithArguments<>() {
+            private final int height = 600;
+            private final double yScale = height * 0.95;
+            private final double margin = height * 0.05;
 
-        guiPanel.repaint();
+            private final GUIPanel guiPanel;
+
+            private final InputPort<Integer> newCursorX;
+            private int oldCursorX;
+
+            private OutputPort<SimpleImmutableEntry<Buckets, Buckets>> methodInputPort;
+            private InputPort<Frequency> methodOutputPort;
+
+            class GUIPanel extends JPanel {
+                private final InputPort<Map<Integer, Integer>> newNotes;
+                private final InputPort<Map<Integer, Integer>> newHarmonics;
+
+                GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer) {
+                    newNotes = new InputPort<>(noteSpectrumBuffer);
+                    newHarmonics = new InputPort<>(harmonicSpectrumBuffer);
+                }
+
+                @Override
+                public void paintComponent(Graphics g) {
+                    try {
+                        Map<Integer, Integer> notes = newNotes.consume();
+                        Map<Integer, Integer> harmonics = newHarmonics.consume();
+
+                        TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
+                        super.paintComponent(g);
+                        renderHarmonicsBuckets(g, harmonics);
+                        renderNoteBuckets(g, notes);
+                        renderCursorLine(g, oldCursorX);
+                        PerformanceTracker.stopTracking(totalTimeKeeper);
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    for (Integer index : ys.keySet()) {
+                        int y = ys.get(index);
+                        g.drawRect(index, height - y, 1, y);
+                    }
+                }
+
+                private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    g.setColor(Color.gray);
+
+                    renderBuckets(g, ys);
+                }
+
+                private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    g.setColor(Color.blue);
+
+                    renderBuckets(g, ys);
+                }
+
+                private void renderCursorLine(Graphics g, int x) {
+                    g.setColor(Color.green);
+
+                    g.drawRect(x, 0, 1, height);
+                }
+            }
+
+            {
+                int capacity = 100;
+
+                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new BoundedBuffer<>(1, "gui - method input");
+                methodInputPort = methodInputBuffer.createOutputPort();
+
+                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast = methodInputBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+
+                BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(1, "gui - note spectrum");
+                BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(1, "gui - harmonic spectrum");
+                new Unpairer<>(spectrumBroadcast[1], noteSpectrumBuffer, harmonicSpectrumBuffer);
+
+                BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer =
+                        harmonicSpectrumBuffer
+                                .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
+                                .performMethod(GUI::bucketsToVolumes)
+                                .performMethod(input -> volumesToYs(input, yScale, margin));
+                BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
+                        noteSpectrumBuffer
+                                .performMethod(GUI::bucketsToVolumes)
+                                .performMethod(input -> volumesToYs(input, yScale, margin));
+                guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
+
+                BoundedBuffer<Frequency> methodOutputBuffer = new BoundedBuffer<>(1, "gui - method output");
+                methodOutputPort = methodOutputBuffer.createInputPort();
+                NoteClicker noteClicker = new NoteClicker(methodOutputBuffer, spectrumWindow);
+                guiPanel.addMouseListener(noteClicker);
+
+                BoundedBuffer<Pulse> frameTickBuffer =
+                        spectrumBroadcast[0]
+                                .performMethod(input -> new Pulse());
+                BoundedBuffer<Integer> cursorXBuffer = new OverwritableBuffer<>(capacity);
+                CursorMover cursorMover = new CursorMover(frameTickBuffer, cursorXBuffer);
+                guiPanel.addMouseMotionListener(cursorMover);
+
+                newCursorX = cursorXBuffer.createInputPort();
+
+                JFrame frame = new JFrame("Natural scale xylophone");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                guiPanel.setPreferredSize(new Dimension(width, height));
+                frame.setContentPane(guiPanel);
+                frame.pack();
+                frame.setVisible(true);
+            }
+
+            private Frequency clickNotes(SimpleImmutableEntry<Buckets, Buckets> input) {
+                try {
+                    methodInputPort.produce(input);
+
+                    List<Integer> newCursorXs = newCursorX.flush();
+                    try {
+                        oldCursorX = newCursorXs.get(0);
+                    } catch (IndexOutOfBoundsException ignored) {
+                    }
+                    guiPanel.repaint();
+
+                    return methodOutputPort.consume();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public Frequency call(SimpleImmutableEntry<Buckets, Buckets> input) {
+                return clickNotes(input);
+            }
+        };
     }
 
     private static Map<Integer, Integer> volumesToYs(Map<Integer, Double> volumes, double yScale, double margin) {
@@ -103,56 +175,4 @@ public class GUI extends Tickable {
         return volumes;
     }
 
-    private class GUIPanel extends JPanel {
-        private final InputPort<Map<Integer, Integer>> newNotes;
-        private final InputPort<Map<Integer, Integer>> newHarmonics;
-
-        GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer){
-            newNotes = new InputPort<>(noteSpectrumBuffer);
-            newHarmonics = new InputPort<>(harmonicSpectrumBuffer);
-        }
-
-        @Override
-        public void paintComponent(Graphics g){
-            try {
-                Map<Integer, Integer> notes = newNotes.consume();
-                Map<Integer, Integer> harmonics = newHarmonics.consume();
-
-                TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
-                super.paintComponent(g);
-                renderHarmonicsBuckets(g, harmonics);
-                renderNoteBuckets(g, notes);
-                renderCursorLine(g, oldCursorX);
-                PerformanceTracker.stopTracking(totalTimeKeeper);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
-            for(Integer index : ys.keySet()){
-                int y = ys.get(index);
-                g.drawRect(index, height - y, 1, y);
-            }
-        }
-
-        private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
-            g.setColor(Color.gray);
-
-            renderBuckets(g, ys);
-        }
-
-        private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
-            g.setColor(Color.blue);
-
-            renderBuckets(g, ys);
-        }
-
-        private void renderCursorLine(Graphics g, int x) {
-            g.setColor(Color.green);
-
-            g.drawRect(x, 0, 1, height);
-        }
-    }
 }
