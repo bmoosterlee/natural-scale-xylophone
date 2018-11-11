@@ -88,6 +88,10 @@ public class BoundedBuffer<T> {
         return TickablePipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
     }
 
+    public void performInputMethod(CallableWithArgument<T> method){
+        new TickableInputComponent<>(this, method);
+    }
+
     public static <K, V> Collection<BoundedBuffer<V>> forEach(Collection<BoundedBuffer<K>> inputBuffers, CallableWithArguments<K, V> method){
         Collection<BoundedBuffer<V>> results = new LinkedList<>();
         for(BoundedBuffer<K> inputBuffer : inputBuffers){
@@ -104,7 +108,8 @@ public class BoundedBuffer<T> {
         return Pairer.PairerWithOutputBuffer(this, other, 1, "pairWith");
     }
 
-    public void relayTo(BoundedBuffer<T> outputBuffer) {
+    public BoundedBuffer<T> relayTo(BoundedBuffer<T> outputBuffer) {
         new TickablePipeComponent<>(this, outputBuffer, input -> input);
+        return outputBuffer;
     }
 }
