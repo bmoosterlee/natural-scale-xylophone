@@ -29,7 +29,8 @@ public class NoteTimestamper extends TickablePipeComponent {
                         input1 ->
                         new TimestampedFrequencies(
                             input1.getKey(),
-                            input1.getValue())).createInputPort();
+                            input1.getValue()))
+                .createInputPort();
             }
 
             @Override
