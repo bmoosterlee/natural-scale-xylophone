@@ -68,8 +68,6 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        int capacity = 10;
-
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
         LinkedList<BoundedBuffer<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
@@ -112,7 +110,7 @@ class Main {
         .performMethod(
             Pianola.build(
                 spectrumBroadcast.poll()
-                .relayTo(new OverwritableBuffer<>(capacity)),
+                .relayTo(new OverwritableBuffer<>(1, "pianola - input")),
                 pianolaPattern,
                 inaudibleFrequencyMargin))
         .relayTo(newNoteBuffer);
