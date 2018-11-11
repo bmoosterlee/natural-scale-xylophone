@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
@@ -28,33 +28,33 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
             private final double margin = height * 0.05;
 
             private final GUIPanel guiPanel;
-
-            private final InputPort<Integer> newCursorX;
-            private int oldCursorX;
-
+            
             private OutputPort<SimpleImmutableEntry<Buckets, Buckets>> methodInputPort;
             private InputPort<Frequency> methodOutputPort;
 
             class GUIPanel extends JPanel {
-                private final InputPort<Map<Integer, Integer>> newNotes;
-                private final InputPort<Map<Integer, Integer>> newHarmonics;
+                private final InputPort<Map<Integer, Integer>> newNotesPort;
+                private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
+                private final InputPort<Integer> newCursorXPort;
 
-                GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer) {
-                    newNotes = new InputPort<>(noteSpectrumBuffer);
-                    newHarmonics = new InputPort<>(harmonicSpectrumBuffer);
+                GUIPanel(BoundedBuffer<Map<Integer, Integer>> noteSpectrumBuffer, BoundedBuffer<Map<Integer, Integer>> harmonicSpectrumBuffer, BoundedBuffer<Integer> cursorXBuffer) {
+                    newNotesPort = new InputPort<>(noteSpectrumBuffer);
+                    newHarmonicsPort = new InputPort<>(harmonicSpectrumBuffer);
+                    newCursorXPort = new InputPort<>(cursorXBuffer);
                 }
 
                 @Override
                 public void paintComponent(Graphics g) {
                     try {
-                        Map<Integer, Integer> notes = newNotes.consume();
-                        Map<Integer, Integer> harmonics = newHarmonics.consume();
+                        Map<Integer, Integer> notes = newNotesPort.consume();
+                        Map<Integer, Integer> harmonics = newHarmonicsPort.consume();
+                        Integer cursorX = newCursorXPort.consume();
 
                         TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
                         super.paintComponent(g);
                         renderHarmonicsBuckets(g, harmonics);
                         renderNoteBuckets(g, notes);
-                        renderCursorLine(g, oldCursorX);
+                        renderCursorLine(g, cursorX);
                         PerformanceTracker.stopTracking(totalTimeKeeper);
 
                     } catch (InterruptedException e) {
@@ -91,40 +91,39 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
             {
                 int capacity = 100;
 
-                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new BoundedBuffer<>(1, "gui - method input");
+                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new BoundedBuffer<>(capacity, "gui - method input");
                 methodInputPort = methodInputBuffer.createOutputPort();
 
-                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast = methodInputBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+                LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
+                    new LinkedList<>(methodInputBuffer.broadcast(2));
 
-                BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(1, "gui - note spectrum");
-                BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(1, "gui - harmonic spectrum");
-                new Unpairer<>(spectrumBroadcast[1], noteSpectrumBuffer, harmonicSpectrumBuffer);
+                BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - note spectrum");
+                BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - harmonic spectrum");
+                new Unpairer<>(spectrumBroadcast.poll(), noteSpectrumBuffer, harmonicSpectrumBuffer);
 
+                BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
+                        noteSpectrumBuffer
+                                .performMethod(GUI::bucketsToVolumes)
+                                .performMethod(input -> volumesToYs(input, yScale, margin));
                 BoundedBuffer<Map<Integer, Integer>> harmonicsYsOutputBuffer =
                         harmonicSpectrumBuffer
                                 .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
                                 .performMethod(GUI::bucketsToVolumes)
                                 .performMethod(input -> volumesToYs(input, yScale, margin));
-                BoundedBuffer<Map<Integer, Integer>> noteYsOutputBuffer =
-                        noteSpectrumBuffer
-                                .performMethod(GUI::bucketsToVolumes)
-                                .performMethod(input -> volumesToYs(input, yScale, margin));
-                guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer);
+                BoundedBuffer<Integer> cursorXBuffer = new BoundedBuffer<>(capacity, "cursorX - output");
+                guiPanel = new GUIPanel(noteYsOutputBuffer, harmonicsYsOutputBuffer, cursorXBuffer);
 
                 methodOutputPort =
                     TickableOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
-                    1,
+                    capacity,
                     "note clicker - output")
                     .createInputPort();
 
-                BoundedBuffer<Pulse> frameTickBuffer =
-                        spectrumBroadcast[0]
-                                .performMethod(input -> new Pulse());
 
-                newCursorX =
-                    frameTickBuffer
+                spectrumBroadcast.poll()
+                    .performMethod(input1 -> new Pulse())
                     .performMethod(CursorMover.build(guiPanel))
-                    .createInputPort();
+                    .relayTo(cursorXBuffer);
 
                 JFrame frame = new JFrame("Natural scale xylophone");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -138,11 +137,6 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
                 try {
                     methodInputPort.produce(input);
 
-                    List<Integer> newCursorXs = newCursorX.flush();
-                    try {
-                        oldCursorX = newCursorXs.get(0);
-                    } catch (IndexOutOfBoundsException ignored) {
-                    }
                     guiPanel.repaint();
 
                     return methodOutputPort.consume();
