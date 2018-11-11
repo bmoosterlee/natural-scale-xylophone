@@ -12,13 +12,11 @@ import component.Pulse;
 import mixer.state.VolumeAmplitudeState;
 import mixer.state.VolumeAmplitudeToVolumeFilter;
 import mixer.state.VolumeState;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
 import java.util.*;
 
 public class SpectrumBuilder extends TickablePipeComponent {
-    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets,Buckets>> outputBuffer, int width, SpectrumWindow spectrumWindow) {
+    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
         super(frameTickBuffer, outputBuffer, build(inputBuffer, spectrumWindow, width));
     }
 
