@@ -32,7 +32,6 @@ public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<B
                 BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast[1];
 
                 BoundedBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new BoundedBuffer<>(capacity, "history - input");
-                OutputPort<ImmutableLinkedList<Buckets>> historyOutputPort = historyBuffer.createOutputPort();
 
                 CallableWithArguments<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> removeOldHistory = new CallableWithArguments<>() {
                     private final OutputPort<Buckets> conditionalSubtractOutputPort1;
@@ -83,29 +82,26 @@ public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<B
                 BoundedBuffer<Buckets> outputBuffer = outputTimeAverageBroadcast[0];
                 BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast[1];
 
-                OutputPort<Buckets> timeAverageOutputPort = timeAverageBuffer.createOutputPort();
-
-                new Unpairer<>(
-                    historyBuffer
-                    .pairWith(preparedBucketsBuffer1)
+                historyBuffer
+                .pairWith(preparedBucketsBuffer1)
+                .performMethod(
+                    input1 ->
+                    input1.getKey()
+                    .add(input1.getValue()))
+                .pairWith(
+                    timeAverageBuffer
+                    .pairWith(preparedBucketsBuffer2)
                     .performMethod(
                         input1 ->
                         input1.getKey()
-                        .add(input1.getValue()))
-                    .pairWith(
-                        timeAverageBuffer
-                        .pairWith(preparedBucketsBuffer2)
-                        .performMethod(
-                            input1 ->
-                            input1.getKey()
-                            .add(input1.getValue())))
-                    .performMethod(removeOldHistory),
-                    historyBuffer,
-                    outputTimeAverageBuffer);
+                        .add(input1.getValue())))
+                .performMethod(removeOldHistory)
+                .performMethod(Unpairer.build(historyBuffer))
+                .relayTo(outputTimeAverageBuffer);
 
                 try {
-                    historyOutputPort.produce(new ImmutableLinkedList<>());
-                    timeAverageOutputPort.produce(new Buckets());
+                    historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
+                    timeAverageBuffer.createOutputPort().produce(new Buckets());
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
