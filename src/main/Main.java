@@ -89,7 +89,7 @@ class Main {
                 .performMethod(
                     SpectrumBuilder.build(
                         volumeBroadcast.poll()
-                        .relayTo(new OverwritableBuffer<>(1, "sound - volume amplitude state out")),
+                        .relayTo(new BoundedBuffer<>(1, new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
                         spectrumWindow,
                         width))
                 .broadcast(2));
@@ -110,7 +110,7 @@ class Main {
         .performMethod(
             Pianola.build(
                 spectrumBroadcast.poll()
-                .relayTo(new OverwritableBuffer<>(1, "pianola - input")),
+                .relayTo(new BoundedBuffer<>(1, new OverwritableStrategy<>(1, "pianola - input"))),
                 pianolaPattern,
                 inaudibleFrequencyMargin))
         .relayTo(newNoteBuffer);
