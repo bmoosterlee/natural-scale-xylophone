@@ -70,32 +70,28 @@ class Main {
 
         int capacity = 10;
 
-        BoundedBuffer<Long> sampleCountBuffer =
+        BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
+        BoundedBuffer<VolumeAmplitudeState>[] volumeBroadcast =
             TickableOutputComponent.buildOutputBuffer(
                 Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                 sampleLookahead,
-                "sample ticker - output")
-                .performMethod(Counter.build());
-        BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        BoundedBuffer<VolumeAmplitudeState> volumeBuffer =
-            sampleCountBuffer
-            .performMethod(Mixer.build(newNoteBuffer, sampleRate));
+            "sample ticker - output")
+            .performMethod(Counter.build())
+            .performMethod(Mixer.build(newNoteBuffer, sampleRate)).broadcast(2).toArray(new BoundedBuffer[0]);
 
-        BoundedBuffer<VolumeAmplitudeState>[] broadcast = volumeBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
-            broadcast[0]
-            .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
+        volumeBroadcast[0]
+        .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer =
-                TickableOutputComponent.buildOutputBuffer(
-            Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast =
+            TickableOutputComponent.buildOutputBuffer(
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
             .performMethod(
                 SpectrumBuilder.build(
-                    broadcast[1]
+                    volumeBroadcast[1]
                     .relayTo(new OverwritableBuffer<>(1, "sound - volume amplitude state out")),
                     spectrumWindow,
-                    width));
-
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast = spectrumBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+                    width))
+            .broadcast(2).toArray(new BoundedBuffer[0]);
 
         spectrumBroadcast[0]
         .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin))
