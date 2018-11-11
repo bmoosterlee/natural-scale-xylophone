@@ -90,9 +90,9 @@ public class SimpleChordGenerator {
     private PriorityQueue<Entry<Integer, Double>> prioritizeFrequencies(Buckets freqProximityBuckets) {
         PriorityQueue<Entry<Integer, Double>> frequencyHierarchy = new PriorityQueue<>(
                 (o1, o2) -> -Double.compare(o1.getValue(), o2.getValue()));
-        Iterator<Entry<Integer, Bucket>> iterator = freqProximityBuckets.iterator();
+        Iterator<? extends Entry<Integer, ? extends Bucket>> iterator = freqProximityBuckets.iterator();
         while (iterator.hasNext()) {
-            Entry<Integer, Bucket> pair = iterator.next();
+            Entry<Integer, ? extends Bucket> pair = iterator.next();
             frequencyHierarchy.add(new AbstractMap.SimpleImmutableEntry<>(pair.getKey(), pair.getValue().getVolume()));
         }
         return frequencyHierarchy;
