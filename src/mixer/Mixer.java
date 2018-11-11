@@ -198,12 +198,10 @@ public class Mixer extends TickablePipeComponent {
                 BoundedBuffer<Long> methodInputBuffer = new BoundedBuffer<>(1, "mixer - input");
                 methodInputPort = methodInputBuffer.createOutputPort();
 
-                BoundedBuffer<TimestampedFrequencies> timeStampedNewNotesBuffer = methodInputBuffer.performMethod(NoteTimestamper.build(noteInputBuffer));
-
-                BoundedBuffer<TimestampedNewNotesWithEnvelope> timestampedNewNotesEnvelopeBuffer =
-                        timeStampedNewNotesBuffer
-                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate));
-                input = timestampedNewNotesEnvelopeBuffer.createInputPort();
+                input =
+                    methodInputBuffer
+                    .performMethod(NoteTimestamper.build(noteInputBuffer))
+                    .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate)).createInputPort();
 
                 {
                     SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = TickablePipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
