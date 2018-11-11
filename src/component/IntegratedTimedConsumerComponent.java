@@ -2,7 +2,7 @@ package component;
 
 public class IntegratedTimedConsumerComponent<T> extends TickablePipeComponent<Pulse, T> {
 
-    public IntegratedTimedConsumerComponent(BufferInterface<Pulse> timeBuffer, BufferInterface<T> inputBuffer, BoundedBuffer<T> outputBuffer){
+    public IntegratedTimedConsumerComponent(BufferInterface<Pulse> timeBuffer, BufferInterface<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
     }
 

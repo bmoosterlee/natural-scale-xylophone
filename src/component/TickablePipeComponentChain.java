@@ -21,7 +21,7 @@ public class TickablePipeComponentChain<K, V> extends TickablePipeComponent{
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
-        BoundedBuffer<V> outputBuffer = new BoundedBuffer<>(capacity, name);
+        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         TickablePipeComponentChain<K, V> methodComponent = new TickablePipeComponentChain<>(inputBuffer, outputBuffer, method);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;

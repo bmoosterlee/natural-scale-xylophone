@@ -68,7 +68,7 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
+        SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
         LinkedList<BufferInterface<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
                 TickableOutputComponent.buildOutputBuffer(
@@ -89,7 +89,7 @@ class Main {
                 .performMethod(
                     SpectrumBuilder.build(
                         volumeBroadcast.poll()
-                        .relayTo(new BoundedBuffer<>(1, new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
+                        .relayTo(new SimpleBuffer<>(1, new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
                         spectrumWindow,
                         width))
                 .broadcast(2));
@@ -110,7 +110,7 @@ class Main {
         .performMethod(
             Pianola.build(
                 spectrumBroadcast.poll()
-                .relayTo(new BoundedBuffer<>(1, new OverwritableStrategy<>(1, "pianola - input"))),
+                .relayTo(new SimpleBuffer<>(1, new OverwritableStrategy<>(1, "pianola - input"))),
                 pianolaPattern,
                 inaudibleFrequencyMargin))
         .relayTo(newNoteBuffer);
@@ -118,7 +118,7 @@ class Main {
         playTestTone(newNoteBuffer, spectrumWindow);
     }
 
-    private static void playTestTone(BoundedBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
+    private static void playTestTone(SimpleBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

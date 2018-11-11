@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
 
 public class NoteClicker extends TickableOutputComponent<Frequency> {
 
-    public NoteClicker(BoundedBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
+    public NoteClicker(SimpleBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
         super(newNoteBuffer, build(spectrumWindow, guiPanel));
     }
 
@@ -21,7 +21,7 @@ public class NoteClicker extends TickableOutputComponent<Frequency> {
             private final InputPort<Frequency> methodOutputPort;
 
             {
-                BufferInterface<Frequency> clickedFrequencies = new BoundedBuffer<>(1, "clickedFrequencies");
+                BufferInterface<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "clickedFrequencies");
                 methodInputPort = clickedFrequencies.createOutputPort();
                 methodOutputPort = clickedFrequencies.createInputPort();
 

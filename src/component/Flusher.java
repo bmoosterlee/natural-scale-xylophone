@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Flusher<T> extends TickablePipeComponent<Pulse, List<T>> {
 
-    public Flusher(BufferInterface<Pulse> timeInputBuffer, BufferInterface<T> inputBuffer, BoundedBuffer<List<T>> outputBuffer) {
+    public Flusher(BufferInterface<Pulse> timeInputBuffer, BufferInterface<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
         super(timeInputBuffer, outputBuffer, flush(inputBuffer));
     }
 

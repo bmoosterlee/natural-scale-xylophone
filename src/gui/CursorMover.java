@@ -8,7 +8,7 @@ import java.awt.event.MouseMotionListener;
 
 public class CursorMover extends TickablePipeComponent<Pulse, Integer> {
 
-    public CursorMover(BufferInterface<Pulse> inputBuffer, BoundedBuffer<Integer> outputBuffer, JPanel guiPanel) {
+    public CursorMover(BufferInterface<Pulse> inputBuffer, SimpleBuffer<Integer> outputBuffer, JPanel guiPanel) {
         super(inputBuffer, outputBuffer, build(guiPanel));
     }
 

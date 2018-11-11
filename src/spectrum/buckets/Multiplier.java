@@ -9,7 +9,7 @@ public class Multiplier extends Tickable {
     private final InputPort<Buckets> input;
     private final OutputPort<Buckets> output;
 
-    public Multiplier(BufferInterface<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, double multiplier) {
+    public Multiplier(BufferInterface<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, double multiplier) {
         this.multiplier = multiplier;
 
         input = new InputPort<>(inputBuffer);

@@ -46,7 +46,7 @@ public class BucketsAverager extends Tickable {
                     multipliers[i - 1] = ((double) averagingWidth - i) / averagingWidth;
                 }
 
-                BoundedBuffer<Buckets> hollowBucketsBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                SimpleBuffer<Buckets> hollowBucketsBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                 count++;
                 multiplierInput = new OutputPort<>(hollowBucketsBuffer);
 
@@ -54,9 +54,9 @@ public class BucketsAverager extends Tickable {
                 BufferInterface<Buckets>[] multiplierOutputBuffers = new BufferInterface[averagingWidth - 1];
 
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    BufferInterface<Buckets> multiplierInputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    BufferInterface<Buckets> multiplierInputBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
-                    BoundedBuffer<Buckets> multiplierOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    SimpleBuffer<Buckets> multiplierOutputBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                     new Multiplier(multiplierInputBuffer, multiplierOutputBuffer, multipliers[i]);
 
@@ -66,15 +66,15 @@ public class BucketsAverager extends Tickable {
 
                 new Broadcast<>(hollowBucketsBuffer, new HashSet<>(Arrays.asList(multiplierInputBuffers)));
 
-                BoundedBuffer<Buckets>[] multiplierOutputBuffersPositive = new BoundedBuffer[averagingWidth - 1];
+                SimpleBuffer<Buckets>[] multiplierOutputBuffersPositive = new SimpleBuffer[averagingWidth - 1];
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    multiplierOutputBuffersPositive[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    multiplierOutputBuffersPositive[i] = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                 }
 
-                BoundedBuffer<Buckets>[] multiplierOutputBuffersNegative = new BoundedBuffer[averagingWidth - 1];
+                SimpleBuffer<Buckets>[] multiplierOutputBuffersNegative = new SimpleBuffer[averagingWidth - 1];
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    multiplierOutputBuffersNegative[i] = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    multiplierOutputBuffersNegative[i] = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
                 }
 
@@ -85,14 +85,14 @@ public class BucketsAverager extends Tickable {
                 OutputPort<Buckets>[] transposerInputs = new OutputPort[(averagingWidth - 1) * 2];
 
                 Set<BufferInterface<Buckets>> adderBuffers = new HashSet<>();
-                BoundedBuffer<Buckets> firstAdderBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                SimpleBuffer<Buckets> firstAdderBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                 count++;
                 adderInput = new OutputPort<>(firstAdderBuffer);
                 adderBuffers.add(firstAdderBuffer);
 
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
-                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    SimpleBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersPositive[i];
+                    SimpleBuffer<Buckets> transposerOutputBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
 
                     new Transposer(transposerInputBuffer, transposerOutputBuffer, (i + 1));
@@ -102,8 +102,8 @@ public class BucketsAverager extends Tickable {
                 }
 
                 for (int i = 0; i < averagingWidth - 1; i++) {
-                    BoundedBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
-                    BoundedBuffer<Buckets> transposerOutputBuffer = new BoundedBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
+                    SimpleBuffer<Buckets> transposerInputBuffer = multiplierOutputBuffersNegative[i];
+                    SimpleBuffer<Buckets> transposerOutputBuffer = new SimpleBuffer<>(capacity, "BucketsAverager" + String.valueOf(count));
                     count++;
 
                     new Transposer(transposerInputBuffer, transposerOutputBuffer, -(i + 1));
@@ -112,7 +112,7 @@ public class BucketsAverager extends Tickable {
                     adderBuffers.add(transposerOutputBuffer);
                 }
 
-                BoundedBuffer<Buckets> adderOutputBuffer = new BoundedBuffer<>(capacity, "buckets averager - adder output");
+                SimpleBuffer<Buckets> adderOutputBuffer = new SimpleBuffer<>(capacity, "buckets averager - adder output");
                 new Adder(adderBuffers, adderOutputBuffer);
 
                 adderInputPort = adderOutputBuffer.createInputPort();

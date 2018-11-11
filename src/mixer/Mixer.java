@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Mixer extends TickablePipeComponent {
 
-    public Mixer(BufferInterface<Long> sampleCountBuffer, BufferInterface<Frequency> noteInputBuffer, BoundedBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
+    public Mixer(BufferInterface<Long> sampleCountBuffer, BufferInterface<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         super(sampleCountBuffer, outputBuffer, build(noteInputBuffer, sampleRate));
     }
 
@@ -193,7 +193,7 @@ public class Mixer extends TickablePipeComponent {
                 unfinishedSlicesWaves = new HashMap<>();
                 finishedSlices = new HashMap<>();
 
-                BoundedBuffer<Long> methodInputBuffer = new BoundedBuffer<>(1, "mixer - input");
+                SimpleBuffer<Long> methodInputBuffer = new SimpleBuffer<>(1, "mixer - input");
                 methodInputPort = methodInputBuffer.createOutputPort();
 
                 input =
@@ -208,14 +208,14 @@ public class Mixer extends TickablePipeComponent {
                 }
 
                 {
-                    BufferInterface<Long> sampleCountBuffer2 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
+                    BufferInterface<Long> sampleCountBuffer2 = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
                     sampleCountOutputPort = sampleCountBuffer2.createOutputPort();
-                    BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequency - input");
+                    SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequency - input");
                     groupEnvelopesByFrequencyOutputPort = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
-                    BufferInterface<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequency - waves");
+                    BufferInterface<Map<Frequency, Wave>> waveBuffer = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - waves");
                     waveOutputPort = waveBuffer.createOutputPort();
 
-                    BufferInterface<VolumeAmplitudeState> oldStateBuffer = new BoundedBuffer<>(capacity, "oldState");
+                    BufferInterface<VolumeAmplitudeState> oldStateBuffer = new SimpleBuffer<>(capacity, "oldState");
                     oldStateOutputPort = oldStateBuffer.createOutputPort();
 
                     methodOutputPort =
@@ -240,14 +240,14 @@ public class Mixer extends TickablePipeComponent {
                 }
 
                 {
-                    BufferInterface<Long> sampleCountBuffer3 = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
+                    BufferInterface<Long> sampleCountBuffer3 = new SimpleBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
                     sampleCountOutputPortPrecalc = sampleCountBuffer3.createOutputPort();
-                    BoundedBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new BoundedBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - input");
+                    SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - input");
                     groupEnvelopesByFrequencyOutputPortPrecalc = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
-                    BufferInterface<Map<Frequency, Wave>> waveBuffer = new BoundedBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - waves");
+                    BufferInterface<Map<Frequency, Wave>> waveBuffer = new SimpleBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - waves");
                     waveOutputPortPrecalc = waveBuffer.createOutputPort();
 
-                    BufferInterface<VolumeAmplitudeState> oldStateBuffer = new BoundedBuffer<>(capacity, "oldStatePrecalc");
+                    BufferInterface<VolumeAmplitudeState> oldStateBuffer = new SimpleBuffer<>(capacity, "oldStatePrecalc");
                     oldStateOutputPortPrecalc = oldStateBuffer.createOutputPort();
 
                     newStateInputPortPrecalc =

@@ -35,7 +35,7 @@ public class Broadcast<T> extends Tickable{
     protected static <T> Collection<BufferInterface<T>> broadcast(BufferInterface<T> inputBuffer, int size){
         Collection<BufferInterface<T>> results = new LinkedList<>();
         for(int i = 0; i<size; i++){
-            results.add(new BoundedBuffer<>(1, "broadcast"));
+            results.add(new SimpleBuffer<>(1, "broadcast"));
         }
         new Broadcast<>(inputBuffer, results);
         return results;

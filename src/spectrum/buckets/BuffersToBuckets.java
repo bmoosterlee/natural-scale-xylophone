@@ -6,7 +6,7 @@ import java.util.*;
 
 public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
 
-    public BuffersToBuckets(BufferInterface<Pulse> tickBuffer, Map<Integer, BufferInterface<AtomicBucket>> inputMap, BoundedBuffer<Buckets> outputBuffer) {
+    public BuffersToBuckets(BufferInterface<Pulse> tickBuffer, Map<Integer, BufferInterface<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
         super(tickBuffer, outputBuffer, toBuckets(inputMap));
     }
 
@@ -16,7 +16,7 @@ public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
             private InputPort<Buckets> methodOutputPort;
 
             {
-                BufferInterface<Pulse> methodInput = new BoundedBuffer<>(1, "BuffersToBuckets - input");
+                BufferInterface<Pulse> methodInput = new SimpleBuffer<>(1, "BuffersToBuckets - input");
                 methodInputPort = methodInput.createOutputPort();
 
                 LinkedList<BufferInterface<Pulse>> frameTickBroadcast = new LinkedList<>(methodInput.broadcast(bufferMap.size()));
@@ -70,13 +70,13 @@ public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
         return output;
     }
 
-    public static <I, K> BoundedBuffer<Map<I, K>> collect(Map<I, BufferInterface<K>> input){
+    public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, BufferInterface<K>> input){
         try {
             Map<I, K> map = new HashMap<>();
             for (I index : input.keySet()) {
                 map.put(index, input.get(index).createInputPort().consume());
             }
-            BufferInterface<Map<I,K>> output = new BoundedBuffer<>(1, "collect");
+            BufferInterface<Map<I,K>> output = new SimpleBuffer<>(1, "collect");
             output.createOutputPort().produce(map);
         }
         catch(InterruptedException e){

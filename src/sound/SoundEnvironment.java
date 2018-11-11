@@ -46,10 +46,10 @@ public class SoundEnvironment extends TickableInputComponent<VolumeAmplitudeStat
                 }
                 sourceDataLine.start();
 
-                BufferInterface<VolumeAmplitudeState> methodInputBuffer = new BoundedBuffer<>(1, "sound environment - input");
+                BufferInterface<VolumeAmplitudeState> methodInputBuffer = new SimpleBuffer<>(1, "sound environment - input");
                 methodInput = methodInputBuffer.createOutputPort();
 
-                BoundedBuffer<Double> amplitudeBuffer = new BoundedBuffer<>(1, "sound environment - signal");
+                SimpleBuffer<Double> amplitudeBuffer = new SimpleBuffer<>(1, "sound environment - signal");
                 new VolumeAmplitudeStateToSignal(methodInputBuffer, amplitudeBuffer);
                 sampleAmplitudeInput = new InputPort<>(amplitudeBuffer);
             }

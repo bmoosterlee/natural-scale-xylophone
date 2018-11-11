@@ -16,7 +16,7 @@ import mixer.state.VolumeState;
 import java.util.*;
 
 public class SpectrumBuilder extends TickablePipeComponent {
-    public SpectrumBuilder(BufferInterface<Pulse> frameTickBuffer, BufferInterface<VolumeAmplitudeState> inputBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
+    public SpectrumBuilder(BufferInterface<Pulse> frameTickBuffer, BufferInterface<VolumeAmplitudeState> inputBuffer, SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
         super(frameTickBuffer, outputBuffer, build(inputBuffer, spectrumWindow, width));
     }
 
@@ -32,7 +32,7 @@ public class SpectrumBuilder extends TickablePipeComponent {
             {
                 this.spectrumWindow = spectrumWindow1;
 
-                BufferInterface<Pulse> relayFrameTickBuffer = new BoundedBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
+                BufferInterface<Pulse> relayFrameTickBuffer = new SimpleBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
                 methodInput = relayFrameTickBuffer.createOutputPort();
                 BufferInterface<Pulse>[] tickBroadcast = relayFrameTickBuffer.broadcast(2).toArray(new BufferInterface[0]);
                 BufferInterface<Pulse> frameTickBuffer1 = tickBroadcast[0];
@@ -53,7 +53,7 @@ public class SpectrumBuilder extends TickablePipeComponent {
 
                 Map<Integer, BufferInterface<AtomicBucket>> harmonicsMap = new HashMap<>();
                 for (Integer i = 0; i < width; i++) {
-                    harmonicsMap.put(i, new BoundedBuffer<>(1000, "harmonics bucket"));
+                    harmonicsMap.put(i, new SimpleBuffer<>(1000, "harmonics bucket"));
                 }
 
                 harmonicsOutput = new HashMap<>();

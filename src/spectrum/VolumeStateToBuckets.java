@@ -18,7 +18,7 @@ public class VolumeStateToBuckets extends Tickable {
     private final InputPort<VolumeState> volumeStateInput;
     private final OutputPort<Buckets> notesBucketsOutput;
 
-    public VolumeStateToBuckets(BufferInterface<VolumeState> volumeStateBuffer, BoundedBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
+    public VolumeStateToBuckets(BufferInterface<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
         bucketBuilder = toBuckets(spectrumWindow);
 
         volumeStateInput = new InputPort<>(volumeStateBuffer);

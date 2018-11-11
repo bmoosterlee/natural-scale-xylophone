@@ -6,15 +6,15 @@ import java.util.List;
 
 public class BufferChainLink<T> implements BufferInterface<T>{
 
-    private final BoundedBuffer<T> buffer;
+    private final SimpleBuffer<T> buffer;
     final TickablePipeComponentChain<? extends Object, T> previousComponent;
 
-    public BufferChainLink(BoundedBuffer<T> buffer, TickablePipeComponentChain<? extends Object, T> previousComponent) {
+    public BufferChainLink(SimpleBuffer<T> buffer, TickablePipeComponentChain<? extends Object, T> previousComponent) {
         this.buffer = buffer;
         this.previousComponent = previousComponent;
     }
 
-    public BoundedBuffer<T> breakChain(){
+    public SimpleBuffer<T> breakChain(){
         try {
             new Thread(previousComponent::tick).start();
         }
@@ -68,16 +68,16 @@ public class BufferChainLink<T> implements BufferInterface<T>{
         return breakChain().broadcast(size);
     }
 
-    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
         return pairWith(other.breakChain());
     }
 
     @Override
-    public BufferInterface<T> relayTo(BoundedBuffer<T> outputBuffer) {
+    public BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer) {
         return null;
     }
 
-    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
         return breakChain().pairWith(other);
     }
 

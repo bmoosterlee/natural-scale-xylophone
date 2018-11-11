@@ -4,15 +4,15 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 
-public class BoundedBuffer<T> implements BufferInterface<T> {
+public class SimpleBuffer<T> implements BufferInterface<T> {
 
     private final BoundedStrategy<T> boundedStrategy;
 
-    public BoundedBuffer(int capacity, String name){
+    public SimpleBuffer(int capacity, String name){
         this(capacity, new BoundedStrategy<>(capacity, name));
     }
 
-    public BoundedBuffer(int capacity, BoundedStrategy<T> strategy){
+    public SimpleBuffer(int capacity, BoundedStrategy<T> strategy){
         boundedStrategy = strategy;
 
         try {
@@ -74,17 +74,17 @@ public class BoundedBuffer<T> implements BufferInterface<T> {
     }
 
     @Override
-    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other){
         return performMethod(Pairer.build(other)).breakChain();
     }
 
     @Override
-    public <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
         return performMethod(Pairer.build(other.breakChain())).breakChain();
     }
 
     @Override
-    public BufferInterface<T> relayTo(BoundedBuffer<T> outputBuffer) {
+    public BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer) {
         new TickablePipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }

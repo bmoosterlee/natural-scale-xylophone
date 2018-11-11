@@ -25,9 +25,9 @@ public interface BufferInterface<T> {
 
     Collection<BufferInterface<T>> broadcast(int size);
 
-    <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other);
+    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferInterface<V> other);
 
-    <V> BoundedBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
+    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
 
-    BufferInterface<T> relayTo(BoundedBuffer<T> outputBuffer);
+    BufferInterface<T> relayTo(SimpleBuffer<T> outputBuffer);
 }

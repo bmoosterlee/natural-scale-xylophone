@@ -4,7 +4,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<K, V>> {
 
-    public Pairer(BufferInterface<K> inputBuffer1, BufferInterface<V> inputBuffer2, BoundedBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
+    public Pairer(BufferInterface<K> inputBuffer1, BufferInterface<V> inputBuffer2, SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
         super(inputBuffer1, outputBuffer, build(inputBuffer2));
 
     }

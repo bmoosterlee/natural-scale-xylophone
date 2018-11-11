@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
 
-    public GUI(BufferInterface<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, BoundedBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+    public GUI(BufferInterface<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
         super(inputBuffer, outputBuffer, build(spectrumWindow, width, inaudibleFrequencyMargin));
     }
 
@@ -91,17 +91,17 @@ public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buc
             {
                 int capacity = 100;
 
-                BufferInterface<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new BoundedBuffer<>(capacity, "gui - method input");
+                BufferInterface<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new SimpleBuffer<>(capacity, "gui - method input");
                 methodInputPort = methodInputBuffer.createOutputPort();
 
                 LinkedList<BufferInterface<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
                     new LinkedList<>(methodInputBuffer.broadcast(2));
 
-                BoundedBuffer<Buckets> noteSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - note spectrum");
-                BoundedBuffer<Buckets> harmonicSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - harmonic spectrum");
+                SimpleBuffer<Buckets> noteSpectrumBuffer = new SimpleBuffer<>(capacity, "gui - note spectrum");
+                SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(capacity, "gui - harmonic spectrum");
                 new Unpairer<>(spectrumBroadcast.poll(), noteSpectrumBuffer, harmonicSpectrumBuffer);
 
-                BufferInterface<Integer> cursorXBuffer = new BoundedBuffer<>(capacity, "cursorX - output");
+                BufferInterface<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
                 InputPort<Map<Integer, Integer>> newNotesPort =
                     noteSpectrumBuffer
                     .performMethod(GUI::bucketsToVolumes)

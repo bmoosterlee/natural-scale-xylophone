@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 
 public class Ticker extends TickableOutputComponent<Pulse> {
 
-    public Ticker(BoundedBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
+    public Ticker(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
         super(outputBuffer, build(frameTime));
     }
 
