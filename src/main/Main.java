@@ -19,8 +19,6 @@ import time.TimeInSeconds;
 
 import java.awt.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Arrays;
-import java.util.HashSet;
 
 /*
 The main components are:
@@ -72,36 +70,53 @@ class Main {
 
         int capacity = 10;
 
-        BoundedBuffer<Long> sampleCountBuffer = new BoundedBuffer<>(sampleLookahead, "sample ticker");
-        new Ticker(sampleCountBuffer, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate));
+        BoundedBuffer<Long> sampleCountBuffer =
+            TickableOutputComponent.buildOutputBuffer(
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
+                sampleLookahead,
+                "sample ticker - output")
+                .performMethod(Counter.build());
         BoundedBuffer<Frequency> newNoteBuffer = new BoundedBuffer<>(64, "new notes");
-        BoundedBuffer<VolumeAmplitudeState> volumeBuffer = new BoundedBuffer<>(capacity, "sound environment - volume state");
-        new Mixer(sampleCountBuffer, newNoteBuffer, volumeBuffer, sampleRate);
+        BoundedBuffer<VolumeAmplitudeState> volumeBuffer =
+            sampleCountBuffer
+            .performMethod(Mixer.build(newNoteBuffer, sampleRate));
 
-        BoundedBuffer<VolumeAmplitudeState> soundVolumeBuffer = new BoundedBuffer<>(capacity, "volume state to signal");
-        BoundedBuffer<VolumeAmplitudeState> spectrumVolumeBuffer = new OverwritableBuffer<>(1, "sound - volume amplitude state out");
-        new Broadcast<>(volumeBuffer, new HashSet<>(Arrays.asList(soundVolumeBuffer, spectrumVolumeBuffer)));
+        BoundedBuffer<VolumeAmplitudeState>[] broadcast = volumeBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
+            broadcast[0]
+            .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        new SoundEnvironment(soundVolumeBuffer, SAMPLE_SIZE_IN_BITS, sampleRate);
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer =
+                TickableOutputComponent.buildOutputBuffer(
+            Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
+            .performMethod(
+                SpectrumBuilder.build(
+                    broadcast[1]
+                    .relayTo(new OverwritableBuffer<>(1, "sound - volume amplitude state out")),
+                    spectrumWindow,
+                    width));
 
-        BoundedBuffer<Pulse> frameTickBuffer = initializePulseTicker(frameRate, frameLookahead, "GUI ticker");
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer = new BoundedBuffer<>(capacity, "spectrum buffer");
-        new SpectrumBuilder(frameTickBuffer, spectrumVolumeBuffer, spectrumBuffer, width, spectrumWindow);
+        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>[] spectrumBroadcast = spectrumBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
 
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> guiSpectrumBuffer = new BoundedBuffer<>(capacity, "gui - notes buckets");
-        BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> pianolaSpectrumBuffer = new OverwritableBuffer<>(capacity);
-        new Broadcast<>(spectrumBuffer, new HashSet<>(Arrays.asList(guiSpectrumBuffer, pianolaSpectrumBuffer)));
+        spectrumBroadcast[0]
+        .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin))
+        .relayTo(newNoteBuffer);
 
-        new GUI(guiSpectrumBuffer, newNoteBuffer, spectrumWindow, width, inaudibleFrequencyMargin);
-
-        BoundedBuffer<Pulse> pianolaTicker = initializePulseTicker(pianolaRate, pianolaLookahead, "Pianola ticker");
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
-        new Pianola(pianolaTicker, pianolaSpectrumBuffer, newNoteBuffer, pianolaPattern, inaudibleFrequencyMargin);
-        //todo create a complimentary pianola pattern which, at a certain rate, checks what notes are being played,
-        //todo and plays harmonically complimentary notes near the notes being played. Use a higher frame rate preferably
+
+        TickableOutputComponent.buildOutputBuffer(
+            Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
+            pianolaLookahead,
+            "Pianola ticker")
+        .performMethod(
+            Pianola.build(
+                spectrumBroadcast[1]
+                .relayTo(new OverwritableBuffer<>(capacity)),
+                pianolaPattern,
+                inaudibleFrequencyMargin))
+        .relayTo(newNoteBuffer);
 
         playTestTone(newNoteBuffer, spectrumWindow);
     }
@@ -117,14 +132,6 @@ class Main {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private static BoundedBuffer<Pulse> initializePulseTicker(int frameRate, int frameLookahead, String name) {
-        BoundedBuffer<Pulse> outputBuffer = new BoundedBuffer<>(frameLookahead, name);
-        BoundedBuffer<Long> tickBuffer = new BoundedBuffer<>(frameLookahead, name);
-        new Ticker(tickBuffer, new TimeInSeconds(1).toNanoSeconds().divide(frameRate));
-        new TickablePipeComponent<>(tickBuffer, outputBuffer, input -> new Pulse());
-        return outputBuffer;
     }
 
 }
