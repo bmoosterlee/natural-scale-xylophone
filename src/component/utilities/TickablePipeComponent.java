@@ -4,30 +4,27 @@ import component.buffer.*;
 
 import java.util.AbstractMap;
 
-public class TickablePipeComponent<K, V> extends Tickable {
+public class TickablePipeComponent<K, V> extends PipeComponent<K, V> {
 
-    protected final InputPort<K> input;
-    protected final OutputPort<V> output;
-    private final CallableWithArguments<K, V> method;
+    private final MyTickable tickable = new MyTickable();
 
     public TickablePipeComponent(BoundedBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
-        this.method = method;
-
-        input = new InputPort<>(inputBuffer);
-        output = new OutputPort<>(outputBuffer);
+        super(inputBuffer, outputBuffer, method);
 
         start();
     }
 
-    @Override
-    protected void tick() {
-        try {
-            K consumed = input.consume();
-            V result = method.call(consumed);
-            output.produce(result);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private class MyTickable extends Tickable {
+
+        @Override
+        protected void tick() {
+            TickablePipeComponent.this.tick();
         }
+
+    }
+
+    protected void start() {
+        tickable.start();
     }
 
     public static <K, V> AbstractMap.SimpleImmutableEntry<BoundedBuffer<K>, BoundedBuffer<V>> methodToComponentBuffers(CallableWithArguments<K, V> method, int capacity, String name){
@@ -45,5 +42,4 @@ public class TickablePipeComponent<K, V> extends Tickable {
         InputPort<V> inputPort = new InputPort<>(outputBuffer);
         return new AbstractMap.SimpleImmutableEntry<>(outputPort, inputPort);
     }
-
 }

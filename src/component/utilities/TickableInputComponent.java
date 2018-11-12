@@ -4,27 +4,25 @@ import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArgument;
 import component.buffer.InputPort;
 
-public class TickableInputComponent<K> extends Tickable {
+public class TickableInputComponent<K> extends InputComponent<K> {
 
-    protected final InputPort<K> input;
-    private final CallableWithArgument<K> method;
+    private final MyTickable tickable = new MyTickable();
 
     public TickableInputComponent(BoundedBuffer<K> inputBuffer, CallableWithArgument<K> method){
-        this.method = method;
-
-        input = new InputPort<>(inputBuffer);
+        super(inputBuffer, method);
 
         start();
     }
 
-    @Override
-    protected void tick() {
-        try {
-            K consumed = input.consume();
-            method.call(consumed);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private class MyTickable extends Tickable {
+        @Override
+        protected void tick() {
+            TickableInputComponent.this.tick();
         }
+    }
+
+    protected void start() {
+        tickable.start();
     }
 
 }

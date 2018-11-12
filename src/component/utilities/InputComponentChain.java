@@ -3,11 +3,11 @@ package component.utilities;
 import component.buffer.BufferChainLink;
 import component.buffer.CallableWithArgument;
 
-public class TickableInputComponentChain<K> extends TickableInputComponent {
+public class InputComponentChain<K> extends InputComponent<K> {
 
-    private final TickablePipeComponentChain previousComponent;
+    private final PipeComponentChain previousComponent;
 
-    public TickableInputComponentChain(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method){
+    public InputComponentChain(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method){
         super(inputBuffer, method);
         previousComponent = inputBuffer.previousComponent;
     }
@@ -19,6 +19,7 @@ public class TickableInputComponentChain<K> extends TickableInputComponent {
         }
         catch(NullPointerException ignored){
         }
+        super.tick();
     }
 
 }
