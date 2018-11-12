@@ -72,7 +72,7 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                 preparedHarmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
             }
 
-            private Frequency playNotes(Pulse input) {
+            private Frequency playNotes() {
                 try {
                     Buckets origNoteBuckets;
                     try {
@@ -100,7 +100,7 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
 
             @Override
             public Frequency call(Pulse input) {
-                return playNotes(input);
+                return playNotes();
             }
         };
     }
