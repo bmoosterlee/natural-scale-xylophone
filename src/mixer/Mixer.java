@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
-public class Mixer extends RunningPipeComponent {
+public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
     public Mixer(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         super(sampleCountBuffer, outputBuffer, build(noteInputBuffer, sampleRate));
