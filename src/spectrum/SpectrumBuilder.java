@@ -34,24 +34,21 @@ public class SpectrumBuilder extends RunningPipeComponent {
             {
                 this.spectrumWindow = spectrumWindow1;
 
-                BoundedBuffer<Pulse> relayFrameTickBuffer = new SimpleBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
-                methodInput = relayFrameTickBuffer.createOutputPort();
-                BoundedBuffer<Pulse>[] tickBroadcast = relayFrameTickBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Pulse> frameTickBuffer1 = tickBroadcast[0];
-                BoundedBuffer<Pulse> frameTickBuffer2 = tickBroadcast[1];
+                BoundedBuffer<Pulse> methodInputBuffer = new SimpleBuffer<>(1000, "SpecturmBuilder - relayFrameTick");
+                methodInput = methodInputBuffer.createOutputPort();
 
-                BoundedBuffer<VolumeState>[] volumeBroadcast =
-                        frameTickBuffer1
-                                .performMethod(TimedConsumer.consumeFrom(inputBuffer))
-                                .performMethod(VolumeAmplitudeToVolumeFilter::filter)
-                                .broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
-                BoundedBuffer<VolumeState> volumeStateBuffer3 = volumeBroadcast[1];
+                LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(methodInputBuffer.broadcast(2));
+                LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
+                    new LinkedList<>(
+                        tickBroadcast.poll()
+                        .performMethod(TimedConsumer.consumeFrom(inputBuffer))
+                        .performMethod(VolumeAmplitudeToVolumeFilter::filter)
+                        .broadcast(2));
 
                 harmonicsInput =
-                        volumeStateBuffer3
-                                .performMethod(HarmonicCalculator.calculateHarmonics(100))
-                                .createInputPort();
+                    volumeBroadcast.poll()
+                    .performMethod(HarmonicCalculator.calculateHarmonics(100))
+                    .createInputPort();
 
                 Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
                 for (Integer i = 0; i < width; i++) {
@@ -63,13 +60,14 @@ public class SpectrumBuilder extends RunningPipeComponent {
                     harmonicsOutput.put(index, new OutputPort<>(harmonicsMap.get(index)));
                 }
 
-                methodOutput = volumeStateBuffer2
-                        .performMethod(VolumeStateToBuckets.build(spectrumWindow))
-                        .pairWith(
-                                frameTickBuffer2
-                                    .performMethod(BuffersToBuckets.build(harmonicsMap))
-                                    .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(200)))
-                        .createInputPort();
+                methodOutput =
+                    volumeBroadcast.poll()
+                    .performMethod(VolumeStateToBuckets.build(spectrumWindow))
+                    .pairWith(
+                        tickBroadcast.poll()
+                        .performMethod(BuffersToBuckets.build(harmonicsMap))
+                        .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(200)))
+                    .createInputPort();
             }
 
             private AbstractMap.SimpleImmutableEntry<Buckets, Buckets> buildSpectrum(Pulse input) {
