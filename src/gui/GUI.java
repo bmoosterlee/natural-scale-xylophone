@@ -94,7 +94,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             {
                 int capacity = 100;
 
-                BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new SimpleBuffer<>(capacity, "gui - method input");
+                SimpleBuffer<SimpleImmutableEntry<Buckets, Buckets>> methodInputBuffer = new SimpleBuffer<>(capacity, "gui - method input");
                 methodInputPort = methodInputBuffer.createOutputPort();
 
                 LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
@@ -104,7 +104,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(capacity, "gui - harmonic spectrum");
                 new Unpairer<>(spectrumBroadcast.poll(), noteSpectrumBuffer, harmonicSpectrumBuffer);
 
-                BoundedBuffer<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
+                SimpleBuffer<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
                 InputPort<Map<Integer, Integer>> newNotesPort =
                     noteSpectrumBuffer
                     .performMethod(GUI::bucketsToVolumes)
