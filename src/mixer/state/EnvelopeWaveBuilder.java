@@ -1,6 +1,7 @@
 package mixer.state;
 
 import component.buffer.*;
+import component.utilities.RunningPipeComponent;
 import component.utilities.TickRunner;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
@@ -12,30 +13,10 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeWaveBuilder extends TickRunner {
-    private CallableWithArguments<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> builder;
-
-    private final InputPort<TimestampedFrequencies> input;
-    private final OutputPort<TimestampedNewNotesWithEnvelope> output;
+public class EnvelopeWaveBuilder extends RunningPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
 
     public EnvelopeWaveBuilder(BoundedBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
-        builder = buildEnvelopeWave(sampleRate);
-
-        input = new InputPort<>(inputBuffer);
-        output = new OutputPort<>(outputBuffer);
-
-        start();
-    }
-
-    protected void tick() {
-        try {
-            TimestampedFrequencies timestampedNewNotes = input.consume();
-            TimestampedNewNotesWithEnvelope result = builder.call(timestampedNewNotes);
-            output.produce(result);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        super(inputBuffer, outputBuffer, buildEnvelopeWave(sampleRate));
     }
 
     public static CallableWithArguments<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelopeWave(SampleRate sampleRate1){
