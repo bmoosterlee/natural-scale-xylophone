@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface BoundedBuffer<T> {
+    String getName();
+
     List<T> flush() throws InterruptedException;
 
     void offer(T packet) throws InterruptedException;

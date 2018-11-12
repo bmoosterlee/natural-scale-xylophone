@@ -27,6 +27,11 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public String getName() {
+        return buffer.getName();
+    }
+
+    @Override
     public List<T> flush() throws InterruptedException {
         return buffer.flush();
     }

@@ -26,6 +26,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public String getName() {
+        return boundedStrategy.getName();
+    }
+
+    @Override
     public List<T> flush() throws InterruptedException {
         return boundedStrategy.flush();
     }

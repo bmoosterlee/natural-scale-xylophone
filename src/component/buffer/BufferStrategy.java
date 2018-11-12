@@ -12,4 +12,6 @@ public interface BufferStrategy<T> {
     boolean isEmpty();
 
     boolean isFull();
+
+    String getName();
 }

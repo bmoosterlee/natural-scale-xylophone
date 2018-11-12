@@ -66,6 +66,11 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         return emptySpots.availablePermits() == 0;
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
     ConcurrentLinkedQueue<T> getBuffer() {
         return buffer;
     }
