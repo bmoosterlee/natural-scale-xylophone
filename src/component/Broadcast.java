@@ -10,10 +10,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-public class Broadcast<T> extends TickRunner {
+public class Broadcast<T> {
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
+    private final MyTickRunner tickRunner = new MyTickRunner();
 
     public Broadcast(BoundedBuffer<T> inputBuffer, Collection<BoundedBuffer<T>> outputBuffers) {
         input = new InputPort<>(inputBuffer);
@@ -23,22 +24,24 @@ public class Broadcast<T> extends TickRunner {
             outputs.add(new OutputPort<>(buffer));
         }
 
-        start();
+        tickRunner.start();
     }
 
-    @Override
-    protected void tick() {
-        try {
-            T item = input.consume();
-            broadcast(item);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private class MyTickRunner extends TickRunner {
+        @Override
+        protected void tick() {
+            Broadcast.this.tick();
         }
     }
 
-    private void broadcast(T item) throws InterruptedException {
-        for(OutputPort<T> output : outputs){
-            output.produce(item);
+    private void tick() {
+        try {
+            T item = input.consume();
+            for(OutputPort<T> output : outputs){
+                output.produce(item);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -50,5 +53,4 @@ public class Broadcast<T> extends TickRunner {
         new Broadcast<>(inputBuffer, results);
         return results;
     }
-
 }
