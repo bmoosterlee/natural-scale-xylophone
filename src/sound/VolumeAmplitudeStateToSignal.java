@@ -1,10 +1,8 @@
 package sound;
 
-import component.buffer.BoundedBuffer;
+import component.buffer.*;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
-import component.buffer.SimpleBuffer;
-import component.buffer.InputPort;
-import component.buffer.OutputPort;
 import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
 import time.PerformanceTracker;
@@ -13,50 +11,17 @@ import time.TimeKeeper;
 import java.util.Map;
 import java.util.Set;
 
-public class VolumeAmplitudeStateToSignal implements Runnable{
-
-    private final InputPort<VolumeAmplitudeState> volumeAmplitudeStateInput;
-    private final OutputPort<Double> amplitudeOutput;
+public class VolumeAmplitudeStateToSignal extends RunningPipeComponent<VolumeAmplitudeState, Double> {
 
     public VolumeAmplitudeStateToSignal(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
-
-        volumeAmplitudeStateInput = new InputPort<>(volumeAmplitudeStateInputBuffer);
-        amplitudeOutput = new OutputPort<>(amplitudeOutputBuffer);
-
-        start();
+        super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, input -> calculateAmplitude(input.volumeAmplitudes));
     }
 
-    private void start() {
-        new Thread(this).start();
-    }
 
-    @Override
-    public void run() {
-        while(true){
-            tick();
-        }
-    }
-
-    private void tick() {
-        try {
-            VolumeAmplitudeState volumeAmplitudeState = volumeAmplitudeStateInput.consume();
-
-            TimeKeeper timeKeeper = PerformanceTracker.startTracking("Tick calculateAmplitudes");
-            double amplitude = calculateAmplitude(volumeAmplitudeState.volumeAmplitudes.keySet(),
-                                                  volumeAmplitudeState.volumeAmplitudes);
-            PerformanceTracker.stopTracking(timeKeeper);
-
-            amplitudeOutput.produce(amplitude);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private double calculateAmplitude(Set<Frequency> liveFrequencies, Map<Frequency, VolumeAmplitude> volumeAmplitudeMap) {
+    public static double calculateAmplitude(Map<Frequency, VolumeAmplitude> volumeAmplitudeMap) {
         double amplitudeSum = 0;
 
-        for (Frequency frequency : liveFrequencies) {
+        for (Frequency frequency : volumeAmplitudeMap.keySet()) {
             VolumeAmplitude volumeAmplitude = volumeAmplitudeMap.get(frequency);
 
             amplitudeSum += volumeAmplitude.getValue();
