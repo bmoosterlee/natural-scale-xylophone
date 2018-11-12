@@ -2,35 +2,17 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
+import component.utilities.RunningPipeComponent;
 import component.utilities.TickRunner;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import java.util.*;
 
-public class BucketsAverager extends TickRunner {
-    private final CallableWithArguments<Buckets, Buckets> averager;
-
-    private final InputPort<Buckets> inputPort;
-    private final OutputPort<Buckets> outputPort;
+public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
 
     public BucketsAverager(int averagingWidth, BoundedBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer) {
-        averager = average(averagingWidth);
-
-        inputPort = new InputPort<>(inputBuffer);
-        outputPort = outputBuffer.createOutputPort();
-
-        start();
-    }
-
-    protected void tick(){
-        try {
-            Buckets newBuckets = inputPort.consume();
-            Buckets result = averager.call(newBuckets);
-            outputPort.produce(result);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        super(inputBuffer, outputBuffer, average(averagingWidth));
     }
 
     public static CallableWithArguments<Buckets, Buckets> average(int averagingWidth){
