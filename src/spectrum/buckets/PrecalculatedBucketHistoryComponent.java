@@ -5,6 +5,7 @@ import component.buffer.*;
 import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
+import java.util.LinkedList;
 
 public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Buckets, Buckets> {
 
@@ -25,12 +26,11 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 SimpleBuffer<Buckets> inputBuffer = new SimpleBuffer<>(capacity, "buckets history - input");
                 methodInput = inputBuffer.createOutputPort();
 
-                BoundedBuffer<Buckets>[] preparedBucketsBroadcast =
-                    inputBuffer
-                    .performMethod(input1 -> input1.multiply(multiplier))
-                    .broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Buckets> preparedBucketsBuffer1 = preparedBucketsBroadcast[0];
-                BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast[1];
+                LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast =
+                    new LinkedList<>(
+                        inputBuffer
+                        .performMethod(input1 -> input1.multiply(multiplier))
+                        .broadcast(2));
 
                 SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
 
@@ -79,21 +79,20 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 };
 
                 SimpleBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
-                BoundedBuffer<Buckets>[] outputTimeAverageBroadcast = outputTimeAverageBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
-                BoundedBuffer<Buckets> outputBuffer = outputTimeAverageBroadcast[0];
-                BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast[1];
+                LinkedList<BoundedBuffer<Buckets>> outputTimeAverageBroadcast = new LinkedList<>(outputTimeAverageBuffer.broadcast(2));
+                BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast.poll();
 
 
                 new Unpairer<>(
                 historyBuffer
-                .pairWith(preparedBucketsBuffer1)
+                .pairWith(preparedBucketsBroadcast.poll())
                 .performMethod(
                     input1 ->
                     input1.getKey()
                     .add(input1.getValue()))
                 .pairWith(
                     timeAverageBuffer
-                    .pairWith(preparedBucketsBuffer2)
+                    .pairWith(preparedBucketsBroadcast.poll())
                     .performMethod(
                         input1 ->
                         input1.getKey()
@@ -109,7 +108,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                     e.printStackTrace();
                 }
 
-                methodOutput = outputBuffer.createInputPort();
+                methodOutput = outputTimeAverageBroadcast.poll().createInputPort();
             }
 
             private Buckets recordHistory(Buckets input) {
