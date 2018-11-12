@@ -9,6 +9,7 @@ import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 public class PrecalculatedBucketHistory implements BucketHistory {
     private final int size;
@@ -40,9 +41,9 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> addNewBucketsMultiplier = RunningPipeComponent.methodToComponentBuffers(input -> input.multiply(multiplier), capacity, "buckets history - multiply");
         multiplierOutputPort = new OutputPort<>(addNewBucketsMultiplier.getKey());
 
-        BoundedBuffer<Buckets> preparedBucketsBuffer1 = new SimpleBuffer<>(capacity, "history - preparedBuckets 1");
-        BoundedBuffer<Buckets> preparedBucketsBuffer2 = new SimpleBuffer<>(capacity, "history - preparedBuckets 2");
-        new Broadcast<>(addNewBucketsMultiplier.getValue(), Arrays.asList(preparedBucketsBuffer1, preparedBucketsBuffer2));
+        LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast = new LinkedList<>(addNewBucketsMultiplier.getValue().broadcast(2));
+        BoundedBuffer<Buckets> preparedBucketsBuffer1 = preparedBucketsBroadcast.poll();
+        BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast.poll();
 
         SimpleBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new SimpleBuffer<>(capacity, "history - input");
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = historyInputBuffer.pairWith(preparedBucketsBuffer1);
