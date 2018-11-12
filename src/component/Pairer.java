@@ -1,43 +1,48 @@
 package component;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.InputPort;
-import component.buffer.SimpleBuffer;
+import component.buffer.*;
 import component.utilities.RunningPipeComponent;
+import component.utilities.TickRunner;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Collection;
 
-public class Pairer<K, V> extends RunningPipeComponent<K, SimpleImmutableEntry<K, V>> {
+public class Pairer<K, V> {
+
+    private final InputPort<K> inputPort1;
+    private final InputPort<V> inputPort2;
+    private final OutputPort<SimpleImmutableEntry<K, V>> outputPort;
+    private final TickRunner tickRunner = new MyTickRunner();
 
     public Pairer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
-        super(inputBuffer1, outputBuffer, build(inputBuffer2));
+        inputPort1 = inputBuffer1.createInputPort();
+        inputPort2 = inputBuffer2.createInputPort();
+        outputPort = outputBuffer.createOutputPort();
 
+        tickRunner.start();
     }
 
-    public static <K, V> CallableWithArguments<K, SimpleImmutableEntry<K, V>> build(BoundedBuffer<V> inputBuffer2){
-        return new CallableWithArguments<>() {
-            private final InputPort<V> inputPort2;
+    private class MyTickRunner extends TickRunner {
+        @Override
+        protected void tick() {
+            Pairer.this.tick();
+        }
+    }
 
-            {
-                inputPort2 = inputBuffer2.createInputPort();
-            }
+    private void tick() {
+        try {
+            K consumed1 = inputPort1.consume();
+            V consumed2 = inputPort2.consume();
+            outputPort.produce(new SimpleImmutableEntry<>(consumed1, consumed2));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-            private SimpleImmutableEntry<K, V> pair(K consumed1) {
-                try {
-                    V consumed2 = inputPort2.consume();
-                    return new SimpleImmutableEntry<>(consumed1, consumed2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public SimpleImmutableEntry<K, V> call(K input) {
-                return pair(input);
-            }
-        };
+    public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>> pair(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2){
+        SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer = new SimpleBuffer<>(1, "pair");
+        new Pairer<>(inputBuffer1, inputBuffer2, outputBuffer);
+        return outputBuffer;
     }
 
 }
