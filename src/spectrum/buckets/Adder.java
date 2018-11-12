@@ -16,7 +16,7 @@ public class Adder implements Runnable {
     public Adder(Set<BoundedBuffer<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
         inputs = new HashSet<>();
         for(BoundedBuffer<Buckets> inputBuffer : inputBuffers){
-            inputs.add(new InputPort<>(inputBuffer));
+            inputs.add(inputBuffer.createInputPort());
         }
 
         output = new OutputPort<>(outputBuffer);

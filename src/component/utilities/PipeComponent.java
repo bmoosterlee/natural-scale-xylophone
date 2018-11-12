@@ -11,7 +11,7 @@ public class PipeComponent<K, V> {
     protected final CallableWithArguments<K, V> method;
 
     public PipeComponent(BoundedBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
-        input = new InputPort<>(inputBuffer);
+        input = inputBuffer.createInputPort();
         output = new OutputPort<>(outputBuffer);
         this.method = method;
     }

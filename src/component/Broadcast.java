@@ -17,7 +17,7 @@ public class Broadcast<T> {
     private final MyTickRunner tickRunner = new MyTickRunner();
 
     public Broadcast(BoundedBuffer<T> inputBuffer, Collection<BoundedBuffer<T>> outputBuffers) {
-        input = new InputPort<>(inputBuffer);
+        input = inputBuffer.createInputPort();
 
         outputs = new HashSet<>();
         for(BoundedBuffer<T> buffer : outputBuffers){

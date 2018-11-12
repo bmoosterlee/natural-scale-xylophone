@@ -51,7 +51,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         new RunningPipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
 
         historyOutputPort = new OutputPort<>(historyInputBuffer);
-        newHistoryInputPort = new InputPort<>(newHistoryBuffer);
+        newHistoryInputPort = newHistoryBuffer.createInputPort();
 
         SimpleBuffer<Buckets> timeAverageBuffer = new SimpleBuffer<>(capacity, "history - time average input");
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = timeAverageBuffer.pairWith(preparedBucketsBuffer2);
@@ -59,7 +59,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         new RunningPipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
 
         timeAverageOutputPort = new OutputPort<>(timeAverageBuffer);
-        newtimeAverageInputPort = new InputPort<>(newTimeAverageBuffer);
+        newtimeAverageInputPort = newTimeAverageBuffer.createInputPort();
 
         SimpleBuffer<Buckets> conditionalInputBuffer1 = new SimpleBuffer<>(capacity, "history - conditional input 1");
         SimpleBuffer<Buckets> conditionalInputBuffer2 = new SimpleBuffer<>(capacity, "history - conditional input 2");
@@ -69,7 +69,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
 
         conditionalOutputPort1 = new OutputPort<>(conditionalInputBuffer1);
         conditionalOutputPort2 = new OutputPort<>(conditionalInputBuffer2);
-        conditionalInputPort = new InputPort<>(conditionalOutputBuffer);
+        conditionalInputPort = conditionalOutputBuffer.createInputPort();
     }
 
     @Override

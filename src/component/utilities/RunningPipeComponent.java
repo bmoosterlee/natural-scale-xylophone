@@ -39,7 +39,7 @@ public class RunningPipeComponent<K, V> extends PipeComponent<K, V> {
         BoundedBuffer<K> inputBuffer = buffers.getKey();
         BoundedBuffer<V> outputBuffer = buffers.getValue();
         OutputPort<K> outputPort = new OutputPort<>(inputBuffer);
-        InputPort<V> inputPort = new InputPort<>(outputBuffer);
+        InputPort<V> inputPort = outputBuffer.createInputPort();
         return new AbstractMap.SimpleImmutableEntry<>(outputPort, inputPort);
     }
 }

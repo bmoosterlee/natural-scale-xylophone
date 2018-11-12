@@ -67,9 +67,9 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                 BoundedBuffer<Frequency> methodOutput = toBuffer(patternOutput);
                 methodOutputPort = methodOutput.createInputPort();
 
-                notesInput = new InputPort<>(noteSpectrumBuffer);
-                preparedNotesInput = new InputPort<>(notesAveragerOutputBuffer);
-                preparedHarmonicsInput = new InputPort<>(harmonicsAveragerBuffer);
+                notesInput = noteSpectrumBuffer.createInputPort();
+                preparedNotesInput = notesAveragerOutputBuffer.createInputPort();
+                preparedHarmonicsInput = harmonicsAveragerBuffer.createInputPort();
             }
 
             private Frequency playNotes() {

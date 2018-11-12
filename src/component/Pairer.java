@@ -20,7 +20,7 @@ public class Pairer<K, V> extends RunningPipeComponent<K, SimpleImmutableEntry<K
             private final InputPort<V> inputPort2;
 
             {
-                inputPort2 = new InputPort<>(inputBuffer2);
+                inputPort2 = inputBuffer2.createInputPort();
             }
 
             private SimpleImmutableEntry<K, V> pair(K consumed1) {

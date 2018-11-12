@@ -52,7 +52,7 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
 
                 SimpleBuffer<Double> amplitudeBuffer = new SimpleBuffer<>(1, "sound environment - signal");
                 new VolumeAmplitudeStateToSignal(methodInputBuffer, amplitudeBuffer);
-                sampleAmplitudeInput = new InputPort<>(amplitudeBuffer);
+                sampleAmplitudeInput = amplitudeBuffer.createInputPort();
             }
 
             private void playSound(VolumeAmplitudeState input) {

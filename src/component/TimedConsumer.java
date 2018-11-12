@@ -17,7 +17,7 @@ public class TimedConsumer<T> extends RunningPipeComponent<Pulse, T> {
             final InputPort<T> inputPort;
 
             {
-                inputPort = new InputPort<>(inputBuffer);
+                inputPort = inputBuffer.createInputPort();
             }
 
 
