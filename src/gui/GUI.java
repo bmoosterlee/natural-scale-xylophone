@@ -2,7 +2,7 @@ package gui;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickableOutputComponent;
+import component.utilities.RunningOutputComponent;
 import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
@@ -120,7 +120,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 guiPanel = new GUIPanel(newNotesPort, newHarmonicsPort, newCursorXPort);
 
                 methodOutputPort =
-                    TickableOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
+                    RunningOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
                     capacity,
                     "note clicker - output")
                     .createInputPort();

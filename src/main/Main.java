@@ -5,7 +5,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.OutputPort;
 import component.buffer.OverwritableStrategy;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickableOutputComponent;
+import component.utilities.RunningOutputComponent;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
@@ -77,7 +77,7 @@ class Main {
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
         LinkedList<BoundedBuffer<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
-                TickableOutputComponent.buildOutputBuffer(
+                RunningOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                     sampleLookahead,
                     "sample ticker - output")
@@ -90,7 +90,7 @@ class Main {
 
         LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
             new LinkedList<>(
-                TickableOutputComponent.buildOutputBuffer(
+                RunningOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
                 .performMethod(
                     SpectrumBuilder.build(
@@ -109,7 +109,7 @@ class Main {
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
 
-        TickableOutputComponent.buildOutputBuffer(
+        RunningOutputComponent.buildOutputBuffer(
             Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
             pianolaLookahead,
             "Pianola ticker")

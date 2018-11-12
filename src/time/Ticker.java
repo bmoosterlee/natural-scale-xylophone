@@ -2,11 +2,11 @@ package time;
 
 import component.*;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickableOutputComponent;
+import component.utilities.RunningOutputComponent;
 
 import java.util.concurrent.Callable;
 
-public class Ticker extends TickableOutputComponent<Pulse> {
+public class Ticker extends RunningOutputComponent<Pulse> {
 
     public Ticker(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
         super(outputBuffer, build(frameTime));

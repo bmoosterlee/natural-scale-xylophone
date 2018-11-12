@@ -4,7 +4,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickableOutputComponent;
+import component.utilities.RunningOutputComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 
@@ -13,7 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.concurrent.Callable;
 
-public class NoteClicker extends TickableOutputComponent<Frequency> {
+public class NoteClicker extends RunningOutputComponent<Frequency> {
 
     public NoteClicker(SimpleBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
         super(newNoteBuffer, build(spectrumWindow, guiPanel));
