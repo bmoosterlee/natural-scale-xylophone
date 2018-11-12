@@ -87,16 +87,12 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         return pairWith(other.breakChain());
     }
 
-    @Override
-    public BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
-        return null;
-    }
-
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return breakChain().pairWith(other);
     }
 
-    public void relayTo(BoundedBuffer<T> outputBuffer) {
-        new ChainedPipeComponent<>(this, outputBuffer, input -> input);
+    @Override
+    public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
+        return null;
     }
 }

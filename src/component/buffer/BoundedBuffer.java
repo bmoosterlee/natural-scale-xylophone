@@ -31,5 +31,5 @@ public interface BoundedBuffer<T> {
 
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
 
-    BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer);
+    SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer);
 }

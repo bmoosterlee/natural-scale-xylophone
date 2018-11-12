@@ -93,7 +93,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
+    public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
         new RunningPipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }
