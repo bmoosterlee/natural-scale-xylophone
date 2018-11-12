@@ -112,7 +112,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                     .createInputPort();
                 InputPort<Map<Integer, Integer>> newHarmonicsPort =
                     harmonicSpectrumBuffer
-                    .performMethod(BucketsAverager.average(inaudibleFrequencyMargin))
+                    .performMethod(BucketsAverager.build(inaudibleFrequencyMargin))
                     .performMethod(GUI::bucketsToVolumes)
                     .performMethod(input2 -> volumesToYs(input2, yScale, margin))
                     .createInputPort();
