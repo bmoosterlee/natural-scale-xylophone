@@ -2,7 +2,6 @@ package spectrum;
 
 import component.buffer.*;
 import component.utilities.RunningPipeComponent;
-import component.utilities.TickRunner;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;
@@ -17,10 +16,10 @@ import java.util.Set;
 public class VolumeStateToBuckets extends RunningPipeComponent<VolumeState, Buckets> {
 
     public VolumeStateToBuckets(BoundedBuffer<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
-        super(volumeStateBuffer, notesBucketsBuffer, toBuckets(spectrumWindow));
+        super(volumeStateBuffer, notesBucketsBuffer, build(spectrumWindow));
     }
 
-    public static CallableWithArguments<VolumeState, Buckets> toBuckets(SpectrumWindow spectrumWindow){
+    public static CallableWithArguments<VolumeState, Buckets> build(SpectrumWindow spectrumWindow){
         return new CallableWithArguments<>() {
             SpectrumWindow spectrumWindow1 = spectrumWindow;
 

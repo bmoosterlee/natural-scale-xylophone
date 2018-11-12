@@ -64,7 +64,7 @@ public class SpectrumBuilder extends RunningPipeComponent {
                 }
 
                 methodOutput = volumeStateBuffer2
-                        .performMethod(VolumeStateToBuckets.toBuckets(spectrumWindow))
+                        .performMethod(VolumeStateToBuckets.build(spectrumWindow))
                         .pairWith(
                                 frameTickBuffer2
                                     .performMethod(BuffersToBuckets.build(harmonicsMap))
