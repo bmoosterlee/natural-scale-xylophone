@@ -46,11 +46,11 @@ public class Broadcast<T> {
     }
 
     public static <T> Collection<SimpleBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
-        Collection<SimpleBuffer<T>> results = new LinkedList<>();
+        Collection<SimpleBuffer<T>> outputBuffers = new LinkedList<>();
         for(int i = 0; i<size; i++){
-            results.add(new SimpleBuffer<>(1, "broadcast"));
+            outputBuffers.add(new SimpleBuffer<>(1, "broadcast"));
         }
-        new Broadcast<T>(inputBuffer, results);
-        return results;
+        new Broadcast<>(inputBuffer, outputBuffers);
+        return outputBuffers;
     }
 }
