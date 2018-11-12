@@ -6,9 +6,9 @@ import component.buffers.InputPort;
 import component.buffers.SimpleBuffer;
 import component.utilities.TickablePipeComponent;
 
-public class IntegratedTimedConsumerComponent<T> extends TickablePipeComponent<Pulse, T> {
+public class TimedConsumer<T> extends TickablePipeComponent<Pulse, T> {
 
-    public IntegratedTimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
+    public TimedConsumer(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
     }
 

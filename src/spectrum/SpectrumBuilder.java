@@ -42,7 +42,7 @@ public class SpectrumBuilder extends TickablePipeComponent {
 
                 BoundedBuffer<VolumeState>[] volumeBroadcast =
                         frameTickBuffer1
-                                .performMethod(IntegratedTimedConsumerComponent.consumeFrom(inputBuffer))
+                                .performMethod(TimedConsumer.consumeFrom(inputBuffer))
                                 .performMethod(VolumeAmplitudeToVolumeFilter::filter)
                                 .broadcast(2).toArray(new BoundedBuffer[0]);
                 BoundedBuffer<VolumeState> volumeStateBuffer2 = volumeBroadcast[0];
