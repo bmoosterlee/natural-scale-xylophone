@@ -15,7 +15,7 @@ public class Unpairer<K, V> extends TickablePipeComponent<SimpleImmutableEntry<K
     }
 
 
-    protected static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(SimpleBuffer<K> outputBuffer1){
+    public static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(SimpleBuffer<K> outputBuffer1){
         return new CallableWithArguments<>() {
             private final OutputPort<K> outputPort1;
 

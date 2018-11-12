@@ -10,7 +10,7 @@ import java.util.List;
 public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
-    final TickablePipeComponentChain<? extends Object, T> previousComponent;
+    public final TickablePipeComponentChain<? extends Object, T> previousComponent;
 
     public BufferChainLink(SimpleBuffer<T> buffer, TickablePipeComponentChain<? extends Object, T> previousComponent) {
         this.buffer = buffer;

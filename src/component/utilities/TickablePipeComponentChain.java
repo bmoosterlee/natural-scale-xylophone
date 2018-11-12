@@ -15,7 +15,7 @@ public class TickablePipeComponentChain<K, V> extends TickablePipeComponent{
         previousComponent = inputBuffer.previousComponent;
     }
 
-    protected void tick() {
+    public void tick() {
         try {
             previousComponent.tick();
         }
