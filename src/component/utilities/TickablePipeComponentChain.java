@@ -1,9 +1,9 @@
 package component.utilities;
 
-import component.buffers.BoundedBuffer;
-import component.buffers.BufferChainLink;
-import component.buffers.CallableWithArguments;
-import component.buffers.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.BufferChainLink;
+import component.buffer.CallableWithArguments;
+import component.buffer.SimpleBuffer;
 
 public class TickablePipeComponentChain<K, V> extends TickablePipeComponent{
 

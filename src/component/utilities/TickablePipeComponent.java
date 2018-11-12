@@ -1,6 +1,6 @@
 package component.utilities;
 
-import component.buffers.*;
+import component.buffer.*;
 
 import java.util.AbstractMap;
 

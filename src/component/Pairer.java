@@ -1,9 +1,9 @@
 package component;
 
-import component.buffers.BoundedBuffer;
-import component.buffers.CallableWithArguments;
-import component.buffers.InputPort;
-import component.buffers.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.CallableWithArguments;
+import component.buffer.InputPort;
+import component.buffer.SimpleBuffer;
 import component.utilities.TickablePipeComponent;
 
 import java.util.AbstractMap.SimpleImmutableEntry;

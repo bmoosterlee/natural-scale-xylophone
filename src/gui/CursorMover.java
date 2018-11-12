@@ -1,9 +1,9 @@
 package gui;
 
 import component.*;
-import component.buffers.BoundedBuffer;
-import component.buffers.CallableWithArguments;
-import component.buffers.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.CallableWithArguments;
+import component.buffer.SimpleBuffer;
 import component.utilities.TickablePipeComponent;
 
 import javax.swing.*;

@@ -1,6 +1,6 @@
 package sound;
 
-import component.buffers.*;
+import component.buffer.*;
 import component.utilities.TickableInputComponent;
 import mixer.state.VolumeAmplitudeState;
 import time.PerformanceTracker;

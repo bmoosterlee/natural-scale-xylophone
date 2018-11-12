@@ -1,10 +1,10 @@
 package sound;
 
-import component.buffers.BoundedBuffer;
+import component.buffer.BoundedBuffer;
 import frequency.Frequency;
-import component.buffers.SimpleBuffer;
-import component.buffers.InputPort;
-import component.buffers.OutputPort;
+import component.buffer.SimpleBuffer;
+import component.buffer.InputPort;
+import component.buffer.OutputPort;
 import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
 import time.PerformanceTracker;

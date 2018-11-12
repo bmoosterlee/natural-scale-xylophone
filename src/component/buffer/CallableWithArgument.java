@@ -1,4 +1,4 @@
-package component.buffers;
+package component.buffer;
 
 public interface CallableWithArgument<K> {
 

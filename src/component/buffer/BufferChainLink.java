@@ -1,4 +1,4 @@
-package component.buffers;
+package component.buffer;
 
 import component.utilities.TickableInputComponentChain;
 import component.utilities.TickablePipeComponentChain;

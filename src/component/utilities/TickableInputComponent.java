@@ -1,8 +1,8 @@
 package component.utilities;
 
-import component.buffers.BoundedBuffer;
-import component.buffers.CallableWithArgument;
-import component.buffers.InputPort;
+import component.buffer.BoundedBuffer;
+import component.buffer.CallableWithArgument;
+import component.buffer.InputPort;
 
 public class TickableInputComponent<K> extends Tickable {
 

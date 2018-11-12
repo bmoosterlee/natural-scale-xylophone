@@ -1,7 +1,7 @@
 package mixer.state;
 
-import component.buffers.BoundedBuffer;
-import component.buffers.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.SimpleBuffer;
 import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 

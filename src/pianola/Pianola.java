@@ -6,7 +6,7 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import component.*;
-import component.buffers.*;
+import component.buffer.*;
 import component.utilities.Tickable;
 import component.utilities.TickablePipeComponent;
 import frequency.Frequency;

@@ -1,6 +1,6 @@
 package mixer.state;
 
-import component.buffers.*;
+import component.buffer.*;
 import component.utilities.Tickable;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;

@@ -1,4 +1,4 @@
-package component.buffers;
+package component.buffer;
 
 import java.util.Collections;
 import java.util.List;

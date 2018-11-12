@@ -1,7 +1,7 @@
 package component.utilities;
 
-import component.buffers.BufferChainLink;
-import component.buffers.CallableWithArgument;
+import component.buffer.BufferChainLink;
+import component.buffer.CallableWithArgument;
 
 public class TickableInputComponentChain<K> extends TickableInputComponent {
 

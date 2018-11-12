@@ -1,8 +1,8 @@
 package spectrum.harmonics;
 
-import component.buffers.SimpleBuffer;
-import component.buffers.BoundedBuffer;
-import component.buffers.CallableWithArguments;
+import component.buffer.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.CallableWithArguments;
 import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 import mixer.state.VolumeState;

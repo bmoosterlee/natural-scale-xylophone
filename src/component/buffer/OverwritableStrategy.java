@@ -1,4 +1,4 @@
-package component.buffers;
+package component.buffer;
 
 public class OverwritableStrategy<T> extends BoundedStrategy<T> {
     public OverwritableStrategy(int capacity, String name) {

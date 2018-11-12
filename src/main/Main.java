@@ -1,10 +1,10 @@
 package main;
 
 import component.*;
-import component.buffers.BoundedBuffer;
-import component.buffers.OutputPort;
-import component.buffers.OverwritableStrategy;
-import component.buffers.SimpleBuffer;
+import component.buffer.BoundedBuffer;
+import component.buffer.OutputPort;
+import component.buffer.OverwritableStrategy;
+import component.buffer.SimpleBuffer;
 import component.utilities.TickableOutputComponent;
 import frequency.Frequency;
 import gui.GUI;
