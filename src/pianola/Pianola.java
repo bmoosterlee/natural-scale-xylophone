@@ -53,14 +53,7 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
 
                 SimpleBuffer<Buckets> notesAveragerInputBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
                 count++;
-                BoundedBuffer<Buckets> notesAveragerOutputBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
-                count++;
-                new BucketsAverager(2 * inaudibleFrequencyMargin, notesAveragerInputBuffer, notesAveragerOutputBuffer);
                 averagerInput = new OutputPort<>(notesAveragerInputBuffer);
-
-                BoundedBuffer<Buckets> harmonicsAveragerBuffer = new SimpleBuffer<>(capacity, "Pianola" + String.valueOf(count));
-                count++;
-                new BucketsAverager(inaudibleFrequencyMargin, harmonicSpectrumBuffer, harmonicsAveragerBuffer);
 
                 BoundedBuffer<Collection<Frequency>> patternOutput = new SimpleBuffer<>(1, "pianola - output");
                 outputPort = patternOutput.createOutputPort();
@@ -68,8 +61,14 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                 methodOutputPort = methodOutput.createInputPort();
 
                 notesInput = noteSpectrumBuffer.createInputPort();
-                preparedNotesInput = notesAveragerOutputBuffer.createInputPort();
-                preparedHarmonicsInput = harmonicsAveragerBuffer.createInputPort();
+                preparedNotesInput =
+                    notesAveragerInputBuffer
+                    .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin))
+                    .createInputPort();
+                preparedHarmonicsInput =
+                    harmonicSpectrumBuffer
+                    .performMethod(BucketsAverager.build(inaudibleFrequencyMargin))
+                    .createInputPort();
             }
 
             private Frequency playNotes() {
