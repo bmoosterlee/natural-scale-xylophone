@@ -2,9 +2,11 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
+import component.utilities.RunningOutputComponent;
 import component.utilities.RunningPipeComponent;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 
 public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
@@ -73,17 +75,22 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
     }
 
     public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, BoundedBuffer<K>> input){
-        try {
-            Map<I, K> map = new HashMap<>();
-            for (I index : input.keySet()) {
-                map.put(index, input.get(index).createInputPort().consume());
-            }
-            BoundedBuffer<Map<I,K>> output = new SimpleBuffer<>(1, "collect");
-            output.createOutputPort().produce(map);
-        }
-        catch(InterruptedException e){
-            e.printStackTrace();
-        }
-        return null;
+        return RunningOutputComponent.buildOutputBuffer(
+            () -> {
+                try {
+                    Map<I, K> map = new HashMap<>();
+                    for (I index : input.keySet()) {
+                        map.put(index, input.get(index).createInputPort().consume());
+                    }
+
+                    return map;
+                }
+                catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+                return null;
+            },
+        1,
+        "buffers to buckets - collect");
     }
 }
