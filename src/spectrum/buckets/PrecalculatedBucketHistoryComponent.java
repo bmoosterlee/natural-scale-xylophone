@@ -78,11 +78,13 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                     }
                 };
 
-                BoundedBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
+                SimpleBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
                 BoundedBuffer<Buckets>[] outputTimeAverageBroadcast = outputTimeAverageBuffer.broadcast(2).toArray(new BoundedBuffer[0]);
                 BoundedBuffer<Buckets> outputBuffer = outputTimeAverageBroadcast[0];
                 BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast[1];
 
+
+                new Unpairer<>(
                 historyBuffer
                 .pairWith(preparedBucketsBuffer1)
                 .performMethod(
@@ -96,9 +98,9 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                         input1 ->
                         input1.getKey()
                         .add(input1.getValue())))
-                .performMethod(removeOldHistory)
-                .performMethod(Unpairer.build(historyBuffer))
-                .relayTo(outputTimeAverageBuffer);
+                .performMethod(removeOldHistory),
+                historyBuffer,
+                outputTimeAverageBuffer);
 
                 try {
                     historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());

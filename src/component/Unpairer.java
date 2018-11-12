@@ -15,7 +15,7 @@ public class Unpairer<K, V> extends RunningPipeComponent<SimpleImmutableEntry<K,
     }
 
 
-    public static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(SimpleBuffer<K> outputBuffer1){
+    private static <K, V> CallableWithArguments<SimpleImmutableEntry<K, V>, V> build(SimpleBuffer<K> outputBuffer1){
         return new CallableWithArguments<>() {
             private final OutputPort<K> outputPort1;
 
