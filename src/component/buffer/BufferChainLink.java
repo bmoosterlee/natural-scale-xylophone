@@ -66,11 +66,11 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public InputPort<T> createInputPort(){
-        return new InputPort<>(breakChain());
+        return breakChain().createInputPort();
     }
 
     public OutputPort<T> createOutputPort(){
-        return new OutputPort<>(breakChain());
+        return breakChain().createOutputPort();
     }
 
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
