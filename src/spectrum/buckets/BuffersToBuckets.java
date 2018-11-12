@@ -6,7 +6,6 @@ import component.utilities.RunningOutputComponent;
 import component.utilities.RunningPipeComponent;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 
 public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
@@ -36,9 +35,10 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
                 methodOutputPort =
                     collect(
-                        forEach(
-                            forEach(frameTickers, flushers),
-                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1))))
+                        toInputPorts(
+                            forEach(
+                                forEach(frameTickers, flushers),
+                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))))
                     .performMethod(Buckets::new).createInputPort();
             }
 
@@ -74,13 +74,21 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
         return output;
     }
 
-    public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, BoundedBuffer<K>> input){
+    public static <I, K> Map<I, InputPort<K>> toInputPorts(Map<I, BoundedBuffer<K>> input){
+        Map<I, InputPort<K>> map = new HashMap<>();
+        for (I index : input.keySet()) {
+            map.put(index, input.get(index).createInputPort());
+        }
+        return map;
+    }
+
+    public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, InputPort<K>> input){
         return RunningOutputComponent.buildOutputBuffer(
             () -> {
                 try {
                     Map<I, K> map = new HashMap<>();
                     for (I index : input.keySet()) {
-                        map.put(index, input.get(index).createInputPort().consume());
+                        map.put(index, input.get(index).consume());
                     }
 
                     return map;
