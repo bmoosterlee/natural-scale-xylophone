@@ -1,6 +1,8 @@
 package time;
 
 import component.*;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickableOutputComponent;
 
 import java.util.concurrent.Callable;
 

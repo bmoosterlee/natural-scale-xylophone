@@ -1,6 +1,10 @@
 package spectrum.buckets;
 
-import component.*;
+import component.buffers.BoundedBuffer;
+import component.buffers.InputPort;
+import component.buffers.OutputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.Tickable;
 
 public class BucketHistoryComponent extends Tickable {
     private BucketHistory bucketHistory;

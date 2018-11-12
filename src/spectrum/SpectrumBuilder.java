@@ -1,6 +1,8 @@
 package spectrum;
 
 import component.*;
+import component.buffers.*;
+import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Buckets;

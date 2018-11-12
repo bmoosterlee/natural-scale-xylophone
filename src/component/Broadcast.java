@@ -1,10 +1,16 @@
 package component;
 
+import component.buffers.BoundedBuffer;
+import component.buffers.InputPort;
+import component.buffers.OutputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.Tickable;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-public class Broadcast<T> extends Tickable{
+public class Broadcast<T> extends Tickable {
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
@@ -32,7 +38,7 @@ public class Broadcast<T> extends Tickable{
         }
     }
 
-    protected static <T> Collection<BoundedBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
+    public static <T> Collection<BoundedBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
         Collection<BoundedBuffer<T>> results = new LinkedList<>();
         for(int i = 0; i<size; i++){
             results.add(new SimpleBuffer<>(1, "broadcast"));

@@ -1,6 +1,10 @@
 package gui;
 
 import component.*;
+import component.buffers.BoundedBuffer;
+import component.buffers.CallableWithArguments;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickablePipeComponent;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;

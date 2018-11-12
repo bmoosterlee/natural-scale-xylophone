@@ -1,4 +1,4 @@
-package component;
+package component.utilities;
 
 public abstract class Tickable implements Runnable {
 

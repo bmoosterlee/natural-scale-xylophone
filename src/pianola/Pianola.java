@@ -6,6 +6,9 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
  * todo use a lookahead of the length of the shortest frame for the pianola, and play the maximum within that frame*/
 
 import component.*;
+import component.buffers.*;
+import component.utilities.Tickable;
+import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 import pianola.patterns.PianolaPattern;
 import spectrum.buckets.BucketHistory;
@@ -17,7 +20,7 @@ import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Set;
 
-public class Pianola extends TickablePipeComponent<Pulse, Frequency>{
+public class Pianola extends TickablePipeComponent<Pulse, Frequency> {
 
     public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         super(tickBuffer, outputBuffer, build(spectrumBuffer, pianolaPattern,inaudibleFrequencyMargin));

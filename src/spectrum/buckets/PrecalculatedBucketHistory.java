@@ -1,6 +1,11 @@
 package spectrum.buckets;
 
 import component.*;
+import component.buffers.BoundedBuffer;
+import component.buffers.InputPort;
+import component.buffers.OutputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickablePipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Arrays;

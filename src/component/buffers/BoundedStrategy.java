@@ -1,4 +1,4 @@
-package component;
+package component.buffers;
 
 import java.util.LinkedList;
 import java.util.List;

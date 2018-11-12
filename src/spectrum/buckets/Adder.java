@@ -1,9 +1,9 @@
 package spectrum.buckets;
 
-import component.SimpleBuffer;
-import component.BoundedBuffer;
-import component.InputPort;
-import component.OutputPort;
+import component.buffers.SimpleBuffer;
+import component.buffers.BoundedBuffer;
+import component.buffers.InputPort;
+import component.buffers.OutputPort;
 
 import java.util.HashSet;
 import java.util.Set;

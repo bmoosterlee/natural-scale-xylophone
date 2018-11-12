@@ -1,6 +1,10 @@
 package gui;
 
-import component.*;
+import component.buffers.BoundedBuffer;
+import component.buffers.InputPort;
+import component.buffers.OutputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickableOutputComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 

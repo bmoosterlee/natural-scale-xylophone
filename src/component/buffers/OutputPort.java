@@ -1,4 +1,4 @@
-package component;
+package component.buffers;
 
 public class OutputPort<T> {
 

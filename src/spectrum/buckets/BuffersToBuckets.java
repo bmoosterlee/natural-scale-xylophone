@@ -1,6 +1,8 @@
 package spectrum.buckets;
 
 import component.*;
+import component.buffers.*;
+import component.utilities.TickablePipeComponent;
 
 import java.util.*;
 

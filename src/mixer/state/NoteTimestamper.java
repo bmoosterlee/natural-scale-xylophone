@@ -1,6 +1,8 @@
 package mixer.state;
 
 import component.*;
+import component.buffers.*;
+import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 
 public class NoteTimestamper extends TickablePipeComponent {

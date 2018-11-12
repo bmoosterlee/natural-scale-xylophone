@@ -1,6 +1,7 @@
 package spectrum;
 
-import component.*;
+import component.buffers.*;
+import component.utilities.Tickable;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;

@@ -1,5 +1,10 @@
 package component;
 
+import component.buffers.BoundedBuffer;
+import component.buffers.CallableWithArguments;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickablePipeComponent;
+
 public class Counter extends TickablePipeComponent<Pulse, Long> {
 
     public Counter(BoundedBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {

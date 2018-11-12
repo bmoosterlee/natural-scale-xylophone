@@ -1,4 +1,7 @@
-package component;
+package component.utilities;
+
+import component.buffers.OutputPort;
+import component.buffers.SimpleBuffer;
 
 import java.util.concurrent.Callable;
 

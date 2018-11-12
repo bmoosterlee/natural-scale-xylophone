@@ -1,5 +1,11 @@
 package component;
 
+import component.buffers.BoundedBuffer;
+import component.buffers.CallableWithArguments;
+import component.buffers.InputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickablePipeComponent;
+
 public class IntegratedTimedConsumerComponent<T> extends TickablePipeComponent<Pulse, T> {
 
     public IntegratedTimedConsumerComponent(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){

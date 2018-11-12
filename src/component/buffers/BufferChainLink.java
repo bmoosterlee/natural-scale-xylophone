@@ -1,4 +1,7 @@
-package component;
+package component.buffers;
+
+import component.utilities.TickableInputComponentChain;
+import component.utilities.TickablePipeComponentChain;
 
 import java.util.AbstractMap;
 import java.util.Collection;

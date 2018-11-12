@@ -1,6 +1,7 @@
 package mixer;
 
-import component.*;
+import component.buffers.*;
+import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;

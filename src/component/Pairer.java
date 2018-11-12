@@ -1,5 +1,11 @@
 package component;
 
+import component.buffers.BoundedBuffer;
+import component.buffers.CallableWithArguments;
+import component.buffers.InputPort;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickablePipeComponent;
+
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<K, V>> {
@@ -9,7 +15,7 @@ public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<
 
     }
 
-    protected static <K, V> CallableWithArguments<K, SimpleImmutableEntry<K, V>> build(BoundedBuffer<V> inputBuffer2){
+    public static <K, V> CallableWithArguments<K, SimpleImmutableEntry<K, V>> build(BoundedBuffer<V> inputBuffer2){
         return new CallableWithArguments<>() {
             private final InputPort<V> inputPort2;
 

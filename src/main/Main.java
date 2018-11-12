@@ -1,6 +1,11 @@
 package main;
 
 import component.*;
+import component.buffers.BoundedBuffer;
+import component.buffers.OutputPort;
+import component.buffers.OverwritableStrategy;
+import component.buffers.SimpleBuffer;
+import component.utilities.TickableOutputComponent;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
@@ -19,6 +24,7 @@ import time.TimeInSeconds;
 
 import java.awt.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.LinkedList;
 
 /*
 The main components are:

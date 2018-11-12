@@ -1,6 +1,9 @@
 package gui;
 
 import component.*;
+import component.buffers.*;
+import component.utilities.TickableOutputComponent;
+import component.utilities.TickablePipeComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
