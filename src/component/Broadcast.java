@@ -30,11 +30,15 @@ public class Broadcast<T> extends TickRunner {
     protected void tick() {
         try {
             T item = input.consume();
-            for(OutputPort<T> output : outputs){
-                output.produce(item);
-            }
+            broadcast(item);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void broadcast(T item) throws InterruptedException {
+        for(OutputPort<T> output : outputs){
+            output.produce(item);
         }
     }
 
