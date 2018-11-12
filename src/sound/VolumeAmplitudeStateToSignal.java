@@ -5,20 +5,22 @@ import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
 import java.util.Map;
-import java.util.Set;
 
 public class VolumeAmplitudeStateToSignal extends RunningPipeComponent<VolumeAmplitudeState, Double> {
 
     public VolumeAmplitudeStateToSignal(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
-        super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, input -> calculateAmplitude(input.volumeAmplitudes));
+        super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, build());
     }
 
+    public static CallableWithArguments<VolumeAmplitudeState, Double> build() {
+        return VolumeAmplitudeStateToSignal::calculateAmplitude;
+    }
 
-    public static double calculateAmplitude(Map<Frequency, VolumeAmplitude> volumeAmplitudeMap) {
+    public static double calculateAmplitude(VolumeAmplitudeState volumeAmplitudeState) {
+        Map<Frequency, VolumeAmplitude> volumeAmplitudeMap = volumeAmplitudeState.volumeAmplitudes;
+
         double amplitudeSum = 0;
 
         for (Frequency frequency : volumeAmplitudeMap.keySet()) {
@@ -28,4 +30,5 @@ public class VolumeAmplitudeStateToSignal extends RunningPipeComponent<VolumeAmp
         }
         return amplitudeSum;
     }
+
 }
