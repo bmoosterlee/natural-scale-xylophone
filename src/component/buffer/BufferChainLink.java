@@ -19,17 +19,15 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public SimpleBuffer<T> breakChain(){
-        if(previousComponent!=null) {
-            new TickRunner() {
+        new TickRunner() {
 
-                @Override
-                protected void tick() {
-                    previousComponent.tick();
-                }
-
+            @Override
+            protected void tick() {
+                previousComponent.tick();
             }
-            .start();
+
         }
+        .start();
 
         return buffer;
     }

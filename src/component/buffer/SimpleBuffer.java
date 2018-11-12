@@ -1,6 +1,8 @@
 package component.buffer;
 
 import component.*;
+import component.utilities.ChainedPipeComponent;
+import component.utilities.RunningInputComponent;
 import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
@@ -67,12 +69,12 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
-        return new BufferChainLink<>(this, null).performMethod(method);
+        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "simpleBuffler - performMethod");
     }
 
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new BufferChainLink<>(this, null).performInputMethod(method);
+        new RunningInputComponent<>(this, method);
     }
 
     @Override
