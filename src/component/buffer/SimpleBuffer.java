@@ -78,7 +78,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public Collection<BoundedBuffer<T>> broadcast(int size) {
+    public Collection<SimpleBuffer<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
     }
 

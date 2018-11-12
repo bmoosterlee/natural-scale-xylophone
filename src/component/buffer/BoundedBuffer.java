@@ -25,7 +25,7 @@ public interface BoundedBuffer<T> {
 
     void performInputMethod(CallableWithArgument<T> method);
 
-    Collection<BoundedBuffer<T>> broadcast(int size);
+    Collection<SimpleBuffer<T>> broadcast(int size);
 
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other);
 

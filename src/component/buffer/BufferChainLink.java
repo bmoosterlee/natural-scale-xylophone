@@ -79,7 +79,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         new ChainedInputComponent<>(this, method);
     }
 
-    public Collection<BoundedBuffer<T>> broadcast(int size) {
+    public Collection<SimpleBuffer<T>> broadcast(int size) {
         return breakChain().broadcast(size);
     }
 
