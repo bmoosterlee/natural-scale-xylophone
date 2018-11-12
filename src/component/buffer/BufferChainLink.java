@@ -73,7 +73,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
+        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "bufferChainLink - performMethod");
     }
 
     @Override
