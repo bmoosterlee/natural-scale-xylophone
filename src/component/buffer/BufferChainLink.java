@@ -2,6 +2,7 @@ package component.buffer;
 
 import component.utilities.ChainedInputComponent;
 import component.utilities.ChainedPipeComponent;
+import component.utilities.TickRunner;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -19,7 +20,15 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     public SimpleBuffer<T> breakChain(){
         try {
-            new Thread(previousComponent::tick).start();
+            new TickRunner(){
+
+                @Override
+                protected void tick() {
+                    previousComponent.tick();
+                }
+
+            }
+            .start();
         }
         catch(NullPointerException ignored){
         }

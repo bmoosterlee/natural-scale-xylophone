@@ -2,7 +2,7 @@ package component.utilities;
 
 public abstract class TickRunner implements Runnable {
 
-    protected void start(){
+    public void start(){
         new Thread(this).start();
     }
 
