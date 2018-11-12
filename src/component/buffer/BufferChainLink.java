@@ -19,8 +19,8 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public SimpleBuffer<T> breakChain(){
-        try {
-            new TickRunner(){
+        if(previousComponent!=null) {
+            new TickRunner() {
 
                 @Override
                 protected void tick() {
@@ -30,8 +30,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
             }
             .start();
         }
-        catch(NullPointerException ignored){
-        }
+
         return buffer;
     }
 
