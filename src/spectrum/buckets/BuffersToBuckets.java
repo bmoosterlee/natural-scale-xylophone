@@ -10,10 +10,10 @@ import java.util.*;
 public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
     public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
-        super(tickBuffer, outputBuffer, toBuckets(inputMap));
+        super(tickBuffer, outputBuffer, build(inputMap));
     }
 
-    public static CallableWithArguments<Pulse, Buckets> toBuckets(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    public static CallableWithArguments<Pulse, Buckets> build(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         return new CallableWithArguments<>() {
             private OutputPort<Pulse> methodInputPort;
             private InputPort<Buckets> methodOutputPort;
