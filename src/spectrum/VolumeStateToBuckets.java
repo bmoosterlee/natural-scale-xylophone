@@ -1,7 +1,7 @@
 package spectrum;
 
 import component.buffer.*;
-import component.utilities.Tickable;
+import component.utilities.TickRunner;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;
@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class VolumeStateToBuckets extends Tickable {
+public class VolumeStateToBuckets extends TickRunner {
     private final CallableWithArguments<VolumeState, Buckets> bucketBuilder;
 
     private final InputPort<VolumeState> volumeStateInput;

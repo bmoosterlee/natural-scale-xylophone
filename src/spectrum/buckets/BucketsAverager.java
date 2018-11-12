@@ -2,13 +2,13 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.Tickable;
+import component.utilities.TickRunner;
 import time.PerformanceTracker;
 import time.TimeKeeper;
 
 import java.util.*;
 
-public class BucketsAverager extends Tickable {
+public class BucketsAverager extends TickRunner {
     private final CallableWithArguments<Buckets, Buckets> averager;
 
     private final InputPort<Buckets> inputPort;

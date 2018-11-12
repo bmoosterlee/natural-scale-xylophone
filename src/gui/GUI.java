@@ -3,7 +3,7 @@ package gui;
 import component.*;
 import component.buffer.*;
 import component.utilities.TickableOutputComponent;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class GUI extends TickablePipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
+public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
 
     public GUI(BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
         super(inputBuffer, outputBuffer, build(spectrumWindow, width, inaudibleFrequencyMargin));

@@ -5,7 +5,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
 
         int capacity = 1;
 
-        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> addNewBucketsMultiplier = TickablePipeComponent.methodToComponentBuffers(input -> input.multiply(multiplier), capacity, "buckets history - multiply");
+        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> addNewBucketsMultiplier = RunningPipeComponent.methodToComponentBuffers(input -> input.multiply(multiplier), capacity, "buckets history - multiply");
         multiplierOutputPort = new OutputPort<>(addNewBucketsMultiplier.getKey());
 
         BoundedBuffer<Buckets> preparedBucketsBuffer1 = new SimpleBuffer<>(capacity, "history - preparedBuckets 1");
@@ -47,7 +47,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         SimpleBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new SimpleBuffer<>(capacity, "history - input");
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = historyInputBuffer.pairWith(preparedBucketsBuffer1);
         SimpleBuffer<ImmutableLinkedList<Buckets>> newHistoryBuffer = new SimpleBuffer<>(capacity, "history - output");
-        new TickablePipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
+        new RunningPipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
 
         historyOutputPort = new OutputPort<>(historyInputBuffer);
         newHistoryInputPort = new InputPort<>(newHistoryBuffer);
@@ -55,7 +55,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         SimpleBuffer<Buckets> timeAverageBuffer = new SimpleBuffer<>(capacity, "history - time average input");
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = timeAverageBuffer.pairWith(preparedBucketsBuffer2);
         SimpleBuffer<Buckets> newTimeAverageBuffer = new SimpleBuffer<>(capacity, "history - new time average");
-        new TickablePipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
+        new RunningPipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
 
         timeAverageOutputPort = new OutputPort<>(timeAverageBuffer);
         newtimeAverageInputPort = new InputPort<>(newTimeAverageBuffer);
@@ -64,7 +64,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         SimpleBuffer<Buckets> conditionalInputBuffer2 = new SimpleBuffer<>(capacity, "history - conditional input 2");
         BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = conditionalInputBuffer1.pairWith(conditionalInputBuffer2);
         SimpleBuffer<Buckets> conditionalOutputBuffer = new SimpleBuffer<>(capacity, "history - conditional output");
-        new TickablePipeComponent<>(pair3, conditionalOutputBuffer, input -> input.getKey().subtract(input.getValue()));
+        new RunningPipeComponent<>(pair3, conditionalOutputBuffer, input -> input.getKey().subtract(input.getValue()));
 
         conditionalOutputPort1 = new OutputPort<>(conditionalInputBuffer1);
         conditionalOutputPort2 = new OutputPort<>(conditionalInputBuffer2);

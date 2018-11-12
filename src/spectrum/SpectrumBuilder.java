@@ -2,7 +2,7 @@ package spectrum;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Buckets;
@@ -17,7 +17,7 @@ import mixer.state.VolumeState;
 
 import java.util.*;
 
-public class SpectrumBuilder extends TickablePipeComponent {
+public class SpectrumBuilder extends RunningPipeComponent {
     public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
         super(frameTickBuffer, outputBuffer, build(inputBuffer, spectrumWindow, width));
     }

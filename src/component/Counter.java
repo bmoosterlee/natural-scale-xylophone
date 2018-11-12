@@ -3,9 +3,9 @@ package component;
 import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
-public class Counter extends TickablePipeComponent<Pulse, Long> {
+public class Counter extends RunningPipeComponent<Pulse, Long> {
 
     public Counter(BoundedBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
         super(inputBuffer, outputBuffer, build());

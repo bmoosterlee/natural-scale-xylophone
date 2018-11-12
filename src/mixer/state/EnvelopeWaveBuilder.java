@@ -1,7 +1,7 @@
 package mixer.state;
 
 import component.buffer.*;
-import component.utilities.Tickable;
+import component.utilities.TickRunner;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.SimpleDeterministicEnvelope;
@@ -12,7 +12,7 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeWaveBuilder extends Tickable {
+public class EnvelopeWaveBuilder extends TickRunner {
     private CallableWithArguments<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> builder;
 
     private final InputPort<TimestampedFrequencies> input;

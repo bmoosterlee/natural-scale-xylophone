@@ -4,9 +4,9 @@ import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.InputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
-public class TimedConsumer<T> extends TickablePipeComponent<Pulse, T> {
+public class TimedConsumer<T> extends RunningPipeComponent<Pulse, T> {
 
     public TimedConsumer(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));

@@ -2,13 +2,13 @@ package mixer.state;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class VolumeAmplitudeToVolumeFilter extends TickablePipeComponent<VolumeAmplitudeState, VolumeState> {
+public class VolumeAmplitudeToVolumeFilter extends RunningPipeComponent<VolumeAmplitudeState, VolumeState> {
 
     public VolumeAmplitudeToVolumeFilter(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateBuffer, SimpleBuffer<VolumeState> volumeStateBuffer) {
         super(volumeAmplitudeStateBuffer, volumeStateBuffer, VolumeAmplitudeToVolumeFilter::filter);

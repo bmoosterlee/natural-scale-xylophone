@@ -4,11 +4,11 @@ import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class Unpairer<K, V> extends TickablePipeComponent<SimpleImmutableEntry<K, V>, V> {
+public class Unpairer<K, V> extends RunningPipeComponent<SimpleImmutableEntry<K, V>, V> {
 
     public Unpairer(BoundedBuffer<SimpleImmutableEntry<K,V>> inputBuffer, SimpleBuffer<K> outputBuffer1, SimpleBuffer<V> outputBuffer2){
         super(inputBuffer, outputBuffer2, build(outputBuffer1));

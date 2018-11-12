@@ -4,11 +4,11 @@ import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.InputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 
-public class Pairer<K, V> extends TickablePipeComponent<K, SimpleImmutableEntry<K, V>> {
+public class Pairer<K, V> extends RunningPipeComponent<K, SimpleImmutableEntry<K, V>> {
 
     public Pairer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
         super(inputBuffer1, outputBuffer, build(inputBuffer2));

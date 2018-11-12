@@ -2,11 +2,11 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
 
-public class PrecalculatedBucketHistoryComponent extends TickablePipeComponent<Buckets, Buckets> {
+public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Buckets, Buckets> {
 
     public PrecalculatedBucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size) {
         super(inputBuffer, outputBuffer, recordHistory(size));

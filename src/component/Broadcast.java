@@ -4,13 +4,13 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.Tickable;
+import component.utilities.TickRunner;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-public class Broadcast<T> extends Tickable {
+public class Broadcast<T> extends TickRunner {
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;

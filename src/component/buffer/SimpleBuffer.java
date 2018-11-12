@@ -1,7 +1,7 @@
 package component.buffer;
 
 import component.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -87,7 +87,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public BoundedBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
-        new TickablePipeComponent<>(this, outputBuffer, input -> input);
+        new RunningPipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }
 }

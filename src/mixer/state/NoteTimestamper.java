@@ -2,10 +2,10 @@ package mixer.state;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 
-public class NoteTimestamper extends TickablePipeComponent {
+public class NoteTimestamper extends RunningPipeComponent {
 
     public NoteTimestamper(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
         super(sampleCountBuffer, outputBuffer, NoteTimestamper.build(newNoteBuffer));

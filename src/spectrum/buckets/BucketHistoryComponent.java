@@ -4,9 +4,9 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.Tickable;
+import component.utilities.TickRunner;
 
-public class BucketHistoryComponent extends Tickable {
+public class BucketHistoryComponent extends TickRunner {
     private BucketHistory bucketHistory;
 
     private final InputPort<Buckets> inputPort;

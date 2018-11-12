@@ -2,11 +2,11 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.*;
 
-public class BuffersToBuckets extends TickablePipeComponent<Pulse, Buckets> {
+public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
     public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
         super(tickBuffer, outputBuffer, toBuckets(inputMap));

@@ -3,11 +3,11 @@ package component;
 import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 
 import java.util.List;
 
-public class Flusher<T> extends TickablePipeComponent<Pulse, List<T>> {
+public class Flusher<T> extends RunningPipeComponent<Pulse, List<T>> {
 
     public Flusher(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
         super(timeInputBuffer, outputBuffer, flush(inputBuffer));

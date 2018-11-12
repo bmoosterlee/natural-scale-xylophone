@@ -1,7 +1,7 @@
 package sound;
 
 import component.buffer.*;
-import component.utilities.TickableInputComponent;
+import component.utilities.RunningInputComponent;
 import mixer.state.VolumeAmplitudeState;
 import time.PerformanceTracker;
 import time.TimeKeeper;
@@ -12,7 +12,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import java.util.List;
 
-public class SoundEnvironment extends TickableInputComponent<VolumeAmplitudeState> {
+public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState> {
 
     public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
         super(inputBuffer, build(SAMPLE_SIZE_IN_BITS, sampleRate));

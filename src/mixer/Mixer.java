@@ -1,7 +1,7 @@
 package mixer;
 
 import component.buffer.*;
-import component.utilities.TickablePipeComponent;
+import component.utilities.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
-public class Mixer extends TickablePipeComponent {
+public class Mixer extends RunningPipeComponent {
 
     public Mixer(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         super(sampleCountBuffer, outputBuffer, build(noteInputBuffer, sampleRate));
@@ -203,7 +203,7 @@ public class Mixer extends TickablePipeComponent {
                     .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate)).createInputPort();
 
                 {
-                    SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = TickablePipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
+                    SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
                     addNewNotesOutputPort = addNewNotesPorts.getKey();
                     addNewNotesInputPort = addNewNotesPorts.getValue();
                 }

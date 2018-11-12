@@ -1,6 +1,6 @@
 package component.utilities;
 
-public abstract class Tickable implements Runnable {
+public abstract class TickRunner implements Runnable {
 
     protected void start(){
         new Thread(this).start();

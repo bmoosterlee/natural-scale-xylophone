@@ -5,7 +5,7 @@ import component.buffer.SimpleBuffer;
 
 import java.util.concurrent.Callable;
 
-public class TickableOutputComponent<V> extends Tickable {
+public class TickableOutputComponent<V> extends TickRunner {
 
     protected final OutputPort<V> output;
     private final Callable<V> method;
