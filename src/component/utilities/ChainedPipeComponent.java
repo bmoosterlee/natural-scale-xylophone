@@ -5,11 +5,11 @@ import component.buffer.BufferChainLink;
 import component.buffer.CallableWithArguments;
 import component.buffer.SimpleBuffer;
 
-public class PipeComponentChain<K, V> extends PipeComponent<K, V>{
+public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
 
-    private final PipeComponentChain previousComponent;
+    private final ChainedPipeComponent previousComponent;
 
-    public PipeComponentChain(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
+    public ChainedPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
         super(inputBuffer, outputBuffer, method);
 
         previousComponent = inputBuffer.previousComponent;
@@ -27,7 +27,7 @@ public class PipeComponentChain<K, V> extends PipeComponent<K, V>{
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        PipeComponentChain<K, V> methodComponent = new PipeComponentChain<>(inputBuffer, outputBuffer, method);
+        ChainedPipeComponent<K, V> methodComponent = new ChainedPipeComponent<>(inputBuffer, outputBuffer, method);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }

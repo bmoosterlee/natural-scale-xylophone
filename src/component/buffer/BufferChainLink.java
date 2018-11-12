@@ -1,7 +1,7 @@
 package component.buffer;
 
-import component.utilities.InputComponentChain;
-import component.utilities.PipeComponentChain;
+import component.utilities.ChainedInputComponent;
+import component.utilities.ChainedPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -10,9 +10,9 @@ import java.util.List;
 public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
-    public final PipeComponentChain<? extends Object, T> previousComponent;
+    public final ChainedPipeComponent<? extends Object, T> previousComponent;
 
-    public BufferChainLink(SimpleBuffer<T> buffer, PipeComponentChain<? extends Object, T> previousComponent) {
+    public BufferChainLink(SimpleBuffer<T> buffer, ChainedPipeComponent<? extends Object, T> previousComponent) {
         this.buffer = buffer;
         this.previousComponent = previousComponent;
     }
@@ -60,12 +60,12 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
-        return PipeComponentChain.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
+        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
     }
 
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new InputComponentChain<>(this, method);
+        new ChainedInputComponent<>(this, method);
     }
 
     public Collection<BoundedBuffer<T>> broadcast(int size) {
@@ -86,6 +86,6 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public void relayTo(BoundedBuffer<T> outputBuffer) {
-        new PipeComponentChain<>(this, outputBuffer, input -> input);
+        new ChainedPipeComponent<>(this, outputBuffer, input -> input);
     }
 }
