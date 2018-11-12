@@ -53,12 +53,10 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                         Map<Integer, Integer> harmonics = newHarmonicsPort.consume();
                         Integer cursorX = newCursorXPort.consume();
 
-                        TimeKeeper totalTimeKeeper = PerformanceTracker.startTracking("render");
                         super.paintComponent(g);
                         renderHarmonicsBuckets(g, harmonics);
                         renderNoteBuckets(g, notes);
                         renderCursorLine(g, cursorX);
-                        PerformanceTracker.stopTracking(totalTimeKeeper);
 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
