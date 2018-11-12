@@ -64,13 +64,12 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
-        return TickablePipeComponentChain.methodToComponentWithOutputBuffer(new BufferChainLink<>(this, null), method, 1, "performMethod");
+        return new BufferChainLink<>(this, null).performMethod(method);
     }
 
-    //todo use chain link
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new TickableInputComponentChain<>(new BufferChainLink<>(this, null), method);
+        new BufferChainLink<>(this, null).performInputMethod(method);
     }
 
     @Override

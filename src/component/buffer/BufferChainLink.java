@@ -63,6 +63,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         return TickablePipeComponentChain.methodToComponentWithOutputBuffer(this, method, 1, "performMethod");
     }
 
+    @Override
     public void performInputMethod(CallableWithArgument<T> method){
         new TickableInputComponentChain<>(this, method);
     }
