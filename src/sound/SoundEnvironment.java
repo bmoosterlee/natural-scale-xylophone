@@ -47,7 +47,7 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
                 }
                 sourceDataLine.start();
 
-                BoundedBuffer<VolumeAmplitudeState> methodInputBuffer = new SimpleBuffer<>(1, "sound environment - input");
+                SimpleBuffer<VolumeAmplitudeState> methodInputBuffer = new SimpleBuffer<>(1, "sound environment - input");
                 methodInput = methodInputBuffer.createOutputPort();
 
                 sampleAmplitudeInput =
