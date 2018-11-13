@@ -21,6 +21,18 @@ public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
         previousComponent = null;
     }
 
+    public void start() {
+        new TickRunner() {
+
+            @Override
+            protected void tick() {
+                ChainedPipeComponent.this.tick();
+            }
+
+        }
+        .start();
+    }
+
     public void tick() {
         try {
             previousComponent.tick();
@@ -44,5 +56,4 @@ public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }
-
 }

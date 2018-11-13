@@ -10,6 +10,19 @@ public class ChainedInputComponent<K> extends InputComponent<K> {
     public ChainedInputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method){
         super(inputBuffer, method);
         previousComponent = inputBuffer.previousComponent;
+        start();
+    }
+
+    public void start() {
+        new TickRunner() {
+
+            @Override
+            protected void tick() {
+                ChainedInputComponent.this.tick();
+            }
+
+        }
+        .start();
     }
 
     @Override
