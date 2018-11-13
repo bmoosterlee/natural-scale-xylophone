@@ -66,7 +66,7 @@ class Main {
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
-        LinkedList<BoundedBuffer<VolumeAmplitudeState>> volumeBroadcast =
+        LinkedList<SimpleBuffer<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
                 RunningOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
@@ -79,14 +79,14 @@ class Main {
         volumeBroadcast.poll()
         .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
+        LinkedList<SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
             new LinkedList<>(
                 RunningOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
                 .performMethod(
                     SpectrumBuilder.build(
                         volumeBroadcast.poll()
-                        .relayTo(new SimpleBuffer<>(1, new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
+                        .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
                         spectrumWindow,
                         width))
                 .broadcast(2));
@@ -107,7 +107,7 @@ class Main {
         .performMethod(
             Pianola.build(
                 spectrumBroadcast.poll()
-                .relayTo(new SimpleBuffer<>(1, new OverwritableStrategy<>(1, "pianola - input"))),
+                .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "pianola - input"))),
                 pianolaPattern,
                 inaudibleFrequencyMargin))
         .relayTo(newNoteBuffer);
