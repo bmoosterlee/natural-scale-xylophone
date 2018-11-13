@@ -2,7 +2,7 @@ package mixer.state;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 
 import java.util.HashMap;

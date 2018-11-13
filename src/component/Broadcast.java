@@ -4,7 +4,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.TickRunner;
+import component.buffer.TickRunner;
 
 import java.util.Collection;
 import java.util.HashSet;

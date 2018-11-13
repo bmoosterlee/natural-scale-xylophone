@@ -2,7 +2,7 @@ package time;
 
 import component.*;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningOutputComponent;
+import component.buffer.RunningOutputComponent;
 
 import java.util.concurrent.Callable;
 

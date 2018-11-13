@@ -1,4 +1,4 @@
-package component.utilities;
+package component.buffer;
 
 public interface Component {
 }

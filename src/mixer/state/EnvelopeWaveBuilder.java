@@ -1,8 +1,7 @@
 package mixer.state;
 
 import component.buffer.*;
-import component.utilities.RunningPipeComponent;
-import component.utilities.TickRunner;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.SimpleDeterministicEnvelope;

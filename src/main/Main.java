@@ -3,28 +3,19 @@ package main;
 import component.*;
 import component.buffer.BoundedBuffer;
 import component.buffer.OutputPort;
-import component.buffer.OverwritableStrategy;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningOutputComponent;
+import component.buffer.RunningOutputComponent;
 import frequency.Frequency;
-import gui.GUI;
 import mixer.Mixer;
 import mixer.state.VolumeAmplitudeState;
-import pianola.Pianola;
-import pianola.patterns.PianolaPattern;
-import pianola.patterns.SweepToTargetUpDown;
 import sound.SampleRate;
 import sound.SoundEnvironment;
-import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
-import spectrum.buckets.Buckets;
 import time.PerformanceTracker;
 import time.Ticker;
 import time.TimeInSeconds;
 
 import java.awt.*;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.LinkedList;
 
 /*
 The main components are:

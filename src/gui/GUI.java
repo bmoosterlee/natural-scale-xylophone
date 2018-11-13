@@ -2,14 +2,12 @@ package gui;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.RunningOutputComponent;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningOutputComponent;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
 import javax.swing.*;
 import java.awt.*;

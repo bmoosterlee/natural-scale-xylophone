@@ -4,7 +4,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningOutputComponent;
+import component.buffer.RunningOutputComponent;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 

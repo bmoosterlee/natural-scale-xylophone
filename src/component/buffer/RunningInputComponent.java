@@ -1,7 +1,4 @@
-package component.utilities;
-
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArgument;
+package component.buffer;
 
 public class RunningInputComponent<K> extends InputComponent<K> {
 

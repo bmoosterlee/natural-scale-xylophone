@@ -1,7 +1,7 @@
 package component;
 
 import component.buffer.*;
-import component.utilities.TickRunner;
+import component.buffer.TickRunner;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 

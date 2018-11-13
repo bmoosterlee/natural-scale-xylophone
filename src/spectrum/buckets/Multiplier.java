@@ -1,8 +1,7 @@
 package spectrum.buckets;
 
 import component.buffer.*;
-import component.utilities.RunningPipeComponent;
-import component.utilities.TickRunner;
+import component.buffer.RunningPipeComponent;
 
 public class Multiplier extends RunningPipeComponent<Buckets, Buckets> {
 

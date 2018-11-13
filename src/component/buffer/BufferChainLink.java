@@ -1,9 +1,5 @@
 package component.buffer;
 
-import component.utilities.ChainedInputComponent;
-import component.utilities.ChainedPipeComponent;
-import component.utilities.TickRunner;
-
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
@@ -60,6 +56,10 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     public OutputPort<T> createOutputPort(){
         return buffer.createOutputPort();
+    }
+
+    protected InputPort<T> createMethodInternalInputPort(){
+        return buffer.createInputPort();
     }
 
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){

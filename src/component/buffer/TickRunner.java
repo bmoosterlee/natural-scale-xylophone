@@ -1,4 +1,4 @@
-package component.utilities;
+package component.buffer;
 
 public abstract class TickRunner implements Runnable {
 

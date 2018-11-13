@@ -1,6 +1,4 @@
-package component.utilities;
-
-import component.buffer.*;
+package component.buffer;
 
 import java.util.AbstractMap;
 

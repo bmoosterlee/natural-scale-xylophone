@@ -1,9 +1,6 @@
 package component.buffer;
 
 import component.*;
-import component.utilities.ChainedPipeComponent;
-import component.utilities.RunningInputComponent;
-import component.utilities.RunningPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.Collection;

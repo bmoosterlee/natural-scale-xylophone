@@ -1,4 +1,4 @@
-package component.utilities;
+package component.buffer;
 
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;

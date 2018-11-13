@@ -3,7 +3,7 @@ package spectrum.harmonics;
 import component.buffer.SimpleBuffer;
 import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.state.VolumeState;
 

@@ -4,7 +4,7 @@ import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.InputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 
 public class TimedConsumer<T> extends RunningPipeComponent<Pulse, T> {
 

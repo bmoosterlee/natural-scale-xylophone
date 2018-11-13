@@ -1,4 +1,4 @@
-package component.utilities;
+package component.buffer;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
@@ -12,6 +12,12 @@ public class PipeComponent<K, V> {
 
     public PipeComponent(BoundedBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
         input = inputBuffer.createInputPort();
+        output = new OutputPort<>(outputBuffer);
+        this.method = method;
+    }
+
+    public PipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
+        input = inputBuffer.createMethodInternalInputPort();
         output = new OutputPort<>(outputBuffer);
         this.method = method;
     }

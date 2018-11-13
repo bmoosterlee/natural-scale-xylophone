@@ -1,7 +1,4 @@
-package component.utilities;
-
-import component.buffer.BufferChainLink;
-import component.buffer.CallableWithArgument;
+package component.buffer;
 
 public class ChainedInputComponent<K> extends InputComponent<K> {
 

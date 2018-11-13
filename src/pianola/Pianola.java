@@ -7,8 +7,8 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import component.*;
 import component.buffer.*;
-import component.utilities.TickRunner;
-import component.utilities.RunningPipeComponent;
+import component.buffer.TickRunner;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import pianola.patterns.PianolaPattern;
 import spectrum.buckets.BucketHistory;

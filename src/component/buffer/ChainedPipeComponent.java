@@ -1,9 +1,4 @@
-package component.utilities;
-
-import component.buffer.BoundedBuffer;
-import component.buffer.BufferChainLink;
-import component.buffer.CallableWithArguments;
-import component.buffer.SimpleBuffer;
+package component.buffer;
 
 public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
 

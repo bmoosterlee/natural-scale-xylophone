@@ -1,14 +1,12 @@
 package spectrum.buckets;
 
-import component.*;
 import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.OutputPort;
 import component.buffer.SimpleBuffer;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.LinkedList;
 
 public class PrecalculatedBucketHistory implements BucketHistory {

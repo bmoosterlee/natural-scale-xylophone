@@ -1,4 +1,4 @@
-package component.utilities;
+package component.buffer;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArgument;
@@ -10,6 +10,11 @@ public class InputComponent<K> {
 
     public InputComponent(BoundedBuffer<K> inputBuffer, CallableWithArgument<K> method) {
         input = inputBuffer.createInputPort();
+        this.method = method;
+    }
+
+    public InputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method) {
+        input = inputBuffer.createMethodInternalInputPort();
         this.method = method;
     }
 

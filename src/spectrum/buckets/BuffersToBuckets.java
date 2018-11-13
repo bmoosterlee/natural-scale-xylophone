@@ -2,8 +2,8 @@ package spectrum.buckets;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.RunningOutputComponent;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningOutputComponent;
+import component.buffer.RunningPipeComponent;
 
 import java.util.*;
 

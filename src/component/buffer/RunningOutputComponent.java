@@ -1,6 +1,4 @@
-package component.utilities;
-
-import component.buffer.SimpleBuffer;
+package component.buffer;
 
 import java.util.concurrent.Callable;
 

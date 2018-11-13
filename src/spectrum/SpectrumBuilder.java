@@ -2,7 +2,7 @@ package spectrum;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Buckets;

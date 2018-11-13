@@ -2,7 +2,7 @@ package mixer.state;
 
 import component.*;
 import component.buffer.*;
-import component.utilities.RunningPipeComponent;
+import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 
 public class NoteTimestamper extends RunningPipeComponent {
