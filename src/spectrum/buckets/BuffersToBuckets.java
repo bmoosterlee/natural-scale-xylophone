@@ -22,23 +22,10 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
                 BoundedBuffer<Pulse> methodInput = new SimpleBuffer<>(1, "BuffersToBuckets - input");
                 methodInputPort = methodInput.createOutputPort();
 
-                LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(methodInput.broadcast(bufferMap.size()));
-                Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
-                for (Integer index : bufferMap.keySet()) {
-                    frameTickers.put(index, frameTickBroadcast.poll());
-                }
-
-                Map<Integer, CallableWithArguments<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
-                for (Integer index : bufferMap.keySet()) {
-                    flushers.put(index, Flusher.flush(bufferMap.get(index)));
-                }
+                BoundedBuffer<Map<Integer, MemoizedBucket>> bucketMap = toBucketMap2(methodInput, bufferMap);
 
                 methodOutputPort =
-                    collect(
-                        toInputPorts(
-                            forEach(
-                                forEach(frameTickers, flushers),
-                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))))
+                    bucketMap
                     .performMethod(Buckets::new).createInputPort();
             }
 
@@ -56,6 +43,25 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
                 return null;
             }
         };
+    }
+
+    private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size()));
+        Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
+        for (Integer index : bufferMap.keySet()) {
+            frameTickers.put(index, frameTickBroadcast.poll());
+        }
+
+        Map<Integer, CallableWithArguments<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
+        for (Integer index : bufferMap.keySet()) {
+            flushers.put(index, Flusher.flush(bufferMap.get(index)));
+        }
+
+        return collect(
+                toInputPorts(
+                        forEach(
+                                forEach(frameTickers, flushers),
+                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))));
     }
 
     public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, CallableWithArguments<K, V>> methods) {
@@ -101,4 +107,57 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
         1,
         "buffers to buckets - collect");
     }
+
+    private static BoundedBuffer<Map<Integer, MemoizedBucket>> toBucketMap2(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+        BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>> incompleteMap = new SimpleBuffer<>(1, "toBucketsMap2");
+        try {
+            incompleteMap.createOutputPort().produce(new ImmutableMap<>());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for(Integer index : bufferMap.keySet()){
+            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> broadcast = new LinkedList<>(incompleteMap.broadcast(2));
+            incompleteMap =
+                broadcast.poll()
+                .pairWith(
+                    broadcast.poll()
+                    .performMethod(in -> new Pulse())
+                    .performMethod(
+                        Flusher.flush(bufferMap.get(index)))
+                    .performMethod(input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))
+                    .performMethod(input2 -> new AbstractMap.SimpleImmutableEntry<>(index, input2)))
+                .performMethod(input1 -> put(input1));
+        }
+        return incompleteMap.performMethod(input1 -> input1.map);
+    }
+
+    private static class ImmutableMap<K, V>{
+        Map<K, V> map;
+
+        public ImmutableMap(){
+            map = new HashMap<>();
+        }
+
+        public ImmutableMap(Map<K, V> map) {
+            this.map = map;
+        }
+
+        public ImmutableMap put(K key, V value){
+            Map<K, V> newMap = new HashMap<>(map);
+            newMap.put(key, value);
+            return new ImmutableMap<>(newMap);
+        }
+
+        public Map<K, V> getMap(){
+            return map;
+        }
+    }
+
+    public static <K, V> ImmutableMap put(AbstractMap.SimpleImmutableEntry<ImmutableMap<K, V>, AbstractMap.SimpleImmutableEntry<K, V>> in){
+        Map<K, V> newMap = new HashMap<>(in.getKey().map);
+        newMap.put(in.getValue().getKey(), in.getValue().getValue());
+        return new ImmutableMap<>(newMap);
+    }
+
 }
