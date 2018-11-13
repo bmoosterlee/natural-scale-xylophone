@@ -22,7 +22,7 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
                 BoundedBuffer<Pulse> methodInput = new SimpleBuffer<>(1, "BuffersToBuckets - input");
                 methodInputPort = methodInput.createOutputPort();
 
-                BoundedBuffer<Map<Integer, MemoizedBucket>> bucketMap = toBucketMap2(methodInput, bufferMap);
+                BoundedBuffer<Map<Integer, MemoizedBucket>> bucketMap = toBucketMap(methodInput, bufferMap);
 
                 methodOutputPort =
                     bucketMap
