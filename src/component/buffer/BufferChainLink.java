@@ -59,7 +59,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     public OutputPort<T> createOutputPort(){
-        return createOutputPort();
+        return buffer.createOutputPort();
     }
 
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
