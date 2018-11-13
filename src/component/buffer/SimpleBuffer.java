@@ -14,17 +14,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     private final BoundedStrategy<T> boundedStrategy;
 
     public SimpleBuffer(int capacity, String name){
-        this(capacity, new BoundedStrategy<>(capacity, name));
+        this(new BoundedStrategy<>(capacity, name));
     }
 
-    public SimpleBuffer(int capacity, BoundedStrategy<T> strategy){
+    public SimpleBuffer(BoundedStrategy<T> strategy){
         boundedStrategy = strategy;
-
-        try {
-            boundedStrategy.getFilledSpots().acquire(capacity);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
