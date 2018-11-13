@@ -7,7 +7,7 @@ import component.buffer.RunningPipeComponent;
 
 public class Counter extends RunningPipeComponent<Pulse, Long> {
 
-    public Counter(BoundedBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
+    public Counter(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
         super(inputBuffer, outputBuffer, build());
     }
 

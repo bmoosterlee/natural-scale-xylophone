@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState> {
 
-    public SoundEnvironment(BoundedBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
+    public SoundEnvironment(SimpleBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
         super(inputBuffer, build(SAMPLE_SIZE_IN_BITS, sampleRate));
     }
 

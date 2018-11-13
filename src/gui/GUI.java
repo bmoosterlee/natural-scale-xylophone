@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
 
-    public GUI(BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+    public GUI(SimpleBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
         super(inputBuffer, outputBuffer, build(spectrumWindow, width, inaudibleFrequencyMargin));
     }
 

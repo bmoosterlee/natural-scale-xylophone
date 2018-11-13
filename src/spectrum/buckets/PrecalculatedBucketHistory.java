@@ -44,7 +44,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast.poll();
 
         SimpleBuffer<ImmutableLinkedList<Buckets>> historyInputBuffer = new SimpleBuffer<>(capacity, "history - input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = historyInputBuffer.pairWith(preparedBucketsBuffer1);
+        SimpleBuffer<AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> pair1 = historyInputBuffer.pairWith(preparedBucketsBuffer1);
         SimpleBuffer<ImmutableLinkedList<Buckets>> newHistoryBuffer = new SimpleBuffer<>(capacity, "history - output");
         new RunningPipeComponent<>(pair1, newHistoryBuffer, input -> input.getKey().add(input.getValue()));
 
@@ -52,7 +52,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         newHistoryInputPort = newHistoryBuffer.createInputPort();
 
         SimpleBuffer<Buckets> timeAverageBuffer = new SimpleBuffer<>(capacity, "history - time average input");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = timeAverageBuffer.pairWith(preparedBucketsBuffer2);
+        SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair2 = timeAverageBuffer.pairWith(preparedBucketsBuffer2);
         SimpleBuffer<Buckets> newTimeAverageBuffer = new SimpleBuffer<>(capacity, "history - new time average");
         new RunningPipeComponent<>(pair2, newTimeAverageBuffer, input -> input.getKey().add(input.getValue()));
 
@@ -61,7 +61,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
 
         SimpleBuffer<Buckets> conditionalInputBuffer1 = new SimpleBuffer<>(capacity, "history - conditional input 1");
         SimpleBuffer<Buckets> conditionalInputBuffer2 = new SimpleBuffer<>(capacity, "history - conditional input 2");
-        BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = conditionalInputBuffer1.pairWith(conditionalInputBuffer2);
+        SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> pair3 = conditionalInputBuffer1.pairWith(conditionalInputBuffer2);
         SimpleBuffer<Buckets> conditionalOutputBuffer = new SimpleBuffer<>(capacity, "history - conditional output");
         new RunningPipeComponent<>(pair3, conditionalOutputBuffer, input -> input.getKey().subtract(input.getValue()));
 

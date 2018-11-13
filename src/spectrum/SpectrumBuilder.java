@@ -18,7 +18,7 @@ import mixer.state.VolumeState;
 import java.util.*;
 
 public class SpectrumBuilder extends RunningPipeComponent {
-    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
+    public SpectrumBuilder(SimpleBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> outputBuffer, SpectrumWindow spectrumWindow, int width) {
         super(frameTickBuffer, outputBuffer, build(inputBuffer, spectrumWindow, width));
     }
 

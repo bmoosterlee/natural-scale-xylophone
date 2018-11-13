@@ -8,7 +8,7 @@ public class InputComponent<K> {
     protected final InputPort<K> input;
     protected final CallableWithArgument<K> method;
 
-    public InputComponent(BoundedBuffer<K> inputBuffer, CallableWithArgument<K> method) {
+    public InputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method) {
         input = inputBuffer.createInputPort();
         this.method = method;
     }

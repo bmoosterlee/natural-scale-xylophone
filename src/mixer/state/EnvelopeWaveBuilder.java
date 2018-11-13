@@ -14,7 +14,7 @@ import java.util.Collection;
 
 public class EnvelopeWaveBuilder extends RunningPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
 
-    public EnvelopeWaveBuilder(BoundedBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
+    public EnvelopeWaveBuilder(SimpleBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
         super(inputBuffer, outputBuffer, buildEnvelopeWave(sampleRate));
     }
 

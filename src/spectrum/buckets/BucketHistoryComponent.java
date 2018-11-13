@@ -5,7 +5,7 @@ import component.buffer.RunningPipeComponent;
 
 public class BucketHistoryComponent extends RunningPipeComponent<Buckets, Buckets> {
 
-    public BucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size){
+    public BucketHistoryComponent(SimpleBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size){
         super(inputBuffer, outputBuffer, new CallableWithArguments<>() {
             BucketHistory bucketHistory = new PrecalculatedBucketHistory(size);
 

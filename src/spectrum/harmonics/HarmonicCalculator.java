@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class HarmonicCalculator extends RunningPipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>> {
 
-    public HarmonicCalculator(BoundedBuffer<VolumeState> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
+    public HarmonicCalculator(SimpleBuffer<VolumeState> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 

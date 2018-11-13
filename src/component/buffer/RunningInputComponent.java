@@ -4,7 +4,7 @@ public class RunningInputComponent<K> extends InputComponent<K> {
 
     private final MyTickRunner tickRunner = new MyTickRunner();
 
-    public RunningInputComponent(BoundedBuffer<K> inputBuffer, CallableWithArgument<K> method){
+    public RunningInputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method){
         super(inputBuffer, method);
 
         start();

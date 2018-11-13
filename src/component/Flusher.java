@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Flusher<T> extends RunningPipeComponent<Pulse, List<T>> {
 
-    public Flusher(BoundedBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
+    public Flusher(SimpleBuffer<Pulse> timeInputBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<List<T>> outputBuffer) {
         super(timeInputBuffer, outputBuffer, flush(inputBuffer));
     }
 

@@ -6,7 +6,7 @@ public class RunningPipeComponent<K, V> extends PipeComponent<K, V> {
 
     private final MyTickRunner tickRunner = new MyTickRunner();
 
-    public RunningPipeComponent(BoundedBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
+    public RunningPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
         super(inputBuffer, outputBuffer, method);
 
         start();
@@ -26,7 +26,7 @@ public class RunningPipeComponent<K, V> extends PipeComponent<K, V> {
     }
 
     public static <K, V> AbstractMap.SimpleImmutableEntry<BoundedBuffer<K>, BoundedBuffer<V>> methodToComponentBuffers(CallableWithArguments<K, V> method, int capacity, String name){
-        BoundedBuffer<K> inputBuffer = new SimpleBuffer<>(capacity, name + " input");
+        SimpleBuffer<K> inputBuffer = new SimpleBuffer<>(capacity, name + " input");
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name + " output");
         new RunningPipeComponent<>(inputBuffer, outputBuffer, method);
         return new AbstractMap.SimpleImmutableEntry<>(inputBuffer, outputBuffer);

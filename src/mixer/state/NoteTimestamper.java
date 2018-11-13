@@ -7,7 +7,7 @@ import frequency.Frequency;
 
 public class NoteTimestamper extends RunningPipeComponent {
 
-    public NoteTimestamper(BoundedBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
+    public NoteTimestamper(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
         super(sampleCountBuffer, outputBuffer, NoteTimestamper.build(newNoteBuffer));
     }
 

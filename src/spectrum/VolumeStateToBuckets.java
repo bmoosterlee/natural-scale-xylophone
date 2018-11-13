@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class VolumeStateToBuckets extends RunningPipeComponent<VolumeState, Buckets> {
 
-    public VolumeStateToBuckets(BoundedBuffer<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
+    public VolumeStateToBuckets(SimpleBuffer<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
         super(volumeStateBuffer, notesBucketsBuffer, build(spectrumWindow));
     }
 

@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
 
-    public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(SimpleBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         super(tickBuffer, outputBuffer, build(spectrumBuffer, pianolaPattern,inaudibleFrequencyMargin));
     }
 

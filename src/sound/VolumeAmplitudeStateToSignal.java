@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class VolumeAmplitudeStateToSignal extends RunningPipeComponent<VolumeAmplitudeState, Double> {
 
-    public VolumeAmplitudeStateToSignal(BoundedBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
+    public VolumeAmplitudeStateToSignal(SimpleBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
         super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, build());
     }
 

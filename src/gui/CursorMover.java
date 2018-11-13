@@ -12,7 +12,7 @@ import java.awt.event.MouseMotionListener;
 
 public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
 
-    public CursorMover(BoundedBuffer<Pulse> inputBuffer, SimpleBuffer<Integer> outputBuffer, JPanel guiPanel) {
+    public CursorMover(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Integer> outputBuffer, JPanel guiPanel) {
         super(inputBuffer, outputBuffer, build(guiPanel));
     }
 

@@ -9,7 +9,7 @@ import java.util.LinkedList;
 
 public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Buckets, Buckets> {
 
-    public PrecalculatedBucketHistoryComponent(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size) {
+    public PrecalculatedBucketHistoryComponent(SimpleBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size) {
         super(inputBuffer, outputBuffer, recordHistory(size));
     }
 

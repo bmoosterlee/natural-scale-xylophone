@@ -9,7 +9,7 @@ import java.util.*;
 
 public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
-    public BuffersToBuckets(BoundedBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
+    public BuffersToBuckets(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
         super(tickBuffer, outputBuffer, build(inputMap));
     }
 

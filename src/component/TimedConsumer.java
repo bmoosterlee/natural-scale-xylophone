@@ -8,7 +8,7 @@ import component.buffer.RunningPipeComponent;
 
 public class TimedConsumer<T> extends RunningPipeComponent<Pulse, T> {
 
-    public TimedConsumer(BoundedBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
+    public TimedConsumer(SimpleBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
     }
 

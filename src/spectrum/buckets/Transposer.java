@@ -5,7 +5,7 @@ import component.buffer.RunningPipeComponent;
 
 public class Transposer extends RunningPipeComponent<Buckets, Buckets> {
 
-    public Transposer(BoundedBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int transposition) {
+    public Transposer(SimpleBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int transposition) {
         super(inputBuffer, outputBuffer, input -> input.transpose(transposition));
 
         start();
