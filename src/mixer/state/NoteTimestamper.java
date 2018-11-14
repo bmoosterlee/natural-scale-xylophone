@@ -25,13 +25,13 @@ public class NoteTimestamper extends RunningPipeComponent {
                 broadcast[0]
                 .pairWith(
                     broadcast[1]
-                    .performMethod(input1 -> new Pulse())
-                    .performMethod(Flusher.flush(newNoteBuffer)))
+                    .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
+                    .performMethod(Flusher.flush(newNoteBuffer), "flush new notes"))
                 .performMethod(
                         input1 ->
                         new TimestampedFrequencies(
                             input1.getKey(),
-                            input1.getValue()))
+                            input1.getValue()), "build timestamped frequencies")
                 .createInputPort();
             }
 

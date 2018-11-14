@@ -199,8 +199,8 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
                 input =
                     methodInputBuffer
-                    .performMethod(NoteTimestamper.build(noteInputBuffer))
-                    .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate)).createInputPort();
+                    .performMethod(NoteTimestamper.build(noteInputBuffer), "timestamp notes")
+                    .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
 
                 {
                     SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
@@ -220,24 +220,25 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     oldStateOutputPort = oldStateBuffer.createOutputPort();
 
                     methodOutputPort =
-                            oldStateBuffer
-                                    .pairWith(
-                                            sampleCountBuffer2
-                                                    .pairWith(
-                                                            groupEnvelopesByFrequencyInputBuffer
-                                                                    .performMethod(Mixer::groupEnvelopesByFrequency)
-                                                                    .pairWith(waveBuffer))
-                                                    .performMethod(
-                                                            input1 -> new EnvelopeWaveSlice(
-                                                                    input1.getKey(),
-                                                                    input1.getValue().getKey(),
-                                                                    input1.getValue().getValue()))
-                                                    .performMethod(Mixer::calculateValuesPerFrequency)
-                                                    .performMethod(Mixer::sumValuesPerFrequency))
-                                    .performMethod(input ->
-                                            input.getKey()
-                                                    .add(input.getValue()))
-                                    .createInputPort();
+                        oldStateBuffer
+                        .pairWith(
+                            sampleCountBuffer2
+                            .pairWith(
+                                groupEnvelopesByFrequencyInputBuffer
+                                .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency")
+                                .pairWith(waveBuffer))
+                                .performMethod(
+                                    input1 -> new EnvelopeWaveSlice(
+                                        input1.getKey(),
+                                        input1.getValue().getKey(),
+                                        input1.getValue().getValue()), "creat envelope wave slice")
+                                .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency")
+                                .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency"))
+                        .performMethod(
+                            input ->
+                                input.getKey()
+                                .add(input.getValue()), "add new and old state")
+                        .createInputPort();
                 }
 
                 {
@@ -252,25 +253,25 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     oldStateOutputPortPrecalc = oldStateBuffer.createOutputPort();
 
                     newStateInputPortPrecalc =
-                            oldStateBuffer
-                                    .pairWith(
-                                            sampleCountBuffer3
-                                                    .pairWith(
-                                                            groupEnvelopesByFrequencyInputBuffer
-                                                                    .performMethod(Mixer::groupEnvelopesByFrequency)
-                                                                    .pairWith(waveBuffer))
-                                                    .performMethod(
-                                                            input11 -> new EnvelopeWaveSlice(
-                                                                    input11.getKey(),
-                                                                    input11.getValue().getKey(),
-                                                                    input11.getValue().getValue()))
-                                                    .performMethod(Mixer::calculateValuesPerFrequency)
-                                                    .performMethod(Mixer::sumValuesPerFrequency))
-                                    .performMethod(
-                                            input1 ->
-                                                    input1.getKey()
-                                                            .add(input1.getValue()))
-                                    .createInputPort();
+                        oldStateBuffer
+                        .pairWith(
+                            sampleCountBuffer3
+                            .pairWith(
+                                groupEnvelopesByFrequencyInputBuffer
+                                .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency precalc")
+                                .pairWith(waveBuffer))
+                            .performMethod(
+                                    input11 -> new EnvelopeWaveSlice(
+                                            input11.getKey(),
+                                            input11.getValue().getKey(),
+                                            input11.getValue().getValue()), "build envelope wave slice precalc")
+                            .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency precalc")
+                            .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency precalc"))
+                        .performMethod(
+                            input1 ->
+                                input1.getKey()
+                                .add(input1.getValue()), "add new and old state precalc")
+                        .createInputPort();
                 }
             }
 

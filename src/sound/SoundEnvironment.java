@@ -52,7 +52,7 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
 
                 sampleAmplitudeInput =
                     methodInputBuffer
-                    .performMethod(VolumeAmplitudeStateToSignal.build())
+                    .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
                     .createInputPort();
             }
 
