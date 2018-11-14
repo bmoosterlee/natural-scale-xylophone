@@ -15,8 +15,8 @@ import java.util.concurrent.Callable;
 
 public class NoteClicker extends RunningOutputComponent<Frequency> {
 
-    public NoteClicker(SimpleBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
-        super(newNoteBuffer, build(spectrumWindow, guiPanel));
+    public NoteClicker(SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
+        super(outputBuffer, build(spectrumWindow, guiPanel));
     }
 
     public static Callable<Frequency> build(SpectrumWindow spectrumWindow, JPanel guiPanel) {
