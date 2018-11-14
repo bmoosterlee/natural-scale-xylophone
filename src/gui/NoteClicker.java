@@ -25,7 +25,7 @@ public class NoteClicker extends RunningOutputComponent<Frequency> {
             private final InputPort<Frequency> methodOutputPort;
 
             {
-                BoundedBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "clickedFrequencies");
+                BoundedBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(100, "clickedFrequencies");
                 methodInputPort = clickedFrequencies.createOutputPort();
                 methodOutputPort = clickedFrequencies.createInputPort();
 
