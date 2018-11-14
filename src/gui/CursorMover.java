@@ -1,7 +1,6 @@
 package gui;
 
 import component.*;
-import component.buffer.BoundedBuffer;
 import component.buffer.CallableWithArguments;
 import component.buffer.SimpleBuffer;
 import component.buffer.RunningPipeComponent;
@@ -19,6 +18,7 @@ public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
     public static CallableWithArguments<Pulse, Integer> build(JPanel guiPanel) {
         return new CallableWithArguments<>() {
             private Integer storedX;
+            boolean readyForNewOutput = true;
 
             {
                 guiPanel.addMouseMotionListener(new CursorListener());
@@ -32,21 +32,22 @@ public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
 
                 @Override
                 public void mouseMoved(MouseEvent e) {
-                    if (storedX == null) {
+                    if (readyForNewOutput) {
+                        readyForNewOutput = false;
                         storedX = e.getX();
                     }
                 }
             }
 
-            private Integer sendCursor() {
-                Integer oldX = storedX;
-                storedX = null;
-                return oldX;
+            private Integer getCursorX() {
+                Integer result = storedX;
+                readyForNewOutput = true;
+                return result;
             }
 
             @Override
             public Integer call(Pulse input) {
-                return sendCursor();
+                return getCursorX();
             }
         };
     }
