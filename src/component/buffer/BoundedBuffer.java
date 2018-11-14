@@ -32,4 +32,6 @@ public interface BoundedBuffer<T> {
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
 
     SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer);
+
+    <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name);
 }

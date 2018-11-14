@@ -60,7 +60,12 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, "simpleBuffler - performMethod");
+        return performMethod(method, "simpleBuffer - performMethod");
+    }
+
+    @Override
+    public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name) {
+        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
     @Override
