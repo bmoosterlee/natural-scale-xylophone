@@ -71,6 +71,28 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
                 sourceDataLine.write(new byte[]{amplitude}, 0, 1);
             }
 
+            private void writeToBuffer(byte[] amplitudes, int size) {
+                sourceDataLine.write(amplitudes, 0, size);
+            }
+
+            private byte fitAmplitude(double amplitude) {
+                return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitude / 2)));
+            }
+
+
+//            public boolean isAudible(Double volume) {
+//                return volume >= marginalSampleSize;
+//            }
+//
+//            public void close() {
+//                sourceDataLine.drain();
+//                sourceDataLine.stop();
+//            }
+            @Override
+            public void call(VolumeAmplitudeState input) {
+                playSound(input);
+            }
+
             private void tickBatch() {
                 try {
                     List<Double> amplitudes = sampleAmplitudeInput.flushOrConsume();
@@ -91,28 +113,6 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }
-
-            private void writeToBuffer(byte[] amplitudes, int size) {
-                sourceDataLine.write(amplitudes, 0, size);
-            }
-
-            private byte fitAmplitude(double amplitude) {
-                return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitude / 2)));
-            }
-
-//            public boolean isAudible(Double volume) {
-//                return volume >= marginalSampleSize;
-//            }
-//
-//            public void close() {
-//                sourceDataLine.drain();
-//                sourceDataLine.stop();
-//            }
-
-            @Override
-            public void call(VolumeAmplitudeState input) {
-                playSound(input);
             }
         };
     }
