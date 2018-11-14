@@ -72,8 +72,8 @@ class Main {
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                     sampleLookahead,
                     "sample ticker - output")
-                .performMethod(Counter.build())
-                .performMethod(Mixer.build(newNoteBuffer, sampleRate))
+                .performMethod(Counter.build(), "count samples")
+                .performMethod(Mixer.build(newNoteBuffer, sampleRate), "mix")
                 .broadcast(2));
 
         volumeBroadcast.poll()
@@ -88,7 +88,7 @@ class Main {
                         volumeBroadcast.poll()
                         .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
                         spectrumWindow,
-                        width))
+                        width), "build spectrum")
                 .broadcast(2));
 
         spectrumBroadcast.poll()
