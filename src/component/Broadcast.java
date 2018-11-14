@@ -16,7 +16,7 @@ public class Broadcast<T> {
     private final Collection<OutputPort<T>> outputs;
     private final MyTickRunner tickRunner = new MyTickRunner();
 
-    public Broadcast(BoundedBuffer<T> inputBuffer, Collection<? extends BoundedBuffer<T>> outputBuffers) {
+    public Broadcast(SimpleBuffer<T> inputBuffer, Collection<? extends BoundedBuffer<T>> outputBuffers) {
         input = inputBuffer.createInputPort();
 
         outputs = new HashSet<>();
@@ -45,7 +45,7 @@ public class Broadcast<T> {
         }
     }
 
-    public static <T> Collection<SimpleBuffer<T>> broadcast(BoundedBuffer<T> inputBuffer, int size){
+    public static <T> Collection<SimpleBuffer<T>> broadcast(SimpleBuffer<T> inputBuffer, int size){
         Collection<SimpleBuffer<T>> outputBuffers = new LinkedList<>();
         for(int i = 0; i<size; i++){
             outputBuffers.add(new SimpleBuffer<>(1, "broadcast"));
