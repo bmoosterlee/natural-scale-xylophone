@@ -64,7 +64,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
                     for (Integer index : ys.keySet()) {
                         int y = ys.get(index);
-                        g.drawRect(index, height - y, 1, y);
+                        g.drawLine(index, height, index, height-y);
                     }
                 }
 
@@ -83,7 +83,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 private void renderCursorLine(Graphics g, int x) {
                     g.setColor(Color.green);
 
-                    g.drawRect(x, 0, 1, height);
+                    g.drawLine(x, 0, x, height);
                 }
             }
 
