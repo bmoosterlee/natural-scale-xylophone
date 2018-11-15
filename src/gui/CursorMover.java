@@ -17,7 +17,7 @@ public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
 
     public static CallableWithArguments<Pulse, Integer> build(JPanel guiPanel) {
         return new CallableWithArguments<>() {
-            private Integer storedX;
+            private Integer storedX = 0;
             boolean readyForNewOutput = true;
 
             {
