@@ -117,14 +117,14 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
 
                 methodOutputPort =
                     spectrumBroadcast.poll()
-                    .performMethod(input -> new Pulse())
+                    .performMethod(input -> new Pulse(), "note - spectrum to pulse")
                     .performMethod(NoteClicker.build(spectrumWindow, guiPanel),
                             "note clicker - output")
                     .createInputPort();
 
 
                 spectrumBroadcast.poll()
-                    .performMethod(input1 -> new Pulse())
+                    .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
                     .performMethod(CursorMover.build(guiPanel))
                     .relayTo(cursorXBuffer);
 
