@@ -7,7 +7,6 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import component.*;
 import component.buffer.*;
-import component.buffer.TickRunner;
 import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import pianola.patterns.PianolaPattern;
@@ -16,17 +15,15 @@ import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
 import spectrum.buckets.PrecalculatedBucketHistory;
 
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
-public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
+public class Pianola extends RunningPipeComponent<Pulse, List<Frequency>> {
 
-    public Pianola(SimpleBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<Frequency> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(SimpleBuffer<Pulse> tickBuffer, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         super(tickBuffer, outputBuffer, build(spectrumBuffer, pianolaPattern,inaudibleFrequencyMargin));
     }
 
-    public static CallableWithArguments<Pulse, Frequency> build(BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin){
+    public static CallableWithArguments<Pulse, List<Frequency>> build(BoundedBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>> spectrumBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin){
         return new CallableWithArguments<>() {
             private final InputPort<Buckets> notesInput;
             private BucketHistory noteHistory;
@@ -36,9 +33,9 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
             private final InputPort<Buckets> preparedNotesInput;
             private final InputPort<Buckets> preparedHarmonicsInput;
 
-            private InputPort<Frequency> methodOutputPort;
+            private InputPort<List<Frequency>> methodOutputPort;
 
-            private OutputPort<Collection<Frequency>> outputPort;
+            private OutputPort<List<Frequency>> outputPort;
 
             {
                 int count = 0;
@@ -55,10 +52,9 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                 count++;
                 averagerInput = new OutputPort<>(notesAveragerInputBuffer);
 
-                BoundedBuffer<Collection<Frequency>> patternOutput = new SimpleBuffer<>(1, "pianola - output");
+                BoundedBuffer<List<Frequency>> patternOutput = new SimpleBuffer<>(1, "pianola - output");
                 outputPort = patternOutput.createOutputPort();
-                BoundedBuffer<Frequency> methodOutput = toBuffer(patternOutput);
-                methodOutputPort = methodOutput.createInputPort();
+                methodOutputPort = patternOutput.createInputPort();
 
                 notesInput = noteSpectrumBuffer.createInputPort();
                 preparedNotesInput =
@@ -71,7 +67,7 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                     .createInputPort();
             }
 
-            private Frequency playNotes() {
+            private List<Frequency> playNotes() {
                 try {
                     Buckets origNoteBuckets;
                     try {
@@ -87,7 +83,7 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
                     Buckets noteBuckets = preparedNotesInput.consume();
                     Buckets harmonicsBuckets = preparedHarmonicsInput.consume();
 
-                    Set<Frequency> results = pianolaPattern.playPattern(noteBuckets, harmonicsBuckets);
+                    LinkedList<Frequency> results = new LinkedList<>(pianolaPattern.playPattern(noteBuckets, harmonicsBuckets));
                     outputPort.produce(results);
 
                     return methodOutputPort.consume();
@@ -98,31 +94,10 @@ public class Pianola extends RunningPipeComponent<Pulse, Frequency> {
             }
 
             @Override
-            public Frequency call(Pulse input) {
+            public List<Frequency> call(Pulse input) {
                 return playNotes();
             }
         };
     }
 
-    public static <T> BoundedBuffer<T> toBuffer(BoundedBuffer<Collection<T>> input){
-        BoundedBuffer<T> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
-        InputPort<Collection<T>> inputPort = input.createInputPort();
-        OutputPort<T> outputPort = outputBuffer.createOutputPort();
-
-        new TickRunner() {
-            @Override
-            protected void tick() {
-                try {
-                    Collection<T> input = inputPort.consume();
-                    for(T element : input){
-                        outputPort.produce(element);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        return outputBuffer;
-    }
 }

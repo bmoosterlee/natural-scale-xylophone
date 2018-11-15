@@ -1,21 +1,26 @@
 package main;
 
 import component.*;
-import component.buffer.BoundedBuffer;
-import component.buffer.OutputPort;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningOutputComponent;
+import component.buffer.*;
 import frequency.Frequency;
+import gui.GUI;
 import mixer.Mixer;
 import mixer.state.VolumeAmplitudeState;
+import pianola.Pianola;
+import pianola.patterns.PianolaPattern;
+import pianola.patterns.SweepToTargetUpDown;
 import sound.SampleRate;
 import sound.SoundEnvironment;
+import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
+import spectrum.buckets.Buckets;
 import time.PerformanceTracker;
 import time.Ticker;
 import time.TimeInSeconds;
 
 import java.awt.*;
+import java.util.AbstractMap;
+import java.util.LinkedList;
 
 /*
 The main components are:
@@ -100,16 +105,19 @@ class Main {
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
 
-        RunningOutputComponent.buildOutputBuffer(
-            Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
-            pianolaLookahead,
-            "Pianola ticker")
-        .performMethod(
-            Pianola.build(
-                spectrumBroadcast.poll()
-                .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "pianola - input"))),
-                pianolaPattern,
-                inaudibleFrequencyMargin))
+        Unzipper.unzip(
+            RunningOutputComponent.buildOutputBuffer(
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
+                pianolaLookahead,
+                "Pianola ticker")
+            .performMethod(
+                Pianola.build(
+                    spectrumBroadcast.poll()
+                    .relayTo(
+                        new SimpleBuffer<>(
+                            new OverwritableStrategy<>(1, "pianola - input"))),
+                    pianolaPattern,
+                    inaudibleFrequencyMargin), "build pianola"))
         .relayTo(newNoteBuffer);
 
         playTestTone(newNoteBuffer, spectrumWindow);
