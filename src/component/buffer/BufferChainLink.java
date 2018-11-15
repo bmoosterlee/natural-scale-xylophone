@@ -90,7 +90,6 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     @Override
     public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
-        new ChainedPipeComponent<>(breakChain(), outputBuffer, input -> input);
-        return outputBuffer;
+        return breakChain().relayTo(outputBuffer);
     }
 }
