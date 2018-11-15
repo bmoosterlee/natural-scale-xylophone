@@ -1,26 +1,23 @@
 package gui;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.InputPort;
-import component.buffer.OutputPort;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningOutputComponent;
+import component.Pulse;
+import component.buffer.*;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.concurrent.Callable;
+import java.util.List;
 
-public class NoteClicker extends RunningOutputComponent<Frequency> {
+public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
 
-    public NoteClicker(SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
-        super(outputBuffer, build(spectrumWindow, guiPanel));
+    public NoteClicker(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
+        super(inputBuffer, outputBuffer, build(spectrumWindow, guiPanel));
     }
 
-    public static Callable<Frequency> build(SpectrumWindow spectrumWindow, JPanel guiPanel) {
-        return new Callable<>() {
+    public static CallableWithArguments<Pulse, List<Frequency>> build(SpectrumWindow spectrumWindow, JPanel guiPanel) {
+        return new CallableWithArguments<>() {
             private final OutputPort<Frequency> methodInputPort;
             private final InputPort<Frequency> methodOutputPort;
 
@@ -63,9 +60,9 @@ public class NoteClicker extends RunningOutputComponent<Frequency> {
                 }
             }
 
-            private Frequency clickFrequency() {
+            private List<Frequency> clickFrequency() {
                 try {
-                    return methodOutputPort.consume();
+                    return methodOutputPort.flush();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -73,7 +70,7 @@ public class NoteClicker extends RunningOutputComponent<Frequency> {
             }
 
             @Override
-            public Frequency call() {
+            public List<Frequency> call(Pulse input) {
                 return clickFrequency();
             }
         };

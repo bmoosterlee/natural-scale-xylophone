@@ -96,8 +96,9 @@ class Main {
                         width), "build spectrum")
                 .broadcast(2));
 
-        spectrumBroadcast.poll()
-        .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin))
+        Unzipper.unzip(
+            spectrumBroadcast.poll()
+            .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin), "build gui"))
         .relayTo(newNoteBuffer);
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());

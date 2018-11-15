@@ -16,13 +16,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buckets>, Frequency> {
+public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buckets>, java.util.List<Frequency>> {
 
-    public GUI(SimpleBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<Frequency> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+    public GUI(SimpleBuffer<SimpleImmutableEntry<Buckets, Buckets>> inputBuffer, SimpleBuffer<java.util.List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
         super(inputBuffer, outputBuffer, build(spectrumWindow, width, inaudibleFrequencyMargin));
     }
 
-    public static CallableWithArguments<SimpleImmutableEntry<Buckets, Buckets>, Frequency> build(SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
+    public static CallableWithArguments<SimpleImmutableEntry<Buckets, Buckets>, java.util.List<Frequency>> build(SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin){
         return new CallableWithArguments<>() {
             private final int height = 600;
             private final double yScale = height * 0.95;
@@ -31,7 +31,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             private final GUIPanel guiPanel;
             
             private OutputPort<SimpleImmutableEntry<Buckets, Buckets>> methodInputPort;
-            private InputPort<Frequency> methodOutputPort;
+            private InputPort<java.util.List<Frequency>> methodOutputPort;
 
             class GUIPanel extends JPanel {
                 private final InputPort<Map<Integer, Integer>> newNotesPort;
@@ -94,7 +94,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 methodInputPort = methodInputBuffer.createOutputPort();
 
                 LinkedList<BoundedBuffer<SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
-                    new LinkedList<>(methodInputBuffer.broadcast(2));
+                    new LinkedList<>(methodInputBuffer.broadcast(3));
 
                 SimpleBuffer<Buckets> noteSpectrumBuffer = new SimpleBuffer<>(capacity, "gui - note spectrum");
                 SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(capacity, "gui - harmonic spectrum");
@@ -103,22 +103,23 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 SimpleBuffer<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
                 InputPort<Map<Integer, Integer>> newNotesPort =
                     noteSpectrumBuffer
-                    .performMethod(GUI::bucketsToVolumes)
-                    .performMethod(input2 -> volumesToYs(input2, yScale, margin))
+                    .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
+                    .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
                     .createInputPort();
                 InputPort<Map<Integer, Integer>> newHarmonicsPort =
                     harmonicSpectrumBuffer
-                    .performMethod(BucketsAverager.build(inaudibleFrequencyMargin))
-                    .performMethod(GUI::bucketsToVolumes)
-                    .performMethod(input2 -> volumesToYs(input2, yScale, margin))
+                    .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "average buckets- harmonics")
+                    .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
+                    .performMethod(input2 -> volumesToYs(input2, yScale, margin), "voluems to ys - harmonics")
                     .createInputPort();
                 InputPort<Integer> newCursorXPort = cursorXBuffer.createInputPort();
                 guiPanel = new GUIPanel(newNotesPort, newHarmonicsPort, newCursorXPort);
 
                 methodOutputPort =
-                    RunningOutputComponent.buildOutputBuffer(NoteClicker.build(spectrumWindow, guiPanel),
-                    capacity,
-                    "note clicker - output")
+                    spectrumBroadcast.poll()
+                    .performMethod(input -> new Pulse())
+                    .performMethod(NoteClicker.build(spectrumWindow, guiPanel),
+                            "note clicker - output")
                     .createInputPort();
 
 
@@ -135,7 +136,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 frame.setVisible(true);
             }
 
-            private Frequency clickNotes(SimpleImmutableEntry<Buckets, Buckets> input) {
+            private java.util.List<Frequency> clickNotes(SimpleImmutableEntry<Buckets, Buckets> input) {
                 try {
                     methodInputPort.produce(input);
 
@@ -149,7 +150,7 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             }
 
             @Override
-            public Frequency call(SimpleImmutableEntry<Buckets, Buckets> input) {
+            public java.util.List<Frequency> call(SimpleImmutableEntry<Buckets, Buckets> input) {
                 return clickNotes(input);
             }
         };
