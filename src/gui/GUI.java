@@ -85,9 +85,6 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             private java.util.List<Frequency> clickNotes(SimpleImmutableEntry<Buckets, Buckets> input) {
                 try {
                     methodInputPort.produce(input);
-
-                    guiPanel.repaint();
-
                     return methodOutputPort.consume();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -105,10 +102,14 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                 private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
                 private final InputPort<Integer> newCursorXPort;
 
+                TickRunner myTickRunner = new MyTickRunner();
+
                 GUIPanel(InputPort<Map<Integer, Integer>> newNotesPort, InputPort<Map<Integer, Integer>> newHarmonicsPort, InputPort<Integer> newCursorXPort) {
                     this.newNotesPort = newNotesPort;
                     this.newHarmonicsPort = newHarmonicsPort;
                     this.newCursorXPort = newCursorXPort;
+
+                    myTickRunner.start();
                 }
 
                 @Override
@@ -151,6 +152,14 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
                     g.setColor(Color.green);
 
                     g.drawLine(x, 0, x, height);
+                }
+
+                class MyTickRunner extends TickRunner {
+
+                    @Override
+                    protected void tick() {
+                        repaint();
+                    }
                 }
             }
         };
