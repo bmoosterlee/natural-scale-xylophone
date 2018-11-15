@@ -33,60 +33,6 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             private OutputPort<SimpleImmutableEntry<Buckets, Buckets>> methodInputPort;
             private InputPort<java.util.List<Frequency>> methodOutputPort;
 
-            class GUIPanel extends JPanel {
-                private final InputPort<Map<Integer, Integer>> newNotesPort;
-                private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
-                private final InputPort<Integer> newCursorXPort;
-
-                GUIPanel(InputPort<Map<Integer, Integer>> newNotesPort, InputPort<Map<Integer, Integer>> newHarmonicsPort, InputPort<Integer> newCursorXPort) {
-                    this.newNotesPort = newNotesPort;
-                    this.newHarmonicsPort = newHarmonicsPort;
-                    this.newCursorXPort = newCursorXPort;
-                }
-
-                @Override
-                public void paintComponent(Graphics g) {
-                    try {
-                        Map<Integer, Integer> notes = newNotesPort.consume();
-                        Map<Integer, Integer> harmonics = newHarmonicsPort.consume();
-                        Integer cursorX = newCursorXPort.consume();
-
-                        super.paintComponent(g);
-                        renderHarmonicsBuckets(g, harmonics);
-                        renderNoteBuckets(g, notes);
-                        renderCursorLine(g, cursorX);
-
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
-                    for (Integer index : ys.keySet()) {
-                        int y = ys.get(index);
-                        g.drawLine(index, height, index, height-y);
-                    }
-                }
-
-                private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
-                    g.setColor(Color.gray);
-
-                    renderBuckets(g, ys);
-                }
-
-                private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
-                    g.setColor(Color.blue);
-
-                    renderBuckets(g, ys);
-                }
-
-                private void renderCursorLine(Graphics g, int x) {
-                    g.setColor(Color.green);
-
-                    g.drawLine(x, 0, x, height);
-                }
-            }
-
             {
                 int capacity = 100;
 
@@ -152,6 +98,60 @@ public class GUI extends RunningPipeComponent<SimpleImmutableEntry<Buckets, Buck
             @Override
             public java.util.List<Frequency> call(SimpleImmutableEntry<Buckets, Buckets> input) {
                 return clickNotes(input);
+            }
+
+            class GUIPanel extends JPanel {
+                private final InputPort<Map<Integer, Integer>> newNotesPort;
+                private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
+                private final InputPort<Integer> newCursorXPort;
+
+                GUIPanel(InputPort<Map<Integer, Integer>> newNotesPort, InputPort<Map<Integer, Integer>> newHarmonicsPort, InputPort<Integer> newCursorXPort) {
+                    this.newNotesPort = newNotesPort;
+                    this.newHarmonicsPort = newHarmonicsPort;
+                    this.newCursorXPort = newCursorXPort;
+                }
+
+                @Override
+                public void paintComponent(Graphics g) {
+                    try {
+                        Map<Integer, Integer> notes = newNotesPort.consume();
+                        Map<Integer, Integer> harmonics = newHarmonicsPort.consume();
+                        Integer cursorX = newCursorXPort.consume();
+
+                        super.paintComponent(g);
+                        renderHarmonicsBuckets(g, harmonics);
+                        renderNoteBuckets(g, notes);
+                        renderCursorLine(g, cursorX);
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                private void renderBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    for (Integer index : ys.keySet()) {
+                        int y = ys.get(index);
+                        g.drawLine(index, height, index, height-y);
+                    }
+                }
+
+                private void renderHarmonicsBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    g.setColor(Color.gray);
+
+                    renderBuckets(g, ys);
+                }
+
+                private void renderNoteBuckets(Graphics g, Map<Integer, Integer> ys) {
+                    g.setColor(Color.blue);
+
+                    renderBuckets(g, ys);
+                }
+
+                private void renderCursorLine(Graphics g, int x) {
+                    g.setColor(Color.green);
+
+                    g.drawLine(x, 0, x, height);
+                }
             }
         };
     }
