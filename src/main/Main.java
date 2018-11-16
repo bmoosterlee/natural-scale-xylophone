@@ -1,7 +1,11 @@
 package main;
 
-import component.*;
-import component.buffer.*;
+import component.Counter;
+import component.Unzipper;
+import component.buffer.OutputPort;
+import component.buffer.OverwritableStrategy;
+import component.buffer.RunningOutputComponent;
+import component.buffer.SimpleBuffer;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
@@ -19,7 +23,6 @@ import time.Ticker;
 import time.TimeInSeconds;
 
 import java.awt.*;
-import java.util.AbstractMap;
 import java.util.LinkedList;
 
 /*

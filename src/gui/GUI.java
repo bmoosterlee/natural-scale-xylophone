@@ -1,7 +1,6 @@
 package gui;
 
 import component.Pulse;
-import component.buffer.BoundedBuffer;
 import component.buffer.InputPort;
 import component.buffer.SimpleBuffer;
 import component.buffer.TickRunner;
@@ -12,7 +11,6 @@ import spectrum.buckets.BucketsAverager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
