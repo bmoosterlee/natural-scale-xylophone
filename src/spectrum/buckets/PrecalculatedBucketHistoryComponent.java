@@ -30,7 +30,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                     new LinkedList<>(
                         inputBuffer
                         .performMethod(input1 -> input1.multiply(multiplier))
-                        .broadcast(2));
+                        .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
                 SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
 
@@ -79,7 +79,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 };
 
                 SimpleBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
-                LinkedList<BoundedBuffer<Buckets>> outputTimeAverageBroadcast = new LinkedList<>(outputTimeAverageBuffer.broadcast(2));
+                LinkedList<BoundedBuffer<Buckets>> outputTimeAverageBroadcast = new LinkedList<>(outputTimeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
                 BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast.poll();
 
 

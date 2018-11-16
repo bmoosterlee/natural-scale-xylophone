@@ -39,7 +39,7 @@ public class PrecalculatedBucketHistory implements BucketHistory {
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> addNewBucketsMultiplier = RunningPipeComponent.methodToComponentBuffers(input -> input.multiply(multiplier), capacity, "buckets history - multiply");
         multiplierOutputPort = new OutputPort<>(addNewBucketsMultiplier.getKey());
 
-        LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast = new LinkedList<>(addNewBucketsMultiplier.getValue().broadcast(2));
+        LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast = new LinkedList<>(addNewBucketsMultiplier.getValue().broadcast(2, "precalculatedBucketHistory preparedBuckets - broadcast"));
         BoundedBuffer<Buckets> preparedBucketsBuffer1 = preparedBucketsBroadcast.poll();
         BoundedBuffer<Buckets> preparedBucketsBuffer2 = preparedBucketsBroadcast.poll();
 

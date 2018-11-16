@@ -31,7 +31,7 @@ public class Pianola {
 
         int repetitionDampener = 3;
 
-        LinkedList<SimpleBuffer<Pulse>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2));
+        LinkedList<SimpleBuffer<Pulse>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
         preparedNotesInput =
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer))

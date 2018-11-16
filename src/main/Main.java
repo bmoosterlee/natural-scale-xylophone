@@ -82,7 +82,7 @@ class Main {
                     "sample ticker - output")
                 .performMethod(Counter.build(), "count samples")
                 .performMethod(Mixer.build(newNoteBuffer, sampleRate), "mix")
-                .broadcast(2));
+                .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
         .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
@@ -99,8 +99,8 @@ class Main {
             spectrumWindow,
             width);
 
-        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(noteSpectrumBuffer.broadcast(2));
-        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(harmonicSpectrumBuffer.broadcast(2));
+        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(noteSpectrumBuffer.broadcast(2, "main note spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(harmonicSpectrumBuffer.broadcast(2, "main harmonic spectrum - broadcast"));
 
         SimpleBuffer<java.util.List<Frequency>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         Unzipper.unzip(guiOutputBuffer).relayTo(newNoteBuffer);

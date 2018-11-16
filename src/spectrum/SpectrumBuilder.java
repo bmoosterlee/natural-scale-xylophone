@@ -27,13 +27,13 @@ public class SpectrumBuilder {
     public SpectrumBuilder(SimpleBuffer<Pulse> frameTickBuffer, SimpleBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<Buckets> noteOutputBuffer, SimpleBuffer<Buckets> harmonicOutputBuffer, SpectrumWindow spectrumWindow, int width) {
         this.spectrumWindow = spectrumWindow;
 
-        LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2));
+        LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2, "spectrum builder tick - broadcast"));
         LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
             new LinkedList<>(
                 tickBroadcast.poll()
                 .performMethod(TimedConsumer.consumeFrom(inputBuffer))
                 .performMethod(VolumeAmplitudeToVolumeFilter::filter)
-                .broadcast(2));
+                .broadcast(2, "Spectrum builder volume - broadcast"));
 
         volumeBroadcast.poll()
         .performMethod(VolumeStateToBuckets.build(spectrumWindow))

@@ -46,7 +46,7 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
     }
 
     private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size()));
+        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "buffers to buckets tick - broadcast"));
         Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
             frameTickers.put(index, frameTickBroadcast.poll());
@@ -117,11 +117,11 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
         }
 
         for(Integer index : bufferMap.keySet()){
-            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> broadcast = new LinkedList<>(incompleteMap.broadcast(2));
+            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> incompleteMapBroadcast = new LinkedList<>(incompleteMap.broadcast(2, "buffers to buckets toBucketsMap2 - broadcast"));
             incompleteMap =
-                broadcast.poll()
+                incompleteMapBroadcast.poll()
                 .pairWith(
-                    broadcast.poll()
+                    incompleteMapBroadcast.poll()
                     .performMethod(in -> new Pulse())
                     .performMethod(
                         Flusher.flush(bufferMap.get(index)))

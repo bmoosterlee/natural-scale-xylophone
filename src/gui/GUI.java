@@ -31,7 +31,7 @@ public class GUI {
         int capacity = 100;
 
         LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast =
-                new LinkedList<>(noteInputBuffer.broadcast(3));
+                new LinkedList<>(noteInputBuffer.broadcast(3, "GUI note spectrum - broadcast"));
 
         newHarmonicsPort =
                 harmonicInputBuffer
