@@ -74,13 +74,13 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipeline) {
-        return pipeline.call(this);
+    public <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipe) {
+        return pipe.call(this);
     }
 
     @Override
-    public void connectTo(CallableWithArgument<BoundedBuffer<T>> pipeline) {
-        pipeline.call(this);
+    public void connectTo(CallableWithArgument<BoundedBuffer<T>> pipe) {
+        pipe.call(this);
     }
 
     @Override
