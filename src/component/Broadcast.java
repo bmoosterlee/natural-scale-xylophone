@@ -16,11 +16,11 @@ public class Broadcast<T> {
     private final Collection<OutputPort<T>> outputs;
     private final MyTickRunner tickRunner = new MyTickRunner();
 
-    public Broadcast(SimpleBuffer<T> inputBuffer, Collection<? extends BoundedBuffer<T>> outputBuffers) {
+    public Broadcast(SimpleBuffer<T> inputBuffer, Collection<SimpleBuffer<T>> outputBuffers) {
         input = inputBuffer.createInputPort();
 
         outputs = new HashSet<>();
-        for(BoundedBuffer<T> buffer : outputBuffers){
+        for(SimpleBuffer<T> buffer : outputBuffers){
             outputs.add(new OutputPort<>(buffer));
         }
 
