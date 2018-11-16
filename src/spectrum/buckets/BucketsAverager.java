@@ -34,7 +34,7 @@ public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
             LinkedList<SimpleBuffer<Buckets>> hollowBucketsBroadcast =
                     new LinkedList<>(
                             methodInputBroadcast.poll()
-                                    .performMethod(BucketsAverager::getHollowBuckets)
+                                    .performMethod(BucketsAverager::getHollowBuckets, "hollow buckets - output")
                                     .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
 
             for (int i = 0; i < averagingWidth - 1; i++) {
@@ -43,18 +43,18 @@ public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
                 LinkedList<SimpleBuffer<Buckets>> multiplierBroadcast =
                         new LinkedList<>(
                                 hollowBucketsBroadcast.poll()
-                                        .performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]))
+                                        .performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]), "buckets averager multiplier - output")
                                         .broadcast(2, "buckets averager multiplier - broadcast"));
 
                 int finalI = i + 1;
 
                 adderBuffers.add(
                         multiplierBroadcast.poll()
-                                .performMethod(input1 -> input1.transpose(finalI)));
+                                .performMethod(input1 -> input1.transpose(finalI), "buckets averager transpose positive"));
 
                 adderBuffers.add(
                         multiplierBroadcast.poll()
-                                .performMethod(input1 -> input1.transpose(-(finalI))));
+                                .performMethod(input1 -> input1.transpose(-(finalI)), "buckets averager transpose negative"));
             }
 
             return Adder.build(adderBuffers);

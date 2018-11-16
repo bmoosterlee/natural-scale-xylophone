@@ -26,7 +26,7 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
                 methodOutputPort =
                     bucketMap
-                    .performMethod(Buckets::new).createInputPort();
+                    .performMethod(Buckets::new, "buffers to buckets - create buckets").createInputPort();
             }
 
             @Override
@@ -67,7 +67,7 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
     public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, CallableWithArguments<K, V>> methods) {
         Map<I, BoundedBuffer<V>> output = new HashMap<>();
         for (I index : input.keySet()) {
-            output.put(index, input.get(index).performMethod(methods.get(index)));
+            output.put(index, input.get(index).performMethod(methods.get(index), "buffers to buckets - for each method application"));
         }
         return output;
     }
@@ -75,7 +75,7 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
     public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, CallableWithArguments<K, V> method) {
         Map<I, BoundedBuffer<V>> output = new HashMap<>();
         for (I index : input.keySet()) {
-            output.put(index, input.get(index).performMethod(method));
+            output.put(index, input.get(index).performMethod(method, "buffers to buckets - for each single method application"));
         }
         return output;
     }
@@ -122,14 +122,14 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
                 incompleteMapBroadcast.poll()
                 .pairWith(
                     incompleteMapBroadcast.poll()
-                    .performMethod(in -> new Pulse())
+                    .performMethod(in -> new Pulse(), "buffers to buckets - to pulse")
                     .performMethod(
-                        Flusher.flush(bufferMap.get(index)))
-                    .performMethod(input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))
-                    .performMethod(input2 -> new AbstractMap.SimpleImmutableEntry<>(index, input2)))
-                .performMethod(input1 -> put(input1));
+                        Flusher.flush(bufferMap.get(index)), "buffers to buckets - flush")
+                    .performMethod(input1 -> new MemoizedBucket(new CompositeBucket<>(input1)), "buffers to buckets - create bucket")
+                    .performMethod(input2 -> new AbstractMap.SimpleImmutableEntry<>(index, input2), "buffers to buckets - pair indrx new entry"))
+                .performMethod(input1 -> put(input1), "buffers to buckets - put entry");
         }
-        return incompleteMap.performMethod(input1 -> input1.map);
+        return incompleteMap.performMethod(input1 -> input1.map, "buffers to buckets - extract Map");
     }
 
     private static class ImmutableMap<K, V>{

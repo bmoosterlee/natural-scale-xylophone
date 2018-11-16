@@ -34,7 +34,7 @@ public class Pianola {
         LinkedList<SimpleBuffer<Pulse>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
         preparedNotesInput =
             tickBroadcast.poll()
-            .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer))
+            .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
 //            .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(50))
 //            .performMethod(input -> input.multiply(repetitionDampener))
 //            .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin))
@@ -42,7 +42,7 @@ public class Pianola {
 
         preparedHarmonicsInput =
             tickBroadcast.poll()
-            .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer))
+            .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer), "pianola - consume from harmonic spectrum buffer")
 //            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin))
             .createInputPort();
 

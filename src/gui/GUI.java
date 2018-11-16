@@ -52,7 +52,7 @@ public class GUI {
 
         noteSpectrumBroadcast.poll()
                 .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
-                .performMethod(CursorMover.build(guiPanel))
+                .performMethod(CursorMover.build(guiPanel), "build cursor mover")
                 .relayTo(cursorXBuffer);
 
         noteSpectrumBroadcast.poll()

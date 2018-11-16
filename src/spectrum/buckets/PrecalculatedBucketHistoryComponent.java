@@ -29,7 +29,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast =
                     new LinkedList<>(
                         inputBuffer
-                        .performMethod(input1 -> input1.multiply(multiplier))
+                        .performMethod(input1 -> input1.multiply(multiplier), "precalculated bucket history component - multiply")
                         .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
                 SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
@@ -51,7 +51,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                             .performMethod(
                                 input1 ->
                                     input1.getKey()
-                                    .subtract(input1.getValue()))
+                                    .subtract(input1.getValue()), "precalculated bucket history component - subtract")
                             .createInputPort();
                     }
 
@@ -89,15 +89,15 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 .performMethod(
                     input1 ->
                     input1.getKey()
-                    .add(input1.getValue()))
+                    .add(input1.getValue()), "precalculated bucket history - add new buckets")
                 .pairWith(
                     timeAverageBuffer
                     .pairWith(preparedBucketsBroadcast.poll())
                     .performMethod(
                         input1 ->
                         input1.getKey()
-                        .add(input1.getValue())))
-                .performMethod(removeOldHistory),
+                        .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"))
+                .performMethod(removeOldHistory, "precalculated bucket history component - remove old history"),
                 historyBuffer,
                 outputTimeAverageBuffer);
 

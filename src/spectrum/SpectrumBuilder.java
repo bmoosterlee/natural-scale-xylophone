@@ -31,17 +31,17 @@ public class SpectrumBuilder {
         LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
             new LinkedList<>(
                 tickBroadcast.poll()
-                .performMethod(TimedConsumer.consumeFrom(inputBuffer))
-                .performMethod(VolumeAmplitudeToVolumeFilter::filter)
+                .performMethod(TimedConsumer.consumeFrom(inputBuffer), "consume from input buffer")
+                .performMethod(VolumeAmplitudeToVolumeFilter::filter, "volume amplitude filter to volume")
                 .broadcast(2, "Spectrum builder volume - broadcast"));
 
         volumeBroadcast.poll()
-        .performMethod(VolumeStateToBuckets.build(spectrumWindow))
+        .performMethod(VolumeStateToBuckets.build(spectrumWindow), "build volume state to buckets")
         .relayTo(noteOutputBuffer);
 
         harmonicsIteratorInput =
             volumeBroadcast.poll()
-            .performMethod(HarmonicCalculator.calculateHarmonics(100))
+            .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator")
             .createInputPort();
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
@@ -55,8 +55,8 @@ public class SpectrumBuilder {
         }
 
         tickBroadcast.poll()
-        .performMethod(BuffersToBuckets.build(harmonicsMap))
-        .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(200))
+        .performMethod(BuffersToBuckets.build(harmonicsMap), "build buffers to buckets")
+        .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(200), "spectrum builder - build history")
         .relayTo(harmonicOutputBuffer);
 
         start();
