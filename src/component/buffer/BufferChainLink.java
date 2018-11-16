@@ -7,14 +7,14 @@ import java.util.List;
 public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
-    public final ChainedPipeComponent<? extends Object, T> previousComponent;
+    protected final ChainedPipeComponent<? extends Object, T> previousComponent;
 
-    public BufferChainLink(SimpleBuffer<T> buffer, ChainedPipeComponent<? extends Object, T> previousComponent) {
+    protected BufferChainLink(SimpleBuffer<T> buffer, ChainedPipeComponent<? extends Object, T> previousComponent) {
         this.buffer = buffer;
         this.previousComponent = previousComponent;
     }
 
-    public SimpleBuffer<T> breakChain(){
+    protected SimpleBuffer<T> breakChain(){
         previousComponent.start();
 
         return buffer;
