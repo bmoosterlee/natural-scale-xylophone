@@ -50,10 +50,12 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         return buffer.isFull();
     }
 
+    @Override
     public InputPort<T> createInputPort(){
         return breakChain().createInputPort();
     }
 
+    @Override
     public OutputPort<T> createOutputPort(){
         return buffer.createOutputPort();
     }
@@ -62,6 +64,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         return buffer.createInputPort();
     }
 
+    @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
         return performMethod(method,"bufferChainLink - performMethod");
     }
@@ -76,18 +79,22 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         new ChainedInputComponent<>(this, method);
     }
 
+    @Override
     public Collection<SimpleBuffer<T>> broadcast(int size) {
         return breakChain().broadcast(size);
     }
 
+    @Override
     public Collection<SimpleBuffer<T>> broadcast(int size, String name) {
         return breakChain().broadcast(size, name);
     }
 
+    @Override
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
         return breakChain().pairWith(other);
     }
 
+    @Override
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return breakChain().pairWith(other);
     }
