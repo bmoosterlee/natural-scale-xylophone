@@ -85,7 +85,7 @@ class Main {
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
-        .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
+        .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
 
         SimpleBuffer<Buckets> noteSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
         SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");

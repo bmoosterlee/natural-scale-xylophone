@@ -15,19 +15,17 @@ import java.util.List;
 public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState> {
 
     public SoundEnvironment(SimpleBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
-        super(inputBuffer, build(SAMPLE_SIZE_IN_BITS, sampleRate));
+        super(inputBuffer, toMethod(buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate)));
     }
 
-    public static CallableWithArgument<VolumeAmplitudeState> build(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
+    public static CallableWithArgument<BoundedBuffer<VolumeAmplitudeState>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
         return new CallableWithArgument<>() {
-            private final SourceDataLine sourceDataLine;
-            private final int sampleSize;
-            private final double marginalSampleSize;
+            private SourceDataLine sourceDataLine;
+            private int sampleSize;
+            private double marginalSampleSize;
 
-            private final InputPort<Double> sampleAmplitudeInput;
-            private final OutputPort<VolumeAmplitudeState> methodInput;
-
-            {
+            @Override
+            public void call(BoundedBuffer<VolumeAmplitudeState> inputBuffer) {
                 sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
                 marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -47,38 +45,19 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
                 }
                 sourceDataLine.start();
 
-                SimpleBuffer<VolumeAmplitudeState> methodInputBuffer = new SimpleBuffer<>(1, "sound environment - input");
-                methodInput = methodInputBuffer.createOutputPort();
-
-                sampleAmplitudeInput =
-                    methodInputBuffer
-                    .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
-                    .createInputPort();
-            }
-
-            private void playSound(VolumeAmplitudeState input) {
-                try {
-                    methodInput.produce(input);
-                    Double amplitude = sampleAmplitudeInput.consume();
-                    byte fittedAmplitude = fitAmplitude(amplitude);
-                    writeToBuffer(fittedAmplitude);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            private void writeToBuffer(byte amplitude) {
-                sourceDataLine.write(new byte[]{amplitude}, 0, 1);
-            }
-
-            private void writeToBuffer(byte[] amplitudes, int size) {
-                sourceDataLine.write(amplitudes, 0, size);
+                inputBuffer
+                .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
+                .performMethod(input -> fitAmplitude(input))
+                .performInputMethod(input -> writeToBuffer(input));
             }
 
             private byte fitAmplitude(double amplitude) {
                 return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitude / 2)));
             }
 
+            private void writeToBuffer(byte amplitude) {
+                sourceDataLine.write(new byte[]{amplitude}, 0, 1);
+            }
 
 //            public boolean isAudible(Double volume) {
 //                return volume >= marginalSampleSize;
@@ -88,32 +67,6 @@ public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState
 //                sourceDataLine.drain();
 //                sourceDataLine.stop();
 //            }
-            @Override
-            public void call(VolumeAmplitudeState input) {
-                playSound(input);
-            }
-
-            private void tickBatch() {
-                try {
-                    List<Double> amplitudes = sampleAmplitudeInput.flushOrConsume();
-                    int size = amplitudes.size();
-
-                    TimeKeeper timeKeeper = PerformanceTracker.startTracking("fit amplitude");
-                    int i = 0;
-                    byte[] fittedAmplitudes = new byte[size];
-                    for (Double amplitude : amplitudes) {
-                        fittedAmplitudes[i++] = fitAmplitude(amplitude);
-                    }
-                    PerformanceTracker.stopTracking(timeKeeper);
-
-                    timeKeeper = PerformanceTracker.startTracking("write to buffer");
-                    writeToBuffer(fittedAmplitudes, size);
-                    PerformanceTracker.stopTracking(timeKeeper);
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
         };
     }
 }
