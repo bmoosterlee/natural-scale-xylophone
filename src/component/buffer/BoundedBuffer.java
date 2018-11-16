@@ -27,6 +27,8 @@ public interface BoundedBuffer<T> {
 
     Collection<SimpleBuffer<T>> broadcast(int size);
 
+    Collection<SimpleBuffer<T>> broadcast(int size, String name);
+
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other);
 
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);

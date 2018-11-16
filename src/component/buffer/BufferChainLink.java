@@ -80,6 +80,10 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
         return breakChain().broadcast(size);
     }
 
+    public Collection<SimpleBuffer<T>> broadcast(int size, String name) {
+        return breakChain().broadcast(size, name);
+    }
+
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
         return breakChain().pairWith(other);
     }

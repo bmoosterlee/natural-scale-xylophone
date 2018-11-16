@@ -79,6 +79,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public Collection<SimpleBuffer<T>> broadcast(int size, String name) {
+        return Broadcast.broadcast(this, size, name);
+    }
+
+    @Override
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return Pairer.pair(this, other);
     }
