@@ -34,7 +34,7 @@ public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
                 LinkedList<SimpleBuffer<Buckets>> hollowBucketsBroadcast =
                     new LinkedList<>(
                         methodInputBroadcast.poll()
-                        .performMethod(this::getHollowBuckets)
+                        .performMethod(BucketsAverager::getHollowBuckets)
                         .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
 
                 for (int i = 0; i < averagingWidth - 1; i++) {
@@ -61,18 +61,6 @@ public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
                 new Adder(adderBuffers, adderOutputBuffer);
 
                 methodOutput = adderOutputBuffer.createInputPort();
-            }
-
-            private Buckets getHollowBuckets(Buckets buckets) {
-                Set<Integer> indices = buckets.getIndices();
-                Map<Integer, Bucket> voidEntries = new HashMap<>();
-
-                for (Integer x : indices) {
-                    Double volume = buckets.getValue(x).getVolume();
-                    voidEntries.put(x, new AtomicBucket(volume));
-                }
-
-                return new Buckets(indices, voidEntries);
             }
 
             private Buckets averageBuckets(Buckets buckets) {
