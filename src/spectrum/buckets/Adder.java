@@ -1,17 +1,15 @@
 package spectrum.buckets;
 
-import component.buffer.SimpleBuffer;
-import component.buffer.BoundedBuffer;
-import component.buffer.InputPort;
-import component.buffer.OutputPort;
+import component.buffer.*;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class Adder implements Runnable {
-
+public class Adder {
     private final Set<InputPort<Buckets>> inputs;
     private final OutputPort<Buckets> output;
+
+    private final TickRunner tickRunner = new MyTickRunner();
 
     public Adder(Set<BoundedBuffer<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
         inputs = new HashSet<>();
@@ -25,13 +23,14 @@ public class Adder implements Runnable {
     }
 
     private void start() {
-        new Thread(this).start();
+        tickRunner.start();
     }
 
-    @Override
-    public void run() {
-        while(true){
-            tick();
+    private class MyTickRunner extends TickRunner {
+
+        @Override
+        protected void tick() {
+            Adder.this.tick();
         }
     }
 
@@ -55,5 +54,11 @@ public class Adder implements Runnable {
             e.printStackTrace();
         }
 
+    }
+
+    public static SimpleBuffer<Buckets> build(Set<BoundedBuffer<Buckets>> inputBuffers){
+        SimpleBuffer<Buckets> outputBuffer = new SimpleBuffer<>(1, "adder - output");
+        new Adder(inputBuffers, outputBuffer);
+        return outputBuffer;
     }
 }
