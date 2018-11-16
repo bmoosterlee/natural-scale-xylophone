@@ -74,6 +74,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipeline) {
+        return pipeline.call(this);
+    }
+
+    @Override
     public Collection<SimpleBuffer<T>> broadcast(int size) {
         return Broadcast.broadcast(this, size);
     }
