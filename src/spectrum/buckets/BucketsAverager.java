@@ -12,74 +12,64 @@ public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
     }
 
     public static CallableWithArguments<Buckets, Buckets> build(int averagingWidth){
-        return new CallableWithArguments<>() {
-            final OutputPort<Buckets> methodInput;
-            final InputPort<Buckets> methodOutput;
+        return PipeComponent.toMethod(buildPipe(averagingWidth));
+    }
 
-            {
-                int capacity = 10000;
+    public static CallableWithArguments<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int averagingWidth) {
+        return inputBuffer -> {
 
-                SimpleBuffer<Buckets> methodInputBuffer = new SimpleBuffer<>(capacity, "BucketsAverager - method input");
-                methodInput = methodInputBuffer.createOutputPort();
-                LinkedList<SimpleBuffer<Buckets>> methodInputBroadcast = new LinkedList<>(methodInputBuffer.broadcast(2, "buckets averager - broadcast"));
-
-                double[] multipliers = new double[averagingWidth - 1];
-                for (int i = 0; i < averagingWidth - 1; i++) {
-                    multipliers[i] = ((double) averagingWidth - (i+1)) / averagingWidth;
-                }
-
-                Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
-                adderBuffers.add(methodInputBroadcast.poll());
-
-                LinkedList<SimpleBuffer<Buckets>> hollowBucketsBroadcast =
+            LinkedList<SimpleBuffer<Buckets>> methodInputBroadcast =
                     new LinkedList<>(
-                        methodInputBroadcast.poll()
-                        .performMethod(BucketsAverager::getHollowBuckets)
-                        .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
+                            inputBuffer
+                                    .broadcast(2, "buckets averager - broadcast"));
 
-                for (int i = 0; i < averagingWidth - 1; i++) {
-                    int finalIMultiplier = i;
+            final double[] multipliers = new double[averagingWidth - 1];
+            for (int i = 0; i < averagingWidth - 1; i++) {
+                multipliers[i] = ((double) averagingWidth - (i + 1)) / averagingWidth;
+            }
 
-                    LinkedList<SimpleBuffer<Buckets>> multiplierBroadcast = new LinkedList<>(
-                        hollowBucketsBroadcast
-                        .poll()
-                        .performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]))
-                        .broadcast(2, "buckets averager multiplier - broadcast"));
+            Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+            adderBuffers.add(methodInputBroadcast.poll());
 
-                    int finalI = i + 1;
+            LinkedList<SimpleBuffer<Buckets>> hollowBucketsBroadcast =
+                    new LinkedList<>(
+                            methodInputBroadcast.poll()
+                                    .performMethod(BucketsAverager::getHollowBuckets)
+                                    .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
 
-                    adderBuffers.add(
+            for (int i = 0; i < averagingWidth - 1; i++) {
+                int finalIMultiplier = i;
+
+                LinkedList<SimpleBuffer<Buckets>> multiplierBroadcast =
+                        new LinkedList<>(
+                                hollowBucketsBroadcast.poll()
+                                        .performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]))
+                                        .broadcast(2, "buckets averager multiplier - broadcast"));
+
+                int finalI = i + 1;
+
+                adderBuffers.add(
                         multiplierBroadcast.poll()
-                        .performMethod(input1 -> input1.transpose(finalI)));
+                                .performMethod(input1 -> input1.transpose(finalI)));
 
-                    adderBuffers.add(
+                adderBuffers.add(
                         multiplierBroadcast.poll()
-                        .performMethod(input1 -> input1.transpose(-(finalI))));
-                }
-
-                SimpleBuffer<Buckets> adderOutputBuffer = new SimpleBuffer<>(capacity, "buckets averager - adder output");
-                new Adder(adderBuffers, adderOutputBuffer);
-
-                methodOutput = adderOutputBuffer.createInputPort();
+                                .performMethod(input1 -> input1.transpose(-(finalI))));
             }
 
-            private Buckets averageBuckets(Buckets buckets) {
-                try {
-                    methodInput.produce(buckets);
-
-                    Buckets result = methodOutput.consume();
-
-                    return result;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public Buckets call(Buckets input) {
-                return averageBuckets(input);
-            }
+            return Adder.build(adderBuffers);
         };
+    }
+
+    private static Buckets getHollowBuckets(Buckets buckets) {
+        Set<Integer> indices = buckets.getIndices();
+        Map<Integer, Bucket> voidEntries = new HashMap<>();
+
+        for (Integer x : indices) {
+            Double volume = buckets.getValue(x).getVolume();
+            voidEntries.put(x, new AtomicBucket(volume));
+        }
+
+        return new Buckets(indices, voidEntries);
     }
 }

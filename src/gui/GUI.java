@@ -35,7 +35,7 @@ public class GUI {
 
         newHarmonicsPort =
                 harmonicInputBuffer
-                        .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "average buckets- harmonics")
+                        .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
                         .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
                         .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics")
                         .createInputPort();

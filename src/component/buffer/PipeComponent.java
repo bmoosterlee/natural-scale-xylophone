@@ -32,4 +32,23 @@ public class PipeComponent<K, V> {
         }
     }
 
+    public static <K, V> CallableWithArguments<K, V> toMethod(CallableWithArguments<BoundedBuffer<K>, BoundedBuffer<V>> pipe){
+        return new CallableWithArguments<>() {
+            SimpleBuffer<K> inputBuffer = new SimpleBuffer<>(1, "pipe to method - input");
+            OutputPort<K> methodInput = inputBuffer.createOutputPort();
+            InputPort<V> methodOutput = pipe.call(inputBuffer).createInputPort();
+
+            @Override
+            public V call(K input) {
+                try {
+                    methodInput.produce(input);
+                    return methodOutput.consume();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        };
+    }
+
 }
