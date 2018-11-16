@@ -84,42 +84,56 @@ class Main {
         volumeBroadcast.poll()
         .performInputMethod(SoundEnvironment.build(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        LinkedList<SimpleBuffer<AbstractMap.SimpleImmutableEntry<Buckets, Buckets>>> spectrumBroadcast =
-            new LinkedList<>(
-                RunningOutputComponent.buildOutputBuffer(
-                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
-                .performMethod(
-                    SpectrumBuilder.build(
-                        volumeBroadcast.poll()
-                        .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
-                        spectrumWindow,
-                        width), "build spectrum")
-                .broadcast(2));
+        SimpleBuffer<Buckets> noteSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
+        SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
+        new SpectrumBuilder(
+            RunningOutputComponent.buildOutputBuffer(
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
+            volumeBroadcast.poll()
+                .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
+            noteSpectrumBuffer,
+            harmonicSpectrumBuffer,
+            spectrumWindow,
+            width);
 
-        Unzipper.unzip(
-            spectrumBroadcast.poll()
-            .performMethod(GUI.build(spectrumWindow, width, inaudibleFrequencyMargin), "build gui"))
-        .relayTo(newNoteBuffer);
+        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(noteSpectrumBuffer.broadcast(2));
+        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(harmonicSpectrumBuffer.broadcast(2));
+
+        SimpleBuffer<java.util.List<Frequency>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
+        Unzipper.unzip(guiOutputBuffer).relayTo(newNoteBuffer);
+        new GUI(
+            noteSpectrumBroadcast.poll(),
+            harmonicSpectrumBroadcast.poll(),
+            guiOutputBuffer,
+            spectrumWindow,
+            width,
+            inaudibleFrequencyMargin);
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
 
-        Unzipper.unzip(
-            RunningOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
-                pianolaLookahead,
-                "Pianola ticker")
-            .performMethod(
-                Pianola.build(
-                    spectrumBroadcast.poll()
-                    .relayTo(
-                        new SimpleBuffer<>(
-                            new OverwritableStrategy<>(1, "pianola - input"))),
-                    pianolaPattern,
-                    inaudibleFrequencyMargin), "build pianola"))
-        .relayTo(newNoteBuffer);
+
+        SimpleBuffer<java.util.List<Frequency>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
+        Unzipper.unzip(pianolaOutputBuffer).relayTo(newNoteBuffer);
+
+        new Pianola(
+                RunningOutputComponent.buildOutputBuffer(
+                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
+                        pianolaLookahead,
+                        "Pianola ticker"),
+            noteSpectrumBroadcast.poll()
+                .relayTo(
+                    new SimpleBuffer<>(
+                        new OverwritableStrategy<>(1, "pianola - note input"))),
+            harmonicSpectrumBroadcast.poll()
+                .relayTo(
+                    new SimpleBuffer<>(
+                        new OverwritableStrategy<>(1, "pianola - harmonic input"))),
+            pianolaOutputBuffer,
+            pianolaPattern,
+            inaudibleFrequencyMargin);
 
         playTestTone(newNoteBuffer, spectrumWindow);
     }
