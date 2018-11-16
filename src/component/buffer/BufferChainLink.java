@@ -85,6 +85,11 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public void connectTo(CallableWithArgument<BoundedBuffer<T>> pipeline) {
+        pipeline.call(this);
+    }
+
+    @Override
     public Collection<SimpleBuffer<T>> broadcast(int size) {
         return breakChain().broadcast(size);
     }

@@ -29,6 +29,8 @@ public interface BoundedBuffer<T> {
 
     <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipeline);
 
+    void connectTo(CallableWithArgument<BoundedBuffer<T>> pipeline);
+
     Collection<SimpleBuffer<T>> broadcast(int size);
 
     Collection<SimpleBuffer<T>> broadcast(int size, String name);
