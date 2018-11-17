@@ -44,7 +44,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                 unfinishedSlicesWaves = new HashMap<>();
                 finishedSlices = new HashMap<>();
 
-                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(2));
+                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(2, "mixer - sample count"));
 
                 timestampedNewNotesWithEnvelopeInputPort =
                         inputBroadcast.poll()
