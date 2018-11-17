@@ -2,17 +2,23 @@ package component.buffer;
 
 public abstract class TickRunner implements Runnable {
 
+    private boolean alive;
+
     public void start(){
+        alive = true;
         new Thread(this).start();
     }
 
     @Override
     public void run() {
-        while(true){
+        while(alive){
             tick();
         }
     }
 
     protected abstract void tick();
 
+    public void kill() {
+        alive = false;
+    }
 }
