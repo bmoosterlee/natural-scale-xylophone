@@ -17,10 +17,12 @@ public class NoteTimestamper extends RunningPipeComponent {
             final InputPort<TimestampedFrequencies> methodOutputPort;
 
             {
-                BoundedBuffer<Long> sampleCountBuffer = new SimpleBuffer<>(1, "noteTimestamper - input");
-                methodInputPort = sampleCountBuffer.createOutputPort();
+                methodInputPort = new OutputPort<>();
 
-                BoundedBuffer<Long>[] broadcast = sampleCountBuffer.broadcast(2, "note timestamper - broadcast").toArray(new BoundedBuffer[0]);
+                BoundedBuffer<Long>[] broadcast =
+                        methodInputPort
+                            .getBuffer()
+                            .broadcast(2, "note timestamper - broadcast").toArray(new BoundedBuffer[0]);
                 methodOutputPort =
                 broadcast[0]
                 .pairWith(
