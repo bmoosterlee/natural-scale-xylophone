@@ -25,10 +25,9 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                     .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
             SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
-
             SimpleBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
+
             LinkedList<BoundedBuffer<Buckets>> outputTimeAverageBroadcast = new LinkedList<>(outputTimeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
-            BoundedBuffer<Buckets> timeAverageBuffer = outputTimeAverageBroadcast.poll();
 
             new OldHistoryRemover(
                 historyBuffer
@@ -38,7 +37,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                         input1 ->
                             input1.getKey()
                             .add(input1.getValue()), "precalculated bucket history - add new buckets"),
-                timeAverageBuffer
+                outputTimeAverageBroadcast.poll()
                     .pairWith(
                         preparedBucketsBroadcast.poll())
                     .performMethod(
