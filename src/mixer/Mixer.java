@@ -201,74 +201,61 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                     .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
 
-                BoundedBuffer<VolumeAmplitudeState> outputBuffer;
+                SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
+                addNewNotesOutputPort = addNewNotesPorts.getKey();
+                addNewNotesInputPort = addNewNotesPorts.getValue();
 
-                {
-                    SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
-                    addNewNotesOutputPort = addNewNotesPorts.getKey();
-                    addNewNotesInputPort = addNewNotesPorts.getValue();
+                groupEnvelopesByFrequencyOutputPort = new OutputPort<>();
+                waveOutputPort = new OutputPort<>();
+                oldStateOutputPort = new OutputPort<>();
 
-                    SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequency - input");
-                    groupEnvelopesByFrequencyOutputPort = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
-                    BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - waves");
-                    waveOutputPort = waveBuffer.createOutputPort();
-
-                    BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new SimpleBuffer<>(capacity, "oldState");
-                    oldStateOutputPort = oldStateBuffer.createOutputPort();
-
-                    outputBuffer =
-                        oldStateBuffer
+                BoundedBuffer<VolumeAmplitudeState> outputBuffer =
+                    oldStateOutputPort.getBuffer()
+                    .pairWith(
+                        inputBroadcast.poll()
                         .pairWith(
-                            inputBroadcast.poll()
+                            groupEnvelopesByFrequencyOutputPort.getBuffer()
+                            .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency")
                             .pairWith(
-                                groupEnvelopesByFrequencyInputBuffer
-                                .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency")
-                                .pairWith(waveBuffer))
-                            .performMethod(
-                                input1 -> new EnvelopeWaveSlice(
-                                    input1.getKey(),
-                                    input1.getValue().getKey(),
-                                    input1.getValue().getValue()), "creat envelope wave slice")
+                                waveOutputPort.getBuffer()))
+                        .performMethod(
+                            input1 -> new EnvelopeWaveSlice(
+                                input1.getKey(),
+                                input1.getValue().getKey(),
+                                input1.getValue().getValue()), "creat envelope wave slice")
                             .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency")
                             .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency"))
                         .performMethod(
                             input ->
                                 input.getKey()
                                 .add(input.getValue()), "add new and old state");
-                }
 
-                {
-                    BoundedBuffer<Long> sampleCountBuffer3 = new SimpleBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - sampleCount");
-                    sampleCountOutputPortPrecalc = sampleCountBuffer3.createOutputPort();
-                    SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequencyPrecalc - input");
-                    groupEnvelopesByFrequencyOutputPortPrecalc = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
-                    BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new SimpleBuffer<>(capacity, "calculateValuesPerFrequencyPrecalc - waves");
-                    waveOutputPortPrecalc = waveBuffer.createOutputPort();
+                sampleCountOutputPortPrecalc = new OutputPort<>();
+                groupEnvelopesByFrequencyOutputPortPrecalc = new OutputPort<>();
+                waveOutputPortPrecalc = new OutputPort<>();
+                oldStateOutputPortPrecalc = new OutputPort<>();
 
-                    BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new SimpleBuffer<>(capacity, "oldStatePrecalc");
-                    oldStateOutputPortPrecalc = oldStateBuffer.createOutputPort();
-
-                    newStateInputPortPrecalc =
-                        oldStateBuffer
+                newStateInputPortPrecalc =
+                    oldStateOutputPortPrecalc.getBuffer()
+                    .pairWith(
+                        sampleCountOutputPortPrecalc.getBuffer()
                         .pairWith(
-                            sampleCountBuffer3
+                            groupEnvelopesByFrequencyOutputPortPrecalc.getBuffer()
+                            .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency precalc")
                             .pairWith(
-                                groupEnvelopesByFrequencyInputBuffer
-                                .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency precalc")
-                                .pairWith(waveBuffer))
-                            .performMethod(
-                                input11 -> new EnvelopeWaveSlice(
-                                    input11.getKey(),
-                                    input11.getValue().getKey(),
-                                    input11.getValue().getValue()), "build envelope wave slice precalc")
-                            .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency precalc")
-                            .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency precalc"))
+                                waveOutputPortPrecalc.getBuffer()))
                         .performMethod(
-                            input1 ->
-                                input1.getKey()
-                                .add(input1.getValue()), "add new and old state precalc")
-                        .createInputPort();
-                }
+                            input11 -> new EnvelopeWaveSlice(
+                                input11.getKey(),
+                                input11.getValue().getKey(),
+                                input11.getValue().getValue()), "build envelope wave slice precalc")
+                        .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency precalc")
+                        .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency precalc"))
+                    .performMethod(
+                        input1 ->
+                            input1.getKey()
+                            .add(input1.getValue()), "add new and old state precalc")
+                    .createInputPort();
 
                 new TickRunner() {
                     @Override
