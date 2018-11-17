@@ -1,6 +1,5 @@
 package spectrum.buckets;
 
-import component.*;
 import component.buffer.*;
 import component.buffer.RunningPipeComponent;
 
@@ -65,9 +64,9 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
         private final InputPort<ImmutableLinkedList<Buckets>> historyInputPort;
         private final InputPort<Buckets> timeAverageInputPort;
 
-        private final OutputPort<Buckets> conditionalSubtractOutputPort1;
-        private final OutputPort<Buckets> conditionalSubtractOutputPort2;
-        private final InputPort<Buckets> conditionalSubtractInputPort;
+        private final OutputPort<Buckets> subtractionInput1;
+        private final OutputPort<Buckets> subtractionInput2;
+        private final InputPort<Buckets> subtractOutput;
 
         private final OutputPort<ImmutableLinkedList<Buckets>> historyOutputBufferPort;
         private final OutputPort<Buckets> timeAverageOutputOutputPort;
@@ -77,16 +76,13 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
             historyInputPort = historyBuffer.createInputPort();
             timeAverageInputPort = timeAverageBuffer.createInputPort();
 
-            conditionalSubtractOutputPort1 = new OutputPort<>();
-            conditionalSubtractOutputPort2 = new OutputPort<>();
+            subtractionInput1 = new OutputPort<>();
+            subtractionInput2 = new OutputPort<>();
 
-            BoundedBuffer<Buckets> subtractInputBuffer1 = conditionalSubtractOutputPort1.getBuffer();
-            BoundedBuffer<Buckets> subtractInputBuffer2 = conditionalSubtractOutputPort2.getBuffer();
-
-            conditionalSubtractInputPort =
-                subtractInputBuffer1
+            subtractOutput =
+                subtractionInput1.getBuffer()
                 .pairWith(
-                    subtractInputBuffer2)
+                        subtractionInput2.getBuffer())
                 .performMethod(
                     input1 ->
                         input1.getKey()
@@ -112,12 +108,12 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 if (history.size() >= size) {
                     AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = history.poll();
                     history = poll.getKey();
-
-                    conditionalSubtractOutputPort1.produce(timeAverage);
                     Buckets removed = poll.getValue();
-                    conditionalSubtractOutputPort2.produce(removed);
 
-                    timeAverage = conditionalSubtractInputPort.consume();
+                    subtractionInput1.produce(timeAverage);
+                    subtractionInput2.produce(removed);
+
+                    timeAverage = subtractOutput.consume();
                 }
 
                 historyOutputBufferPort.produce(history);
