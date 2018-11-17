@@ -27,9 +27,6 @@ public class GUI {
     private final GUIPanel guiPanel;
 
     public GUI(SimpleBuffer<Buckets> noteInputBuffer, SimpleBuffer<Buckets> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin) {
-
-        int capacity = 100;
-
         LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast =
                 new LinkedList<>(noteInputBuffer.broadcast(3, "GUI note spectrum - broadcast"));
 
@@ -45,15 +42,13 @@ public class GUI {
                         .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
                         .resize(20)
                         .createInputPort();
-        SimpleBuffer<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
-        newCursorXPort = cursorXBuffer.createInputPort();
 
         guiPanel = new GUIPanel();
 
-        noteSpectrumBroadcast.poll()
+        newCursorXPort =
+                noteSpectrumBroadcast.poll()
                 .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
-                .connectTo(CursorMover.buildPipe(guiPanel))
-                .relayTo(cursorXBuffer);
+                .connectTo(CursorMover.buildPipe(guiPanel)).createInputPort();
 
         noteSpectrumBroadcast.poll()
             .performMethod(input -> new Pulse(), "note - spectrum to pulse")
