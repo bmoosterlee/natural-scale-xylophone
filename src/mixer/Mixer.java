@@ -198,7 +198,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
                 input =
                     inputBroadcast.poll()
-                    .performMethod(NoteTimestamper.build(noteInputBuffer), "timestamp notes")
+                    .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                     .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
 
                 BoundedBuffer<VolumeAmplitudeState> outputBuffer;
