@@ -79,6 +79,7 @@ class Main {
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                         sampleLookahead,
                         "sample ticker - output")
+                .toOverwritable()
                 .performMethod(Counter.build(), "count samples")
                 .connectTo(Mixer.buildPipe(newNoteBuffer, sampleRate))
                 .broadcast(2, "main volume - broadcast"));
@@ -90,7 +91,8 @@ class Main {
         SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
         new SpectrumBuilder(
             RunningOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
+                .toOverwritable(),
             volumeBroadcast.poll()
                 .toOverwritable(),
             noteSpectrumBuffer,
@@ -124,7 +126,8 @@ class Main {
             RunningOutputComponent.buildOutputBuffer(
                 Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
                     pianolaLookahead,
-                    "Pianola ticker"),
+                    "Pianola ticker")
+                .toOverwritable(),
             noteSpectrumBroadcast.poll()
                 .toOverwritable(),
             harmonicSpectrumBroadcast.poll()

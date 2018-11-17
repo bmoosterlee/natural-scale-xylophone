@@ -24,7 +24,7 @@ public class SpectrumBuilder {
 
     private final TickRunner tickRunner = new MyTickRunner();
 
-    public SpectrumBuilder(SimpleBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<Buckets> noteOutputBuffer, SimpleBuffer<Buckets> harmonicOutputBuffer, SpectrumWindow spectrumWindow, int width) {
+    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<Buckets> noteOutputBuffer, SimpleBuffer<Buckets> harmonicOutputBuffer, SpectrumWindow spectrumWindow, int width) {
         this.spectrumWindow = spectrumWindow;
 
         LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2, "spectrum builder tick - broadcast"));

@@ -27,7 +27,7 @@ public class Pianola {
 
     private final TickRunner tickRunner = new MyTickRunner();
 
-    public Pianola(SimpleBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
 
         int repetitionDampener = 3;
