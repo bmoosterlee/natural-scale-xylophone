@@ -20,16 +20,15 @@ public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
     public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<List<Frequency>>> buildPipe(SpectrumWindow spectrumWindow, JPanel guiPanel) {
         return new CallableWithArguments<>() {
 
-            private OutputPort<Frequency> methodInputPort;
+            private OutputPort<Frequency> clickedFrequenciesPort;
 
             @Override
             public BoundedBuffer<List<Frequency>> call(BoundedBuffer<Pulse> inputBuffer) {
-                SimpleBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "note clicker - click");
-                methodInputPort = clickedFrequencies.createOutputPort();
+                clickedFrequenciesPort = new OutputPort<>();
 
                 guiPanel.addMouseListener(new MyMouseListener());
 
-                return inputBuffer.performMethod(Flusher.flush(clickedFrequencies));
+                return inputBuffer.performMethod(Flusher.flush(clickedFrequenciesPort.getBuffer()));
             }
 
             class MyMouseListener implements MouseListener {
@@ -41,7 +40,7 @@ public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     try {
-                        methodInputPort.produce(spectrumWindow.getFrequency(e.getX()));
+                        clickedFrequenciesPort.produce(spectrumWindow.getFrequency(e.getX()));
                     } catch (InterruptedException e1) {
                         e1.printStackTrace();
                     }
