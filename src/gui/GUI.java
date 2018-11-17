@@ -57,7 +57,7 @@ public class GUI {
 
         noteSpectrumBroadcast.poll()
             .performMethod(input -> new Pulse(), "note - spectrum to pulse")
-            .performMethod(NoteClicker.build(spectrumWindow, guiPanel), "note clicker - output")
+            .connectTo(NoteClicker.buildPipe(spectrumWindow, guiPanel))
         .relayTo(outputBuffer);
 
         JFrame frame = new JFrame("Natural scale xylophone");

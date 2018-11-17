@@ -1,5 +1,6 @@
 package gui;
 
+import component.Flusher;
 import component.Pulse;
 import component.buffer.*;
 import frequency.Frequency;
@@ -13,20 +14,22 @@ import java.util.List;
 public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
 
     public NoteClicker(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
-        super(inputBuffer, outputBuffer, build(spectrumWindow, guiPanel));
+        super(inputBuffer, outputBuffer, toMethod(buildPipe(spectrumWindow, guiPanel)));
     }
 
-    public static CallableWithArguments<Pulse, List<Frequency>> build(SpectrumWindow spectrumWindow, JPanel guiPanel) {
+    public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<List<Frequency>>> buildPipe(SpectrumWindow spectrumWindow, JPanel guiPanel) {
         return new CallableWithArguments<>() {
-            private final OutputPort<Frequency> methodInputPort;
-            private final InputPort<Frequency> methodOutputPort;
 
-            {
-                BoundedBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(100, "clickedFrequencies");
+            private OutputPort<Frequency> methodInputPort;
+
+            @Override
+            public BoundedBuffer<List<Frequency>> call(BoundedBuffer<Pulse> inputBuffer) {
+                SimpleBuffer<Frequency> clickedFrequencies = new SimpleBuffer<>(1, "note clicker - click");
                 methodInputPort = clickedFrequencies.createOutputPort();
-                methodOutputPort = clickedFrequencies.createInputPort();
 
                 guiPanel.addMouseListener(new MyMouseListener());
+
+                return inputBuffer.performMethod(Flusher.flush(clickedFrequencies));
             }
 
             class MyMouseListener implements MouseListener {
@@ -60,19 +63,6 @@ public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
                 }
             }
 
-            private List<Frequency> clickFrequency() {
-                try {
-                    return methodOutputPort.flush();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public List<Frequency> call(Pulse input) {
-                return clickFrequency();
-            }
         };
     }
 }
