@@ -51,7 +51,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
 
             try {
                 historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
-                timeAverageBuffer.createOutputPort().produce(new Buckets());
+                outputTimeAverageBuffer.createOutputPort().produce(new Buckets());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
