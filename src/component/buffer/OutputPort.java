@@ -9,7 +9,11 @@ public class OutputPort<T> {
     }
 
     public OutputPort(){
-        this(new SimpleBuffer<>(1, "output port created buffer"));
+        this("output port created buffer");
+    }
+
+    public OutputPort(String name){
+        this(new SimpleBuffer<>(1, name));
     }
 
     public void produce(T packet) throws InterruptedException {
