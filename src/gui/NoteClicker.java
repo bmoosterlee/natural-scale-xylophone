@@ -28,7 +28,7 @@ public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
 
                 guiPanel.addMouseListener(new MyMouseListener());
 
-                return inputBuffer.performMethod(Flusher.flush(clickedFrequenciesPort.getBuffer()));
+                return inputBuffer.performMethod(Flusher.flush(clickedFrequenciesPort.getBuffer()), "clicked frequencies");
             }
 
             class MyMouseListener implements MouseListener {

@@ -56,7 +56,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                 addNewNotesInputPort = addNewNotesPorts.getValue();
 
                 BoundedBuffer<VolumeAmplitudeState> outputBuffer =
-                        inputBroadcast.poll().performMethod(this::mix);
+                        inputBroadcast.poll().performMethod(this::mix, "mixer");
 
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");

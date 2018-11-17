@@ -37,14 +37,14 @@ public class Pianola {
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
             .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
-            .performMethod(input -> input.multiply(repetitionDampener))
-            .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin))
+            .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
+            .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average buckets")
             .createInputPort();
 
         preparedHarmonicsInput =
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer), "pianola - consume from harmonic spectrum buffer")
-            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin))
+            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - buckets averager")
             .createInputPort();
 
         outputPort = outputBuffer.createOutputPort();

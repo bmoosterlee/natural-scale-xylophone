@@ -25,7 +25,7 @@ public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
             public BoundedBuffer<Integer> call(BoundedBuffer<Pulse> inputBuffer) {
                 guiPanel.addMouseMotionListener(new CursorListener());
 
-                return inputBuffer.performMethod(input -> getCursorX());
+                return inputBuffer.performMethod(input -> getCursorX(), "cursor location");
             }
 
             class CursorListener implements MouseMotionListener {
