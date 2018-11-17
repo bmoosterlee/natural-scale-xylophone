@@ -229,13 +229,13 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                                 groupEnvelopesByFrequencyInputBuffer
                                 .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency")
                                 .pairWith(waveBuffer))
-                                .performMethod(
-                                    input1 -> new EnvelopeWaveSlice(
-                                        input1.getKey(),
-                                        input1.getValue().getKey(),
-                                        input1.getValue().getValue()), "creat envelope wave slice")
-                                .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency")
-                                .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency"))
+                            .performMethod(
+                                input1 -> new EnvelopeWaveSlice(
+                                    input1.getKey(),
+                                    input1.getValue().getKey(),
+                                    input1.getValue().getValue()), "creat envelope wave slice")
+                            .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency")
+                            .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency"))
                         .performMethod(
                             input ->
                                 input.getKey()
@@ -262,10 +262,10 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                                 .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency precalc")
                                 .pairWith(waveBuffer))
                             .performMethod(
-                                    input11 -> new EnvelopeWaveSlice(
-                                            input11.getKey(),
-                                            input11.getValue().getKey(),
-                                            input11.getValue().getValue()), "build envelope wave slice precalc")
+                                input11 -> new EnvelopeWaveSlice(
+                                    input11.getKey(),
+                                    input11.getValue().getKey(),
+                                    input11.getValue().getValue()), "build envelope wave slice precalc")
                             .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency precalc")
                             .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency precalc"))
                         .performMethod(
