@@ -5,6 +5,8 @@ import component.buffer.*;
 import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 
+import java.util.LinkedList;
+
 public class NoteTimestamper extends RunningPipeComponent {
 
     public NoteTimestamper(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
@@ -13,20 +15,22 @@ public class NoteTimestamper extends RunningPipeComponent {
 
     public static CallableWithArguments<Long, TimestampedFrequencies> build(BoundedBuffer<Frequency> newNoteBuffer) {
         return new CallableWithArguments<>() {
-            final OutputPort<Long> methodInputPort;
+            final OutputPort<Long> sampleCountPort;
             final InputPort<TimestampedFrequencies> methodOutputPort;
 
             {
-                methodInputPort = new OutputPort<>();
+                sampleCountPort = new OutputPort<>();
 
-                BoundedBuffer<Long>[] broadcast =
-                        methodInputPort
-                            .getBuffer()
-                            .broadcast(2, "note timestamper - broadcast").toArray(new BoundedBuffer[0]);
+                LinkedList<BoundedBuffer<Long>> sampleCountBroadcast =
+                        new LinkedList<>(
+                            sampleCountPort
+                                .getBuffer()
+                                .broadcast(2, "note timestamper - broadcast"));
+
                 methodOutputPort =
-                broadcast[0]
+                sampleCountBroadcast.poll()
                 .pairWith(
-                    broadcast[1]
+                    sampleCountBroadcast.poll()
                     .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
                     .performMethod(Flusher.flush(newNoteBuffer), "flush new notes"))
                 .performMethod(
@@ -40,7 +44,7 @@ public class NoteTimestamper extends RunningPipeComponent {
             @Override
             public TimestampedFrequencies call(Long input) {
                 try {
-                    methodInputPort.produce(input);
+                    sampleCountPort.produce(input);
 
                     TimestampedFrequencies result = methodOutputPort.consume();
 
