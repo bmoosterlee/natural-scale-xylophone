@@ -31,7 +31,6 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
             private InputPort<Collection<EnvelopeForFrequency>> addNewNotesInputPort;
 
             private OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
-            private OutputPort<Long> sampleCountOutputPort;
             private OutputPort<Map<Frequency, Wave>> waveOutputPort;
             private OutputPort<VolumeAmplitudeState> oldStateOutputPort;
 
@@ -61,8 +60,6 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
             private void finish(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeAmplitudeState oldFinishedSlice) {
                 try {
-                    sampleCountOutputPort.produce(sampleCount);
-
                     try {
                         groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
                     } catch (NullPointerException e) {
@@ -196,7 +193,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                 unfinishedSlicesWaves = new HashMap<>();
                 finishedSlices = new HashMap<>();
 
-                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(2));
+                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(3));
                 mixInput = inputBroadcast.poll().createInputPort();
 
                 input =
@@ -211,8 +208,6 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     addNewNotesOutputPort = addNewNotesPorts.getKey();
                     addNewNotesInputPort = addNewNotesPorts.getValue();
 
-                    BoundedBuffer<Long> sampleCountBuffer2 = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
-                    sampleCountOutputPort = sampleCountBuffer2.createOutputPort();
                     SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequency - input");
                     groupEnvelopesByFrequencyOutputPort = groupEnvelopesByFrequencyInputBuffer.createOutputPort();
                     BoundedBuffer<Map<Frequency, Wave>> waveBuffer = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - waves");
@@ -224,7 +219,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     outputBuffer =
                         oldStateBuffer
                         .pairWith(
-                            sampleCountBuffer2
+                            inputBroadcast.poll()
                             .pairWith(
                                 groupEnvelopesByFrequencyInputBuffer
                                 .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency")
