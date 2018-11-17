@@ -48,7 +48,7 @@ public class GUI {
         newCursorXPort =
                 noteSpectrumBroadcast.poll()
                 .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
-                .connectTo(CursorMover.buildPipe(guiPanel)).createInputPort();
+                .connectTo(CursorMover.buildPipe(guiPanel)).resize(20).createInputPort();
 
         noteSpectrumBroadcast.poll()
             .performMethod(input -> new Pulse(), "note - spectrum to pulse")
