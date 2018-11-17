@@ -81,7 +81,7 @@ class Main {
                     sampleLookahead,
                     "sample ticker - output")
                 .performMethod(Counter.build(), "count samples")
-                .performMethod(Mixer.build(newNoteBuffer, sampleRate), "mix")
+                .connectTo(Mixer.buildPipe(newNoteBuffer, sampleRate))
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()

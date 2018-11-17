@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
     public Mixer(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
-        super(sampleCountBuffer, outputBuffer, build(noteInputBuffer, sampleRate));
+        super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(noteInputBuffer, sampleRate)));
     }
 
-    public static CallableWithArguments<Long, VolumeAmplitudeState> build(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
+    public static CallableWithArguments<BoundedBuffer<Long>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new CallableWithArguments<>() {
             private Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
             private Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
@@ -40,8 +40,9 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
             private OutputPort<Map<Frequency, Wave>> waveOutputPortPrecalc;
             private OutputPort<VolumeAmplitudeState> oldStateOutputPortPrecalc;
             private InputPort<VolumeAmplitudeState> newStateInputPortPrecalc;
-            private OutputPort<Long> methodInputPort;
             private InputPort<VolumeAmplitudeState> methodOutputPort;
+
+            private InputPort<Long> mixInput;
 
             private void precalculateInBackground() {
                 while (input.isEmpty()) {
@@ -187,28 +188,29 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                 return newNoteWaves;
             }
 
-            {
+            @Override
+            public BoundedBuffer<VolumeAmplitudeState> call(BoundedBuffer<Long> inputBuffer) {
                 int capacity = 10;
 
                 unfinishedSlices = new HashMap<>();
                 unfinishedSlicesWaves = new HashMap<>();
                 finishedSlices = new HashMap<>();
 
-                SimpleBuffer<Long> methodInputBuffer = new SimpleBuffer<>(1, "mixer - input");
-                methodInputPort = methodInputBuffer.createOutputPort();
+                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(2));
+                mixInput = inputBroadcast.poll().createInputPort();
 
                 input =
-                    methodInputBuffer
+                    inputBroadcast.poll()
                     .performMethod(NoteTimestamper.build(noteInputBuffer), "timestamp notes")
                     .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
+
+                BoundedBuffer<VolumeAmplitudeState> outputBuffer;
 
                 {
                     SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
                     addNewNotesOutputPort = addNewNotesPorts.getKey();
                     addNewNotesInputPort = addNewNotesPorts.getValue();
-                }
 
-                {
                     BoundedBuffer<Long> sampleCountBuffer2 = new SimpleBuffer<>(capacity, "calculateValuesPerFrequency - sampleCount");
                     sampleCountOutputPort = sampleCountBuffer2.createOutputPort();
                     SimpleBuffer<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyInputBuffer = new SimpleBuffer<>(capacity, "groupEnvelopesByFrequency - input");
@@ -219,7 +221,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                     BoundedBuffer<VolumeAmplitudeState> oldStateBuffer = new SimpleBuffer<>(capacity, "oldState");
                     oldStateOutputPort = oldStateBuffer.createOutputPort();
 
-                    methodOutputPort =
+                    outputBuffer =
                         oldStateBuffer
                         .pairWith(
                             sampleCountBuffer2
@@ -237,8 +239,7 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                         .performMethod(
                             input ->
                                 input.getKey()
-                                .add(input.getValue()), "add new and old state")
-                        .createInputPort();
+                                .add(input.getValue()), "add new and old state");
                 }
 
                 {
@@ -273,11 +274,20 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
                                 .add(input1.getValue()), "add new and old state precalc")
                         .createInputPort();
                 }
+
+                new TickRunner() {
+                    @Override
+                    protected void tick() {
+                        mix();
+                    }
+                }.start();
+
+                return outputBuffer;
             }
 
-            private VolumeAmplitudeState mix(Long sampleCount) {
+            private void mix() {
                 try {
-                    methodInputPort.produce(sampleCount);
+                    Long sampleCount = mixInput.consume();
 
                     TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = input.consume();
                     DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
@@ -292,16 +302,9 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
 
     //            precalculateInBackground();
 
-                    return methodOutputPort.consume();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                return null;
-            }
-
-            @Override
-            public VolumeAmplitudeState call(Long input) {
-                return mix(input);
             }
         };
     }
