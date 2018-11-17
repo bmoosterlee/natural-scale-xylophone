@@ -108,4 +108,9 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
         new RunningPipeComponent<>(this, outputBuffer, input -> input);
         return outputBuffer;
     }
+
+    @Override
+    public BufferChainLink<T> toOverwritable() {
+        return ChainedPipeComponent.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+    }
 }

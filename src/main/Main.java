@@ -3,7 +3,6 @@ package main;
 import component.Counter;
 import component.Unzipper;
 import component.buffer.OutputPort;
-import component.buffer.OverwritableStrategy;
 import component.buffer.RunningOutputComponent;
 import component.buffer.SimpleBuffer;
 import frequency.Frequency;
@@ -93,7 +92,7 @@ class Main {
             RunningOutputComponent.buildOutputBuffer(
                 Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
             volumeBroadcast.poll()
-                .relayTo(new SimpleBuffer<>(new OverwritableStrategy<>(1, "sound - volume amplitude state out"))),
+                .toOverwritable(),
             noteSpectrumBuffer,
             harmonicSpectrumBuffer,
             spectrumWindow,
@@ -127,13 +126,9 @@ class Main {
                         pianolaLookahead,
                         "Pianola ticker"),
             noteSpectrumBroadcast.poll()
-                .relayTo(
-                    new SimpleBuffer<>(
-                        new OverwritableStrategy<>(1, "pianola - note input"))),
+                .toOverwritable(),
             harmonicSpectrumBroadcast.poll()
-                .relayTo(
-                    new SimpleBuffer<>(
-                        new OverwritableStrategy<>(1, "pianola - harmonic input"))),
+                .toOverwritable(),
             pianolaOutputBuffer,
             pianolaPattern,
             inaudibleFrequencyMargin);

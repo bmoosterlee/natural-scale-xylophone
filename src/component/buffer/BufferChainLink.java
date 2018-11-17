@@ -113,4 +113,9 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
         return breakChain().relayTo(outputBuffer);
     }
+
+    @Override
+    public BufferChainLink<T> toOverwritable() {
+        return ChainedPipeComponent.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+    }
 }

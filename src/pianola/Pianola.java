@@ -7,11 +7,12 @@ package pianola;/*todo write a history tracker of when notes were played. Take a
 
 import component.Pulse;
 import component.TimedConsumer;
-import component.Unpairer;
 import component.buffer.*;
 import frequency.Frequency;
 import pianola.patterns.PianolaPattern;
-import spectrum.buckets.*;
+import spectrum.buckets.Buckets;
+import spectrum.buckets.BucketsAverager;
+import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Pianola {
 
     private final TickRunner tickRunner = new MyTickRunner();
 
-    public Pianola(SimpleBuffer<Pulse> tickBuffer, SimpleBuffer<Buckets> noteSpectrumBuffer, SimpleBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(SimpleBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
 
         int repetitionDampener = 3;

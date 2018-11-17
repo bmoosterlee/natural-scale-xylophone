@@ -51,4 +51,18 @@ public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }
+
+    public static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
+        SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+        ChainedPipeComponent<K, K> methodComponent = new ChainedPipeComponent<>(inputBuffer, outputBuffer, input -> input);
+        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        return outputChainLink;
+    }
+
+    public static <K> BufferChainLink<K> chainToOverwritableBuffer(SimpleBuffer<K> inputBuffer, int capacity, String name) {
+        SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+        ChainedPipeComponent<K, K> methodComponent = new ChainedPipeComponent<>(inputBuffer, outputBuffer, input -> input);
+        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        return outputChainLink;
+    }
 }
