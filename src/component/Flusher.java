@@ -1,9 +1,6 @@
 package component;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningPipeComponent;
+import component.buffer.*;
 
 import java.util.List;
 
@@ -14,9 +11,11 @@ public class Flusher<T> extends RunningPipeComponent<Pulse, List<T>> {
     }
 
     public static <T> CallableWithArguments<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
+        InputPort<T> inputPort = inputBuffer.createInputPort();
+
         return input -> {
             try {
-                return inputBuffer.flush();
+                return inputPort.flush();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
