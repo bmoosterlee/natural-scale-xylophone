@@ -15,18 +15,11 @@ import mixer.state.VolumeAmplitudeToVolumeFilter;
 import mixer.state.VolumeState;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class SpectrumBuilder {
-    private final SpectrumWindow spectrumWindow;
 
-    private final InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorInput;
-    private final Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput;
-
-    private final TickRunner tickRunner = new MyTickRunner();
-
-    public SpectrumBuilder(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SimpleBuffer<Buckets> noteOutputBuffer, SimpleBuffer<Buckets> harmonicOutputBuffer, SpectrumWindow spectrumWindow, int width) {
-        this.spectrumWindow = spectrumWindow;
-
+    public static SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildComponent(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SpectrumWindow spectrumWindow, int width) {
         LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2, "spectrum builder tick - broadcast"));
         LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
             new LinkedList<>(
@@ -35,16 +28,16 @@ public class SpectrumBuilder {
                 .performMethod(VolumeAmplitudeToVolumeFilter::filter, "volume amplitude filter to volume")
                 .broadcast(2, "Spectrum builder volume - broadcast"));
 
-        volumeBroadcast.poll()
-        .performMethod(VolumeStateToBuckets.build(spectrumWindow), "build volume state to buckets")
-        .relayTo(noteOutputBuffer);
+        BoundedBuffer<Buckets> noteOutputBuffer =
+            volumeBroadcast.poll()
+            .performMethod(VolumeStateToBuckets.build(spectrumWindow), "build volume state to buckets");
 
-        harmonicsIteratorInput =
+        InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorInput =
             volumeBroadcast.poll()
             .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator")
             .createInputPort();
 
-        harmonicsOutput = new HashMap<>();
+        Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput = new HashMap<>();
         for (Integer i = 0; i < width; i++) {
             harmonicsOutput.put(i, new OutputPort<>("harmonic bucket"));
         }
@@ -54,41 +47,34 @@ public class SpectrumBuilder {
             harmonicsMap.put(index, harmonicsOutput.get(index).getBuffer().resize(1000));
         }
 
-        tickBroadcast.poll()
-        .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
-        .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200))
-        .relayTo(harmonicOutputBuffer);
+        BoundedBuffer<Buckets> harmonicsOutputBuffer =
+            tickBroadcast.poll()
+            .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
+            .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
 
-        start();
-    }
+        new TickRunner(){
 
-    private class MyTickRunner extends TickRunner {
+            @Override
+            protected void tick() {
+                try {
+                    Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsIteratorInput.consume();
 
-        @Override
-        protected void tick() {
-            SpectrumBuilder.this.tick();
-        }
-
-    }
-
-    protected void start() {
-        tickRunner.start();
-    }
-
-    protected void tick() {
-        try {
-            Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsIteratorInput.consume();
-
-            while (harmonicsIteratorInput.isEmpty()) {
-                if (!update(harmonicHierarchyIterator)) break;
+                    while (harmonicsIteratorInput.isEmpty()) {
+                        if (!update(harmonicHierarchyIterator, harmonicsOutput, spectrumWindow)) break;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+        }.start();
+
+        return new SimpleImmutableEntry<>(noteOutputBuffer, harmonicsOutputBuffer);
     }
+
 
     //return true when harmonicHierarchy has been depleted.
-    private boolean update(Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator) {
+    private static boolean update(Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator, Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput, SpectrumWindow spectrumWindow) {
         try {
             Map.Entry<Harmonic, Double> harmonicVolume = harmonicHierarchyIterator.next();
             Frequency frequency = harmonicVolume.getKey().getHarmonicFrequency();

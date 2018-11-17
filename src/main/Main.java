@@ -2,6 +2,7 @@ package main;
 
 import component.Counter;
 import component.Unzipper;
+import component.buffer.BoundedBuffer;
 import component.buffer.OutputPort;
 import component.buffer.RunningOutputComponent;
 import component.buffer.SimpleBuffer;
@@ -22,6 +23,7 @@ import time.Ticker;
 import time.TimeInSeconds;
 
 import java.awt.*;
+import java.util.AbstractMap;
 import java.util.LinkedList;
 
 /*
@@ -87,21 +89,18 @@ class Main {
         volumeBroadcast.poll()
         .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        SimpleBuffer<Buckets> noteSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
-        SimpleBuffer<Buckets> harmonicSpectrumBuffer = new SimpleBuffer<>(1, "note spectrum output");
-        new SpectrumBuilder(
+        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
+            SpectrumBuilder.buildComponent(
             RunningOutputComponent.buildOutputBuffer(
                 Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
                 .toOverwritable(),
             volumeBroadcast.poll()
                 .toOverwritable(),
-            noteSpectrumBuffer,
-            harmonicSpectrumBuffer,
             spectrumWindow,
             width);
 
-        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(noteSpectrumBuffer.broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(harmonicSpectrumBuffer.broadcast(2, "main harmonic spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
 
         SimpleBuffer<java.util.List<Frequency>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         Unzipper.unzip(guiOutputBuffer).relayTo(newNoteBuffer);
