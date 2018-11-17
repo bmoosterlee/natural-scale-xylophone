@@ -82,9 +82,10 @@ public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
     }
 
     private static BoundedBuffer<Map<Integer, MemoizedBucket>> toBucketMap2(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>> incompleteMap = new SimpleBuffer<>(1, "toBucketsMap2");
+        OutputPort<ImmutableMap<Integer, MemoizedBucket>> incompleteMapOutputPort = new OutputPort<>();
+        BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>> incompleteMap = incompleteMapOutputPort.getBuffer();
         try {
-            incompleteMap.createOutputPort().produce(new ImmutableMap<>());
+            incompleteMapOutputPort.produce(new ImmutableMap<>());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
