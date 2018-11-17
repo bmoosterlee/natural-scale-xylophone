@@ -43,7 +43,7 @@ public class GUI {
                 noteSpectrumBroadcast.poll()
                         .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
                         .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
-                        .relayTo(new SimpleBuffer<>(20, "volumes to ys - relay"))
+                        .resize(20)
                         .createInputPort();
         SimpleBuffer<Integer> cursorXBuffer = new SimpleBuffer<>(capacity, "cursorX - output");
         newCursorXPort = cursorXBuffer.createInputPort();
