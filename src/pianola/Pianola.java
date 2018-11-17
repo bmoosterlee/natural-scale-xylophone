@@ -36,7 +36,7 @@ public class Pianola {
         preparedNotesInput =
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
-            .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(50))
+            .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
             .performMethod(input -> input.multiply(repetitionDampener))
             .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin))
             .createInputPort();
