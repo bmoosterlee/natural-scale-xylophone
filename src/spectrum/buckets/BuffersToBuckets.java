@@ -10,39 +10,12 @@ import java.util.*;
 public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
 
     public BuffersToBuckets(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
-        super(tickBuffer, outputBuffer, build(inputMap));
+        super(tickBuffer, outputBuffer, toMethod(buildPipe(inputMap)));
     }
 
-    public static CallableWithArguments<Pulse, Buckets> build(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        return new CallableWithArguments<>() {
-            private OutputPort<Pulse> methodInputPort;
-            private InputPort<Buckets> methodOutputPort;
-
-            {
-                BoundedBuffer<Pulse> methodInput = new SimpleBuffer<>(1, "BuffersToBuckets - input");
-                methodInputPort = methodInput.createOutputPort();
-
-                BoundedBuffer<Map<Integer, MemoizedBucket>> bucketMap = toBucketMap(methodInput, bufferMap);
-
-                methodOutputPort =
-                    bucketMap
-                    .performMethod(Buckets::new, "buffers to buckets - create buckets").createInputPort();
-            }
-
-            @Override
-            public Buckets call(Pulse input) {
-                try {
-                    methodInputPort.produce(input);
-
-                    Buckets result = methodOutputPort.consume();
-
-                    return result;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        };
+    public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<Buckets>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+        return inputBuffer -> toBucketMap(inputBuffer, bufferMap)
+            .performMethod(Buckets::new, "buffers to buckets - create buckets");
     }
 
     private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {

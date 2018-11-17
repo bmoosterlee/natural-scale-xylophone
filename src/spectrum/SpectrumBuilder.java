@@ -55,7 +55,7 @@ public class SpectrumBuilder {
         }
 
         tickBroadcast.poll()
-        .performMethod(BuffersToBuckets.build(harmonicsMap), "build buffers to buckets")
+        .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
         .performMethod(PrecalculatedBucketHistoryComponent.recordHistory(200), "spectrum builder - build history")
         .relayTo(harmonicOutputBuffer);
 
