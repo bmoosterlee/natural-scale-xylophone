@@ -77,8 +77,8 @@ class Main {
             new LinkedList<>(
                 RunningOutputComponent.buildOutputBuffer(
                     Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
-                    sampleLookahead,
-                    "sample ticker - output")
+                        sampleLookahead,
+                        "sample ticker - output")
                 .performMethod(Counter.build(), "count samples")
                 .connectTo(Mixer.buildPipe(newNoteBuffer, sampleRate))
                 .broadcast(2, "main volume - broadcast"));
@@ -121,10 +121,10 @@ class Main {
         Unzipper.unzip(pianolaOutputBuffer).relayTo(newNoteBuffer);
 
         new Pianola(
-                RunningOutputComponent.buildOutputBuffer(
-                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
-                        pianolaLookahead,
-                        "Pianola ticker"),
+            RunningOutputComponent.buildOutputBuffer(
+                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
+                    pianolaLookahead,
+                    "Pianola ticker"),
             noteSpectrumBroadcast.poll()
                 .toOverwritable(),
             harmonicSpectrumBroadcast.poll()
