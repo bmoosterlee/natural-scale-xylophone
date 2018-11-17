@@ -24,7 +24,7 @@ public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
 
             @Override
             public BoundedBuffer<List<Frequency>> call(BoundedBuffer<Pulse> inputBuffer) {
-                clickedFrequenciesPort = new OutputPort<>();
+                clickedFrequenciesPort = new OutputPort<>("clicked frequency buffer");
 
                 guiPanel.addMouseListener(new MyMouseListener());
 

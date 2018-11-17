@@ -76,8 +76,8 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
             historyInputPort = historyBuffer.createInputPort();
             timeAverageInputPort = timeAverageBuffer.createInputPort();
 
-            subtractionInput1 = new OutputPort<>();
-            subtractionInput2 = new OutputPort<>();
+            subtractionInput1 = new OutputPort<>("bucket history - subtraction term 1");
+            subtractionInput2 = new OutputPort<>("bucket history - subtraction term 2");
 
             subtractOutput =
                 subtractionInput1.getBuffer()

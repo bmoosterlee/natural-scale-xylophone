@@ -46,7 +46,7 @@ public class SpectrumBuilder {
 
         harmonicsOutput = new HashMap<>();
         for (Integer i = 0; i < width; i++) {
-            harmonicsOutput.put(i, new OutputPort<>());
+            harmonicsOutput.put(i, new OutputPort<>("harmonic bucket"));
         }
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
