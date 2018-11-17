@@ -32,11 +32,12 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                 private final InputPort<Buckets> conditionalSubtractInputPort;
 
                 {
-                    BoundedBuffer<Buckets> subtractInputBuffer1 = new SimpleBuffer<>(capacity, "history - conditional input 1");
-                    BoundedBuffer<Buckets> subtractInputBuffer2 = new SimpleBuffer<>(capacity, "history - conditional input 2");
+                    conditionalSubtractOutputPort1 = new OutputPort<>();
+                    conditionalSubtractOutputPort2 = new OutputPort<>();
 
-                    conditionalSubtractOutputPort1 = subtractInputBuffer1.createOutputPort();
-                    conditionalSubtractOutputPort2 = subtractInputBuffer2.createOutputPort();
+                    BoundedBuffer<Buckets> subtractInputBuffer1 = conditionalSubtractOutputPort1.getBuffer();
+                    BoundedBuffer<Buckets> subtractInputBuffer2 = conditionalSubtractOutputPort2.getBuffer();
+
                     conditionalSubtractInputPort =
                             subtractInputBuffer1
                                     .pairWith(subtractInputBuffer2)
