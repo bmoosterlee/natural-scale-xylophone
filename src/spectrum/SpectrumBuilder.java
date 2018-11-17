@@ -44,14 +44,14 @@ public class SpectrumBuilder {
             .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator")
             .createInputPort();
 
-        Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
+        harmonicsOutput = new HashMap<>();
         for (Integer i = 0; i < width; i++) {
-            harmonicsMap.put(i, new SimpleBuffer<>(1000, "harmonics bucket"));
+            harmonicsOutput.put(i, new OutputPort<>());
         }
 
-        harmonicsOutput = new HashMap<>();
-        for (Integer index : harmonicsMap.keySet()) {
-            harmonicsOutput.put(index, new OutputPort<>(harmonicsMap.get(index)));
+        Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
+        for (Integer index : harmonicsOutput.keySet()) {
+            harmonicsMap.put(index, harmonicsOutput.get(index).getBuffer().resize(1000));
         }
 
         tickBroadcast.poll()
