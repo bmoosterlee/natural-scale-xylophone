@@ -42,4 +42,6 @@ public interface BoundedBuffer<T> {
     SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer);
 
     BufferChainLink<T> toOverwritable();
+
+    BufferChainLink<T> resize(int size);
 }
