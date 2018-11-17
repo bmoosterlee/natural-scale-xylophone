@@ -25,9 +25,9 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                     .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
             SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
-            SimpleBuffer<Buckets> outputTimeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
+            SimpleBuffer<Buckets> timeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
 
-            LinkedList<BoundedBuffer<Buckets>> outputTimeAverageBroadcast = new LinkedList<>(outputTimeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
+            LinkedList<BoundedBuffer<Buckets>> timeAverageBroadcast = new LinkedList<>(timeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
 
             new OldHistoryRemover(
                 historyBuffer
@@ -37,7 +37,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                         input1 ->
                             input1.getKey()
                             .add(input1.getValue()), "precalculated bucket history - add new buckets"),
-                outputTimeAverageBroadcast.poll()
+                timeAverageBroadcast.poll()
                     .pairWith(
                         preparedBucketsBroadcast.poll())
                     .performMethod(
@@ -45,17 +45,17 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
                             input1.getKey()
                             .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"),
                 historyBuffer,
-                outputTimeAverageBuffer,
+                timeAverageBuffer,
                 size);
 
             try {
                 historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
-                outputTimeAverageBuffer.createOutputPort().produce(new Buckets());
+                timeAverageBuffer.createOutputPort().produce(new Buckets());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            return outputTimeAverageBroadcast.poll();
+            return timeAverageBroadcast.poll();
         };
     }
 
