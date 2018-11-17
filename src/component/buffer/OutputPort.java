@@ -8,8 +8,16 @@ public class OutputPort<T> {
         this.buffer = buffer;
     }
 
+    public OutputPort(){
+        this(new SimpleBuffer<>(1, "output port created buffer"));
+    }
+
     public void produce(T packet) throws InterruptedException {
         buffer.offer(packet);
+    }
+
+    public BoundedBuffer<T> getBuffer() {
+        return buffer;
     }
 
 }
