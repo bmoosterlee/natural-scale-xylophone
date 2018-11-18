@@ -47,12 +47,12 @@ public abstract class TickRunnerSpawner implements Runnable{
     private TickRunner createNewTickRunner() {
         return new TickRunner() {
 
-                        @Override
-                        protected void tick() {
-                            TickRunnerSpawner.this.tick();
-                        }
+            @Override
+            protected void tick() {
+                TickRunnerSpawner.this.tick();
+            }
 
-                    };
+        };
     }
 
     protected abstract void tick();
