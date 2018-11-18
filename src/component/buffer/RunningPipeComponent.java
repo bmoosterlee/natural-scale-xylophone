@@ -1,26 +1,22 @@
 package component.buffer;
 
-public class RunningPipeComponent<K, V> extends PipeComponent<K, V> {
+public class RunningPipeComponent<K, V> {
 
-    private final MyTickRunner tickRunner = new MyTickRunner();
+    private final PipeComponent<K, V> pipeComponent;
 
-    public RunningPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
-        super(inputBuffer, outputBuffer, method);
+    public RunningPipeComponent(final PipeComponent<K, V> pipeComponent){
+        this.pipeComponent = pipeComponent;
 
-        start();
+        new SimpleTickRunner() {
+            @Override
+            protected void tick() {
+                RunningPipeComponent.this.tick();
+            }
+        }.start();
     }
 
-    private class MyTickRunner extends SimpleTickRunner {
-
-        @Override
-        protected void tick() {
-            RunningPipeComponent.this.tick();
-        }
-
-    }
-
-    protected void start() {
-        tickRunner.start();
+    private void tick() {
+        pipeComponent.tick();
     }
 
 }

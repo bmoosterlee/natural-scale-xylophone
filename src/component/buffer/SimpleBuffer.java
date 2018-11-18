@@ -70,7 +70,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new RunningInputComponent<>(this, method);
+        new RunningInputComponent<>(new InputComponent<>(this, method));
     }
 
     @Override
@@ -105,7 +105,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
-        new RunningPipeComponent<>(this, outputBuffer, input -> input);
+        new RunningPipeComponent<>(new PipeComponent<>(this, outputBuffer, input -> input));
         return outputBuffer;
     }
 

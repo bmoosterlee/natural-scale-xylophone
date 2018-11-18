@@ -1,24 +1,22 @@
 package component.buffer;
 
-public class RunningInputComponent<K> extends InputComponent<K> {
+public class RunningInputComponent<K> {
 
-    private final MyTickRunner tickRunner = new MyTickRunner();
+    private final InputComponent<K> inputComponent;
 
-    public RunningInputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method){
-        super(inputBuffer, method);
+    public RunningInputComponent(final InputComponent<K> inputComponent){
+        this.inputComponent = inputComponent;
 
-        start();
+        new SimpleTickRunner() {
+            @Override
+            protected void tick() {
+                RunningInputComponent.this.tick();
+            }
+        }.start();
     }
 
-    private class MyTickRunner extends SimpleTickRunner {
-        @Override
-        protected void tick() {
-            RunningInputComponent.this.tick();
-        }
-    }
-
-    protected void start() {
-        tickRunner.start();
+    private void tick() {
+        inputComponent.tick();
     }
 
 }
