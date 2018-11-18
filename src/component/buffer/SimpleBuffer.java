@@ -85,7 +85,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public Collection<SimpleBuffer<T>> broadcast(int size) {
-        return Broadcast.broadcast(this, size);
+        return Broadcast.broadcast(this, Math.max(10, size));
     }
 
     @Override
