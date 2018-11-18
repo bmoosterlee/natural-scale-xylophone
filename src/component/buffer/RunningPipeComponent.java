@@ -12,7 +12,7 @@ public class RunningPipeComponent<K, V> extends PipeComponent<K, V> {
         start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
 
         @Override
         protected void tick() {

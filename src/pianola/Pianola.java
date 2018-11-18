@@ -25,7 +25,7 @@ public class Pianola {
 
     private final OutputPort<List<Frequency>> outputPort;
 
-    private final TickRunner tickRunner = new MyTickRunner();
+    private final SimpleTickRunner tickRunner = new MyTickRunner();
 
     public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
@@ -69,7 +69,7 @@ public class Pianola {
         tickRunner.start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
         @Override
         protected void tick() {
             Pianola.this.tick();

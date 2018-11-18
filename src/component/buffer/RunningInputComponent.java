@@ -10,7 +10,7 @@ public class RunningInputComponent<K> extends InputComponent<K> {
         start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
         @Override
         protected void tick() {
             RunningInputComponent.this.tick();

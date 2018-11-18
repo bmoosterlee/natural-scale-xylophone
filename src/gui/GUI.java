@@ -3,7 +3,7 @@ package gui;
 import component.Pulse;
 import component.buffer.InputPort;
 import component.buffer.SimpleBuffer;
-import component.buffer.TickRunner;
+import component.buffer.SimpleTickRunner;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
@@ -62,7 +62,7 @@ public class GUI {
         frame.pack();
         frame.setVisible(true);
 
-        new TickRunner() {
+        new SimpleTickRunner() {
 
             @Override
             protected void tick() {

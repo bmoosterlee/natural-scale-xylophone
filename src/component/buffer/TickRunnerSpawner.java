@@ -4,7 +4,7 @@ import java.util.LinkedList;
 
 public abstract class TickRunnerSpawner implements Runnable{
     private final BoundedBuffer inputBuffer;
-    private final LinkedList<TickRunner> liveRunners;
+    private final LinkedList<SimpleTickRunner> liveRunners;
 
     public TickRunnerSpawner(BoundedBuffer inputBuffer){
         this.inputBuffer = inputBuffer;
@@ -17,13 +17,13 @@ public abstract class TickRunnerSpawner implements Runnable{
 
     @Override
     public void run() {
-        TickRunner firstTickRunner = createNewTickRunner();
+        SimpleTickRunner firstTickRunner = createNewTickRunner();
         firstTickRunner.start();
         liveRunners.add(firstTickRunner);
 
         while(true){
             if(inputBuffer.isFull()){
-                TickRunner tickRunner = createNewTickRunner();
+                SimpleTickRunner tickRunner = createNewTickRunner();
                 tickRunner.start();
                 liveRunners.add(tickRunner);
             }
@@ -44,8 +44,8 @@ public abstract class TickRunnerSpawner implements Runnable{
         }
     }
 
-    private TickRunner createNewTickRunner() {
-        return new TickRunner() {
+    private SimpleTickRunner createNewTickRunner() {
+        return new SimpleTickRunner() {
 
             @Override
             protected void tick() {

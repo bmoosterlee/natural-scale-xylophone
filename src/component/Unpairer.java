@@ -1,7 +1,7 @@
 package component;
 
 import component.buffer.*;
-import component.buffer.TickRunner;
+import component.buffer.SimpleTickRunner;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 
@@ -11,7 +11,7 @@ public class Unpairer<K, V> {
     private final OutputPort<K> output1;
     private final OutputPort<V> output2;
 
-    TickRunner tickRunner = new MyTickRunner();
+    SimpleTickRunner tickRunner = new MyTickRunner();
 
     public Unpairer(BoundedBuffer<SimpleImmutableEntry<K,V>> inputBuffer, SimpleBuffer<K> outputBuffer1, SimpleBuffer<V> outputBuffer2){
         input = inputBuffer.createInputPort();
@@ -21,7 +21,7 @@ public class Unpairer<K, V> {
         tickRunner.start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
         @Override
         protected void tick() {
             Unpairer.this.tick();

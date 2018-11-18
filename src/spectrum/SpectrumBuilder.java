@@ -52,7 +52,7 @@ public class SpectrumBuilder {
             .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
             .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
 
-        new TickRunner(){
+        new SimpleTickRunner(){
 
             @Override
             protected void tick() {

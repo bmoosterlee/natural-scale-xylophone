@@ -11,7 +11,7 @@ public class ChainedInputComponent<K> extends InputComponent<K> {
     }
 
     public void start() {
-        new TickRunner() {
+        new SimpleTickRunner() {
 
             @Override
             protected void tick() {

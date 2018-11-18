@@ -9,7 +9,7 @@ public class Adder {
     private final Set<InputPort<Buckets>> inputs;
     private final OutputPort<Buckets> output;
 
-    private final TickRunner tickRunner = new MyTickRunner();
+    private final SimpleTickRunner tickRunner = new MyTickRunner();
 
     public Adder(Set<BoundedBuffer<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
         inputs = new HashSet<>();
@@ -26,7 +26,7 @@ public class Adder {
         tickRunner.start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
 
         @Override
         protected void tick() {

@@ -2,7 +2,6 @@ package component;
 
 import component.buffer.*;
 
-import java.util.Collection;
 import java.util.List;
 
 public class Unzipper {
@@ -12,7 +11,7 @@ public class Unzipper {
         InputPort<List<T>> inputPort = input.createInputPort();
         OutputPort<T> outputPort = outputBuffer.createOutputPort();
 
-        new TickRunner() {
+        new SimpleTickRunner() {
             @Override
             protected void tick() {
                 try {

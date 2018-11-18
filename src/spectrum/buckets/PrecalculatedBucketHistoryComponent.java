@@ -92,7 +92,7 @@ public class PrecalculatedBucketHistoryComponent extends RunningPipeComponent<Bu
             historyOutputBufferPort = historyOutputBuffer.createOutputPort();
             timeAverageOutputOutputPort = timeAverageOutputBuffer.createOutputPort();
 
-            new TickRunner(){
+            new SimpleTickRunner(){
                 @Override
                 protected void tick() {
                     OldHistoryRemover.this.tick();

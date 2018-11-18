@@ -12,7 +12,7 @@ public class RunningOutputComponent<V> extends OutputComponent<V> {
         start();
     }
 
-    private class MyTickRunner extends TickRunner {
+    private class MyTickRunner extends SimpleTickRunner {
 
         protected void tick() {
             RunningOutputComponent.this.tick();

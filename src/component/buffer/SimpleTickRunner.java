@@ -1,6 +1,6 @@
 package component.buffer;
 
-public abstract class TickRunner implements Runnable {
+public abstract class SimpleTickRunner implements Runnable {
 
     private boolean alive;
 
