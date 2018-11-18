@@ -7,7 +7,7 @@ import component.buffer.RunningPipeComponent;
 
 import java.util.*;
 
-public class BuffersToBuckets extends RunningPipeComponent<Pulse, Buckets> {
+public class BuffersToBuckets extends PipeComponent<Pulse, Buckets> {
 
     public BuffersToBuckets(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
         super(tickBuffer, outputBuffer, toMethod(buildPipe(inputMap)));

@@ -1,16 +1,13 @@
 package gui;
 
 import component.*;
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningPipeComponent;
+import component.buffer.*;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public class CursorMover extends RunningPipeComponent<Pulse, Integer> {
+public class CursorMover extends PipeComponent<Pulse, Integer> {
 
     public CursorMover(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Integer> outputBuffer, JPanel guiPanel) {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(guiPanel)));

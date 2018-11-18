@@ -5,7 +5,7 @@ import component.buffer.RunningPipeComponent;
 
 import java.util.*;
 
-public class BucketsAverager extends RunningPipeComponent<Buckets, Buckets> {
+public class BucketsAverager extends PipeComponent<Buckets, Buckets> {
 
     public BucketsAverager(SimpleBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int averagingWidth) {
         super(inputBuffer, outputBuffer, build(averagingWidth));

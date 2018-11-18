@@ -1,12 +1,8 @@
 package component;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.InputPort;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningPipeComponent;
+import component.buffer.*;
 
-public class TimedConsumer<T> extends RunningPipeComponent<Pulse, T> {
+public class TimedConsumer<T> extends PipeComponent<Pulse, T> {
 
     public TimedConsumer(SimpleBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));

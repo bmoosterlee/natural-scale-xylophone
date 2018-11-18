@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 
-public class NoteClicker extends RunningPipeComponent<Pulse, List<Frequency>> {
+public class NoteClicker extends PipeComponent<Pulse, List<Frequency>> {
 
     public NoteClicker(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, JPanel guiPanel) {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(spectrumWindow, guiPanel)));

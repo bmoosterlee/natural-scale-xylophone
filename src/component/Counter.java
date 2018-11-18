@@ -1,11 +1,8 @@
 package component;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.SimpleBuffer;
-import component.buffer.RunningPipeComponent;
+import component.buffer.*;
 
-public class Counter extends RunningPipeComponent<Pulse, Long> {
+public class Counter extends PipeComponent<Pulse, Long> {
 
     public Counter(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
         super(inputBuffer, outputBuffer, build());

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class VolumeStateToBuckets extends RunningPipeComponent<VolumeState, Buckets> {
+public class VolumeStateToBuckets extends PipeComponent<VolumeState, Buckets> {
 
     public VolumeStateToBuckets(SimpleBuffer<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
         super(volumeStateBuffer, notesBucketsBuffer, build(spectrumWindow));

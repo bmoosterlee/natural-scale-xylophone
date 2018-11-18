@@ -7,7 +7,7 @@ import frequency.Frequency;
 
 import java.util.LinkedList;
 
-public class NoteTimestamper extends RunningPipeComponent {
+public class NoteTimestamper extends PipeComponent<Long, TimestampedFrequencies> {
 
     public NoteTimestamper(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
         super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(newNoteBuffer)));

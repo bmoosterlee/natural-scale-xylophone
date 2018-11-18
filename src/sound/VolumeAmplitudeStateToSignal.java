@@ -8,7 +8,7 @@ import mixer.state.VolumeAmplitudeState;
 
 import java.util.Map;
 
-public class VolumeAmplitudeStateToSignal extends RunningPipeComponent<VolumeAmplitudeState, Double> {
+public class VolumeAmplitudeStateToSignal extends PipeComponent<VolumeAmplitudeState, Double> {
 
     public VolumeAmplitudeStateToSignal(SimpleBuffer<VolumeAmplitudeState> volumeAmplitudeStateInputBuffer, SimpleBuffer<Double> amplitudeOutputBuffer) {
         super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, build());
