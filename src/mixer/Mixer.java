@@ -188,15 +188,17 @@ public class Mixer extends RunningPipeComponent<Long, VolumeAmplitudeState> {
             private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes) {
                 Map<Frequency, Wave> newNoteWaves = new HashMap<>();
                 Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                for (Long i : unfinishedSlicesWaves.keySet()) {
-                    Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
+                synchronized (unfinishedSlicesWaves) {
+                    for (Long i : unfinishedSlicesWaves.keySet()) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
 
-                    Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
-                    foundWaves.keySet().retainAll(missingWaveFrequencies);
-                    newNoteWaves.putAll(foundWaves);
+                        Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
+                        foundWaves.keySet().retainAll(missingWaveFrequencies);
+                        newNoteWaves.putAll(foundWaves);
 
-                    missingWaveFrequencies = new HashSet<>(missingWaveFrequencies);
-                    missingWaveFrequencies.removeAll(oldUnfinishedSliceWaves.keySet());
+                        missingWaveFrequencies = new HashSet<>(missingWaveFrequencies);
+                        missingWaveFrequencies.removeAll(oldUnfinishedSliceWaves.keySet());
+                    }
                 }
                 for (Frequency frequency : missingWaveFrequencies) {
                     Wave newWave = new Wave(frequency, sampleRate);
