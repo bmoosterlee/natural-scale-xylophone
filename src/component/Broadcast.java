@@ -1,10 +1,6 @@
 package component;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.InputPort;
-import component.buffer.OutputPort;
-import component.buffer.SimpleBuffer;
-import component.buffer.TickRunner;
+import component.buffer.*;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,7 +10,6 @@ public class Broadcast<T> {
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
-    private final MyTickRunner tickRunner = new MyTickRunner();
 
     public Broadcast(SimpleBuffer<T> inputBuffer, Collection<SimpleBuffer<T>> outputBuffers) {
         input = inputBuffer.createInputPort();
@@ -24,14 +19,12 @@ public class Broadcast<T> {
             outputs.add(new OutputPort<>(buffer));
         }
 
-        tickRunner.start();
-    }
-
-    private class MyTickRunner extends TickRunner {
-        @Override
-        protected void tick() {
-            Broadcast.this.tick();
-        }
+        new TickRunnerSpawner(inputBuffer) {
+            @Override
+            protected void tick() {
+                Broadcast.this.tick();
+            }
+        }.start();
     }
 
     private void tick() {

@@ -17,7 +17,7 @@ public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
     }
 
     public void start() {
-        new TickRunner() {
+        new TickRunnerSpawner(getFirstInputBuffer()) {
 
             @Override
             protected void tick() {
@@ -36,6 +36,14 @@ public class ChainedPipeComponent<K, V> extends PipeComponent<K, V>{
         }
 
         super.tick();
+    }
+
+    private BoundedBuffer getFirstInputBuffer() {
+        ChainedPipeComponent index = this;
+        while(index.previousComponent!=null){
+            index = index.previousComponent;
+        }
+        return index.input.getBuffer();
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
