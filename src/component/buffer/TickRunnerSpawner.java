@@ -3,10 +3,10 @@ package component.buffer;
 import java.util.LinkedList;
 
 public abstract class TickRunnerSpawner implements Runnable{
-    private final SimpleBuffer inputBuffer;
+    private final BoundedBuffer inputBuffer;
     private final LinkedList<TickRunner> liveRunners;
 
-    public TickRunnerSpawner(SimpleBuffer inputBuffer){
+    public TickRunnerSpawner(BoundedBuffer inputBuffer){
         this.inputBuffer = inputBuffer;
         liveRunners = new LinkedList<>();
     }
