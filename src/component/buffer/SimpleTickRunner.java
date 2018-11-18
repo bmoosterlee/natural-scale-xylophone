@@ -2,10 +2,9 @@ package component.buffer;
 
 public abstract class SimpleTickRunner implements Runnable {
 
-    private boolean alive;
+    private boolean alive = true;
 
     public void start(){
-        alive = true;
         new Thread(this).start();
     }
 
