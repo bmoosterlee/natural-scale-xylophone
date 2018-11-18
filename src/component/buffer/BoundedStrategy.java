@@ -17,11 +17,7 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         emptySpots = new Semaphore(capacity);
         filledSpots = new Semaphore(capacity);
 
-        try {
-            filledSpots.acquire(capacity);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        filledSpots.drainPermits();
     }
 
     @Override
