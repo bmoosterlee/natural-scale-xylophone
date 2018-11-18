@@ -4,7 +4,6 @@ import component.Counter;
 import component.Unzipper;
 import component.buffer.BoundedBuffer;
 import component.buffer.OutputPort;
-import component.buffer.RunningOutputComponent;
 import component.buffer.SimpleBuffer;
 import frequency.Frequency;
 import gui.GUI;
@@ -77,8 +76,7 @@ class Main {
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
         LinkedList<SimpleBuffer<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
-                RunningOutputComponent.buildOutputBuffer(
-                    Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
+                    Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate),
                         sampleLookahead,
                         "sample ticker - output")
                 .toOverwritable()
@@ -91,8 +89,7 @@ class Main {
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
             SpectrumBuilder.buildComponent(
-            RunningOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
+                Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(frameRate), frameLookahead, "GUI ticker")
                 .toOverwritable(),
             volumeBroadcast.poll()
                 .toOverwritable(),
@@ -122,8 +119,7 @@ class Main {
         Unzipper.unzip(pianolaOutputBuffer).relayTo(newNoteBuffer);
 
         new Pianola(
-            RunningOutputComponent.buildOutputBuffer(
-                Ticker.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
+                Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate),
                     pianolaLookahead,
                     "Pianola ticker")
                 .toOverwritable(),

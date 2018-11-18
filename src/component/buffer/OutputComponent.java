@@ -14,7 +14,7 @@ public class OutputComponent<V> {
         this.method = method;
     }
 
-    protected void tick() {
+    public void tick() {
         try {
             V result = method.call();
             output.produce(result);
