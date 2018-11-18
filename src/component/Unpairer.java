@@ -11,7 +11,7 @@ public class Unpairer<K, V> {
     private final OutputPort<K> output1;
     private final OutputPort<V> output2;
 
-    SimpleTickRunner tickRunner = new MyTickRunner();
+    TickRunner tickRunner = new MyTickRunner();
 
     public Unpairer(BoundedBuffer<SimpleImmutableEntry<K,V>> inputBuffer, SimpleBuffer<K> outputBuffer1, SimpleBuffer<V> outputBuffer2){
         input = inputBuffer.createInputPort();

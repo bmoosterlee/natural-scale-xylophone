@@ -1,12 +1,8 @@
 package component.buffer;
 
-public abstract class SimpleTickRunner implements Runnable {
+public abstract class SimpleTickRunner extends TickRunner {
 
     private boolean alive = true;
-
-    public void start(){
-        new Thread(this).start();
-    }
 
     @Override
     public void run() {
@@ -14,8 +10,6 @@ public abstract class SimpleTickRunner implements Runnable {
             tick();
         }
     }
-
-    protected abstract void tick();
 
     public void kill() {
         alive = false;

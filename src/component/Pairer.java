@@ -10,7 +10,7 @@ public class Pairer<K, V> {
     private final InputPort<K> inputPort1;
     private final InputPort<V> inputPort2;
     private final OutputPort<SimpleImmutableEntry<K, V>> outputPort;
-    private final SimpleTickRunner tickRunner = new MyTickRunner();
+    private final TickRunner tickRunner = new MyTickRunner();
 
     public Pairer(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer){
         inputPort1 = inputBuffer1.createInputPort();

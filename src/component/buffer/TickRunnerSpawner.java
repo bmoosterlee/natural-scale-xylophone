@@ -2,17 +2,13 @@ package component.buffer;
 
 import java.util.LinkedList;
 
-public abstract class TickRunnerSpawner implements Runnable{
+public abstract class TickRunnerSpawner extends TickRunner{
     private final BoundedBuffer inputBuffer;
     private final LinkedList<SimpleTickRunner> liveRunners;
 
     public TickRunnerSpawner(BoundedBuffer inputBuffer){
         this.inputBuffer = inputBuffer;
         liveRunners = new LinkedList<>();
-    }
-
-    public void start(){
-        new Thread(this).start();
     }
 
     @Override
@@ -54,7 +50,5 @@ public abstract class TickRunnerSpawner implements Runnable{
 
         };
     }
-
-    protected abstract void tick();
 
 }
