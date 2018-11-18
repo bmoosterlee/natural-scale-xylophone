@@ -49,9 +49,15 @@ public class Mixer extends PipeComponent<Long, VolumeAmplitudeState> {
                                 .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                                 .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
 
-                SimpleImmutableEntry<OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>>, InputPort<Collection<EnvelopeForFrequency>>> addNewNotesPorts = RunningPipeComponent.methodToComponentPorts(addNewNotesInput -> toEnvelopesForFrequencies(addNewNotesInput.getKey(), addNewNotesInput.getValue()), capacity, "addNewNotes");
-                addNewNotesOutputPort = addNewNotesPorts.getKey();
-                addNewNotesInputPort = addNewNotesPorts.getValue();
+                addNewNotesOutputPort = new OutputPort<>();
+                addNewNotesInputPort =
+                    addNewNotesOutputPort.getBuffer()
+                    .performMethod(
+                        input ->
+                            toEnvelopesForFrequencies(
+                                input.getKey(),
+                                input.getValue()), "addNewNotes")
+                    .createInputPort();
 
                 BoundedBuffer<VolumeAmplitudeState> outputBuffer =
                         inputBroadcast.poll().performMethod(this::mix, "mixer");
