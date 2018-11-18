@@ -60,7 +60,7 @@ public class BuffersToBuckets extends PipeComponent<Pulse, Buckets> {
     }
 
     public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, InputPort<K>> input){
-        return RunningComponent.buildOutputBuffer(
+        return TickRunningStrategy.buildOutputBuffer(
             () -> {
                 try {
                     Map<I, K> map = new HashMap<>();
