@@ -31,4 +31,8 @@ public class InputPort<T> {
     public boolean isEmpty() {
         return buffer.isEmpty();
     }
+
+    public BoundedBuffer<T> getBuffer() {
+        return buffer;
+    }
 }
