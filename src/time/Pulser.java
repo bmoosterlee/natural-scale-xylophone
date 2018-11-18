@@ -7,9 +7,9 @@ import component.buffer.SimpleTickRunner;
 
 import java.util.concurrent.Callable;
 
-public class Ticker {
+public class Pulser {
 
-    public Ticker(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
+    public Pulser(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
         final OutputComponent<Pulse> outputComponent = new OutputComponent<>(outputBuffer, build(frameTime));
 
         new SimpleTickRunner(){
@@ -50,7 +50,7 @@ public class Ticker {
 
     public static SimpleBuffer<Pulse> buildOutputBuffer(TimeInNanoSeconds frameTime, int capacity, String name) {
         SimpleBuffer<Pulse> outputBuffer = new SimpleBuffer<>(capacity, name);
-        new Ticker(outputBuffer, frameTime);
+        new Pulser(outputBuffer, frameTime);
         return outputBuffer;
     }
 

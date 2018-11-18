@@ -18,7 +18,7 @@ import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
 import time.PerformanceTracker;
-import time.Ticker;
+import time.Pulser;
 import time.TimeInSeconds;
 
 import java.awt.*;
@@ -76,7 +76,7 @@ class Main {
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
         LinkedList<SimpleBuffer<VolumeAmplitudeState>> volumeBroadcast =
             new LinkedList<>(
-                    Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate),
+                    Pulser.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate),
                         sampleLookahead,
                         "sample ticker - output")
                 .toOverwritable()
@@ -89,7 +89,7 @@ class Main {
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
             SpectrumBuilder.buildComponent(
-                Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(frameRate), frameLookahead, "GUI ticker")
+                Pulser.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(frameRate), frameLookahead, "GUI ticker")
                 .toOverwritable(),
             volumeBroadcast.poll()
                 .toOverwritable(),
@@ -119,7 +119,7 @@ class Main {
         Unzipper.unzip(pianolaOutputBuffer).relayTo(newNoteBuffer);
 
         new Pianola(
-                Ticker.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate),
+                Pulser.buildOutputBuffer(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate),
                     pianolaLookahead,
                     "Pianola ticker")
                 .toOverwritable(),
