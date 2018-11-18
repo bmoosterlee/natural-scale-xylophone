@@ -1,7 +1,6 @@
 package spectrum;
 
 import component.buffer.*;
-import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;

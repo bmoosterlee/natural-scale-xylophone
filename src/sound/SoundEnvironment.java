@@ -1,16 +1,12 @@
 package sound;
 
 import component.buffer.*;
-import component.buffer.RunningInputComponent;
 import mixer.state.VolumeAmplitudeState;
-import time.PerformanceTracker;
-import time.TimeKeeper;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import java.util.List;
 
 public class SoundEnvironment extends RunningInputComponent<VolumeAmplitudeState> {
 

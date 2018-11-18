@@ -2,7 +2,6 @@ package mixer.state;
 
 import component.*;
 import component.buffer.*;
-import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 
 import java.util.LinkedList;

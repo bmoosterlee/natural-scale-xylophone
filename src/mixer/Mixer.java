@@ -1,13 +1,11 @@
 package mixer;
 
 import component.buffer.*;
-import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
 import mixer.state.*;
 import sound.SampleRate;
-import mixer.state.Wave;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;

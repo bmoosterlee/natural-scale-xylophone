@@ -1,7 +1,6 @@
 package spectrum.buckets;
 
 import component.buffer.*;
-import component.buffer.RunningPipeComponent;
 
 import java.util.AbstractMap;
 import java.util.LinkedList;

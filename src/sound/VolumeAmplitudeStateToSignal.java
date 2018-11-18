@@ -1,7 +1,6 @@
 package sound;
 
 import component.buffer.*;
-import component.buffer.RunningPipeComponent;
 import frequency.Frequency;
 import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;

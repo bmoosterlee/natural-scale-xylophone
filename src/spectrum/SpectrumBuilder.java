@@ -9,7 +9,6 @@ import spectrum.buckets.BuffersToBuckets;
 import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
-import component.Pulse;
 import mixer.state.VolumeAmplitudeState;
 import mixer.state.VolumeAmplitudeToVolumeFilter;
 import mixer.state.VolumeState;
