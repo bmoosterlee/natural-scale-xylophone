@@ -1,22 +1,21 @@
 package component.buffer;
 
-public class ChainedInputComponent<K> extends MethodInputComponent<K> {
-
+public class ChainedInputComponent<K> {
+    private final MethodInputComponent<K> methodInputComponent;
     private final ChainedPipeComponent previousComponent;
 
-    public ChainedInputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method){
-        super(inputBuffer, method);
-        previousComponent = inputBuffer.previousComponent;
+    public ChainedInputComponent(ChainedPipeComponent<?, K> previousComponent, MethodInputComponent<K> methodInputComponent){
+        this.methodInputComponent = methodInputComponent;
+        this.previousComponent = previousComponent;
     }
 
-    @Override
-    protected void tick() {
+    public void tick() {
         try{
             previousComponent.tick();
         }
         catch(NullPointerException ignored){
         }
-        super.tick();
+        methodInputComponent.tick();
     }
 
     public <T> AbstractInputComponent<T> wrap() {
@@ -34,7 +33,7 @@ public class ChainedInputComponent<K> extends MethodInputComponent<K> {
         while(index.previousComponent!=null){
             index = index.previousComponent;
         }
-        return index.input;
+        return index.methodPipeComponent.input;
     }
 
 }

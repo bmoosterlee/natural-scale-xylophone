@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public abstract class AbstractPipeComponent<K, V> extends AbstractComponent<K, V> {
-    protected final InputPort<K> input;
-    protected final OutputPort<V> output;
+    public final InputPort<K> input;
+    public final OutputPort<V> output;
 
     public AbstractPipeComponent(InputPort<K> input, OutputPort<V> output) {
         this.input = input;
