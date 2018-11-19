@@ -15,7 +15,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     protected SimpleBuffer<T> breakChain(){
-        previousComponent.start();
+        new TickRunningStrategy<>(previousComponent.wrap());
 
         return buffer;
     }
@@ -76,7 +76,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new ChainedInputComponent<>(this, method);
+        new TickRunningStrategy<>(new ChainedInputComponent<>(this, method).wrap());
     }
 
     @Override

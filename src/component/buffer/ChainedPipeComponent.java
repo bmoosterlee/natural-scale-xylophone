@@ -2,7 +2,7 @@ package component.buffer;
 
 public class ChainedPipeComponent<K, V> extends MethodPipeComponent<K, V> {
 
-    private final ChainedPipeComponent previousComponent;
+    final ChainedPipeComponent previousComponent;
 
     public ChainedPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method){
         super(inputBuffer, outputBuffer, method);
@@ -16,18 +16,6 @@ public class ChainedPipeComponent<K, V> extends MethodPipeComponent<K, V> {
         previousComponent = null;
     }
 
-    public void start() {
-        new TickRunnerSpawner(getFirstInputBuffer()) {
-
-            @Override
-            protected void tick() {
-                ChainedPipeComponent.this.tick();
-            }
-
-        }
-        .start();
-    }
-
     public void tick() {
         try {
             previousComponent.tick();
@@ -38,12 +26,12 @@ public class ChainedPipeComponent<K, V> extends MethodPipeComponent<K, V> {
         super.tick();
     }
 
-    private BoundedBuffer getFirstInputBuffer() {
+    private <T> InputPort<T> getFirstInputPort() {
         ChainedPipeComponent index = this;
         while(index.previousComponent!=null){
             index = index.previousComponent;
         }
-        return index.input.getBuffer();
+        return index.input;
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
@@ -72,5 +60,15 @@ public class ChainedPipeComponent<K, V> extends MethodPipeComponent<K, V> {
         ChainedPipeComponent<K, K> methodComponent = new ChainedPipeComponent<>(inputBuffer, outputBuffer, input -> input);
         BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
+    }
+
+    public <T> AbstractPipeComponent<T, V> wrap() {
+        return new AbstractPipeComponent<>(getFirstInputPort(), output) {
+
+            @Override
+            protected void tick() {
+                ChainedPipeComponent.this.tick();
+            }
+        };
     }
 }
