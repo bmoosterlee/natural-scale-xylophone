@@ -4,14 +4,14 @@ import component.buffer.*;
 
 import java.util.*;
 
-public class BucketsAverager extends PipeComponent<Buckets, Buckets> {
+public class BucketsAverager extends MethodPipeComponent<Buckets, Buckets> {
 
     public BucketsAverager(SimpleBuffer<Buckets> inputBuffer, BoundedBuffer<Buckets> outputBuffer, int averagingWidth) {
         super(inputBuffer, outputBuffer, build(averagingWidth));
     }
 
     public static CallableWithArguments<Buckets, Buckets> build(int averagingWidth){
-        return PipeComponent.toMethod(buildPipe(averagingWidth));
+        return MethodPipeComponent.toMethod(buildPipe(averagingWidth));
     }
 
     public static CallableWithArguments<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int averagingWidth) {

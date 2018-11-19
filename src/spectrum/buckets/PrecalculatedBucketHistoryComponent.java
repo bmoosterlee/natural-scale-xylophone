@@ -5,7 +5,7 @@ import component.buffer.*;
 import java.util.AbstractMap;
 import java.util.LinkedList;
 
-public class PrecalculatedBucketHistoryComponent extends PipeComponent<Buckets, Buckets> {
+public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buckets, Buckets> {
 
     public PrecalculatedBucketHistoryComponent(SimpleBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size) {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(size)));

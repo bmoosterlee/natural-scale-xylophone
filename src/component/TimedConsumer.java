@@ -2,7 +2,7 @@ package component;
 
 import component.buffer.*;
 
-public class TimedConsumer<T> extends PipeComponent<Pulse, T> {
+public class TimedConsumer<T> extends MethodPipeComponent<Pulse, T> {
 
     public TimedConsumer(SimpleBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));

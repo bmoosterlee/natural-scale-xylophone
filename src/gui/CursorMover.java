@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public class CursorMover extends PipeComponent<Pulse, Integer> {
+public class CursorMover extends MethodPipeComponent<Pulse, Integer> {
 
     public CursorMover(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Integer> outputBuffer, JPanel guiPanel) {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(guiPanel)));

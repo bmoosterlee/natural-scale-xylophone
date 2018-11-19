@@ -1,6 +1,6 @@
 package component.buffer;
 
-public class ChainedInputComponent<K> extends InputComponent<K> {
+public class ChainedInputComponent<K> extends MethodInputComponent<K> {
 
     private final ChainedPipeComponent previousComponent;
 

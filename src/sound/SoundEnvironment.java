@@ -8,10 +8,10 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-public class SoundEnvironment extends InputComponent<VolumeAmplitudeState> {
+public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState> {
 
     public SoundEnvironment(SimpleBuffer<VolumeAmplitudeState> inputBuffer, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate) {
-        super(inputBuffer, InputComponent.toMethod(buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate)));
+        super(inputBuffer, MethodInputComponent.toMethod(buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate)));
     }
 
     public static CallableWithArgument<BoundedBuffer<VolumeAmplitudeState>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){

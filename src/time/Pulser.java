@@ -1,7 +1,7 @@
 package time;
 
 import component.Pulse;
-import component.buffer.OutputComponent;
+import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
 import component.buffer.SimpleTickRunner;
 
@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 public class Pulser {
 
     public Pulser(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
-        final OutputComponent<Pulse> outputComponent = new OutputComponent<>(outputBuffer, build(frameTime));
+        final MethodOutputComponent<Pulse> outputComponent = new MethodOutputComponent<>(outputBuffer, build(frameTime));
 
         new SimpleTickRunner(){
 

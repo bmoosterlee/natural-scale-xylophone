@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
-public class Mixer extends PipeComponent<Long, VolumeAmplitudeState> {
+public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
 
     public Mixer(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(noteInputBuffer, sampleRate)));

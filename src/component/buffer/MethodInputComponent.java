@@ -1,20 +1,15 @@
 package component.buffer;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArgument;
-import component.buffer.InputPort;
-
-public class InputComponent<K> {
-    protected final InputPort<K> input;
+public class MethodInputComponent<K> extends AbstractInputComponent<K> {
     protected final CallableWithArgument<K> method;
 
-    public InputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method) {
-        input = inputBuffer.createInputPort();
+    public MethodInputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method) {
+        super(inputBuffer.createInputPort());
         this.method = method;
     }
 
-    public InputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method) {
-        input = inputBuffer.createMethodInternalInputPort();
+    public MethodInputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method) {
+        super(inputBuffer.createMethodInternalInputPort());
         this.method = method;
     }
 

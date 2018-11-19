@@ -1,24 +1,15 @@
 package component.buffer;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.CallableWithArguments;
-import component.buffer.InputPort;
-import component.buffer.OutputPort;
-
-public class PipeComponent<K, V> {
-    protected final InputPort<K> input;
-    protected final OutputPort<V> output;
+public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
     protected final CallableWithArguments<K, V> method;
 
-    public PipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
-        input = inputBuffer.createInputPort();
-        output = new OutputPort<>(outputBuffer);
+    public MethodPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
+        super(inputBuffer.createInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
 
-    public PipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
-        input = inputBuffer.createMethodInternalInputPort();
-        output = new OutputPort<>(outputBuffer);
+    public MethodPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
+        super(inputBuffer.createMethodInternalInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
 
