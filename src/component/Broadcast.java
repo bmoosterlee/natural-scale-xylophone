@@ -19,7 +19,7 @@ public class Broadcast<T> {
             outputs.add(new OutputPort<>(buffer));
         }
 
-        new TickRunnerSpawner(inputBuffer) {
+        new TickRunnerSpawner(inputBuffer, outputBuffers) {
             @Override
             protected void tick() {
                 Broadcast.this.tick();
