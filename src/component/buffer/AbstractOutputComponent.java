@@ -1,6 +1,9 @@
 package component.buffer;
 
-public abstract class AbstractOutputComponent<V> {
+import java.util.Collection;
+import java.util.Collections;
+
+public abstract class AbstractOutputComponent<V> extends AbstractComponent<Object, V> {
     protected final OutputPort<V> output;
 
     public AbstractOutputComponent(OutputPort<V> output) {
@@ -8,4 +11,14 @@ public abstract class AbstractOutputComponent<V> {
     }
 
     protected abstract void tick();
+
+    @Override
+    public Collection<InputPort<Object>> getInputPorts() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<OutputPort<V>> getOutputPorts() {
+        return Collections.singleton(output);
+    }
 }

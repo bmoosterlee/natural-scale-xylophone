@@ -1,6 +1,9 @@
 package component.buffer;
 
-public abstract class AbstractPipeComponent<K, V> {
+import java.util.Collection;
+import java.util.Collections;
+
+public abstract class AbstractPipeComponent<K, V> extends AbstractComponent<K, V> {
     protected final InputPort<K> input;
     protected final OutputPort<V> output;
 
@@ -10,4 +13,14 @@ public abstract class AbstractPipeComponent<K, V> {
     }
 
     protected abstract void tick();
+
+    @Override
+    public Collection<InputPort<K>> getInputPorts() {
+        return Collections.singleton(input);
+    }
+
+    @Override
+    public Collection<OutputPort<V>> getOutputPorts() {
+        return Collections.singleton(output);
+    }
 }
