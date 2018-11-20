@@ -41,7 +41,7 @@ public class Broadcast<T> extends AbstractComponent<T, T> {
         for(int i = 0; i<size; i++){
             outputBuffers.add(new SimpleBuffer<>(1, name));
         }
-        new TickRunningStrategy<>(new Broadcast<>(inputBuffer, outputBuffers));
+        new TickRunningStrategy(new Broadcast<>(inputBuffer, outputBuffers));
         return outputBuffers;
     }
 

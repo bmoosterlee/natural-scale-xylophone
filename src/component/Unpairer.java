@@ -3,28 +3,20 @@ package component;
 import component.buffer.*;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
-public class Unpairer<K, V> {
+public class Unpairer<K, V> extends AbstractComponent {
 
     protected final InputPort<SimpleImmutableEntry<K, V>> input;
     private final OutputPort<K> output1;
     private final OutputPort<V> output2;
 
-    TickRunner tickRunner = new MyTickRunner();
-
     public Unpairer(BoundedBuffer<SimpleImmutableEntry<K,V>> inputBuffer, SimpleBuffer<K> outputBuffer1, SimpleBuffer<V> outputBuffer2){
         input = inputBuffer.createInputPort();
         output1 = outputBuffer1.createOutputPort();
         output2 = outputBuffer2.createOutputPort();
-
-        tickRunner.start();
-    }
-
-    private class MyTickRunner extends SimpleTickRunner {
-        @Override
-        protected void tick() {
-            Unpairer.this.tick();
-        }
     }
 
     protected void tick(){
@@ -38,6 +30,23 @@ public class Unpairer<K, V> {
         catch(InterruptedException e){
             e.printStackTrace();
         }
+    }
+
+    public static <K, V> SimpleImmutableEntry<SimpleBuffer<K>, SimpleBuffer<V>> unpair(BoundedBuffer<SimpleImmutableEntry<K, V>> inputBuffer){
+        SimpleBuffer<K> outputBuffer1 = new SimpleBuffer<>(1, "unpair - output 1");
+        SimpleBuffer<V> outputBuffer2 = new SimpleBuffer<>(1, "unpair - output 2");
+        new TickRunningStrategy(new Unpairer<>(inputBuffer, outputBuffer1, outputBuffer2));
+        return new SimpleImmutableEntry<>(outputBuffer1, outputBuffer2);
+    }
+
+    @Override
+    protected Collection<InputPort> getInputPorts() {
+        return Collections.singletonList(input);
+    }
+
+    @Override
+    protected Collection<OutputPort> getOutputPorts() {
+        return Arrays.asList(output1, output2);
     }
 
 }
