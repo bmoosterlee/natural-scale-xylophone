@@ -1,26 +1,20 @@
 package component.buffer;
 
-public class PipeComponentChainLink<K, V> {
-    final MethodPipeComponent<K, V> methodPipeComponent;
-    final PipeComponentChainLink previousComponentChainLink;
+public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
+    private final MethodPipeComponent<K, V> methodPipeComponent;
 
     public PipeComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
+        super(previousComponentChainLink);
         this.methodPipeComponent = methodPipeComponent;
 
-        this.previousComponentChainLink = previousComponentChainLink;
     }
 
     public PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
         this(null, methodPipeComponent);
     }
 
-    protected void tick() {
-        try {
-            previousComponentChainLink.tick();
-        }
-        catch(NullPointerException ignored){
-        }
-
+    @Override
+    protected void componentTick() {
         methodPipeComponent.tick();
     }
 

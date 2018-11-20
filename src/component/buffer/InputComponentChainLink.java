@@ -1,20 +1,15 @@
 package component.buffer;
 
-public class InputComponentChainLink<K> {
+public class InputComponentChainLink<K> extends ComponentChainLink<K>{
     private final MethodInputComponent<K> methodInputComponent;
-    private final PipeComponentChainLink previousComponentChainLink;
 
     public InputComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodInputComponent<K> methodInputComponent){
+        super(previousComponentChainLink);
         this.methodInputComponent = methodInputComponent;
-        this.previousComponentChainLink = previousComponentChainLink;
     }
 
-    public void tick() {
-        try{
-            previousComponentChainLink.tick();
-        }
-        catch(NullPointerException ignored){
-        }
+    @Override
+    protected void componentTick() {
         methodInputComponent.tick();
     }
 
@@ -29,12 +24,7 @@ public class InputComponentChainLink<K> {
     }
 
     private InputPort getFirstInputPort() {
-        try{
-            return previousComponentChainLink.getFirstInputPort();
-        }
-        catch(NullPointerException e) {
-            return methodInputComponent.input;
-        }
+        return previousComponentChainLink.getFirstInputPort();
     }
 
     static <T> InputComponentChainLink<T> methodToInputComponent(BufferChainLink<T> inputBuffer, CallableWithArgument<T> method) {
