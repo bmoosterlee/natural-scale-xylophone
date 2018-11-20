@@ -1,22 +1,22 @@
 package component.buffer;
 
-public class ChainedPipeComponent<K, V> {
+public class PipeComponentChainLink<K, V> {
     final MethodPipeComponent<K, V> methodPipeComponent;
-    final ChainedPipeComponent previousComponent;
+    final PipeComponentChainLink previousComponentChainLink;
 
-    public ChainedPipeComponent(ChainedPipeComponent<?, K> previousComponent, MethodPipeComponent<K, V> methodPipeComponent){
+    public PipeComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
         this.methodPipeComponent = methodPipeComponent;
 
-        this.previousComponent = previousComponent;
+        this.previousComponentChainLink = previousComponentChainLink;
     }
 
-    public ChainedPipeComponent(MethodPipeComponent<K, V> methodPipeComponent){
+    public PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
         this(null, methodPipeComponent);
     }
 
     protected void tick() {
         try {
-            previousComponent.tick();
+            previousComponentChainLink.tick();
         }
         catch(NullPointerException ignored){
         }
@@ -24,49 +24,50 @@ public class ChainedPipeComponent<K, V> {
         methodPipeComponent.tick();
     }
 
-    private <T> InputPort<T> getFirstInputPort() {
-        ChainedPipeComponent index = this;
-        while(index.previousComponent!=null){
-            index = index.previousComponent;
+    public <T> AbstractPipeComponent<T, V> wrap() {
+        return new AbstractPipeComponent<>(getFirstInputPort(), methodPipeComponent.output) {
+
+            @Override
+            protected void tick() {
+                PipeComponentChainLink.this.tick();
+            }
+        };
+    }
+
+    InputPort getFirstInputPort() {
+        try{
+            return previousComponentChainLink.getFirstInputPort();
         }
-        return index.methodPipeComponent.input;
+        catch(NullPointerException e) {
+            return methodPipeComponent.input;
+        }
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        ChainedPipeComponent<K, V> methodComponent = new ChainedPipeComponent<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
+        PipeComponentChainLink<K, V> methodComponent = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        ChainedPipeComponent<K, V> methodComponent = new ChainedPipeComponent<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
+        PipeComponentChainLink<K, V> methodComponent = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }
 
     public static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        ChainedPipeComponent<K, K> methodComponent = new ChainedPipeComponent<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
+        PipeComponentChainLink<K, K> methodComponent = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
         BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
     }
 
     public static <K> BufferChainLink<K> chainToOverwritableBuffer(SimpleBuffer<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        ChainedPipeComponent<K, K> methodComponent = new ChainedPipeComponent<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
+        PipeComponentChainLink<K, K> methodComponent = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
         BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
         return outputChainLink;
-    }
-
-    public <T> AbstractPipeComponent<T, V> wrap() {
-        return new AbstractPipeComponent<>(getFirstInputPort(), methodPipeComponent.output) {
-
-            @Override
-            protected void tick() {
-                ChainedPipeComponent.this.tick();
-            }
-        };
     }
 }

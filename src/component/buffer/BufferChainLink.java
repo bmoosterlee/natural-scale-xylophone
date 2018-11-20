@@ -7,9 +7,9 @@ import java.util.List;
 public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
-    protected final ChainedPipeComponent<? extends Object, T> previousComponent;
+    protected final PipeComponentChainLink<? extends Object, T> previousComponent;
 
-    protected BufferChainLink(SimpleBuffer<T> buffer, ChainedPipeComponent<? extends Object, T> previousComponent) {
+    protected BufferChainLink(SimpleBuffer<T> buffer, PipeComponentChainLink<? extends Object, T> previousComponent) {
         this.buffer = buffer;
         this.previousComponent = previousComponent;
     }
@@ -71,12 +71,12 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name) {
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, name);
+        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
     @Override
     public void performInputMethod(CallableWithArgument<T> method){
-        new TickRunningStrategy<>(new ChainedInputComponent<>(this.previousComponent, new MethodInputComponent<>(this, method)).wrap());
+        new TickRunningStrategy<>(InputComponentChainLink.methodToInputComponent(this, method).wrap());
     }
 
     @Override
@@ -116,11 +116,11 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     @Override
     public BufferChainLink<T> toOverwritable() {
-        return ChainedPipeComponent.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+        return PipeComponentChainLink.chainToOverwritableBuffer(this, 1, "to overwritable - output");
     }
 
     @Override
     public BufferChainLink<T> resize(int size) {
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
+        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
     }
 }

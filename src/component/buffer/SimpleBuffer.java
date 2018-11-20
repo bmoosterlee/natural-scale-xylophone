@@ -65,7 +65,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name) {
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, method, 1, name);
+        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
     @Override
@@ -111,11 +111,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
 
     @Override
     public BufferChainLink<T> toOverwritable() {
-        return ChainedPipeComponent.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+        return PipeComponentChainLink.chainToOverwritableBuffer(this, 1, "to overwritable - output");
     }
 
     @Override
     public BufferChainLink<T> resize(int size) {
-        return ChainedPipeComponent.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
+        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
     }
 }
