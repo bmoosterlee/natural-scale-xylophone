@@ -10,8 +10,6 @@ public abstract class AbstractInputComponent<K> extends AbstractComponent<K, Obj
         this.input = input;
     }
 
-    protected abstract void tick();
-
     @Override
     public Collection<InputPort<K>> getInputPorts() {
         return Collections.singleton(input);

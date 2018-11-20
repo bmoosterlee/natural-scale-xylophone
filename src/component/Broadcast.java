@@ -3,10 +3,11 @@ package component;
 import component.buffer.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-public class Broadcast<T> {
+public class Broadcast<T> extends AbstractComponent<T, T> {
 
     private final InputPort<T> input;
     private final Collection<OutputPort<T>> outputs;
@@ -18,16 +19,9 @@ public class Broadcast<T> {
         for(SimpleBuffer<T> buffer : outputBuffers){
             outputs.add(new OutputPort<>(buffer));
         }
-
-        new TickRunnerSpawner(inputBuffer, outputBuffers) {
-            @Override
-            protected void tick() {
-                Broadcast.this.tick();
-            }
-        }.start();
     }
 
-    private void tick() {
+    protected void tick() {
         try {
             T item = input.consume();
             for(OutputPort<T> output : outputs){
@@ -47,7 +41,17 @@ public class Broadcast<T> {
         for(int i = 0; i<size; i++){
             outputBuffers.add(new SimpleBuffer<>(1, name));
         }
-        new Broadcast<>(inputBuffer, outputBuffers);
+        new TickRunningStrategy<>(new Broadcast<>(inputBuffer, outputBuffers));
         return outputBuffers;
+    }
+
+    @Override
+    protected Collection<InputPort<T>> getInputPorts() {
+        return Collections.singleton(input);
+    }
+
+    @Override
+    protected Collection<OutputPort<T>> getOutputPorts() {
+        return outputs;
     }
 }

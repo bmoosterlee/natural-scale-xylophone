@@ -1,30 +1,24 @@
 package component.buffer;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public abstract class TickRunnerSpawner extends TickRunner{
-    private final Collection<? extends BoundedBuffer> inputBuffers;
-    private final Collection<? extends BoundedBuffer> outputBuffers;
+    private final Collection<BoundedBuffer> inputBuffers;
+    private final Collection<BoundedBuffer> outputBuffers;
     private final LinkedList<SimpleTickRunner> liveRunners;
 
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(Collection<K> inputBuffers, Collection<V> outputBuffers){
-        this.inputBuffers = inputBuffers;
-        this.outputBuffers = outputBuffers;
+    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(AbstractComponent<K, V> component){
+        this.inputBuffers = new HashSet<>();
+        for(InputPort<K> inputPort : component.getInputPorts()){
+            this.inputBuffers.add(inputPort.getBuffer());
+        }
+        this.outputBuffers = new HashSet<>();
+        for(OutputPort<V> outputPort : component.getOutputPorts()){
+            this.outputBuffers.add(outputPort.getBuffer());
+        }
         liveRunners = new LinkedList<>();
-    }
-
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(K inputBuffer, V outputBuffer){
-        this(Collections.singleton(inputBuffer), Collections.singleton(outputBuffer));
-    }
-
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(Collection<K> inputBuffers, V outputBuffer){
-        this(inputBuffers, Collections.singleton(outputBuffer));
-    }
-
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(K inputBuffer, Collection<V> outputBuffers){
-        this(Collections.singleton(inputBuffer), outputBuffers);
     }
 
     @Override

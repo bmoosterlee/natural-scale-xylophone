@@ -4,29 +4,11 @@ import java.util.concurrent.Callable;
 
 public class TickRunningStrategy<K, V> {
 
-    public TickRunningStrategy(final AbstractPipeComponent<K, V> pipeComponent){
+    public TickRunningStrategy(final AbstractComponent<K, V> pipeComponent){
         new SimpleTickRunner() {
             @Override
             protected void tick() {
                 pipeComponent.tick();
-            }
-        }.start();
-    }
-
-    public TickRunningStrategy(final AbstractInputComponent<K> inputComponent){
-        new SimpleTickRunner() {
-            @Override
-            protected void tick() {
-                inputComponent.tick();
-            }
-        }.start();
-    }
-
-    public TickRunningStrategy(final AbstractOutputComponent<V> outputComponent){
-
-        new SimpleTickRunner() {
-            protected void tick() {
-                outputComponent.tick();
             }
         }.start();
     }

@@ -12,8 +12,6 @@ public abstract class AbstractPipeComponent<K, V> extends AbstractComponent<K, V
         this.output = output;
     }
 
-    protected abstract void tick();
-
     @Override
     public Collection<InputPort<K>> getInputPorts() {
         return Collections.singleton(input);
@@ -22,5 +20,13 @@ public abstract class AbstractPipeComponent<K, V> extends AbstractComponent<K, V
     @Override
     public Collection<OutputPort<V>> getOutputPorts() {
         return Collections.singleton(output);
+    }
+
+    public InputPort<K> getInputPort() {
+        return input;
+    }
+
+    public OutputPort<V> getOutputPort() {
+        return output;
     }
 }

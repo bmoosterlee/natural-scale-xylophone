@@ -10,8 +10,6 @@ public abstract class AbstractOutputComponent<V> extends AbstractComponent<Objec
         this.output = output;
     }
 
-    protected abstract void tick();
-
     @Override
     public Collection<InputPort<Object>> getInputPorts() {
         return Collections.emptyList();
