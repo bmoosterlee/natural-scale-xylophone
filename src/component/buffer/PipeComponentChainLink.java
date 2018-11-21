@@ -39,29 +39,29 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        PipeComponentChainLink<K, V> methodComponent = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
-        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
+        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, CallableWithArguments<K,V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        PipeComponentChainLink<K, V> methodComponent = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
-        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
+        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
     public static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        PipeComponentChainLink<K, K> methodComponent = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
-        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        PipeComponentChainLink<K, K> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
+        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
     public static <K> BufferChainLink<K> chainToOverwritableBuffer(SimpleBuffer<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        PipeComponentChainLink<K, K> methodComponent = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
-        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, methodComponent);
+        PipeComponentChainLink<K, K> componentChainLink = new PipeComponentChainLink<>(new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input));
+        BufferChainLink<K> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 }
