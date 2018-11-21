@@ -3,15 +3,15 @@ package component.buffer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.concurrent.Callable;
 
 public class TickRunnerSpawner extends TickRunner{
     private final Collection<BoundedBuffer> inputBuffers;
     private final Collection<BoundedBuffer> outputBuffers;
     private final LinkedList<SimpleTickRunner> liveRunners;
     private final AbstractComponent component;
+    private final int minimumThreadCount;
 
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(AbstractComponent<K, V> component){
+    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(AbstractComponent<K, V> component, boolean threadAlreadyRunning){
         this.component = component;
 
         this.inputBuffers = new HashSet<>();
@@ -23,6 +23,12 @@ public class TickRunnerSpawner extends TickRunner{
             this.outputBuffers.add(outputPort.getBuffer());
         }
         liveRunners = new LinkedList<>();
+        if(threadAlreadyRunning){
+            minimumThreadCount = 0;
+        }
+        else{
+            minimumThreadCount = 1;
+        }
 
         SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
         firstTickRunner.start();
@@ -40,7 +46,7 @@ public class TickRunnerSpawner extends TickRunner{
         }
         else {
             if (allEmpty(inputBuffers)) {
-                if (liveRunners.size() > 1) {
+                if (liveRunners.size() > minimumThreadCount) {
                     try {
                         liveRunners.remove().kill();
                     } catch (NullPointerException ignored) {

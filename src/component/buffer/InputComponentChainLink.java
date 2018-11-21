@@ -8,6 +8,18 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
         this.methodInputComponent = methodInputComponent;
     }
 
+    protected void parallisationAwareTick() {
+        try{
+            if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodInputComponent.isParallelisable()) {
+                previousComponentChainLink.tick();
+            }
+        }
+        catch(NullPointerException ignored){
+        }
+
+        componentTick();
+    }
+
     @Override
     protected void componentTick() {
         methodInputComponent.tick();
@@ -28,7 +40,9 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
     }
 
     static <T> InputComponentChainLink<T> methodToInputComponent(BufferChainLink<T> inputBuffer, CallableWithArgument<T> method) {
-        return new InputComponentChainLink<>(inputBuffer.previousComponent, new MethodInputComponent<>(inputBuffer, method));
+        MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
+        parallelChainCheck(inputBuffer, component);
+        return new InputComponentChainLink<>(inputBuffer.previousComponent, component);
     }
 
 }

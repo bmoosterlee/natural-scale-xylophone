@@ -3,16 +3,13 @@ package time;
 import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
-import component.buffer.SimpleTickRunner;
 
 import java.util.concurrent.Callable;
 
-public class Pulser {
+public class Pulser extends MethodOutputComponent<Pulse> {
 
     public Pulser(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
-        final MethodOutputComponent<Pulse> outputComponent = new MethodOutputComponent<>(outputBuffer, build(frameTime));
-
-        new SimpleTickRunner(outputComponent).start();
+        super(outputBuffer, build(frameTime));
     }
 
     private static Callable<Pulse> build(TimeInNanoSeconds frameTime) {
@@ -48,4 +45,8 @@ public class Pulser {
         return outputBuffer;
     }
 
+    @Override
+    public Boolean isParallelisable(){
+        return false;
+    }
 }

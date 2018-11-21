@@ -9,4 +9,8 @@ public abstract class AbstractComponent<K, V> {
     protected abstract Collection<OutputPort<V>> getOutputPorts();
 
     protected abstract void tick();
+
+    public Boolean isParallelisable(){
+        return true;
+    }
 }
