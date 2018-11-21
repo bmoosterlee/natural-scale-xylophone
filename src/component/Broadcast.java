@@ -46,12 +46,16 @@ public class Broadcast<T> extends AbstractComponent<T, T> {
     }
 
     @Override
-    protected Collection<InputPort<T>> getInputPorts() {
-        return Collections.singleton(input);
+    protected Collection<BoundedBuffer<T>> getInputBuffers() {
+        return Collections.singleton(input.getBuffer());
     }
 
     @Override
-    protected Collection<OutputPort<T>> getOutputPorts() {
-        return outputs;
+    protected Collection<BoundedBuffer<T>> getOutputBuffers() {
+        Collection<BoundedBuffer<T>> outputBuffers = new HashSet<>();
+        for(OutputPort<T> outputPort : outputs){
+            outputBuffers.add(outputPort.getBuffer());
+        }
+        return outputBuffers;
     }
 }

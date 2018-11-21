@@ -95,13 +95,13 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
 
             new SimpleTickRunner(new AbstractComponent() {
                 @Override
-                protected Collection<InputPort> getInputPorts() {
-                    return Arrays.asList(historyInputPort, timeAverageInputPort, subtractOutput);
+                protected Collection<BoundedBuffer> getInputBuffers() {
+                    return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer(), subtractOutput.getBuffer());
                 }
 
                 @Override
-                protected Collection<OutputPort> getOutputPorts() {
-                    return Arrays.asList(subtractionInput1, subtractionInput2, historyOutputBufferPort, timeAverageOutputOutputPort);
+                protected Collection<BoundedBuffer> getOutputBuffers() {
+                    return Arrays.asList(subtractionInput1.getBuffer(), subtractionInput2.getBuffer(), historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
                 }
 
                 @Override

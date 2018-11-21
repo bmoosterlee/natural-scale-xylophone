@@ -48,13 +48,13 @@ public class Pianola {
 
         new SimpleTickRunner(new AbstractComponent() {
             @Override
-            protected Collection<InputPort> getInputPorts() {
-                return Arrays.asList(preparedNotesInput, preparedHarmonicsInput);
+            protected Collection<BoundedBuffer> getInputBuffers() {
+                return Arrays.asList(preparedNotesInput.getBuffer(), preparedHarmonicsInput.getBuffer());
             }
 
             @Override
-            protected Collection<OutputPort> getOutputPorts() {
-                return Collections.singleton(outputPort);
+            protected Collection<BoundedBuffer> getOutputBuffers() {
+                return Collections.singleton(outputPort.getBuffer());
             }
 
             @Override

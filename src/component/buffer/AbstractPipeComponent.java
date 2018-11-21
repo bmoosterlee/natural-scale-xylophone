@@ -13,13 +13,13 @@ public abstract class AbstractPipeComponent<K, V> extends AbstractComponent<K, V
     }
 
     @Override
-    public Collection<InputPort<K>> getInputPorts() {
-        return Collections.singleton(input);
+    public Collection<BoundedBuffer<K>> getInputBuffers() {
+        return Collections.singleton(input.getBuffer());
     }
 
     @Override
-    public Collection<OutputPort<V>> getOutputPorts() {
-        return Collections.singleton(output);
+    public Collection<BoundedBuffer<V>> getOutputBuffers() {
+        return Collections.singleton(output.getBuffer());
     }
 
     public InputPort<K> getInputPort() {

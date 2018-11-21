@@ -54,13 +54,17 @@ public class SpectrumBuilder {
         new TickRunningStrategy(
             new AbstractComponent<Iterator<Map.Entry<Harmonic, Double>>, AtomicBucket>() {
                 @Override
-                protected Collection<InputPort<Iterator<Map.Entry<Harmonic, Double>>>> getInputPorts() {
-                    return Collections.singleton(harmonicsIteratorInput);
+                protected Collection<BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>>> getInputBuffers() {
+                    return Collections.singleton(harmonicsIteratorInput.getBuffer());
                 }
 
                 @Override
-                protected Collection<OutputPort<AtomicBucket>> getOutputPorts() {
-                    return harmonicsOutput.values();
+                protected Collection<BoundedBuffer<AtomicBucket>> getOutputBuffers() {
+                    Collection<BoundedBuffer<AtomicBucket>> outputBuffers = new HashSet<>();
+                    for(OutputPort<AtomicBucket> outputPort : harmonicsOutput.values()){
+                        outputBuffers.add(outputPort.getBuffer());
+                    }
+                    return outputBuffers;
                 }
 
                 @Override

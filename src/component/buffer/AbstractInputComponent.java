@@ -11,12 +11,12 @@ public abstract class AbstractInputComponent<K> extends AbstractComponent<K, Obj
     }
 
     @Override
-    public Collection<InputPort<K>> getInputPorts() {
-        return Collections.singleton(input);
+    public Collection<BoundedBuffer<K>> getInputBuffers() {
+        return Collections.singleton(input.getBuffer());
     }
 
     @Override
-    public Collection<OutputPort<Object>> getOutputPorts() {
+    public Collection<BoundedBuffer<Object>> getOutputBuffers() {
         return Collections.emptyList();
     }
 }

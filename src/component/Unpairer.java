@@ -40,13 +40,13 @@ public class Unpairer<K, V> extends AbstractComponent {
     }
 
     @Override
-    protected Collection<InputPort> getInputPorts() {
-        return Collections.singletonList(input);
+    protected Collection<BoundedBuffer> getInputBuffers() {
+        return Collections.singletonList(input.getBuffer());
     }
 
     @Override
-    protected Collection<OutputPort> getOutputPorts() {
-        return Arrays.asList(output1, output2);
+    protected Collection<BoundedBuffer> getOutputBuffers() {
+        return Arrays.asList(output1.getBuffer(), output2.getBuffer());
     }
 
 }

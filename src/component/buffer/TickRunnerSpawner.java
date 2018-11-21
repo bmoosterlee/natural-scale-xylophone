@@ -1,27 +1,20 @@
 package component.buffer;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 
-public class TickRunnerSpawner extends TickRunner{
-    private final Collection<BoundedBuffer> inputBuffers;
-    private final Collection<BoundedBuffer> outputBuffers;
+public class TickRunnerSpawner<K, V> extends TickRunner{
+    private final Collection<BoundedBuffer<K>> inputBuffers;
+    private final Collection<BoundedBuffer<V>> outputBuffers;
     private final LinkedList<SimpleTickRunner> liveRunners;
     private final AbstractComponent component;
     private final int minimumThreadCount;
 
-    public <K extends BoundedBuffer, V extends BoundedBuffer> TickRunnerSpawner(AbstractComponent<K, V> component, boolean threadAlreadyRunning){
+    public TickRunnerSpawner(AbstractComponent<K, V> component, boolean threadAlreadyRunning){
         this.component = component;
+        this.inputBuffers = component.getInputBuffers();
+        this.outputBuffers = component.getOutputBuffers();
 
-        this.inputBuffers = new HashSet<>();
-        for(InputPort<K> inputPort : component.getInputPorts()){
-            this.inputBuffers.add(inputPort.getBuffer());
-        }
-        this.outputBuffers = new HashSet<>();
-        for(OutputPort<V> outputPort : component.getOutputPorts()){
-            this.outputBuffers.add(outputPort.getBuffer());
-        }
         liveRunners = new LinkedList<>();
         if(threadAlreadyRunning){
             minimumThreadCount = 0;

@@ -65,12 +65,12 @@ public class GUI {
             }
 
             @Override
-            protected Collection<InputPort> getInputPorts() {
-                return Arrays.asList(newHarmonicsPort, newNotesPort, newCursorXPort);
+            protected Collection<BoundedBuffer> getInputBuffers() {
+                return Arrays.asList(newHarmonicsPort.getBuffer(), newNotesPort.getBuffer(), newCursorXPort.getBuffer());
             }
 
             @Override
-            protected Collection<OutputPort> getOutputPorts() {
+            protected Collection<BoundedBuffer> getOutputBuffers() {
                 return Collections.emptyList();
             }
         }).start();

@@ -2,7 +2,6 @@ package component;
 
 import component.buffer.*;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,13 +34,13 @@ public class Unzipper<T> extends AbstractComponent<List<T>, T> {
     }
 
     @Override
-    protected Collection<InputPort<List<T>>> getInputPorts() {
-        return Collections.singleton(inputPort);
+    protected Collection<BoundedBuffer<List<T>>> getInputBuffers() {
+        return Collections.singleton(inputPort.getBuffer());
     }
 
     @Override
-    protected Collection<OutputPort<T>> getOutputPorts() {
-        return Collections.singleton(outputPort);
+    protected Collection<BoundedBuffer<T>> getOutputBuffers() {
+        return Collections.singleton(outputPort.getBuffer());
     }
 
 }

@@ -23,13 +23,17 @@ public class Adder extends AbstractComponent<Buckets, Buckets> {
     }
 
     @Override
-    protected Collection<InputPort<Buckets>> getInputPorts() {
-        return inputs;
+    protected Collection<BoundedBuffer<Buckets>> getInputBuffers() {
+        Collection<BoundedBuffer<Buckets>> inputBuffers = new HashSet<>();
+        for(InputPort<Buckets> outputPort : inputs){
+            inputBuffers.add(outputPort.getBuffer());
+        }
+        return inputBuffers;
     }
 
     @Override
-    protected Collection<OutputPort<Buckets>> getOutputPorts() {
-        return Collections.singleton(output);
+    protected Collection<BoundedBuffer<Buckets>> getOutputBuffers() {
+        return Collections.singleton(output.getBuffer());
     }
 
     protected void tick() {

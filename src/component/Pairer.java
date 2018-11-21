@@ -36,13 +36,13 @@ public class Pairer<K, V> extends AbstractComponent {
     }
 
     @Override
-    protected Collection<InputPort> getInputPorts() {
-        return Arrays.asList(inputPort1, inputPort2);
+    protected Collection<BoundedBuffer> getInputBuffers() {
+        return Arrays.asList(inputPort1.getBuffer(), inputPort2.getBuffer());
     }
 
     @Override
-    protected Collection<OutputPort> getOutputPorts() {
-        return Collections.singletonList(outputPort);
+    protected Collection<BoundedBuffer> getOutputBuffers() {
+        return Collections.singletonList(outputPort.getBuffer());
     }
 
 }

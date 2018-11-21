@@ -4,9 +4,9 @@ import java.util.Collection;
 
 public abstract class AbstractComponent<K, V> {
 
-    protected abstract Collection<InputPort<K>> getInputPorts();
+    protected abstract Collection<BoundedBuffer<K>> getInputBuffers();
 
-    protected abstract Collection<OutputPort<V>> getOutputPorts();
+    protected abstract Collection<BoundedBuffer<V>> getOutputBuffers();
 
     protected abstract void tick();
 
