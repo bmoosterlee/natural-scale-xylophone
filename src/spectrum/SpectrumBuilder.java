@@ -51,22 +51,31 @@ public class SpectrumBuilder {
             .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
             .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
 
-        new SimpleTickRunner(){
-
-            @Override
-            protected void tick() {
-                try {
-                    Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsIteratorInput.consume();
-
-                    while (harmonicsIteratorInput.isEmpty()) {
-                        if (!update(harmonicHierarchyIterator, harmonicsOutput, spectrumWindow)) break;
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        new TickRunningStrategy(
+            new AbstractComponent<Iterator<Map.Entry<Harmonic, Double>>, AtomicBucket>() {
+                @Override
+                protected Collection<InputPort<Iterator<Map.Entry<Harmonic, Double>>>> getInputPorts() {
+                    return Collections.singleton(harmonicsIteratorInput);
                 }
-            }
 
-        }.start();
+                @Override
+                protected Collection<OutputPort<AtomicBucket>> getOutputPorts() {
+                    return harmonicsOutput.values();
+                }
+
+                @Override
+                protected void tick() {
+                    try {
+                        Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsIteratorInput.consume();
+
+                        while (harmonicsIteratorInput.isEmpty()) {
+                            if (!update(harmonicHierarchyIterator, harmonicsOutput, spectrumWindow)) break;
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+        });
 
         return new SimpleImmutableEntry<>(noteOutputBuffer, harmonicsOutputBuffer);
     }
