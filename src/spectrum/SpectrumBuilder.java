@@ -79,6 +79,11 @@ public class SpectrumBuilder {
                         e.printStackTrace();
                     }
                 }
+
+                @Override
+                public Boolean isParallelisable(){
+                    return false;
+                }
         });
 
         return new SimpleImmutableEntry<>(noteOutputBuffer, harmonicsOutputBuffer);

@@ -46,7 +46,7 @@ public class Pianola {
 
         outputPort = outputBuffer.createOutputPort();
 
-        new SimpleTickRunner(new AbstractComponent() {
+        new TickRunningStrategy(new AbstractComponent() {
             @Override
             protected Collection<BoundedBuffer> getInputBuffers() {
                 return Arrays.asList(preparedNotesInput.getBuffer(), preparedHarmonicsInput.getBuffer());
@@ -61,7 +61,13 @@ public class Pianola {
             protected void tick() {
                 Pianola.this.tick();
             }
-        }).start();
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
+
+        });
     }
 
     private void tick() {

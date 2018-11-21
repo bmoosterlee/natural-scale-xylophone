@@ -73,6 +73,11 @@ public class GUI {
             protected Collection<BoundedBuffer> getOutputBuffers() {
                 return Collections.emptyList();
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         }).start();
     }
 
