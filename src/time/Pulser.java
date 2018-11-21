@@ -3,6 +3,7 @@ package time;
 import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
+import component.buffer.TickRunningStrategy;
 
 import java.util.concurrent.Callable;
 
@@ -41,7 +42,7 @@ public class Pulser extends MethodOutputComponent<Pulse> {
 
     public static SimpleBuffer<Pulse> buildOutputBuffer(TimeInNanoSeconds frameTime, int capacity, String name) {
         SimpleBuffer<Pulse> outputBuffer = new SimpleBuffer<>(capacity, name);
-        new Pulser(outputBuffer, frameTime);
+        new TickRunningStrategy(new Pulser(outputBuffer, frameTime));
         return outputBuffer;
     }
 
