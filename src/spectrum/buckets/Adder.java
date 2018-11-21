@@ -2,14 +2,14 @@ package spectrum.buckets;
 
 import component.buffer.*;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Adder {
+public class Adder extends AbstractComponent<Buckets, Buckets> {
     private final Set<InputPort<Buckets>> inputs;
     private final OutputPort<Buckets> output;
-
-    private final TickRunner tickRunner = new MyTickRunner();
 
     public Adder(Set<BoundedBuffer<Buckets>> inputBuffers, SimpleBuffer<Buckets> outputBuffer) {
         inputs = new HashSet<>();
@@ -19,22 +19,20 @@ public class Adder {
 
         output = new OutputPort<>(outputBuffer);
 
-        start();
+        new SimpleTickRunner(this).start();
     }
 
-    private void start() {
-        tickRunner.start();
+    @Override
+    protected Collection<InputPort<Buckets>> getInputPorts() {
+        return inputs;
     }
 
-    private class MyTickRunner extends SimpleTickRunner {
-
-        @Override
-        protected void tick() {
-            Adder.this.tick();
-        }
+    @Override
+    protected Collection<OutputPort<Buckets>> getOutputPorts() {
+        return Collections.singleton(output);
     }
 
-    private void tick() {
+    protected void tick() {
         try {
             Buckets accumulator = null;
 

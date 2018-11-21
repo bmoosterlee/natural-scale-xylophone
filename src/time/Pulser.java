@@ -12,13 +12,7 @@ public class Pulser {
     public Pulser(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
         final MethodOutputComponent<Pulse> outputComponent = new MethodOutputComponent<>(outputBuffer, build(frameTime));
 
-        new SimpleTickRunner(){
-
-            @Override
-            protected void tick() {
-                outputComponent.tick();
-            }
-        }.start();
+        new SimpleTickRunner(outputComponent).start();
     }
 
     private static Callable<Pulse> build(TimeInNanoSeconds frameTime) {

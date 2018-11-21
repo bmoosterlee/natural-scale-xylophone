@@ -1,8 +1,14 @@
 package component.buffer;
 
-public abstract class SimpleTickRunner extends TickRunner {
+public class SimpleTickRunner extends TickRunner {
 
-    private boolean alive = true;
+    private final AbstractComponent component;
+    private boolean alive;
+
+    public SimpleTickRunner(AbstractComponent component){
+        this.component = component;
+        alive = true;
+    }
 
     @Override
     public void run() {
@@ -11,7 +17,12 @@ public abstract class SimpleTickRunner extends TickRunner {
         }
     }
 
-    public void kill() {
+    void kill() {
         alive = false;
+    }
+
+    @Override
+    protected void tick() {
+        component.tick();
     }
 }

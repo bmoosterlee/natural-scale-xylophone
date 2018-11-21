@@ -1,9 +1,7 @@
 package gui;
 
 import component.Pulse;
-import component.buffer.InputPort;
-import component.buffer.SimpleBuffer;
-import component.buffer.SimpleTickRunner;
+import component.buffer.*;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
@@ -11,9 +9,7 @@ import spectrum.buckets.BucketsAverager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 public class GUI {
     private final int height = 600;
@@ -62,14 +58,22 @@ public class GUI {
         frame.pack();
         frame.setVisible(true);
 
-        new SimpleTickRunner() {
-
+        new SimpleTickRunner(new AbstractComponent() {
             @Override
             protected void tick() {
                 guiPanel.repaint();
             }
 
-        }.start();
+            @Override
+            protected Collection<InputPort> getInputPorts() {
+                return Arrays.asList(newHarmonicsPort, newNotesPort, newCursorXPort);
+            }
+
+            @Override
+            protected Collection<OutputPort> getOutputPorts() {
+                return Collections.emptyList();
+            }
+        }).start();
     }
 
     class GUIPanel extends JPanel {

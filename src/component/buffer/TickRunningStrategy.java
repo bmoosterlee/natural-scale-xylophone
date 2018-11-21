@@ -5,12 +5,7 @@ import java.util.concurrent.Callable;
 public class TickRunningStrategy {
 
     public TickRunningStrategy(final AbstractComponent pipeComponent){
-        new SimpleTickRunner() {
-            @Override
-            protected void tick() {
-                pipeComponent.tick();
-            }
-        }.start();
+        new SimpleTickRunner(pipeComponent).start();
     }
 
     public static <V> SimpleBuffer<V> buildOutputBuffer(Callable<V> method, int capacity, String name) {

@@ -3,6 +3,8 @@ package spectrum.buckets;
 import component.buffer.*;
 
 import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 
 public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buckets, Buckets> {
@@ -91,12 +93,22 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
             historyOutputBufferPort = historyOutputBuffer.createOutputPort();
             timeAverageOutputOutputPort = timeAverageOutputBuffer.createOutputPort();
 
-            new SimpleTickRunner(){
+            new SimpleTickRunner(new AbstractComponent() {
+                @Override
+                protected Collection<InputPort> getInputPorts() {
+                    return Arrays.asList(historyInputPort, timeAverageInputPort, subtractOutput);
+                }
+
+                @Override
+                protected Collection<OutputPort> getOutputPorts() {
+                    return Arrays.asList(subtractionInput1, subtractionInput2, historyOutputBufferPort, timeAverageOutputOutputPort);
+                }
+
                 @Override
                 protected void tick() {
                     OldHistoryRemover.this.tick();
                 }
-            }.start();
+            }).start();
         }
 
         private void tick(){

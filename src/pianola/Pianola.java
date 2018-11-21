@@ -14,8 +14,7 @@ import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
 import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Pianola {
     private final PianolaPattern pianolaPattern;
@@ -24,8 +23,6 @@ public class Pianola {
     private final InputPort<Buckets> preparedHarmonicsInput;
 
     private final OutputPort<List<Frequency>> outputPort;
-
-    private final TickRunner tickRunner = new MyTickRunner();
 
     public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         this.pianolaPattern = pianolaPattern;
@@ -49,7 +46,22 @@ public class Pianola {
 
         outputPort = outputBuffer.createOutputPort();
 
-        start();
+        new SimpleTickRunner(new AbstractComponent() {
+            @Override
+            protected Collection<InputPort> getInputPorts() {
+                return Arrays.asList(preparedNotesInput, preparedHarmonicsInput);
+            }
+
+            @Override
+            protected Collection<OutputPort> getOutputPorts() {
+                return Collections.singleton(outputPort);
+            }
+
+            @Override
+            protected void tick() {
+                Pianola.this.tick();
+            }
+        }).start();
     }
 
     private void tick() {
@@ -65,14 +77,4 @@ public class Pianola {
         }
     }
 
-    private void start(){
-        tickRunner.start();
-    }
-
-    private class MyTickRunner extends SimpleTickRunner {
-        @Override
-        protected void tick() {
-            Pianola.this.tick();
-        }
-    }
 }
