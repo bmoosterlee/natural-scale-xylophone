@@ -32,6 +32,12 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
             protected void tick() {
                 InputComponentChainLink.this.tick();
             }
+
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 

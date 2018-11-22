@@ -37,6 +37,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
             protected void tick() {
                 PipeComponentChainLink.this.tick();
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 
