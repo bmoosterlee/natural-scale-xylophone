@@ -43,4 +43,9 @@ public class Unzipper<T> extends AbstractComponent<List<T>, T> {
         return Collections.singleton(outputPort.getBuffer());
     }
 
+    @Override
+    public Boolean isParallelisable(){
+        return false;
+    }
+
 }
