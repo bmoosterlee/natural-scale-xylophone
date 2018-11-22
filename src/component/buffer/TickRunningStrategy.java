@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 public class TickRunningStrategy {
 
     public TickRunningStrategy(final AbstractComponent pipeComponent){
-        new SimpleTickRunner(pipeComponent).start();
+        this(pipeComponent, false);
     }
 
     public TickRunningStrategy(final AbstractComponent pipeComponent, boolean threadAlreadyRunning){
