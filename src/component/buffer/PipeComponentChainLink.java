@@ -20,11 +20,14 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     @Override
     InputPort getFirstInputPort() {
         try{
-            return previousComponentChainLink.getFirstInputPort();
+            InputPort firstInputPort = previousComponentChainLink.getFirstInputPort();
+            if(firstInputPort!=null) {
+                return firstInputPort;
+            }
         }
-        catch(NullPointerException e) {
-            return methodPipeComponent.input;
+        catch(NullPointerException ignored) {
         }
+        return methodPipeComponent.input;
     }
 
     @Override
@@ -82,7 +85,10 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     InputPort getParallelisationAwareFirstInputPort() {
         try{
             if(previousComponentChainLink.isParallelisable()) {
-                return previousComponentChainLink.getParallelisationAwareFirstInputPort();
+                InputPort parallelisationAwareFirstInputPort = previousComponentChainLink.getParallelisationAwareFirstInputPort();
+                if(parallelisationAwareFirstInputPort!=null) {
+                    return parallelisationAwareFirstInputPort;
+                }
             }
         }
         catch(NullPointerException ignored) {

@@ -25,7 +25,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     InputPort getParallelisationAwareFirstInputPort() {
         try{
             if(previousComponentChainLink.isParallelisable()) {
-                return previousComponentChainLink.getParallelisationAwareFirstInputPort();
+                InputPort parallelisationAwareFirstInputPort = previousComponentChainLink.getParallelisationAwareFirstInputPort();
+                if(parallelisationAwareFirstInputPort!=null) {
+                    return parallelisationAwareFirstInputPort;
+                }
             }
         }
         catch(NullPointerException ignored) {
@@ -45,10 +48,17 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     }
 
     @Override
-    protected InputPort getFirstInputPort() {
-        return previousComponentChainLink.getFirstInputPort();
+    InputPort getFirstInputPort() {
+        try{
+            InputPort firstInputPort = previousComponentChainLink.getFirstInputPort();
+            if(firstInputPort!=null) {
+                return firstInputPort;
+            }
+        }
+        catch(NullPointerException ignored) {
+        }
+        return methodInputComponent.input;
     }
-
     @Override
     Boolean isParallelisable() {
         return methodInputComponent.isParallelisable();
