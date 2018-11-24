@@ -31,8 +31,10 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         return collect(
                 toInputPorts(
                         forEach(
-                                forEach(frameTickers, flushers),
-                                input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))));
+                            forEach(
+                                    forEach(frameTickers, flushers),
+                                    input1 -> new CompositeBucket<>(input1)),
+                                    input1 -> new MemoizedBucket(input1))));
     }
 
     public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, PipeCallable<K, V>> methods) {
