@@ -2,15 +2,18 @@ package component.buffer;
 
 public class MethodInputComponent<K> extends AbstractInputComponent<K> {
     protected final InputCallable<K> method;
+    private final Boolean parallelisability;
 
     public MethodInputComponent(SimpleBuffer<K> inputBuffer, InputCallable<K> method) {
         super(inputBuffer.createInputPort());
         this.method = method;
+        parallelisability = method.isParallelisable();
     }
 
     public MethodInputComponent(BufferChainLink<K> inputBuffer, InputCallable<K> method) {
         super(inputBuffer.createMethodInternalInputPort());
         this.method = method;
+        parallelisability = method.isParallelisable();
     }
 
     protected void tick() {
@@ -20,6 +23,11 @@ public class MethodInputComponent<K> extends AbstractInputComponent<K> {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Boolean isParallelisable(){
+        return parallelisability;
     }
 
     public static <K> InputCallable<K> toMethod(InputCallable<BoundedBuffer<K>> pipe){

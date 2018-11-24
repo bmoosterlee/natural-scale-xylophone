@@ -1,6 +1,8 @@
 package main;
 
-public interface OutputCallable<V> {
+import component.buffer.ComponentCallable;
+
+public interface OutputCallable<V> extends ComponentCallable {
 
     V call();
 
