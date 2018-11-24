@@ -13,13 +13,21 @@ public class Flusher<T> extends MethodPipeComponent<Pulse, List<T>> {
     public static <T> PipeCallable<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
         InputPort<T> inputPort = inputBuffer.createInputPort();
 
-        return input -> {
-            try {
-                return inputPort.flush();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        return new PipeCallable<>() {
+            @Override
+            public List<T> call(Pulse input) {
+                try {
+                    return inputPort.flush();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
-            return null;
+
+            @Override
+            public Boolean isParallelisable() {
+                return false;
+            }
         };
     }
 
