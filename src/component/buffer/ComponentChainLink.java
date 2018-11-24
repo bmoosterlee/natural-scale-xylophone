@@ -21,13 +21,17 @@ public abstract class ComponentChainLink {
 
     static <K, V> void parallelChainCheck(BufferChainLink<K> inputBuffer, AbstractComponent<K, V> component) {
         if(!component.isParallelisable() && inputBuffer.previousComponent.isParallelisable()){
-            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.previousComponent.getParallelisationAwareFirstInputPort(), inputBuffer.previousComponent.getOutputPort()) {
-                @Override
-                protected void tick() {
-                    inputBuffer.previousComponent.parallelisationAwareTick();
-                }
-            }, true);
+            breakParallelisationChain(inputBuffer);
         }
+    }
+
+    private static <K> void breakParallelisationChain(BufferChainLink<K> inputBuffer) {
+        new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.previousComponent.getParallelisationAwareFirstInputPort(), inputBuffer.previousComponent.getOutputPort()) {
+            @Override
+            protected void tick() {
+                inputBuffer.previousComponent.parallelisationAwareTick();
+            }
+        }, true);
     }
 
     protected abstract void parallelisationAwareTick();
