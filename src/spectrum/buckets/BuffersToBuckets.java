@@ -16,7 +16,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
             .performMethod(Buckets::new, "buffers to buckets - create buckets");
     }
 
-    private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    private static BufferChainLink<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "buffers to buckets tick - broadcast"));
         Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
@@ -59,8 +59,8 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         return map;
     }
 
-    public static <I, K> SimpleBuffer<Map<I, K>> collect(Map<I, InputPort<K>> input){
-        return MethodOutputComponent.buildOutputBuffer(
+    public static <I, K> BufferChainLink<Map<I, K>> collect(Map<I, InputPort<K>> input){
+        return OutputComponentChainLink.buildOutputBuffer(
             () -> {
                 try {
                     Map<I, K> map = new HashMap<>();

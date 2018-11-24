@@ -21,9 +21,4 @@ public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
         }
     }
 
-    public static <V> SimpleBuffer<V> buildOutputBuffer(Callable<V> method, int capacity, String name) {
-        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, method));
-        return outputBuffer;
-    }
 }
