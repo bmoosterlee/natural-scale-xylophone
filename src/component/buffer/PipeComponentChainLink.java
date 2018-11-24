@@ -62,7 +62,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
 
     @Override
     public AbstractPipeComponent wrap() {
-        parallelChainCheck(this);
+        this.parallelChainCheck();
 
         return new AbstractPipeComponent<>(getFirstInputPort(), getOutputPort()) {
 

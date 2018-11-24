@@ -21,13 +21,13 @@ public abstract class ComponentChainLink {
 
     static <K, V> void parallelChainCheck(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
         if(!newComponent.isParallelisable()) {
-            parallelChainCheck(previousComponentOutputBuffer.previousComponent);
+            previousComponentOutputBuffer.previousComponent.parallelChainCheck();
         }
     }
 
-    static <K> void parallelChainCheck(final ComponentChainLink previousComponent) {
-        if (previousComponent.isParallelisable()) {
-            new TickRunningStrategy(previousComponent.parallelWrap(), true);
+    void parallelChainCheck() {
+        if (isParallelisable()) {
+            new TickRunningStrategy(parallelWrap(), true);
         }
     }
 
