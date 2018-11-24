@@ -1,9 +1,9 @@
 package component.buffer;
 
-public abstract class ComponentChainLink<K> {
-    final PipeComponentChainLink<?, K> previousComponentChainLink;
+public abstract class ComponentChainLink {
+    final ComponentChainLink previousComponentChainLink;
 
-    public ComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink) {
+    public ComponentChainLink(ComponentChainLink previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
     }
 

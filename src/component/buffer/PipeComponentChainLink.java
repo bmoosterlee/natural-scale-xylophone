@@ -1,6 +1,6 @@
 package component.buffer;
 
-public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
+public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     private final MethodPipeComponent<K, V> methodPipeComponent;
 
     public PipeComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){

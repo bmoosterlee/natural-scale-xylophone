@@ -1,6 +1,6 @@
 package component.buffer;
 
-public class InputComponentChainLink<K> extends ComponentChainLink<K>{
+public class InputComponentChainLink<K> extends ComponentChainLink {
     private final MethodInputComponent<K> methodInputComponent;
 
     public InputComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodInputComponent<K> methodInputComponent){
