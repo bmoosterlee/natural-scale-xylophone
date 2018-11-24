@@ -4,8 +4,7 @@ import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
 import component.buffer.TickRunningStrategy;
-
-import java.util.concurrent.Callable;
+import main.OutputCallable;
 
 public class Pulser extends MethodOutputComponent<Pulse> {
 
@@ -13,8 +12,8 @@ public class Pulser extends MethodOutputComponent<Pulse> {
         super(outputBuffer, build(frameTime));
     }
 
-    private static Callable<Pulse> build(TimeInNanoSeconds frameTime) {
-        return new Callable<>() {
+    private static OutputCallable<Pulse> build(TimeInNanoSeconds frameTime) {
+        return new OutputCallable<>() {
 
             private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
                 TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();

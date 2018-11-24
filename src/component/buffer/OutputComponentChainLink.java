@@ -1,6 +1,6 @@
 package component.buffer;
 
-import java.util.concurrent.Callable;
+import main.OutputCallable;
 
 public class OutputComponentChainLink<V> extends ComponentChainLink {
     private final MethodOutputComponent methodOutputComponent;
@@ -55,7 +55,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
         };
     }
 
-    public static <V> BufferChainLink<V> buildOutputBuffer(Callable<V> method, int capacity, String name) {
+    public static <V> BufferChainLink<V> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodOutputComponent<V> component = new MethodOutputComponent<>(outputBuffer, method);
         OutputComponentChainLink<V> componentChainLink = new OutputComponentChainLink<>(component);
