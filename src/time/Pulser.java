@@ -3,7 +3,6 @@ package time;
 import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
-import component.buffer.TickRunningStrategy;
 import main.OutputCallable;
 
 public class Pulser extends MethodOutputComponent<Pulse> {
@@ -12,7 +11,7 @@ public class Pulser extends MethodOutputComponent<Pulse> {
         super(outputBuffer, build(frameTime));
     }
 
-    private static OutputCallable<Pulse> build(TimeInNanoSeconds frameTime) {
+    public static OutputCallable<Pulse> build(TimeInNanoSeconds frameTime) {
         return new OutputCallable<>() {
 
             private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
@@ -36,17 +35,12 @@ public class Pulser extends MethodOutputComponent<Pulse> {
 
                 return new Pulse();
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 
-    public static SimpleBuffer<Pulse> buildOutputBuffer(TimeInNanoSeconds frameTime, int capacity, String name) {
-        SimpleBuffer<Pulse> outputBuffer = new SimpleBuffer<>(capacity, name);
-        new TickRunningStrategy(new Pulser(outputBuffer, frameTime));
-        return outputBuffer;
-    }
-
-    @Override
-    public Boolean isParallelisable(){
-        return false;
-    }
 }
