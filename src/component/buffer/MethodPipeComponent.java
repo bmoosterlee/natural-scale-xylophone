@@ -2,18 +2,15 @@ package component.buffer;
 
 public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
     protected final PipeCallable<K, V> method;
-    private final Boolean parallelisability;
 
     public MethodPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
-        parallelisability = method.isParallelisable();
     }
 
     public MethodPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createMethodInternalInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
-        parallelisability = method.isParallelisable();
     }
 
     protected void tick() {
@@ -28,7 +25,7 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
 
     @Override
     public Boolean isParallelisable(){
-        return parallelisability;
+        return method.isParallelisable();
     }
 
     public static <K, V> PipeCallable<K, V> toMethod(PipeCallable<BoundedBuffer<K>, BoundedBuffer<V>> pipe){

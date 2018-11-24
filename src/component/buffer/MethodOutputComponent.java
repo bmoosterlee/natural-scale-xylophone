@@ -4,12 +4,10 @@ import main.OutputCallable;
 
 public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
     protected final OutputCallable<V> method;
-    private final Boolean parallelisability;
 
     public MethodOutputComponent(SimpleBuffer<V> outputBuffer, OutputCallable<V> method) {
         super(new OutputPort<>(outputBuffer));
         this.method = method;
-        parallelisability = method.isParallelisable();
     }
 
     public void tick() {
@@ -23,7 +21,7 @@ public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
 
     @Override
     public Boolean isParallelisable(){
-        return parallelisability;
+        return method.isParallelisable();
     }
 
 }
