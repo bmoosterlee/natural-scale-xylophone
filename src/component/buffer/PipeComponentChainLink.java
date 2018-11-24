@@ -3,7 +3,7 @@ package component.buffer;
 public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     private final MethodPipeComponent<K, V> methodPipeComponent;
 
-    public PipeComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
+    public PipeComponentChainLink(ComponentChainLink previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
         super(previousComponentChainLink);
         this.methodPipeComponent = methodPipeComponent;
     }
@@ -12,10 +12,36 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         this(null, methodPipeComponent);
     }
 
+    @Override
+    protected void componentTick() {
+        methodPipeComponent.tick();
+    }
+
+    @Override
+    InputPort getFirstInputPort() {
+        try{
+            return previousComponentChainLink.getFirstInputPort();
+        }
+        catch(NullPointerException e) {
+            return methodPipeComponent.input;
+        }
+    }
+
+    @Override
+    protected OutputPort getOutputPort() {
+        return methodPipeComponent.output;
+    }
+
+    @Override
+    Boolean isParallelisable() {
+        return methodPipeComponent.isParallelisable();
+    }
+
+    @Override
     protected void parallelisationAwareTick() {
         try{
-            if(previousComponentChainLink.isParallelisable() == isParallelisable()) {
-                previousComponentChainLink.tick();
+            if(previousComponentChainLink.isParallelisable()) {
+                previousComponentChainLink.parallelisationAwareTick();
             }
         }
         catch(NullPointerException ignored){
@@ -25,16 +51,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     }
 
     @Override
-    protected void componentTick() {
-        methodPipeComponent.tick();
-    }
-
-    @Override
-    protected OutputPort getOutputPort() {
-        return methodPipeComponent.output;
-    }
-
-    public <T> AbstractPipeComponent<T, V> wrap() {
+    public AbstractPipeComponent wrap() {
         return new AbstractPipeComponent<>(getFirstInputPort(), getOutputPort()) {
 
             @Override
@@ -49,24 +66,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         };
     }
 
-    InputPort getFirstInputPort() {
-        try{
-            return previousComponentChainLink.getFirstInputPort();
-        }
-        catch(NullPointerException e) {
-            return methodPipeComponent.input;
-        }
-    }
-
     @Override
-    Boolean isParallelisable() {
-        return methodPipeComponent.isParallelisable();
-    }
-
-    InputPort getParallisationAwareFirstInputPort() {
+    InputPort getParallelisationAwareFirstInputPort() {
         try{
-            if(previousComponentChainLink.isParallelisable() == isParallelisable()) {
-                return previousComponentChainLink.getFirstInputPort();
+            if(previousComponentChainLink.isParallelisable()) {
+                return previousComponentChainLink.getParallelisationAwareFirstInputPort();
             }
         }
         catch(NullPointerException ignored) {
@@ -83,7 +87,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     }
 
     private static <K, V> BufferChainLink<V> getBufferChainLink(BufferChainLink<K> inputBuffer, SimpleBuffer<V> outputBuffer, MethodPipeComponent<K, V> component) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, component);
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<K, V>(inputBuffer.previousComponent, component);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
