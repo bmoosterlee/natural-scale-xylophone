@@ -19,17 +19,17 @@ public abstract class ComponentChainLink {
 
     protected abstract void componentTick();
 
-    static <K, V> void parallelChainCheck(BufferChainLink<K> inputBuffer, AbstractComponent<K, V> component) {
-        if(!component.isParallelisable() && inputBuffer.previousComponent.isParallelisable()){
-            breakParallelisationChain(inputBuffer);
+    static <K, V> void parallelChainCheck(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
+        if(!newComponent.isParallelisable() && previousComponentOutputBuffer.previousComponent.isParallelisable()){
+            breakParallelisationChain(previousComponentOutputBuffer);
         }
     }
 
-    private static <K> void breakParallelisationChain(BufferChainLink<K> inputBuffer) {
-        new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.previousComponent.getParallelisationAwareFirstInputPort(), inputBuffer.previousComponent.getOutputPort()) {
+    private static <K> void breakParallelisationChain(BufferChainLink<K> previousComponentOutputBuffer) {
+        new TickRunningStrategy(new AbstractPipeComponent<>(previousComponentOutputBuffer.previousComponent.getParallelisationAwareFirstInputPort(), previousComponentOutputBuffer.previousComponent.getOutputPort()) {
             @Override
             protected void tick() {
-                inputBuffer.previousComponent.parallelisationAwareTick();
+                previousComponentOutputBuffer.previousComponent.parallelisationAwareTick();
             }
         }, true);
     }
