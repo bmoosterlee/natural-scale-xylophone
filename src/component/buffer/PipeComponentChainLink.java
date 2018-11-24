@@ -38,6 +38,16 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     }
 
     @Override
+    protected AbstractComponent parallelWrap() {
+        return new AbstractPipeComponent<>(getParallelisationAwareFirstInputPort(), getOutputPort()) {
+            @Override
+            protected void tick() {
+                parallelisationAwareTick();
+            }
+        };
+    }
+
+    @Override
     protected void parallelisationAwareTick() {
         try{
             if(previousComponentChainLink.isParallelisable()) {

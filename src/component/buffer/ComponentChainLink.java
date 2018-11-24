@@ -27,14 +27,11 @@ public abstract class ComponentChainLink {
 
     static <K> void parallelChainCheck(final ComponentChainLink previousComponent) {
         if (previousComponent.isParallelisable()) {
-            new TickRunningStrategy(new AbstractPipeComponent<>(previousComponent.getParallelisationAwareFirstInputPort(), previousComponent.getOutputPort()) {
-                @Override
-                protected void tick() {
-                    previousComponent.parallelisationAwareTick();
-                }
-            }, true);
+            new TickRunningStrategy(previousComponent.parallelWrap(), true);
         }
     }
+
+    protected abstract AbstractComponent parallelWrap();
 
     protected abstract void parallelisationAwareTick();
 

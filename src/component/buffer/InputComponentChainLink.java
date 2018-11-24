@@ -55,6 +55,16 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     }
 
     @Override
+    protected AbstractComponent parallelWrap() {
+        return new AbstractInputComponent<>(getParallelisationAwareFirstInputPort()) {
+            @Override
+            protected void tick() {
+                parallelisationAwareTick();
+            }
+        };
+    }
+
+    @Override
     public AbstractComponent wrap() {
         return new AbstractInputComponent<>(getFirstInputPort()) {
 

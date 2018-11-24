@@ -16,6 +16,16 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
     }
 
     @Override
+    protected AbstractComponent parallelWrap() {
+        return new AbstractOutputComponent<>(getOutputPort()) {
+            @Override
+            protected void tick() {
+                parallelisationAwareTick();
+            }
+        };
+    }
+
+    @Override
     InputPort getFirstInputPort() {
         return null;
     }
