@@ -1,8 +1,5 @@
 package component.buffer;
 
-import component.buffer.OutputPort;
-import component.buffer.SimpleBuffer;
-
 import java.util.concurrent.Callable;
 
 public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
@@ -22,5 +19,11 @@ public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static <V> SimpleBuffer<V> buildOutputBuffer(Callable<V> method, int capacity, String name) {
+        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
+        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, method));
+        return outputBuffer;
     }
 }
