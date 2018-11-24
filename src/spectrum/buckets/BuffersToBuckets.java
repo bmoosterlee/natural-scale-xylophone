@@ -126,7 +126,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         }
     }
 
-    public static <K, V> ImmutableMap put(AbstractMap.SimpleImmutableEntry<ImmutableMap<K, V>, AbstractMap.SimpleImmutableEntry<K, V>> in){
+    public static <K, V> ImmutableMap<K, V> put(AbstractMap.SimpleImmutableEntry<ImmutableMap<K, V>, AbstractMap.SimpleImmutableEntry<K, V>> in){
         Map<K, V> newMap = new HashMap<>(in.getKey().map);
         newMap.put(in.getValue().getKey(), in.getValue().getValue());
         return new ImmutableMap<>(newMap);
