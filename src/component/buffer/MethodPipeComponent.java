@@ -47,6 +47,11 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
                 }
                 return null;
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return pipe.isParallelisable();
+            }
         };
     }
 

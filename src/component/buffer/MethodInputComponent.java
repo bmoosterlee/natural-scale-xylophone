@@ -46,6 +46,11 @@ public class MethodInputComponent<K> extends AbstractInputComponent<K> {
                     e.printStackTrace();
                 }
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return pipe.isParallelisable();
+            }
         };
     }
 }
