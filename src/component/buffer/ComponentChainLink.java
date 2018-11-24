@@ -24,7 +24,7 @@ public abstract class ComponentChainLink<K> {
             new TickRunningStrategy(new AbstractPipeComponent(inputBuffer.previousComponent.getParallisationAwareFirstInputPort(), inputBuffer.previousComponent.methodPipeComponent.output) {
                 @Override
                 protected void tick() {
-                    inputBuffer.previousComponent.parallisationAwareTick();
+                    inputBuffer.previousComponent.parallelisationAwareTick();
                 }
             }, true);
         }

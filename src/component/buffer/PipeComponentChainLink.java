@@ -13,7 +13,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
         this(null, methodPipeComponent);
     }
 
-    protected void parallisationAwareTick() {
+    protected void parallelisationAwareTick() {
         try{
             if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodPipeComponent.isParallelisable()) {
                 previousComponentChainLink.tick();

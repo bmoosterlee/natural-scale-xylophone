@@ -8,7 +8,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
         this.methodInputComponent = methodInputComponent;
     }
 
-    protected void parallisationAwareTick() {
+    protected void parallelisationAwareTick() {
         try{
             if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodInputComponent.isParallelisable()) {
                 previousComponentChainLink.tick();
