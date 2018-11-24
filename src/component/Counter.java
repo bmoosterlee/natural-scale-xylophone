@@ -8,8 +8,8 @@ public class Counter extends MethodPipeComponent<Pulse, Long> {
         super(inputBuffer, outputBuffer, build());
     }
 
-    public static CallableWithArguments<Pulse, Long> build() {
-        return new CallableWithArguments<>() {
+    public static PipeCallable<Pulse, Long> build() {
+        return new PipeCallable<>() {
             private long calculatedTicks = 0L;
 
             @Override

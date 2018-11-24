@@ -59,27 +59,27 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method){
+    public <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method){
         return performMethod(method, "simpleBuffer - performMethod");
     }
 
     @Override
-    public <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name) {
+    public <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method, String name) {
         return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
     @Override
-    public void performInputMethod(CallableWithArgument<T> method){
+    public void performInputMethod(InputCallable<T> method){
         new TickRunningStrategy(new MethodInputComponent<>(this, method));
     }
 
     @Override
-    public <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipe) {
+    public <V> BoundedBuffer<V> connectTo(PipeCallable<BoundedBuffer<T>, BoundedBuffer<V>> pipe) {
         return pipe.call(this);
     }
 
     @Override
-    public void connectTo(CallableWithArgument<BoundedBuffer<T>> pipe) {
+    public void connectTo(InputCallable<BoundedBuffer<T>> pipe) {
         pipe.call(this);
     }
 

@@ -18,8 +18,8 @@ public class VolumeStateToBuckets extends MethodPipeComponent<VolumeState, Bucke
         super(volumeStateBuffer, notesBucketsBuffer, build(spectrumWindow));
     }
 
-    public static CallableWithArguments<VolumeState, Buckets> build(SpectrumWindow spectrumWindow){
-        return new CallableWithArguments<>() {
+    public static PipeCallable<VolumeState, Buckets> build(SpectrumWindow spectrumWindow){
+        return new PipeCallable<>() {
             SpectrumWindow spectrumWindow1 = spectrumWindow;
 
             @Override

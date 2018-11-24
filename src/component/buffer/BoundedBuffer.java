@@ -21,15 +21,15 @@ public interface BoundedBuffer<T> {
 
     OutputPort<T> createOutputPort();
 
-    <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method);
+    <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method);
 
-    <V> BufferChainLink<V> performMethod(CallableWithArguments<T, V> method, String name);
+    <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method, String name);
 
-    void performInputMethod(CallableWithArgument<T> method);
+    void performInputMethod(InputCallable<T> method);
 
-    <V> BoundedBuffer<V> connectTo(CallableWithArguments<BoundedBuffer<T>, BoundedBuffer<V>> pipe);
+    <V> BoundedBuffer<V> connectTo(PipeCallable<BoundedBuffer<T>, BoundedBuffer<V>> pipe);
 
-    void connectTo(CallableWithArgument<BoundedBuffer<T>> pipe);
+    void connectTo(InputCallable<BoundedBuffer<T>> pipe);
 
     Collection<SimpleBuffer<T>> broadcast(int size);
 

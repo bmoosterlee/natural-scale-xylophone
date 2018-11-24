@@ -11,7 +11,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         super(tickBuffer, outputBuffer, toMethod(buildPipe(inputMap)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<Buckets>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<Buckets>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         return inputBuffer -> toBucketMap(inputBuffer, bufferMap)
             .performMethod(Buckets::new, "buffers to buckets - create buckets");
     }
@@ -23,7 +23,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
             frameTickers.put(index, frameTickBroadcast.poll());
         }
 
-        Map<Integer, CallableWithArguments<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
+        Map<Integer, PipeCallable<Pulse, List<AtomicBucket>>> flushers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
             flushers.put(index, Flusher.flush(bufferMap.get(index)));
         }
@@ -35,7 +35,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
                                 input1 -> new MemoizedBucket(new CompositeBucket<>(input1)))));
     }
 
-    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, CallableWithArguments<K, V>> methods) {
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, PipeCallable<K, V>> methods) {
         Map<I, BoundedBuffer<V>> output = new HashMap<>();
         for (I index : input.keySet()) {
             output.put(index, input.get(index).performMethod(methods.get(index), "buffers to buckets - for each method application"));
@@ -43,7 +43,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         return output;
     }
 
-    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, CallableWithArguments<K, V> method) {
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, PipeCallable<K, V> method) {
         Map<I, BoundedBuffer<V>> output = new HashMap<>();
         for (I index : input.keySet()) {
             output.put(index, input.get(index).performMethod(method, "buffers to buckets - for each single method application"));

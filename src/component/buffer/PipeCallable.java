@@ -1,6 +1,6 @@
 package component.buffer;
 
-public interface CallableWithArguments<K, V> {
+public interface PipeCallable<K, V> {
 
     V call(K input);
 

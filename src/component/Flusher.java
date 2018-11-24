@@ -10,7 +10,7 @@ public class Flusher<T> extends MethodPipeComponent<Pulse, List<T>> {
         super(timeInputBuffer, outputBuffer, flush(inputBuffer));
     }
 
-    public static <T> CallableWithArguments<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
+    public static <T> PipeCallable<Pulse, List<T>> flush(BoundedBuffer<T> inputBuffer){
         InputPort<T> inputPort = inputBuffer.createInputPort();
 
         return input -> {

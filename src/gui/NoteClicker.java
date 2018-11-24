@@ -17,8 +17,8 @@ public class NoteClicker extends MethodPipeComponent<Pulse, List<Frequency>> {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(spectrumWindow, guiPanel)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<List<Frequency>>> buildPipe(SpectrumWindow spectrumWindow, JPanel guiPanel) {
-        return new CallableWithArguments<>() {
+    public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<List<Frequency>>> buildPipe(SpectrumWindow spectrumWindow, JPanel guiPanel) {
+        return new PipeCallable<>() {
 
             private OutputPort<Frequency> clickedFrequenciesPort;
 

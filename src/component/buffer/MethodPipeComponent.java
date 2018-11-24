@@ -1,14 +1,14 @@
 package component.buffer;
 
 public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
-    protected final CallableWithArguments<K, V> method;
+    protected final PipeCallable<K, V> method;
 
-    public MethodPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
+    public MethodPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
 
-    public MethodPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, CallableWithArguments<K, V> method) {
+    public MethodPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createMethodInternalInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
@@ -23,8 +23,8 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
         }
     }
 
-    public static <K, V> CallableWithArguments<K, V> toMethod(CallableWithArguments<BoundedBuffer<K>, BoundedBuffer<V>> pipe){
-        return new CallableWithArguments<>() {
+    public static <K, V> PipeCallable<K, V> toMethod(PipeCallable<BoundedBuffer<K>, BoundedBuffer<V>> pipe){
+        return new PipeCallable<>() {
             SimpleBuffer<K> inputBuffer = new SimpleBuffer<>(1, "pipe to method - input");
             OutputPort<K> methodInput = inputBuffer.createOutputPort();
             InputPort<V> methodOutput = pipe.call(inputBuffer).createInputPort();

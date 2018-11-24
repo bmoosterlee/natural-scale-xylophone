@@ -12,7 +12,7 @@ public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFreque
         super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(newNoteBuffer)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Long>, BoundedBuffer<TimestampedFrequencies>> buildPipe(BoundedBuffer<Frequency> newNoteBuffer) {
+    public static PipeCallable<BoundedBuffer<Long>, BoundedBuffer<TimestampedFrequencies>> buildPipe(BoundedBuffer<Frequency> newNoteBuffer) {
         return inputBuffer -> {
             LinkedList<BoundedBuffer<Long>> sampleCountBroadcast =
                     new LinkedList<>(

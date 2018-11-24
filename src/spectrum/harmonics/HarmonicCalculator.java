@@ -16,8 +16,8 @@ public class HarmonicCalculator extends MethodPipeComponent<VolumeState, Iterato
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 
-    public static CallableWithArguments<VolumeState, Iterator<Map.Entry<Harmonic, Double>>> calculateHarmonics(int maxHarmonics1){
-        return new CallableWithArguments<>() {
+    public static PipeCallable<VolumeState, Iterator<Entry<Harmonic, Double>>> calculateHarmonics(int maxHarmonics1){
+        return new PipeCallable<>() {
             private NewHarmonicsCalculator newHarmonicsCalculator;
             private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
 

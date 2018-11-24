@@ -8,8 +8,8 @@ public class TimedConsumer<T> extends MethodPipeComponent<Pulse, T> {
         super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
     }
 
-    public static <T> CallableWithArguments<Pulse, T> consumeFrom(BoundedBuffer<T> inputBuffer){
-        return new CallableWithArguments<>() {
+    public static <T> PipeCallable<Pulse, T> consumeFrom(BoundedBuffer<T> inputBuffer){
+        return new PipeCallable<>() {
             final InputPort<T> inputPort;
 
             {

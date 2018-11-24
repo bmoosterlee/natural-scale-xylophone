@@ -13,8 +13,8 @@ public class CursorMover extends MethodPipeComponent<Pulse, Integer> {
         super(inputBuffer, outputBuffer, toMethod(buildPipe(guiPanel)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Pulse>, BoundedBuffer<Integer>> buildPipe(JPanel guiPanel) {
-        return new CallableWithArguments<>() {
+    public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<Integer>> buildPipe(JPanel guiPanel) {
+        return new PipeCallable<>() {
             Integer storedX = 0;
             boolean readyForNewOutput = true;
 

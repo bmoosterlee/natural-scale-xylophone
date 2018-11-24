@@ -13,7 +13,7 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
         super(inputBuffer, outputBuffer, toMethod(buildPipe(size)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int size){
+    public static PipeCallable<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int size){
         return inputBuffer -> {
             int capacity = 100;
             double multiplier = 1. / size;

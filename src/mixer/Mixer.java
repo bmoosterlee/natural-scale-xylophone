@@ -17,8 +17,8 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
         super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(noteInputBuffer, sampleRate)));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Long>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
-        return new CallableWithArguments<>() {
+    public static PipeCallable<BoundedBuffer<Long>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
+        return new PipeCallable<>() {
             private Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
             private Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
             private Map<Long, VolumeAmplitudeState> finishedSlices;

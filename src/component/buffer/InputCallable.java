@@ -1,6 +1,6 @@
 package component.buffer;
 
-public interface CallableWithArgument<K> {
+public interface InputCallable<K> {
 
     void call(K input);
 

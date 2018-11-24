@@ -10,11 +10,11 @@ public class BucketsAverager extends MethodPipeComponent<Buckets, Buckets> {
         super(inputBuffer, outputBuffer, build(averagingWidth));
     }
 
-    public static CallableWithArguments<Buckets, Buckets> build(int averagingWidth){
+    public static PipeCallable<Buckets, Buckets> build(int averagingWidth){
         return MethodPipeComponent.toMethod(buildPipe(averagingWidth));
     }
 
-    public static CallableWithArguments<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int averagingWidth) {
+    public static PipeCallable<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int averagingWidth) {
         return inputBuffer -> {
 
             LinkedList<SimpleBuffer<Buckets>> methodInputBroadcast =

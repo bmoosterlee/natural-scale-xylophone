@@ -14,8 +14,8 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
         super(inputBuffer, MethodInputComponent.toMethod(buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate)));
     }
 
-    public static CallableWithArgument<BoundedBuffer<VolumeAmplitudeState>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
-        return new CallableWithArgument<>() {
+    public static InputCallable<BoundedBuffer<VolumeAmplitudeState>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
+        return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
             private double marginalSampleSize;

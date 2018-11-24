@@ -1,14 +1,14 @@
 package component.buffer;
 
 public class MethodInputComponent<K> extends AbstractInputComponent<K> {
-    protected final CallableWithArgument<K> method;
+    protected final InputCallable<K> method;
 
-    public MethodInputComponent(SimpleBuffer<K> inputBuffer, CallableWithArgument<K> method) {
+    public MethodInputComponent(SimpleBuffer<K> inputBuffer, InputCallable<K> method) {
         super(inputBuffer.createInputPort());
         this.method = method;
     }
 
-    public MethodInputComponent(BufferChainLink<K> inputBuffer, CallableWithArgument<K> method) {
+    public MethodInputComponent(BufferChainLink<K> inputBuffer, InputCallable<K> method) {
         super(inputBuffer.createMethodInternalInputPort());
         this.method = method;
     }
@@ -22,8 +22,8 @@ public class MethodInputComponent<K> extends AbstractInputComponent<K> {
         }
     }
 
-    public static <K> CallableWithArgument<K> toMethod(CallableWithArgument<BoundedBuffer<K>> pipe){
-        return new CallableWithArgument<>() {
+    public static <K> InputCallable<K> toMethod(InputCallable<BoundedBuffer<K>> pipe){
+        return new InputCallable<>() {
             SimpleBuffer<K> inputBuffer = new SimpleBuffer<>(1, "pipe to method - input");
             OutputPort<K> methodInput = inputBuffer.createOutputPort();
             {

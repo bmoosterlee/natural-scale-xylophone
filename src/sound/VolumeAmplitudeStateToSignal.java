@@ -13,7 +13,7 @@ public class VolumeAmplitudeStateToSignal extends MethodPipeComponent<VolumeAmpl
         super(volumeAmplitudeStateInputBuffer, amplitudeOutputBuffer, build());
     }
 
-    public static CallableWithArguments<VolumeAmplitudeState, Double> build() {
+    public static PipeCallable<VolumeAmplitudeState, Double> build() {
         return VolumeAmplitudeStateToSignal::calculateAmplitude;
     }
 
