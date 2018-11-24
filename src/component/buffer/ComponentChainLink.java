@@ -21,16 +21,16 @@ public abstract class ComponentChainLink {
 
     static <K, V> void parallelChainCheck(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
         if(!newComponent.isParallelisable()) {
-            parallelisationChainCheck(previousComponentOutputBuffer);
+            parallelisationChainCheck(previousComponentOutputBuffer.previousComponent);
         }
     }
 
-    private static <K> void parallelisationChainCheck(BufferChainLink<K> previousComponentOutputBuffer) {
-        if (previousComponentOutputBuffer.previousComponent.isParallelisable()) {
-            new TickRunningStrategy(new AbstractPipeComponent<>(previousComponentOutputBuffer.previousComponent.getParallelisationAwareFirstInputPort(), previousComponentOutputBuffer.previousComponent.getOutputPort()) {
+    private static <K> void parallelisationChainCheck(final ComponentChainLink previousComponent) {
+        if (previousComponent.isParallelisable()) {
+            new TickRunningStrategy(new AbstractPipeComponent<>(previousComponent.getParallelisationAwareFirstInputPort(), previousComponent.getOutputPort()) {
                 @Override
                 protected void tick() {
-                    previousComponentOutputBuffer.previousComponent.parallelisationAwareTick();
+                    previousComponent.parallelisationAwareTick();
                 }
             }, true);
         }
