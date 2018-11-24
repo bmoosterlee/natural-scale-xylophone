@@ -66,6 +66,8 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
 
     @Override
     public AbstractComponent wrap() {
+        parallelChainCheck(this);
+
         return new AbstractInputComponent<>(getFirstInputPort()) {
 
             @Override
