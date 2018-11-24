@@ -2,7 +2,7 @@ package component.buffer;
 
 public class TickRunningStrategy {
 
-    public TickRunningStrategy(final AbstractComponent pipeComponent){
+    public <K, V> TickRunningStrategy(final AbstractComponent<K, V> pipeComponent){
         this(pipeComponent, false);
     }
 
