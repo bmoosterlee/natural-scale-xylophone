@@ -1,12 +1,11 @@
 package component.buffer;
 
 public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
-    final MethodPipeComponent<K, V> methodPipeComponent;
+    private final MethodPipeComponent<K, V> methodPipeComponent;
 
     public PipeComponentChainLink(PipeComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
         super(previousComponentChainLink);
         this.methodPipeComponent = methodPipeComponent;
-
     }
 
     public PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
@@ -15,7 +14,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
 
     protected void parallelisationAwareTick() {
         try{
-            if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodPipeComponent.isParallelisable()) {
+            if(previousComponentChainLink.isParallelisable() == isParallelisable()) {
                 previousComponentChainLink.tick();
             }
         }
@@ -30,8 +29,13 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
         methodPipeComponent.tick();
     }
 
+    @Override
+    protected OutputPort getOutputPort() {
+        return methodPipeComponent.output;
+    }
+
     public <T> AbstractPipeComponent<T, V> wrap() {
-        return new AbstractPipeComponent<>(getFirstInputPort(), methodPipeComponent.output) {
+        return new AbstractPipeComponent<>(getFirstInputPort(), getOutputPort()) {
 
             @Override
             protected void tick() {
@@ -54,9 +58,14 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K> {
         }
     }
 
+    @Override
+    Boolean isParallelisable() {
+        return methodPipeComponent.isParallelisable();
+    }
+
     InputPort getParallisationAwareFirstInputPort() {
         try{
-            if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodPipeComponent.isParallelisable()) {
+            if(previousComponentChainLink.isParallelisable() == isParallelisable()) {
                 return previousComponentChainLink.getFirstInputPort();
             }
         }

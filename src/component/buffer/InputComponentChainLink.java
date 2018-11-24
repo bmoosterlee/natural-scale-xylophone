@@ -10,7 +10,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
 
     protected void parallelisationAwareTick() {
         try{
-            if(previousComponentChainLink.methodPipeComponent.isParallelisable() == methodInputComponent.isParallelisable()) {
+            if(previousComponentChainLink.isParallelisable() == isParallelisable()) {
                 previousComponentChainLink.tick();
             }
         }
@@ -23,6 +23,11 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
     @Override
     protected void componentTick() {
         methodInputComponent.tick();
+    }
+
+    @Override
+    protected OutputPort getOutputPort() {
+        return null;
     }
 
     public AbstractInputComponent wrap() {
@@ -41,8 +46,14 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K>{
         };
     }
 
-    private InputPort getFirstInputPort() {
+    @Override
+    protected InputPort getFirstInputPort() {
         return previousComponentChainLink.getFirstInputPort();
+    }
+
+    @Override
+    Boolean isParallelisable() {
+        return methodInputComponent.isParallelisable();
     }
 
     static <T> InputComponentChainLink<T> methodToInputComponent(BufferChainLink<T> inputBuffer, CallableWithArgument<T> method) {
