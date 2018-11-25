@@ -27,6 +27,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         }
         catch(NullPointerException ignored) {
         }
+        return getInputPort();
+    }
+
+    @Override
+    protected InputPort<K> getInputPort() {
         return methodPipeComponent.input;
     }
 
@@ -66,22 +71,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
                 return false;
             }
         };
-    }
-
-    @Override
-    InputPort getParallelisationAwareFirstInputPort() {
-        try{
-            if(previousComponentChainLink.isParallelisable()) {
-                InputPort parallelisationAwareFirstInputPort = previousComponentChainLink.getParallelisationAwareFirstInputPort();
-                if(parallelisationAwareFirstInputPort!=null) {
-                    return parallelisationAwareFirstInputPort;
-                }
-            }
-        }
-        catch(NullPointerException ignored) {
-        }
-
-        return methodPipeComponent.input;
     }
 
     public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K,V> method, int capacity, String name) {

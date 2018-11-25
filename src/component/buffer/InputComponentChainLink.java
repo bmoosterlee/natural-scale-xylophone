@@ -9,24 +9,13 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     }
 
     @Override
-    InputPort getParallelisationAwareFirstInputPort() {
-        try{
-            if(previousComponentChainLink.isParallelisable()) {
-                InputPort parallelisationAwareFirstInputPort = previousComponentChainLink.getParallelisationAwareFirstInputPort();
-                if(parallelisationAwareFirstInputPort!=null) {
-                    return parallelisationAwareFirstInputPort;
-                }
-            }
-        }
-        catch(NullPointerException ignored) {
-        }
-
-        return methodInputComponent.input;
+    protected void componentTick() {
+        methodInputComponent.tick();
     }
 
     @Override
-    protected void componentTick() {
-        methodInputComponent.tick();
+    protected InputPort<K> getInputPort() {
+        return methodInputComponent.input;
     }
 
     @Override
@@ -44,7 +33,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
         }
         catch(NullPointerException ignored) {
         }
-        return methodInputComponent.input;
+        return getInputPort();
     }
     @Override
     Boolean isParallelisable() {

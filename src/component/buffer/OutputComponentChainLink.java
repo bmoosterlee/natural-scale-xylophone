@@ -36,13 +36,13 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
     }
 
     @Override
-    protected OutputPort getOutputPort() {
-        return methodOutputComponent.output;
+    protected InputPort getInputPort() {
+        return null;
     }
 
     @Override
-    InputPort getParallelisationAwareFirstInputPort() {
-        return null;
+    protected OutputPort getOutputPort() {
+        return methodOutputComponent.output;
     }
 
     @Override

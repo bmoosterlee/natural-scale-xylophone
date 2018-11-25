@@ -45,13 +45,28 @@ public abstract class ComponentChainLink {
         componentTick();
     }
 
-    abstract InputPort getParallelisationAwareFirstInputPort();
+    InputPort getParallelisationAwareFirstInputPort() {
+        try{
+            if(previousComponentChainLink.isParallelisable()) {
+                InputPort parallelisationAwareFirstInputPort = previousComponentChainLink.getParallelisationAwareFirstInputPort();
+                if(parallelisationAwareFirstInputPort!=null) {
+                    return parallelisationAwareFirstInputPort;
+                }
+            }
+        }
+        catch(NullPointerException ignored) {
+        }
+
+        return getInputPort();
+    }
 
     public abstract <T, V> AbstractComponent<T, V> wrap();
 
     abstract InputPort getFirstInputPort();
 
     abstract Boolean isParallelisable();
+
+    protected abstract InputPort getInputPort();
 
     protected abstract OutputPort getOutputPort();
 }
