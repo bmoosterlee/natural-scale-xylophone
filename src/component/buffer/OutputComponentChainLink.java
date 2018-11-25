@@ -1,7 +1,5 @@
 package component.buffer;
 
-import main.OutputCallable;
-
 public class OutputComponentChainLink<V> extends ComponentChainLink {
     private final MethodOutputComponent methodOutputComponent;
 

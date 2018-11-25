@@ -3,7 +3,7 @@ package time;
 import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
-import main.OutputCallable;
+import component.buffer.OutputCallable;
 
 public class Pulser extends MethodOutputComponent<Pulse> {
 

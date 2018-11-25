@@ -1,7 +1,5 @@
 package component.buffer;
 
-import main.OutputCallable;
-
 public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
     protected final OutputCallable<V> method;
 
