@@ -19,13 +19,13 @@ public abstract class ComponentChainLink {
 
     protected abstract void componentTick();
 
-    static <K, V> void parallelChainCheck(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
+    static <K, V> void tryToBreakParallelChain(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
         if(!newComponent.isParallelisable()) {
-            previousComponentOutputBuffer.previousComponent.parallelChainCheck();
+            previousComponentOutputBuffer.previousComponent.tryToBreakParallelChain();
         }
     }
 
-    void parallelChainCheck() {
+    void tryToBreakParallelChain() {
         if (isParallelisable()) {
             new TickRunningStrategy(parallelWrap(), true);
         }

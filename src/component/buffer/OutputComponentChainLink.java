@@ -47,7 +47,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
 
     @Override
     public AbstractComponent wrap() {
-        parallelChainCheck();
+        tryToBreakParallelChain();
 
         return new AbstractOutputComponent<>(getOutputPort()) {
 

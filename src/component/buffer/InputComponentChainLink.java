@@ -52,7 +52,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
 
     @Override
     public AbstractComponent wrap() {
-        parallelChainCheck();
+        tryToBreakParallelChain();
 
         return new AbstractInputComponent<>(getFirstInputPort()) {
 
@@ -71,7 +71,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
 
     static <T> InputComponentChainLink<T> methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
         MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
-        parallelChainCheck(inputBuffer, component);
+        tryToBreakParallelChain(inputBuffer, component);
         return new InputComponentChainLink<>(inputBuffer.previousComponent, component);
     }
 
