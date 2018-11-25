@@ -31,7 +31,7 @@ public abstract class ComponentChainLink {
         }
     }
 
-    protected abstract AbstractComponent parallelWrap();
+    protected abstract <K, V> AbstractComponent<K, V> parallelWrap();
 
     protected abstract void parallelisationAwareTick();
 
