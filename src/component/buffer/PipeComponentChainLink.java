@@ -18,19 +18,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     }
 
     @Override
-    InputPort getFirstInputPort() {
-        try{
-            InputPort firstInputPort = previousComponentChainLink.getFirstInputPort();
-            if(firstInputPort!=null) {
-                return firstInputPort;
-            }
-        }
-        catch(NullPointerException ignored) {
-        }
-        return getInputPort();
-    }
-
-    @Override
     protected InputPort<K> getInputPort() {
         return methodPipeComponent.input;
     }
@@ -57,11 +44,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
 
     @Override
     protected AbstractPipeComponent sequentialWrap() {
-        return new AbstractPipeComponent<>(getFirstInputPort(), getOutputPort()) {
+        return new AbstractPipeComponent<>(getSequentialAwareFirstInputPort(), getOutputPort()) {
 
             @Override
             protected void tick() {
-                PipeComponentChainLink.this.tick();
+                sequentialAwareTick();
             }
 
             @Override

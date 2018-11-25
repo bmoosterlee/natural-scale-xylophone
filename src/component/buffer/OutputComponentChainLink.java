@@ -26,11 +26,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
     }
 
     @Override
-    InputPort getFirstInputPort() {
-        return null;
-    }
-
-    @Override
     Boolean isParallelisable() {
         return methodOutputComponent.isParallelisable();
     }
@@ -51,7 +46,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
 
             @Override
             protected void tick() {
-                OutputComponentChainLink.this.tick();
+                sequentialAwareTick();
             }
 
             @Override

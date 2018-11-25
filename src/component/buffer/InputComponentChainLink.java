@@ -24,18 +24,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     }
 
     @Override
-    InputPort getFirstInputPort() {
-        try{
-            InputPort firstInputPort = previousComponentChainLink.getFirstInputPort();
-            if(firstInputPort!=null) {
-                return firstInputPort;
-            }
-        }
-        catch(NullPointerException ignored) {
-        }
-        return getInputPort();
-    }
-    @Override
     Boolean isParallelisable() {
         return methodInputComponent.isParallelisable();
     }
@@ -52,13 +40,12 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
 
     @Override
     protected AbstractInputComponent sequentialWrap() {
-        return new AbstractInputComponent<>(getFirstInputPort()) {
+        return new AbstractInputComponent<>(getSequentialAwareFirstInputPort()) {
 
             @Override
             protected void tick() {
-                InputComponentChainLink.this.tick();
+                sequentialAwareTick();
             }
-
 
             @Override
             public Boolean isParallelisable(){

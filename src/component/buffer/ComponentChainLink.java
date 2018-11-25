@@ -2,14 +2,30 @@ package component.buffer;
 
 public abstract class ComponentChainLink {
     final ComponentChainLink previousComponentChainLink;
+    final ComponentChainLink previousSequentialComponentChainLink;
 
     public ComponentChainLink(ComponentChainLink previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
+
+        ComponentChainLink previousSequentialComponentChainLink1;
+        try {
+            if (!previousComponentChainLink.isParallelisable()) {
+                previousSequentialComponentChainLink1 = previousComponentChainLink;
+            }
+            else{
+                previousSequentialComponentChainLink1 = previousComponentChainLink.previousSequentialComponentChainLink;
+            }
+        }
+        catch(NullPointerException ignored){
+            previousSequentialComponentChainLink1 = null;
+        }
+
+        previousSequentialComponentChainLink = previousSequentialComponentChainLink1;
     }
 
-    protected void tick() {
+    protected void sequentialAwareTick() {
         try{
-            previousComponentChainLink.tick();
+            previousSequentialComponentChainLink.sequentialAwareTick();
         }
         catch(NullPointerException ignored){
         }
@@ -25,7 +41,25 @@ public abstract class ComponentChainLink {
     }
 
     private void tryToBreakSequentialChain() {
-        new TickRunningStrategy(sequentialWrap(), false);
+        if(!isParallelisable()){
+            new TickRunningStrategy(sequentialWrap(), false);
+        }
+        else if(previousSequentialComponentChainLink!=null) {
+            new TickRunningStrategy(previousSequentialComponentChainLink.sequentialWrap(), false);
+        }
+    }
+
+    InputPort getSequentialAwareFirstInputPort() {
+        try{
+            InputPort sequentialAwareFirstInputPort = previousSequentialComponentChainLink.getSequentialAwareFirstInputPort();
+            if(sequentialAwareFirstInputPort!=null) {
+                return sequentialAwareFirstInputPort;
+            }
+        }
+        catch(NullPointerException ignored) {
+        }
+
+        return getInputPort();
     }
 
     protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
@@ -70,8 +104,6 @@ public abstract class ComponentChainLink {
 
         return getInputPort();
     }
-
-    abstract InputPort getFirstInputPort();
 
     abstract Boolean isParallelisable();
 
