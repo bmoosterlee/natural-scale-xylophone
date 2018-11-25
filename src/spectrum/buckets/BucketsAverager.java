@@ -1,5 +1,6 @@
 package spectrum.buckets;
 
+import component.Collator;
 import component.buffer.*;
 
 import java.util.*;
@@ -56,7 +57,7 @@ public class BucketsAverager extends MethodPipeComponent<Buckets, Buckets> {
                                 .performMethod(input1 -> input1.transpose(-(finalI)), "buckets averager transpose negative"));
             }
 
-            return Adder.build(adderBuffers);
+            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(Buckets::add);
         };
     }
 
