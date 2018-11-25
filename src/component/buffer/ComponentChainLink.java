@@ -21,7 +21,10 @@ public abstract class ComponentChainLink {
 
     public void breakChain(){
         tryToBreakParallelChain();
+        tryToBreakSequentialChain();
+    }
 
+    private void tryToBreakSequentialChain() {
         new TickRunningStrategy(sequentialWrap(), false);
     }
 
