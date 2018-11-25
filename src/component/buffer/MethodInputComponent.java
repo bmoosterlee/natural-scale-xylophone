@@ -20,7 +20,9 @@ public class MethodInputComponent<K> extends AbstractInputComponent<K> {
 
     protected void tryTick() {
         K consumed = tryConsume();
-        process(consumed);
+        if(consumed!=null) {
+            process(consumed);
+        }
     }
 
     private K consume() {
