@@ -39,6 +39,11 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public T tryPoll() {
+        return boundedStrategy.tryPoll();
+    }
+
+    @Override
     public boolean isEmpty() {
         return boundedStrategy.isEmpty();
     }

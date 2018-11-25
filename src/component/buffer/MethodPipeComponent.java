@@ -14,8 +14,32 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
     }
 
     protected void tick() {
+        K consumed = consume();
+        procesAndProduce(consumed);
+    }
+
+    protected void tryTick() {
+        K consumed = tryConsume();
+        if(consumed!=null) {
+            procesAndProduce(consumed);
+        }
+    }
+
+    private K consume() {
+        try{
+            return input.consume();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private K tryConsume() {
+        return input.tryConsume();
+    }
+
+    private void procesAndProduce(K consumed) {
         try {
-            K consumed = input.consume();
             V result = method.call(consumed);
             output.produce(result);
         } catch (InterruptedException e) {

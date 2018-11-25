@@ -15,6 +15,10 @@ public class InputPort<T> {
         return buffer.poll();
     }
 
+    public T tryConsume() {
+        return buffer.tryPoll();
+    }
+
     public List<T> flush() throws InterruptedException {
         return buffer.flush();
     }

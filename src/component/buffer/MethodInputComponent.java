@@ -14,12 +14,30 @@ public class MethodInputComponent<K> extends AbstractInputComponent<K> {
     }
 
     protected void tick() {
+        K consumed = consume();
+        process(consumed);
+    }
+
+    protected void tryTick() {
+        K consumed = tryConsume();
+        process(consumed);
+    }
+
+    private K consume() {
         try {
-            K consumed = input.consume();
-            method.call(consumed);
+            return input.consume();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    private K tryConsume() {
+        return input.tryConsume();
+    }
+
+    private void process(K consumed) {
+        method.call(consumed);
     }
 
     @Override

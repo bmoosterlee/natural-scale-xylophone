@@ -9,6 +9,8 @@ public interface BufferStrategy<T> {
 
     T poll() throws InterruptedException;
 
+    T tryPoll();
+
     boolean isEmpty();
 
     boolean isFull();

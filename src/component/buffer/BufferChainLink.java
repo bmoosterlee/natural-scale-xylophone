@@ -41,6 +41,11 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public T tryPoll() {
+        return buffer.tryPoll();
+    }
+
+    @Override
     public boolean isEmpty() {
         return buffer.isEmpty();
     }

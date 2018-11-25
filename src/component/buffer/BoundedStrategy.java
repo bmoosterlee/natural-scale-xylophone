@@ -59,6 +59,18 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
     }
 
     @Override
+    public T tryPoll() {
+        if(filledSpots.tryAcquire()){
+            T item = buffer.poll();
+            emptySpots.release();
+            return item;
+        }
+        else{
+            return null;
+        }
+    }
+
+    @Override
     public boolean isEmpty() {
         return filledSpots.availablePermits() == 0;
     }
