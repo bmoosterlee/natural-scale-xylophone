@@ -40,10 +40,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
         return methodOutputComponent.output;
     }
 
-    protected void parallelisationAwareTick() {
-        componentTick();
-    }
-
     @Override
     InputPort getParallelisationAwareFirstInputPort() {
         return null;

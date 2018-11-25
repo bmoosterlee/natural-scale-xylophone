@@ -51,19 +51,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     }
 
     @Override
-    protected void parallelisationAwareTick() {
-        try{
-            if(previousComponentChainLink.isParallelisable()) {
-                previousComponentChainLink.parallelisationAwareTick();
-            }
-        }
-        catch(NullPointerException ignored){
-        }
-
-        componentTick();
-    }
-
-    @Override
     public AbstractPipeComponent wrap() {
         parallelChainCheck();
 

@@ -9,19 +9,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     }
 
     @Override
-    protected void parallelisationAwareTick() {
-        try{
-            if(previousComponentChainLink.isParallelisable()) {
-                previousComponentChainLink.parallelisationAwareTick();
-            }
-        }
-        catch(NullPointerException ignored){
-        }
-
-        componentTick();
-    }
-
-    @Override
     InputPort getParallelisationAwareFirstInputPort() {
         try{
             if(previousComponentChainLink.isParallelisable()) {
