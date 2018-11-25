@@ -1,7 +1,7 @@
 package main;
 
 import component.Counter;
-import component.Unzipper;
+import component.Separator;
 import component.buffer.BoundedBuffer;
 import component.buffer.OutputComponentChainLink;
 import component.buffer.OutputPort;
@@ -76,7 +76,7 @@ class Main {
         LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
 
         SimpleBuffer<java.util.List<Frequency>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        Unzipper.unzip(guiOutputBuffer).relayTo(newNoteBuffer);
+        Separator.separate(guiOutputBuffer).relayTo(newNoteBuffer);
         new GUI(
             noteSpectrumBroadcast.poll(),
             harmonicSpectrumBroadcast.poll(),
@@ -92,7 +92,7 @@ class Main {
 
 
         SimpleBuffer<java.util.List<Frequency>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        Unzipper.unzip(pianolaOutputBuffer).relayTo(newNoteBuffer);
+        Separator.separate(pianolaOutputBuffer).relayTo(newNoteBuffer);
 
         new Pianola(
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),

@@ -6,12 +6,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class Unzipper<T> extends AbstractComponent<List<T>, T> {
+public class Separator<T> extends AbstractComponent<List<T>, T> {
 
     private final InputPort<List<T>> inputPort;
     private final OutputPort<T> outputPort;
 
-    public Unzipper(BoundedBuffer<List<T>> inputBuffer, SimpleBuffer<T> outputBuffer) {
+    public Separator(BoundedBuffer<List<T>> inputBuffer, SimpleBuffer<T> outputBuffer) {
         inputPort = inputBuffer.createInputPort();
         outputPort = outputBuffer.createOutputPort();
     }
@@ -27,9 +27,9 @@ public class Unzipper<T> extends AbstractComponent<List<T>, T> {
         }
     }
 
-    public static <T> SimpleBuffer<T> unzip(BoundedBuffer<List<T>> inputBuffer){
+    public static <T> SimpleBuffer<T> separate(BoundedBuffer<List<T>> inputBuffer){
         SimpleBuffer<T> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
-        new TickRunningStrategy(new Unzipper<>(inputBuffer, outputBuffer));
+        new TickRunningStrategy(new Separator<>(inputBuffer, outputBuffer));
         return outputBuffer;
     }
 
