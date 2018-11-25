@@ -54,10 +54,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
         };
     }
 
-    static <T> InputComponentChainLink<T> methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
+    static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
         MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
         tryToBreakParallelChain(inputBuffer, component);
-        return new InputComponentChainLink<>(inputBuffer.previousComponent, component);
+        new InputComponentChainLink<>(inputBuffer.previousComponent, component).breakChain();
     }
 
 }
