@@ -42,10 +42,10 @@ public abstract class ComponentChainLink {
 
     private void tryToBreakSequentialChain() {
         if(!isParallelisable()){
-            new TickRunningStrategy(sequentialWrap(), false);
+            new TickRunningStrategy(sequentialWrap());
         }
         else if(previousSequentialComponentChainLink!=null) {
-            new TickRunningStrategy(previousSequentialComponentChainLink.sequentialWrap(), false);
+            new TickRunningStrategy(previousSequentialComponentChainLink.sequentialWrap());
         }
     }
 
@@ -72,7 +72,7 @@ public abstract class ComponentChainLink {
 
     private void tryToBreakParallelChain() {
         if (isParallelisable()) {
-            new TickRunningStrategy(parallelWrap(), true);
+            new TickRunningStrategy(parallelWrap());
         }
     }
 

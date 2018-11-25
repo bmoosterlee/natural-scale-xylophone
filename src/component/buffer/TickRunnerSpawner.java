@@ -10,18 +10,13 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
     private final AbstractComponent component;
     private final int minimumThreadCount;
 
-    public TickRunnerSpawner(AbstractComponent<K, V> component, boolean threadAlreadyRunning){
+    public TickRunnerSpawner(AbstractComponent<K, V> component){
         this.component = component;
         this.inputBuffers = component.getInputBuffers();
         this.outputBuffers = component.getOutputBuffers();
 
         liveRunners = new LinkedList<>();
-        if(threadAlreadyRunning){
-            minimumThreadCount = 0;
-        }
-        else{
-            minimumThreadCount = 1;
-        }
+        minimumThreadCount = 1;
 
         SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
         firstTickRunner.start();
