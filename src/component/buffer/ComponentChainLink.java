@@ -1,10 +1,10 @@
 package component.buffer;
 
 public abstract class ComponentChainLink {
-    final ComponentChainLink previousComponentChainLink;
-    final ComponentChainLink previousSequentialComponentChainLink;
+    private final ComponentChainLink previousComponentChainLink;
+    private final ComponentChainLink previousSequentialComponentChainLink;
 
-    public ComponentChainLink(ComponentChainLink previousComponentChainLink) {
+    ComponentChainLink(ComponentChainLink previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
 
         ComponentChainLink previousSequentialComponentChainLink1;
@@ -23,7 +23,7 @@ public abstract class ComponentChainLink {
         previousSequentialComponentChainLink = previousSequentialComponentChainLink1;
     }
 
-    protected void sequentialAwareTick() {
+    void sequentialAwareTick() {
         try{
             previousSequentialComponentChainLink.sequentialAwareTick();
         }
@@ -70,7 +70,7 @@ public abstract class ComponentChainLink {
         }
     }
 
-    void tryToBreakParallelChain() {
+    private void tryToBreakParallelChain() {
         if (isParallelisable()) {
             new TickRunningStrategy(parallelWrap(), true);
         }
@@ -78,7 +78,7 @@ public abstract class ComponentChainLink {
 
     protected abstract <K, V> AbstractComponent<K, V> parallelWrap();
 
-    protected void parallelisationAwareTick() {
+    void parallelisationAwareTick() {
         try{
             if(previousComponentChainLink.isParallelisable()) {
                 previousComponentChainLink.parallelisationAwareTick();

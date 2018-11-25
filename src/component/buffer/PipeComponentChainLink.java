@@ -3,12 +3,12 @@ package component.buffer;
 public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     private final MethodPipeComponent<K, V> methodPipeComponent;
 
-    public PipeComponentChainLink(ComponentChainLink previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
+    private PipeComponentChainLink(ComponentChainLink previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
         super(previousComponentChainLink);
         this.methodPipeComponent = methodPipeComponent;
     }
 
-    public PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
+    private PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
         this(null, methodPipeComponent);
     }
 
@@ -58,7 +58,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         };
     }
 
-    public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K,V> method, int capacity, String name) {
+    static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);
         tryToBreakParallelChain(inputBuffer, component);
@@ -71,7 +71,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         return outputChainLink;
     }
 
-    public static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, PipeCallable<K,V> method, int capacity, String name) {
+    static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);
         return getBufferChainLink(outputBuffer, component);
@@ -83,7 +83,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         return outputChainLink;
     }
 
-    public static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
+    static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
         MethodPipeComponent<K, K> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input);
         tryToBreakParallelChain(inputBuffer, component);

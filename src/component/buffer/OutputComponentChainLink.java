@@ -5,7 +5,7 @@ import main.OutputCallable;
 public class OutputComponentChainLink<V> extends ComponentChainLink {
     private final MethodOutputComponent methodOutputComponent;
 
-    public OutputComponentChainLink(MethodOutputComponent<V> methodOutputComponent) {
+    private OutputComponentChainLink(MethodOutputComponent<V> methodOutputComponent) {
         super(null);
         this.methodOutputComponent = methodOutputComponent;
     }
