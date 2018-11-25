@@ -19,6 +19,12 @@ public abstract class ComponentChainLink {
 
     protected abstract void componentTick();
 
+    public <T, V> AbstractComponent<T, V> wrap(){
+        tryToBreakParallelChain();
+
+        return sequentialWrap();
+    }
+
     protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
 
     static <K, V> void tryToBreakParallelChain(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
@@ -61,8 +67,6 @@ public abstract class ComponentChainLink {
 
         return getInputPort();
     }
-
-    public abstract <T, V> AbstractComponent<T, V> wrap();
 
     abstract InputPort getFirstInputPort();
 
