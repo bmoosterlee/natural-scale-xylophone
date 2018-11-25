@@ -19,10 +19,10 @@ public abstract class ComponentChainLink {
 
     protected abstract void componentTick();
 
-    public <T, V> AbstractComponent<T, V> wrap(){
+    public void wrap(){
         tryToBreakParallelChain();
 
-        return sequentialWrap();
+        new TickRunningStrategy(sequentialWrap(), false);
     }
 
     protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
