@@ -29,24 +29,25 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
 
             LinkedList<BoundedBuffer<Buckets>> timeAverageBroadcast = new LinkedList<>(timeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
 
-            new OldHistoryRemover(
-                historyBuffer
-                    .pairWith(
-                        preparedBucketsBroadcast.poll())
-                    .performMethod(
-                        input1 ->
-                            input1.getKey()
-                            .add(input1.getValue()), "precalculated bucket history - add new buckets"),
-                timeAverageBroadcast.poll()
-                    .pairWith(
-                        preparedBucketsBroadcast.poll())
-                    .performMethod(
-                        input1 ->
-                            input1.getKey()
-                            .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"),
-                historyBuffer,
-                timeAverageBuffer,
-                size);
+            new TickRunningStrategy(
+                new OldHistoryRemover(
+                    historyBuffer
+                        .pairWith(
+                            preparedBucketsBroadcast.poll())
+                        .performMethod(
+                            input1 ->
+                                input1.getKey()
+                                .add(input1.getValue()), "precalculated bucket history - add new buckets"),
+                    timeAverageBroadcast.poll()
+                        .pairWith(
+                            preparedBucketsBroadcast.poll())
+                        .performMethod(
+                            input1 ->
+                                input1.getKey()
+                                .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"),
+                    historyBuffer,
+                    timeAverageBuffer,
+                    size));
 
             try {
                 historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
@@ -59,7 +60,7 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
         };
     }
 
-    private static class OldHistoryRemover {
+    private static class OldHistoryRemover extends AbstractComponent {
         private final int size;
 
         private final InputPort<ImmutableLinkedList<Buckets>> historyInputPort;
@@ -92,26 +93,10 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
 
             historyOutputBufferPort = historyOutputBuffer.createOutputPort();
             timeAverageOutputOutputPort = timeAverageOutputBuffer.createOutputPort();
-
-            new SimpleTickRunner(new AbstractComponent() {
-                @Override
-                protected Collection<BoundedBuffer> getInputBuffers() {
-                    return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer(), subtractOutput.getBuffer());
-                }
-
-                @Override
-                protected Collection<BoundedBuffer> getOutputBuffers() {
-                    return Arrays.asList(subtractionInput1.getBuffer(), subtractionInput2.getBuffer(), historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
-                }
-
-                @Override
-                protected void tick() {
-                    OldHistoryRemover.this.tick();
-                }
-            }).start();
         }
 
-        private void tick(){
+        @Override
+        protected void tick(){
             try {
                 ImmutableLinkedList<Buckets> history = historyInputPort.consume();
                 Buckets timeAverage = timeAverageInputPort.consume();
@@ -132,6 +117,16 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        @Override
+        protected Collection<BoundedBuffer> getInputBuffers() {
+            return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer(), subtractOutput.getBuffer());
+        }
+
+        @Override
+        protected Collection<BoundedBuffer> getOutputBuffers() {
+            return Arrays.asList(subtractionInput1.getBuffer(), subtractionInput2.getBuffer(), historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
         }
     }
 }
