@@ -54,6 +54,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
     public AbstractComponent wrap() {
         tryToBreakParallelChain();
 
+        return sequentialWrap();
+    }
+
+    private AbstractInputComponent sequentialWrap() {
         return new AbstractInputComponent<>(getFirstInputPort()) {
 
             @Override
