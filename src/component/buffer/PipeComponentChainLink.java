@@ -61,7 +61,8 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         return sequentialWrap();
     }
 
-    private AbstractPipeComponent sequentialWrap() {
+    @Override
+    protected AbstractPipeComponent sequentialWrap() {
         return new AbstractPipeComponent<>(getFirstInputPort(), getOutputPort()) {
 
             @Override

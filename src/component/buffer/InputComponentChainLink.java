@@ -57,7 +57,8 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
         return sequentialWrap();
     }
 
-    private AbstractInputComponent sequentialWrap() {
+    @Override
+    protected AbstractInputComponent sequentialWrap() {
         return new AbstractInputComponent<>(getFirstInputPort()) {
 
             @Override

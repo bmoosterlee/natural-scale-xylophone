@@ -19,6 +19,8 @@ public abstract class ComponentChainLink {
 
     protected abstract void componentTick();
 
+    protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
+
     static <K, V> void tryToBreakParallelChain(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
         if(!newComponent.isParallelisable()) {
             previousComponentOutputBuffer.previousComponent.tryToBreakParallelChain();
