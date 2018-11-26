@@ -45,4 +45,8 @@ public class Pairer<K, V> extends AbstractComponent {
         return Collections.singletonList(outputPort.getBuffer());
     }
 
+    @Override
+    public Boolean isParallelisable(){
+        return false;
+    }
 }
