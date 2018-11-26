@@ -15,23 +15,31 @@ public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFreque
     }
 
     public static PipeCallable<BoundedBuffer<Long>, BoundedBuffer<TimestampedFrequencies>> buildPipe(BoundedBuffer<Frequency> newNoteBuffer) {
-        return inputBuffer -> {
-            LinkedList<BoundedBuffer<Long>> sampleCountBroadcast =
-                    new LinkedList<>(
-                        inputBuffer
-                            .broadcast(2, "note timestamper - broadcast"));
+        return new PipeCallable<>() {
+            @Override
+            public BoundedBuffer<TimestampedFrequencies> call(BoundedBuffer<Long> inputBuffer) {
+                LinkedList<BoundedBuffer<Long>> sampleCountBroadcast =
+                        new LinkedList<>(
+                                inputBuffer
+                                        .broadcast(2, "note timestamper - broadcast"));
 
-            return sampleCountBroadcast.poll()
-                .pairWith(
-                    sampleCountBroadcast.poll()
-                    .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
-                    .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
-                .performMethod(
-                        ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
-                            input1 -> new TimestampedFrequencies(
-                                input1.getKey(),
-                                input1.getValue()))
-                        .toSequential(), "build timestamped frequencies");
+                return sampleCountBroadcast.poll()
+                        .pairWith(
+                                sampleCountBroadcast.poll()
+                                        .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
+                                        .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
+                        .performMethod(
+                                ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
+                                        input1 -> new TimestampedFrequencies(
+                                                input1.getKey(),
+                                                input1.getValue()))
+                                        .toSequential(), "build timestamped frequencies");
+            }
+
+            @Override
+            public Boolean isParallelisable() {
+                return false;
+            }
         };
     }
 

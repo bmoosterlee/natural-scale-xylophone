@@ -53,8 +53,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
                 timestampedNewNotesWithEnvelopeInputPort =
                         inputBroadcast.poll()
-                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer).toSequential())
-                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate).toSequential(), "build envelope wave").createInputPort();
+                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
+                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
 
                 addNewNotesOutputPort = new OutputPort<>();
                 addNewNotesInputPort =

@@ -30,6 +30,11 @@ public class EnvelopeWaveBuilder extends MethodPipeComponent<TimestampedFrequenc
                 TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
                 return timestampedNewNotesWithEnvelope;
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 
