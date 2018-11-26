@@ -63,6 +63,7 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                 BoundedBuffer<VolumeAmplitudeState> outputBuffer =
                         inputBroadcast.poll()
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
+                                this::mix)
                             sampleCount -> mix(sampleCount))
                         .toSequential(), "mixer");
 
@@ -78,6 +79,7 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                         .pairWith(
                             groupEnvelopesByFrequencyOutputPort.getBuffer()
                             .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
+                                    Mixer::groupEnvelopesByFrequency)
                                 envelopesForFrequencies -> groupEnvelopesByFrequency(envelopesForFrequencies))
                             .toSequential(), "group envelopes by frequency precalc")
                             .pairWith(
@@ -90,6 +92,10 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                                     input11.getValue().getValue()))
                             .toSequential(), "build envelope wave slice precalc")
                         .performMethod(((PipeCallable<EnvelopeWaveSlice, Map<Frequency, Collection<VolumeAmplitude>>>)
+                                Mixer::calculateValuesPerFrequency)
+                        .toSequential(), "calculate values per frequency precalc")
+                        .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
+                                Mixer::sumValuesPerFrequency)
                             envelopeWaveSlice -> calculateValuesPerFrequency(envelopeWaveSlice))
                         .toSequential(), "calculate values per frequency precalc")
                         .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)

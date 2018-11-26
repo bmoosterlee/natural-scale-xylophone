@@ -44,6 +44,10 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
                 inputBuffer
                 .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
                 .performMethod(((PipeCallable<Double, Byte>)
+                        this::fitAmplitude)
+                .toSequential(), "fit amplitude")
+                .performInputMethod(((InputCallable<Byte>)
+                        this::writeToBuffer)
                     input ->
                         fitAmplitude(input))
                 .toSequential(), "fit amplitude")
