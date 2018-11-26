@@ -123,7 +123,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                             currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(futureSampleCount);
                         }
                         VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(futureSampleCount);
-                        VolumeAmplitudeState finishedSlice = calculateVolume(futureSampleCount, currentUnfinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
+                        VolumeAmplitudeState finishedSlice = calculateVolumeAmplitude(futureSampleCount, currentUnfinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
                         finishedSlices.put(futureSampleCount, finishedSlice);
                     } catch (NoSuchElementException e) {
                         break;
@@ -131,7 +131,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 }
             }
 
-            private VolumeAmplitudeState calculateVolume(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeAmplitudeState oldFinishedSlice) {
+            private VolumeAmplitudeState calculateVolumeAmplitude(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeAmplitudeState oldFinishedSlice) {
                 try {
                     sampleCountOutputPort.produce(sampleCount);
 
@@ -251,7 +251,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
                     }
                     VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(sampleCount);
-                    VolumeAmplitudeState result = calculateVolume(sampleCount, currentFinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
+                    VolumeAmplitudeState result = calculateVolumeAmplitude(sampleCount, currentFinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
 
     //            precalculateInBackground();
 
