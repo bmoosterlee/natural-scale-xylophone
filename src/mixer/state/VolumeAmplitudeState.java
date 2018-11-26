@@ -4,19 +4,15 @@ import frequency.Frequency;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class VolumeAmplitudeState {
-    private final Long sampleCount;
     public final Map<Frequency, VolumeAmplitude> volumeAmplitudes;
 
-    public VolumeAmplitudeState(Long sampleCount, Map<Frequency, VolumeAmplitude> volumeAmplitudes) {
-        this.sampleCount = sampleCount;
+    public VolumeAmplitudeState(Map<Frequency, VolumeAmplitude> volumeAmplitudes) {
         this.volumeAmplitudes = volumeAmplitudes;
     }
 
-    public VolumeAmplitudeState(Long sampleCount, VolumeState volumeState, AmplitudeState amplitudeState) {
-        this.sampleCount = sampleCount;
+    public VolumeAmplitudeState(VolumeState volumeState, AmplitudeState amplitudeState) {
         volumeAmplitudes = new HashMap<>();
         try {
             for(Frequency frequency : volumeState.volumes.keySet()){
@@ -40,7 +36,7 @@ public class VolumeAmplitudeState {
             newVolumes.put(frequency, new VolumeAmplitude(volume, amplitude));
         }
 
-        return new VolumeAmplitudeState(sampleCount, newVolumes);
+        return new VolumeAmplitudeState(newVolumes);
     }
 
     public VolumeAmplitudeState add(Frequency frequency, VolumeAmplitude volumeAmplitude) {
