@@ -1,5 +1,7 @@
 package mixer;
 
+import component.Counter;
+import component.Pulse;
 import component.buffer.*;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
@@ -11,13 +13,13 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
-public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
+public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
-    public Mixer(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
+    public Mixer(SimpleBuffer<Pulse> sampleCountBuffer, BoundedBuffer<Frequency> noteInputBuffer, SimpleBuffer<VolumeAmplitudeState> outputBuffer, SampleRate sampleRate){
         super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(noteInputBuffer, sampleRate)));
     }
 
-    public static PipeCallable<BoundedBuffer<Long>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
+    public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new PipeCallable<>() {
             private Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
             private final Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
@@ -41,8 +43,13 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
             }
 
             @Override
-            public BoundedBuffer<VolumeAmplitudeState> call(BoundedBuffer<Long> inputBuffer) {
-                LinkedList<SimpleBuffer<Long>> inputBroadcast = new LinkedList<>(inputBuffer.broadcast(2, "mixer - sample count"));
+            public BoundedBuffer<VolumeAmplitudeState> call(BoundedBuffer<Pulse> inputBuffer) {
+                LinkedList<SimpleBuffer<Long>> inputBroadcast =
+                    new LinkedList<>(
+                        inputBuffer
+                        .performMethod(
+                            Counter.build(), "count samples")
+                        .broadcast(2, "mixer - sample count"));
 
                 timestampedNewNotesWithEnvelopeInputPort =
                         inputBroadcast.poll()
