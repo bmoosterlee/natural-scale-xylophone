@@ -86,13 +86,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     oldVolumeStateOutputPort.getBuffer()
                     .pairWith(
                         oldAmplitudeStateOutputPort.getBuffer())
-                    .performMethod(
-                        ((PipeCallable<SimpleImmutableEntry<VolumeState, AmplitudeState>, VolumeAmplitudeState>)
-                        input1 ->
-                            new VolumeAmplitudeState(
-                                input1.getKey(),
-                                input1.getValue()))
-                        .toSequential())
                     .pairWith(
                         sampleCountOutputPort.getBuffer()
                         .pairWith(
@@ -114,12 +107,16 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         .toSequential(), "calculate values per frequency precalc")
                         .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
                                 Mixer::sumValuesPerFrequency)
-                        .toSequential(), "sum values per frequency precalc"))
+                        .toSequential(), "sum values per frequency precalc")
+                    .performMethod(Mixer::split))
                     .performMethod(
-                        ((PipeCallable<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>, VolumeAmplitudeState>)
+                        ((PipeCallable<SimpleImmutableEntry<SimpleImmutableEntry<VolumeState, AmplitudeState>, SimpleImmutableEntry<VolumeState, AmplitudeState>>, VolumeAmplitudeState>)
                         input1 ->
-                            input1.getKey()
-                            .add(input1.getValue()))
+                            new VolumeAmplitudeState(
+                                input1.getKey().getKey()
+                                    .add(input1.getValue().getKey()),
+                                input1.getKey().getValue()
+                                    .add(input1.getValue().getValue())))
                     .toSequential(), "add new and old state precalc")
                 .createInputPort();
 
@@ -284,6 +281,17 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return false;
             }
         };
+    }
+
+    private static SimpleImmutableEntry<VolumeState, AmplitudeState> split(Map<Frequency, VolumeAmplitude> frequencyVolumeAmplitudeMap) {
+        HashMap<Frequency, Double> volumes = new HashMap<>();
+        HashMap<Frequency, Double> amplitudes = new HashMap<>();
+        for(Frequency frequency : frequencyVolumeAmplitudeMap.keySet()){
+            VolumeAmplitude volumeAmplitude = frequencyVolumeAmplitudeMap.get(frequency);
+            volumes.put(frequency, volumeAmplitude.volume);
+            amplitudes.put(frequency, volumeAmplitude.amplitude);
+        }
+        return new SimpleImmutableEntry<>(new VolumeState(volumes), new AmplitudeState(amplitudes));
     }
 
     private static Map<Frequency, VolumeAmplitude> sumValuesPerFrequency(Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections) {
