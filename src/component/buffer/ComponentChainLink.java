@@ -23,21 +23,11 @@ public abstract class ComponentChainLink {
         previousSequentialComponentChainLink = previousSequentialComponentChainLink1;
     }
 
-    void sequentialAwareTick() {
-        try{
-            previousSequentialComponentChainLink.sequentialAwareTick();
-        }
-        catch(NullPointerException ignored){
-        }
-
-        componentTick();
-    }
-
     protected abstract void componentTick();
 
     public void breakChain(){
-        tryToBreakParallelChain();
         tryToBreakSequentialChain();
+        tryToBreakParallelChain();
     }
 
     private void tryToBreakSequentialChain() {
@@ -47,6 +37,18 @@ public abstract class ComponentChainLink {
         else if(previousSequentialComponentChainLink!=null) {
             new TickRunningStrategy(previousSequentialComponentChainLink.sequentialWrap());
         }
+    }
+
+    protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
+
+    void sequentialAwareTick() {
+        try{
+            previousSequentialComponentChainLink.sequentialAwareTick();
+        }
+        catch(NullPointerException ignored){
+        }
+
+        componentTick();
     }
 
     InputPort getSequentialAwareFirstInputPort() {
@@ -61,8 +63,6 @@ public abstract class ComponentChainLink {
 
         return getInputPort();
     }
-
-    protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
 
     static <K, V> void tryToBreakParallelChain(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
         if(!newComponent.isParallelisable()) {
