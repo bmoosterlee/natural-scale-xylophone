@@ -34,7 +34,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             private OutputPort<Long> sampleCountOutputPort;
             private OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
             private OutputPort<Map<Frequency, Wave>> waveOutputPort;
-            private OutputPort<VolumeAmplitudeState> oldStateOutputPort;
+            private OutputPort<VolumeState> oldVolumeStateOutputPort;
+            private OutputPort<AmplitudeState> oldAmplitudeStateOutputPort;
             private InputPort<VolumeAmplitudeState> newStateInputPort;
 
             {
@@ -78,10 +79,20 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
                 waveOutputPort = new OutputPort<>("mixer - wave output");
-                oldStateOutputPort = new OutputPort<>("mixer - old state");
+                oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
+                oldAmplitudeStateOutputPort = new OutputPort<>("mixer - old amplitude state");
 
                 newStateInputPort =
-                    oldStateOutputPort.getBuffer()
+                    oldVolumeStateOutputPort.getBuffer()
+                    .pairWith(
+                        oldAmplitudeStateOutputPort.getBuffer())
+                    .performMethod(
+                        ((PipeCallable<SimpleImmutableEntry<VolumeState, AmplitudeState>, VolumeAmplitudeState>)
+                        input1 ->
+                            new VolumeAmplitudeState(
+                                input1.getKey(),
+                                input1.getValue()))
+                        .toSequential())
                     .pairWith(
                         sampleCountOutputPort.getBuffer()
                         .pairWith(
@@ -150,9 +161,14 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     }
 
                     try {
-                        oldStateOutputPort.produce(new VolumeAmplitudeState(oldFinishedVolumeSlice, oldFinishedAmplitudeSlice));
+                        oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
                     } catch (NullPointerException e) {
-                        oldStateOutputPort.produce(new VolumeAmplitudeState(new HashMap<>()));
+                        oldVolumeStateOutputPort.produce(new VolumeState(new HashMap<>()));
+                    }
+                    try {
+                        oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
+                    } catch (NullPointerException e) {
+                        oldAmplitudeStateOutputPort.produce(new AmplitudeState(new HashMap<>()));
                     }
 
                     VolumeAmplitudeState result = newStateInputPort.consume();
