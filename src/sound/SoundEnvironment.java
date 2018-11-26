@@ -48,11 +48,6 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
                 .toSequential(), "fit amplitude")
                 .performInputMethod(((InputCallable<Byte>)
                         this::writeToBuffer)
-                    input ->
-                        fitAmplitude(input))
-                .toSequential(), "fit amplitude")
-                .performInputMethod(((InputCallable<Byte>)
-                    input -> writeToBuffer(input))
                 .toSequential());
             }
 

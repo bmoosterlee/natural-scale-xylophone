@@ -64,7 +64,6 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                         inputBroadcast.poll()
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
                                 this::mix)
-                            sampleCount -> mix(sampleCount))
                         .toSequential(), "mixer");
 
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
@@ -80,7 +79,6 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                             groupEnvelopesByFrequencyOutputPort.getBuffer()
                             .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
                                     Mixer::groupEnvelopesByFrequency)
-                                envelopesForFrequencies -> groupEnvelopesByFrequency(envelopesForFrequencies))
                             .toSequential(), "group envelopes by frequency precalc")
                             .pairWith(
                                 waveOutputPort.getBuffer()))
@@ -96,10 +94,6 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                         .toSequential(), "calculate values per frequency precalc")
                         .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
                                 Mixer::sumValuesPerFrequency)
-                            envelopeWaveSlice -> calculateValuesPerFrequency(envelopeWaveSlice))
-                        .toSequential(), "calculate values per frequency precalc")
-                        .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
-                            newVolumeAmplitudeCollections -> sumValuesPerFrequency(newVolumeAmplitudeCollections))
                         .toSequential(), "sum values per frequency precalc"))
                     .performMethod(
                         ((PipeCallable<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>, VolumeAmplitudeState>)
