@@ -18,6 +18,11 @@ public class Counter extends MethodPipeComponent<Pulse, Long> {
                 calculatedTicks++;
                 return oldCalculatedTicks;
             }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 }
