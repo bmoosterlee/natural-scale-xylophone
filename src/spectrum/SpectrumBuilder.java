@@ -10,7 +10,6 @@ import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
 import mixer.state.VolumeAmplitudeState;
-import mixer.state.VolumeAmplitudeToVolumeFilter;
 import mixer.state.VolumeState;
 
 import java.util.*;
@@ -24,7 +23,7 @@ public class SpectrumBuilder {
             new LinkedList<>(
                 tickBroadcast.poll()
                 .performMethod(TimedConsumer.consumeFrom(inputBuffer), "consume from input buffer")
-                .performMethod(VolumeAmplitudeToVolumeFilter::filter, "volume amplitude filter to volume")
+                .performMethod(VolumeAmplitudeState::toVolumeState, "volume amplitude filter to volume")
                 .broadcast(2, "Spectrum builder volume - broadcast"));
 
         BoundedBuffer<Buckets> noteOutputBuffer =

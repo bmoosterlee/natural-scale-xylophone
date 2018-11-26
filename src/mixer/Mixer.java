@@ -23,7 +23,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         return new PipeCallable<>() {
             private Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
             private final Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
-            private Map<Long, VolumeAmplitudeState> finishedSlices;
+            private Map<Long, VolumeState> finishedVolumeSlices;
+            private Map<Long, AmplitudeState> finishedAmplitudeSlices;
 
             private InputPort<TimestampedNewNotesWithEnvelope> timestampedNewNotesWithEnvelopeInputPort;
 
@@ -39,7 +40,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             {
                 unfinishedSlices = new HashMap<>();
                 unfinishedSlicesWaves = new HashMap<>();
-                finishedSlices = new HashMap<>();
+                finishedVolumeSlices = new HashMap<>();
+                finishedAmplitudeSlices = new HashMap<>();
             }
 
             @Override
@@ -122,9 +124,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         synchronized (unfinishedSlicesWaves) {
                             currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(futureSampleCount);
                         }
-                        VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(futureSampleCount);
+                        VolumeAmplitudeState oldFinishedSlice = new VolumeAmplitudeState(futureSampleCount, finishedVolumeSlices.remove(futureSampleCount), finishedAmplitudeSlices.remove(futureSampleCount));
                         VolumeAmplitudeState finishedSlice = calculateVolumeAmplitude(futureSampleCount, currentUnfinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
-                        finishedSlices.put(futureSampleCount, finishedSlice);
+                        finishedVolumeSlices.put(futureSampleCount, finishedSlice.toVolumeState());
+                        finishedAmplitudeSlices.put(futureSampleCount, finishedSlice.toAmplitudeState());
                     } catch (NoSuchElementException e) {
                         break;
                     }
@@ -250,7 +253,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     synchronized (unfinishedSlicesWaves) {
                         currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
                     }
-                    VolumeAmplitudeState oldFinishedSlice = finishedSlices.remove(sampleCount);
+                    VolumeAmplitudeState oldFinishedSlice = new VolumeAmplitudeState(sampleCount, finishedVolumeSlices.remove(sampleCount), finishedAmplitudeSlices.remove(sampleCount));
                     VolumeAmplitudeState result = calculateVolumeAmplitude(sampleCount, currentFinishedSlice, currentUnfinishedSliceWaves, oldFinishedSlice);
 
     //            precalculateInBackground();
