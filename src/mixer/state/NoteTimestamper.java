@@ -4,7 +4,9 @@ import component.*;
 import component.buffer.*;
 import frequency.Frequency;
 
+import java.util.AbstractMap;
 import java.util.LinkedList;
+import java.util.List;
 
 public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFrequencies> {
 
@@ -23,12 +25,13 @@ public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFreque
                 .pairWith(
                     sampleCountBroadcast.poll()
                     .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
-                    .performMethod(Flusher.flush(newNoteBuffer), "flush new notes"))
+                    .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
                 .performMethod(
-                    input1 ->
-                        new TimestampedFrequencies(
-                            input1.getKey(),
-                            input1.getValue()), "build timestamped frequencies");
+                        ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
+                            input1 -> new TimestampedFrequencies(
+                                input1.getKey(),
+                                input1.getValue()))
+                        .toSequential(), "build timestamped frequencies");
         };
     }
 

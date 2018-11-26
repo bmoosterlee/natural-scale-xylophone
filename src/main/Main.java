@@ -55,7 +55,6 @@ class Main {
                     OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                         sampleLookahead,
                         "sample ticker - output")
-                .toOverwritable()
                 .performMethod(Counter.build(), "count samples")
                 .connectTo(Mixer.buildPipe(newNoteBuffer, sampleRate))
                 .broadcast(2, "main volume - broadcast"));

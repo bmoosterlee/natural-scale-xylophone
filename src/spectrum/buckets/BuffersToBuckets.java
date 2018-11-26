@@ -56,7 +56,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
     public static <I, K> Map<I, InputPort<K>> toInputPorts(Map<I, BoundedBuffer<K>> input){
         Map<I, InputPort<K>> map = new HashMap<>();
         for (I index : input.keySet()) {
-            map.put(index, input.get(index).createInputPort());
+            map.put(index, input.get(index).toOverwritable().createInputPort());
         }
         return map;
     }

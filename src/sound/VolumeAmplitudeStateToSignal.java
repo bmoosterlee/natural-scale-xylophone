@@ -14,18 +14,19 @@ public class VolumeAmplitudeStateToSignal extends MethodPipeComponent<VolumeAmpl
     }
 
     public static PipeCallable<VolumeAmplitudeState, Double> build() {
-        return volumeAmplitudeState -> {
-            Map<Frequency, VolumeAmplitude> volumeAmplitudeMap = volumeAmplitudeState.volumeAmplitudes;
+        return ((PipeCallable<VolumeAmplitudeState, Double>)
+            volumeAmplitudeState -> {
+                Map<Frequency, VolumeAmplitude> volumeAmplitudeMap = volumeAmplitudeState.volumeAmplitudes;
 
-            double amplitudeSum = 0;
+                double amplitudeSum = 0;
 
-            for (Frequency frequency : volumeAmplitudeMap.keySet()) {
-                VolumeAmplitude volumeAmplitude = volumeAmplitudeMap.get(frequency);
+                for (Frequency frequency : volumeAmplitudeMap.keySet()) {
+                    VolumeAmplitude volumeAmplitude = volumeAmplitudeMap.get(frequency);
 
-                amplitudeSum += volumeAmplitude.getValue();
-            }
-            return amplitudeSum;
-        };
+                    amplitudeSum += volumeAmplitude.getValue();
+                }
+                return amplitudeSum;
+        }).toSequential();
     }
 
 }

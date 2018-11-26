@@ -46,21 +46,25 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
 
                 timestampedNewNotesWithEnvelopeInputPort =
                         inputBroadcast.poll()
-                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
+                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer).toSequential())
+                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate).toSequential(), "build envelope wave").createInputPort();
 
                 addNewNotesOutputPort = new OutputPort<>();
                 addNewNotesInputPort =
                     addNewNotesOutputPort.getBuffer()
                     .performMethod(
-                        input ->
-                            toEnvelopesForFrequencies(
-                                input.getKey(),
-                                input.getValue()), "addNewNotes")
+                            ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
+                                input -> toEnvelopesForFrequencies(
+                                    input.getKey(),
+                                    input.getValue()))
+                            .toSequential(), "addNewNotes")
                     .createInputPort();
 
                 BoundedBuffer<VolumeAmplitudeState> outputBuffer =
-                        inputBroadcast.poll().performMethod(this::mix, "mixer");
+                        inputBroadcast.poll()
+                        .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
+                            sampleCount -> mix(sampleCount))
+                        .toSequential(), "mixer");
 
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
@@ -73,20 +77,30 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                         sampleCountOutputPort.getBuffer()
                         .pairWith(
                             groupEnvelopesByFrequencyOutputPort.getBuffer()
-                            .performMethod(Mixer::groupEnvelopesByFrequency, "group envelopes by frequency precalc")
+                            .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
+                                envelopesForFrequencies -> groupEnvelopesByFrequency(envelopesForFrequencies))
+                            .toSequential(), "group envelopes by frequency precalc")
                             .pairWith(
                                 waveOutputPort.getBuffer()))
                         .performMethod(
-                            input11 -> new EnvelopeWaveSlice(
-                                input11.getKey(),
-                                input11.getValue().getKey(),
-                                input11.getValue().getValue()), "build envelope wave slice precalc")
-                        .performMethod(Mixer::calculateValuesPerFrequency, "calculate values per frequency precalc")
-                        .performMethod(Mixer::sumValuesPerFrequency, "sum values per frequency precalc"))
+                            ((PipeCallable<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>, EnvelopeWaveSlice>)
+                                input11 -> new EnvelopeWaveSlice(
+                                    input11.getKey(),
+                                    input11.getValue().getKey(),
+                                    input11.getValue().getValue()))
+                            .toSequential(), "build envelope wave slice precalc")
+                        .performMethod(((PipeCallable<EnvelopeWaveSlice, Map<Frequency, Collection<VolumeAmplitude>>>)
+                            envelopeWaveSlice -> calculateValuesPerFrequency(envelopeWaveSlice))
+                        .toSequential(), "calculate values per frequency precalc")
+                        .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
+                            newVolumeAmplitudeCollections -> sumValuesPerFrequency(newVolumeAmplitudeCollections))
+                        .toSequential(), "sum values per frequency precalc"))
                     .performMethod(
+                        ((PipeCallable<SimpleImmutableEntry<VolumeAmplitudeState, Map<Frequency, VolumeAmplitude>>, VolumeAmplitudeState>)
                         input1 ->
                             input1.getKey()
-                            .add(input1.getValue()), "add new and old state precalc")
+                            .add(input1.getValue()))
+                    .toSequential(), "add new and old state precalc")
                 .createInputPort();
 
                 return outputBuffer;
@@ -239,6 +253,11 @@ public class Mixer extends MethodPipeComponent<Long, VolumeAmplitudeState> {
                     e.printStackTrace();
                 }
                 return null;
+            }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
             }
         };
     }

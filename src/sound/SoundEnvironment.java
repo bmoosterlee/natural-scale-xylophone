@@ -43,8 +43,13 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
 
                 inputBuffer
                 .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
-                .performMethod(input -> fitAmplitude(input), "fit amplitude")
-                .performInputMethod(input -> writeToBuffer(input));
+                .performMethod(((PipeCallable<Double, Byte>)
+                    input ->
+                        fitAmplitude(input))
+                .toSequential(), "fit amplitude")
+                .performInputMethod(((InputCallable<Byte>)
+                    input -> writeToBuffer(input))
+                .toSequential());
             }
 
             private byte fitAmplitude(double amplitude) {
@@ -63,6 +68,11 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
 //                sourceDataLine.drain();
 //                sourceDataLine.stop();
 //            }
+
+            @Override
+            public Boolean isParallelisable(){
+                return false;
+            }
         };
     }
 }
