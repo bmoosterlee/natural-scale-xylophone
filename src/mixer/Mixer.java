@@ -154,48 +154,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         return totalMap;
     }
 
-    private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
-        Map<Frequency, Collection<Double>> newVolumeCollections = new HashMap<>();
-        for (Frequency frequency : envelopesPerFrequency.keySet()) {
-            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
-            try {
-                Collection<Double> volumes = new LinkedList<>();
-                for (Envelope envelope : envelopes) {
-                    double volume = envelope.getVolume(sampleCount);
-                    volumes.add(volume);
-                }
-
-                newVolumeCollections.put(frequency, volumes);
-            }
-            catch(NullPointerException ignored){
-            }
-        }
-        return newVolumeCollections;
-    }
-
-    private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
-        Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
-        for (Frequency frequency : wavesPerFrequency.keySet()) {
-            Wave wave = wavesPerFrequency.get(frequency);
-            try {
-                double amplitude = wave.getAmplitude(sampleCount);
-                newAmplitudeCollections.put(frequency, amplitude);
-            }
-            catch(NullPointerException ignored){
-            }
-        }
-        return newAmplitudeCollections;
-    }
-
-
-    private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
-        Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(w -> w.getFrequency()));
-        Map<Frequency, Collection<Envelope>> result = groupedEnvelopeFroFrequencies.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        e -> e.getValue().stream().map(EnvelopeForFrequency::getEnvelope).collect(Collectors.toList())));
-        return result;
-    }
 
     private static Collection<EnvelopeForFrequency> toEnvelopesForFrequencies(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
         Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
@@ -226,7 +184,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                             .pairWith(
                                                     groupEnvelopesByFrequencyOutputPort.getBuffer()
                                                             .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
-                                                                    Mixer::groupEnvelopesByFrequency)
+                                                                    VolumeCalculator::groupEnvelopesByFrequency)
                                                                     .toSequential(), "group envelopes by frequency precalc"))
                                             .performMethod(input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()))
                                             .performMethod(Mixer::sumValuesPerFrequency)
@@ -236,6 +194,34 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                             input1.getKey()
                                                     .add(input1.getValue()))
                             .createInputPort();
+        }
+
+        private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
+            Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(w -> w.getFrequency()));
+            Map<Frequency, Collection<Envelope>> result = groupedEnvelopeFroFrequencies.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey,
+                            e -> e.getValue().stream().map(EnvelopeForFrequency::getEnvelope).collect(Collectors.toList())));
+            return result;
+        }
+
+        private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
+            Map<Frequency, Collection<Double>> newVolumeCollections = new HashMap<>();
+            for (Frequency frequency : envelopesPerFrequency.keySet()) {
+                Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
+                try {
+                    Collection<Double> volumes = new LinkedList<>();
+                    for (Envelope envelope : envelopes) {
+                        double volume = envelope.getVolume(sampleCount);
+                        volumes.add(volume);
+                    }
+
+                    newVolumeCollections.put(frequency, volumes);
+                }
+                catch(NullPointerException ignored){
+                }
+            }
+            return newVolumeCollections;
         }
 
         private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
@@ -302,6 +288,20 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                                     .add(input1.getValue()))
                             .createInputPort();
 
+        }
+
+        private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
+            Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
+            for (Frequency frequency : wavesPerFrequency.keySet()) {
+                Wave wave = wavesPerFrequency.get(frequency);
+                try {
+                    double amplitude = wave.getAmplitude(sampleCount);
+                    newAmplitudeCollections.put(frequency, amplitude);
+                }
+                catch(NullPointerException ignored){
+                }
+            }
+            return newAmplitudeCollections;
         }
 
         private AmplitudeState calculateAmplitude(Map<Frequency, Wave> currentUnfinishedWaveSlice, AmplitudeState oldFinishedAmplitudeSlice) {
