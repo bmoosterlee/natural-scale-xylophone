@@ -124,7 +124,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 while (timestampedNewNotesWithEnvelopeInputPort.isEmpty()) {
                     try {
                         Long futureSampleCount = unfinishedEnvelopeSlices.keySet().iterator().next();
-                        Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(futureSampleCount);
+                        Collection<EnvelopeForFrequency> currentUnfinishedEnvelopeSlice = unfinishedEnvelopeSlices.remove(futureSampleCount);
                         Map<Frequency, Wave> currentUnfinishedSliceWaves;
                         synchronized (unfinishedWaveSlices) {
                             currentUnfinishedSliceWaves = unfinishedWaveSlices.remove(futureSampleCount);
@@ -135,7 +135,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        VolumeState finishedVolumeSlice = calculateVolume(currentUnfinishedSlice, finishedVolumeSlices.remove(futureSampleCount));
+                        VolumeState finishedVolumeSlice = calculateVolume(currentUnfinishedEnvelopeSlice, finishedVolumeSlices.remove(futureSampleCount));
                         AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedSliceWaves, finishedAmplitudeSlices.remove(futureSampleCount));
                         finishedVolumeSlices.put(futureSampleCount, finishedVolumeSlice);
                         finishedAmplitudeSlices.put(futureSampleCount, finishedAmplitudeSlice);
@@ -168,10 +168,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return null;
             }
 
-            private AmplitudeState calculateAmplitude(Map<Frequency, Wave> currentUnfinishedSliceWaves, AmplitudeState oldFinishedAmplitudeSlice) {
+            private AmplitudeState calculateAmplitude(Map<Frequency, Wave> currentUnfinishedWaveSlice, AmplitudeState oldFinishedAmplitudeSlice) {
                 try {
                     try {
-                        waveOutputPort.produce(currentUnfinishedSliceWaves);
+                        waveOutputPort.produce(currentUnfinishedWaveSlice);
                     } catch (NullPointerException e) {
                         waveOutputPort.produce(new HashMap<>());
                     }
