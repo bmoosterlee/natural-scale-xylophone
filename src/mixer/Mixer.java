@@ -19,18 +19,14 @@ public class Mixer {
 
     public static SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> buildComponent(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         Callable<SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>>> o = new Callable<>() {
-            private OutputPort<Long> sampleCountOutputPort;
 
             private VolumeCalculator volumeCalculator;
             private AmplitudeCalculator amplitudeCalculator;
 
             @Override
             public SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> call(){
-                sampleCountOutputPort = new OutputPort<>("mixer - sample count");
-                LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
-
-                volumeCalculator = new VolumeCalculator(sampleBroadcast.poll());
-                amplitudeCalculator = new AmplitudeCalculator(sampleBroadcast.poll());
+                volumeCalculator = new VolumeCalculator();
+                amplitudeCalculator = new AmplitudeCalculator();
 
                 OutputPort<TimestampedFrequencies> noteAdderInputPort = new OutputPort<>();
                 SimpleBuffer<Long> mixInputBuffer = new SimpleBuffer<>(1, "mixer - mix input");
@@ -96,12 +92,6 @@ public class Mixer {
             }
 
             private SimpleImmutableEntry<VolumeState, AmplitudeState> calculateVolumeAmplitude(Long sampleCount) {
-                try {
-                    sampleCountOutputPort.produce(sampleCount);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
                 VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(sampleCount);
                 AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(sampleCount);
 
@@ -152,20 +142,22 @@ public class Mixer {
     private static class VolumeCalculator {
         final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
         final Map<Long, VolumeState> finishedVolumeSlices;
+        private OutputPort<Long> sampleCountOutputPort;
         final OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
         final OutputPort<VolumeState> oldVolumeStateOutputPort;
         final InputPort<VolumeState> newVolumeStateInputPort;
 
-        public VolumeCalculator(SimpleBuffer<Long> sampleBuffer){
+        public VolumeCalculator(){
             unfinishedEnvelopeSlices = new HashMap<>();
             finishedVolumeSlices = new HashMap<>();
 
+            sampleCountOutputPort = new OutputPort<>("volume calculator - sample count");
             groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
             oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
             newVolumeStateInputPort =
                     oldVolumeStateOutputPort.getBuffer()
                             .pairWith(
-                                    sampleBuffer
+                                    sampleCountOutputPort.getBuffer()
                                             .pairWith(
                                                     groupEnvelopesByFrequencyOutputPort.getBuffer()
                                                             .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
@@ -231,6 +223,12 @@ public class Mixer {
         }
 
         private VolumeState calculateVolume(Long sampleCount) {
+            try {
+                sampleCountOutputPort.produce(sampleCount);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
             VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
 
@@ -258,20 +256,22 @@ public class Mixer {
     private static class AmplitudeCalculator {
         final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices;
         final Map<Long, AmplitudeState> finishedAmplitudeSlices;
+        private OutputPort<Long> sampleCountOutputPort;
         final OutputPort<Map<Frequency, Wave>> waveOutputPort;
         final OutputPort<AmplitudeState> oldAmplitudeStateOutputPort;
         final InputPort<AmplitudeState> newAmplitudeStateInputPort;
 
-        public AmplitudeCalculator(SimpleBuffer<Long> sampleBuffer) {
+        public AmplitudeCalculator() {
             unfinishedWaveSlices = new HashMap<>();
             finishedAmplitudeSlices = new HashMap<>();
 
+            sampleCountOutputPort = new OutputPort<>("amplitude calculator - sample count");
             waveOutputPort = new OutputPort<>("mixer - wave output");
             oldAmplitudeStateOutputPort = new OutputPort<>("mixer - old amplitude state");
             newAmplitudeStateInputPort =
                     oldAmplitudeStateOutputPort.getBuffer()
                             .pairWith(
-                                    sampleBuffer
+                                    sampleCountOutputPort.getBuffer()
                                             .pairWith(
                                                     waveOutputPort.getBuffer())
                                             .performMethod(input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()))
@@ -299,6 +299,12 @@ public class Mixer {
         }
 
         private AmplitudeState calculateAmplitude(Long sampleCount) {
+            try {
+                sampleCountOutputPort.produce(sampleCount);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             Map<Frequency, Wave> currentUnfinishedWaveSlice;
             synchronized (unfinishedWaveSlices) {
                 currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
