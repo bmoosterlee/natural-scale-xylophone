@@ -110,24 +110,17 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
             }
 
-            //todo there might be duplicate frequencies added at a timestamp. Group by frequency as well.
-            private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
-                Map<Frequency, Wave> newNoteWaves = amplitudeCalculator.reuseOrCreateNewWaves(newNotes, sampleRate);
-
-                long endingSampleCount = envelope.getEndingSampleCount();
-                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
-                amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, newNoteWaves);
-            }
-
             private VolumeAmplitudeState mix(Long sampleCount) {
                 try {
                     TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = timestampedNewNotesWithEnvelopeInputPort.consume();
                     Collection<EnvelopeForFrequency> newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
 
-                    DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
-                    Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
+                    long endingSampleCount = timestampedNewNotesWithEnvelope.getEnvelope().getEndingSampleCount();
 
-                    addNewNotes(sampleCount, envelope, newNotes, newNotesWithEnvelopes);
+                    volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
+
+                    Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
+                    amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, sampleRate);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -331,10 +324,13 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             return null;
         }
 
-        private void addNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, Map<Frequency, Wave> newNoteWaves) {
+        private void addNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, SampleRate sampleRate) {
             if (newNotes.isEmpty()) {
                 return;
             }
+
+            Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotes, sampleRate);
+
             for (Long i = sampleCount; i < endingSampleCount; i++) {
                 synchronized (unfinishedWaveSlices) {
                     Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
