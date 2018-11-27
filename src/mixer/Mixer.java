@@ -124,25 +124,31 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 while (timestampedNewNotesWithEnvelopeInputPort.isEmpty()) {
                     try {
                         Long futureSampleCount = unfinishedEnvelopeSlices.keySet().iterator().next();
-                        Collection<EnvelopeForFrequency> currentUnfinishedEnvelopeSlice = unfinishedEnvelopeSlices.remove(futureSampleCount);
-                        Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                        synchronized (unfinishedWaveSlices) {
-                            currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(futureSampleCount);
-                        }
 
-                        try {
-                            sampleCountOutputPort.produce(futureSampleCount);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        VolumeState finishedVolumeSlice = calculateVolume(currentUnfinishedEnvelopeSlice, finishedVolumeSlices.remove(futureSampleCount));
-                        AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedWaveSlice, finishedAmplitudeSlices.remove(futureSampleCount));
-                        finishedVolumeSlices.put(futureSampleCount, finishedVolumeSlice);
-                        finishedAmplitudeSlices.put(futureSampleCount, finishedAmplitudeSlice);
+                        SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(futureSampleCount);
+
+                        finishedVolumeSlices.put(futureSampleCount, volumeAmplitudeState.getKey());
+                        finishedAmplitudeSlices.put(futureSampleCount, volumeAmplitudeState.getValue());
                     } catch (NoSuchElementException e) {
                         break;
                     }
                 }
+            }
+
+            private SimpleImmutableEntry<VolumeState, AmplitudeState> calculateVolumeAmplitude(Long sampleCount) {
+                Collection<EnvelopeForFrequency> currentFinishedEnvelopeSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+                Map<Frequency, Wave> currentUnfinishedWaveSlice;
+                synchronized (unfinishedWaveSlices) {
+                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
+                }
+                try {
+                    sampleCountOutputPort.produce(sampleCount);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                VolumeState finishedVolumeSlice = calculateVolume(currentFinishedEnvelopeSlice, finishedVolumeSlices.remove(sampleCount));
+                AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedWaveSlice, finishedAmplitudeSlices.remove(sampleCount));
+                return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
             }
 
             private VolumeState calculateVolume(Collection<EnvelopeForFrequency> currentUnfinishedSlice, VolumeState oldFinishedVolumeSlice) {
@@ -272,24 +278,15 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
 
                     addNewNotes(sampleCount, envelope, newNotes);
-
-                    Collection<EnvelopeForFrequency> currentFinishedEnvelopeSlice = unfinishedEnvelopeSlices.remove(sampleCount);
-                    Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                    synchronized (unfinishedWaveSlices) {
-                        currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
-                    }
-                    sampleCountOutputPort.produce(sampleCount);
-                    VolumeState finishedVolumeSlice = calculateVolume(currentFinishedEnvelopeSlice, finishedVolumeSlices.remove(sampleCount));
-                    AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedWaveSlice, finishedAmplitudeSlices.remove(sampleCount));
-                    VolumeAmplitudeState result = new VolumeAmplitudeState(finishedVolumeSlice, finishedAmplitudeSlice);
-
-    //            precalculateInBackground();
-
-                    return result;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                return null;
+
+                SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(sampleCount);
+
+                //            precalculateInBackground();
+
+                return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
             @Override
