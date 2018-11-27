@@ -72,9 +72,12 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 amplitudeCalculator = new AmplitudeCalculator(sampleBroadcast.poll());
 
                 return inputBroadcast.poll()
+                        .performMethod(((PipeCallable<Long, Long>)
+                                this::addNewNotes)
+                                .toSequential(), "mixer - add new notes")
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
                                 this::mix)
-                                .toSequential(), "mixer");
+                                .toSequential(), "mixer - mix");
             }
 
             private void precalculateInBackground() {
@@ -111,8 +114,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             private VolumeAmplitudeState mix(Long sampleCount) {
-                addNewNotes(sampleCount);
-
                 SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(sampleCount);
 
                 //            precalculateInBackground();
@@ -120,7 +121,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
-            private void addNewNotes(Long sampleCount) {
+            private Long addNewNotes(Long sampleCount) {
                 try {
                     TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = timestampedNewNotesWithEnvelopeInputPort.consume();
                     Collection<EnvelopeForFrequency> newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
@@ -134,6 +135,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
+                return sampleCount;
             }
 
             @Override
