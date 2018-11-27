@@ -70,9 +70,10 @@ public class Mixer {
                         .relayTo(mixInputBuffer);
 
                 //Mix
-                return Unpairer.unpair(mixInputBuffer
+                return Unpairer.unpair(
+                        mixInputBuffer
                         .performMethod(((PipeCallable<Long, SimpleImmutableEntry<VolumeState, AmplitudeState>>)
-                                this::mix)
+                                sampleCount -> calculateVolumeAmplitude(sampleCount))
                                 .toSequential(), "mixer - mix"));
             }
 
@@ -105,10 +106,6 @@ public class Mixer {
                 AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(sampleCount);
 
                 return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
-            }
-
-            private SimpleImmutableEntry<VolumeState, AmplitudeState> mix(Long sampleCount) {
-                return calculateVolumeAmplitude(sampleCount);
             }
 
             private Long addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
