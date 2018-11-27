@@ -8,7 +8,9 @@ import component.buffer.SimpleBuffer;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
+import mixer.state.AmplitudeState;
 import mixer.state.VolumeAmplitudeState;
+import mixer.state.VolumeState;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
@@ -49,21 +51,27 @@ class Main {
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
-        LinkedList<SimpleBuffer<VolumeAmplitudeState>> volumeBroadcast =
-            new LinkedList<>(
-                    OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
+
+        AbstractMap.SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
+                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                         sampleLookahead,
-                        "sample ticker - output")
-                .connectTo(Mixer.buildPipe(newNoteBuffer, sampleRate))
+                        "sample ticker - output"),
+                newNoteBuffer,
+                sampleRate);
+
+        LinkedList<SimpleBuffer<VolumeState>> volumeBroadcast =
+            new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
+        .pairWith(volumeAmplitudeStateBuffers.getValue())
+        .performMethod(input -> new VolumeAmplitudeState(input.getKey(), input.getValue()))
         .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
             SpectrumBuilder.buildComponent(
-                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker")
                 .toOverwritable(),
+                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
             volumeBroadcast.poll()
                 .toOverwritable(),
             spectrumWindow,

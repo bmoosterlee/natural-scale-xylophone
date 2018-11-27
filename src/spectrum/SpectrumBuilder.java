@@ -17,13 +17,12 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class SpectrumBuilder {
 
-    public static SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildComponent(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeAmplitudeState> inputBuffer, SpectrumWindow spectrumWindow, int width) {
+    public static SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildComponent(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeState> inputBuffer, SpectrumWindow spectrumWindow, int width) {
         LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2, "spectrum builder tick - broadcast"));
         LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
             new LinkedList<>(
                 tickBroadcast.poll()
                 .performMethod(TimedConsumer.consumeFrom(inputBuffer), "consume from input buffer")
-                .performMethod(VolumeAmplitudeState::toVolumeState, "volume amplitude filter to volume")
                 .broadcast(2, "Spectrum builder volume - broadcast"));
 
         BoundedBuffer<Buckets> noteOutputBuffer =
