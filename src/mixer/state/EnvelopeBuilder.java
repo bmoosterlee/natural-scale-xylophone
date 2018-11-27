@@ -17,9 +17,8 @@ public class EnvelopeBuilder extends MethodPipeComponent<TimestampedFrequencies,
         super(inputBuffer, outputBuffer, buildEnvelope(sampleRate));
     }
 
-    public static PipeCallable<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelope(SampleRate sampleRate1){
+    public static PipeCallable<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelope(SampleRate sampleRate){
         return new PipeCallable<>() {
-            private final SampleRate sampleRate = sampleRate1;
             private final DeterministicFunction envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
 
             @Override
