@@ -107,13 +107,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     e.printStackTrace();
                 }
 
-                VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(volumeCalculator.unfinishedEnvelopeSlices.remove(sampleCount), volumeCalculator.finishedVolumeSlices.remove(sampleCount));
-
-                Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                synchronized (amplitudeCalculator.unfinishedWaveSlices) {
-                    currentUnfinishedWaveSlice = amplitudeCalculator.unfinishedWaveSlices.remove(sampleCount);
-                }
-                AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(currentUnfinishedWaveSlice, amplitudeCalculator.finishedAmplitudeSlices.remove(sampleCount));
+                VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(sampleCount);
+                AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(sampleCount);
 
                 return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
             }
@@ -244,7 +239,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
         }
 
-        private VolumeState calculateVolume(Collection<EnvelopeForFrequency> currentUnfinishedSlice, VolumeState oldFinishedVolumeSlice) {
+        private VolumeState calculateVolume(Long sampleCount) {
+            Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+            VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
+
             try {
                 try {
                     groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
@@ -309,7 +307,14 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             return newAmplitudeCollections;
         }
 
-        private AmplitudeState calculateAmplitude(Map<Frequency, Wave> currentUnfinishedWaveSlice, AmplitudeState oldFinishedAmplitudeSlice) {
+        private AmplitudeState calculateAmplitude(Long sampleCount) {
+            Map<Frequency, Wave> currentUnfinishedWaveSlice;
+            synchronized (unfinishedWaveSlices) {
+                currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
+            }
+
+            AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
+
             try {
                 try {
                     waveOutputPort.produce(currentUnfinishedWaveSlice);
