@@ -30,35 +30,52 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
             @Override
             public BoundedBuffer<VolumeAmplitudeState> call(BoundedBuffer<Pulse> inputBuffer) {
-                this.inputBuffer = inputBuffer;
-                LinkedList<SimpleBuffer<Long>> inputBroadcast =
-                    new LinkedList<>(
-                        inputBuffer
-                        .performMethod(input -> {
-//                            precalculateInBackground();
-                            return input;
-                        })
-                        .performMethod(
-                            Counter.build(), "count samples")
-                        .broadcast(2, "mixer - sample count"));
-
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
 
                 volumeCalculator = new VolumeCalculator(sampleBroadcast.poll());
                 amplitudeCalculator = new AmplitudeCalculator(sampleBroadcast.poll());
 
-                return inputBroadcast.poll()
-                        .pairWith(
-                                inputBroadcast.poll()
-                                        .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                                        .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave"))
-                        .performMethod(((PipeCallable<SimpleImmutableEntry<Long,TimestampedNewNotesWithEnvelope>, Long>)
-                                input ->
-                                    addNewNotes(
-                                        input.getKey(),
-                                        input.getValue()))
-                                .toSequential(), "mixer - add new notes")
+                OutputPort<TimestampedFrequencies> noteAdderInputPort = new OutputPort<>();
+                SimpleBuffer<Long> mixInputBuffer = new SimpleBuffer<>(1, "mixer - mix input");
+                OutputPort<Long> mixInput = mixInputBuffer.createOutputPort();
+
+                //Precalculate
+                this.inputBuffer = inputBuffer;
+                inputBuffer
+                .performMethod(input1 -> {
+//                            precalculateInBackground();
+                    return input1;
+                })
+                //Determine whether to add new notes or mix
+                .performMethod(Counter.build(), "count samples")
+                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
+                .performInputMethod(((InputCallable<TimestampedFrequencies>) timestampedFrequencies -> {
+                    if (timestampedFrequencies.getFrequencies().isEmpty()) {
+                        try {
+                            mixInput.produce(timestampedFrequencies.getSampleCount());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        try {
+                            noteAdderInputPort.produce(timestampedFrequencies);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).toSequential());
+
+                //Add new notes
+                noteAdderInputPort.getBuffer()
+                        .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave")
+                .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, Long>)
+                        this::addNewNotes)
+                        .toSequential(), "mixer - add new notes")
+                .relayTo(mixInputBuffer);
+
+                //Mix
+                return mixInputBuffer
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
                                 this::mix)
                                 .toSequential(), "mixer - mix");
@@ -107,12 +124,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
-            private Long addNewNotes(Long sampleCount, TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
-                DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
+            private Long addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
+                Long sampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
-                if(newNotes.isEmpty()){
-                    return sampleCount;
-                }
+                DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 long endingSampleCount = envelope.getEndingSampleCount();
 
                 volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotes, envelope);
