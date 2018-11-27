@@ -111,6 +111,16 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             private VolumeAmplitudeState mix(Long sampleCount) {
+                addNewNotes(sampleCount);
+
+                SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(sampleCount);
+
+                //            precalculateInBackground();
+
+                return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
+            }
+
+            private void addNewNotes(Long sampleCount) {
                 try {
                     TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = timestampedNewNotesWithEnvelopeInputPort.consume();
                     Collection<EnvelopeForFrequency> newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
@@ -124,12 +134,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-                SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(sampleCount);
-
-                //            precalculateInBackground();
-
-                return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
             @Override
