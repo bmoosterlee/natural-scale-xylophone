@@ -299,23 +299,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         };
     }
 
-    private static SimpleImmutableEntry<Map<Frequency,Collection<Double>>, Map<Frequency,Collection<Double>>> split2(Map<Frequency,Collection<VolumeAmplitude>> frequencyCollectionMap) {
-        HashMap<Frequency, Collection<Double>> volumeCollections = new HashMap<>();
-        HashMap<Frequency, Collection<Double>> amplitudeCollections = new HashMap<>();
-        for(Frequency frequency : frequencyCollectionMap.keySet()){
-            Collection<VolumeAmplitude> volumeAmplitudes = frequencyCollectionMap.get(frequency);
-            Collection<Double> volumes = new HashSet<>();
-            Collection<Double> amplitudes = new HashSet<>();
-            for(VolumeAmplitude volumeAmplitude : volumeAmplitudes) {
-                volumes.add(volumeAmplitude.volume);
-                amplitudes.add(volumeAmplitude.amplitude);
-            }
-            volumeCollections.put(frequency, volumes);
-            volumeCollections.put(frequency, amplitudes);
-        }
-        return new SimpleImmutableEntry<>(volumeCollections, amplitudeCollections);
-    }
-
     private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
         Map<Frequency, Double> totalMap = new HashMap<>();
         for(Frequency frequency : collectionMap.keySet()) {
