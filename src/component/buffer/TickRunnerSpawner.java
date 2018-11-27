@@ -18,28 +18,19 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
         liveRunners = new LinkedList<>();
         minimumThreadCount = 1;
 
-        SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
-        firstTickRunner.start();
-        liveRunners.add(firstTickRunner);
+        add();
     }
 
     @Override
     protected void tick() {
         if(!anyClog(outputBuffers)){
             if(anyClog(inputBuffers)) {
-                SimpleTickRunner tickRunner = new SimpleTickRunner(component);
-                tickRunner.start();
-                liveRunners.add(tickRunner);
+                add();
             }
         }
         else {
             if (allEmpty(inputBuffers)) {
-                if (liveRunners.size() > minimumThreadCount) {
-                    try {
-                        liveRunners.remove().kill();
-                    } catch (NullPointerException ignored) {
-                    }
-                }
+                tryRemove();
             }
         }
 
@@ -47,6 +38,21 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void add() {
+        SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
+        firstTickRunner.start();
+        liveRunners.add(firstTickRunner);
+    }
+
+    private void tryRemove() {
+        if (liveRunners.size() > minimumThreadCount) {
+            try {
+                liveRunners.remove().kill();
+            } catch (NullPointerException ignored) {
+            }
         }
     }
 
