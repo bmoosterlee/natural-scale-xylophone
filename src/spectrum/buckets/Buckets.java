@@ -29,22 +29,20 @@ public class Buckets {
         Map<Integer, Bucket> newEntries = new HashMap<>(bucketsData);
 
         for(Integer index : otherBuckets.getIndices()){
-            Bucket newBucket = otherBuckets.getValue(index);
+            Bucket oldBucket = bucketsData.get(index);
+            Bucket otherBucket = otherBuckets.getValue(index);
 
-            try {
-                Bucket oldBucket = newEntries.get(index);
-                newBucket = oldBucket.add(newBucket);
-
-            } catch (NullPointerException e) {
+            if(oldBucket==null) {
                 newIndices.add(index);
+                newEntries.put(index, otherBucket);
             }
-
-            newEntries.put(index, newBucket);
+            else {
+                Bucket newBucket = oldBucket.add(otherBucket);
+                newEntries.put(index, newBucket);
+            }
         }
 
-        Buckets newBuckets = new Buckets(newIndices, newEntries);
-
-        return newBuckets;
+        return new Buckets(newIndices, newEntries);
     }
 
     public static Buckets add(Collection<Buckets> bucketsCollection) {
