@@ -136,24 +136,25 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             private SimpleImmutableEntry<VolumeState, AmplitudeState> calculateVolumeAmplitude(Long sampleCount) {
-                Collection<EnvelopeForFrequency> currentFinishedEnvelopeSlice = unfinishedEnvelopeSlices.remove(sampleCount);
-                Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                synchronized (unfinishedWaveSlices) {
-                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
-                }
                 try {
                     sampleCountOutputPort.produce(sampleCount);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                VolumeState finishedVolumeSlice = calculateVolume(currentFinishedEnvelopeSlice, finishedVolumeSlices.remove(sampleCount));
+
+                VolumeState finishedVolumeSlice = calculateVolume(unfinishedEnvelopeSlices.remove(sampleCount), finishedVolumeSlices.remove(sampleCount));
+
+                Map<Frequency, Wave> currentUnfinishedWaveSlice;
+                synchronized (unfinishedWaveSlices) {
+                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
+                }
                 AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedWaveSlice, finishedAmplitudeSlices.remove(sampleCount));
+
                 return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
             }
 
             private VolumeState calculateVolume(Collection<EnvelopeForFrequency> currentUnfinishedSlice, VolumeState oldFinishedVolumeSlice) {
                 try {
-
                     try {
                         groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
                     } catch (NullPointerException e) {
@@ -167,7 +168,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     }
 
                     return newVolumeStateInputPort.consume();
-
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -189,7 +189,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     }
 
                     return newAmplitudeStateInputPort.consume();
-
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -197,8 +196,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             //todo there might be duplicate frequencies added at a timestamp. Group by frequency as well.
-            //todo combine unfinishedSlice and unfinishedSliceWaves into one object
-
             private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes) {
                 Collection<EnvelopeForFrequency> newNotesWithEnvelopes;
                 try {
