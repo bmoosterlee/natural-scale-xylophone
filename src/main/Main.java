@@ -1,6 +1,5 @@
 package main;
 
-import component.Counter;
 import component.Separator;
 import component.buffer.BoundedBuffer;
 import component.buffer.OutputComponentChainLink;
