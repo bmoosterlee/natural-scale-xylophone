@@ -61,18 +61,17 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         .pairWith(
                                 timestampedNewNotesWithEnvelopeBroadcast.poll()
                                         .performMethod(
-                                                timestampedNewNotesWithEnvelope ->
-                                                        new SimpleImmutableEntry<>(
+                                                ((PipeCallable<TimestampedNewNotesWithEnvelope, Collection<EnvelopeForFrequency>>)
+                                                        timestampedNewNotesWithEnvelope -> distribute(
                                                                 timestampedNewNotesWithEnvelope.getEnvelope(),
                                                                 timestampedNewNotesWithEnvelope.getFrequencies()))
-                                        .performMethod(
-                                                ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
-                                                        input -> distribute(
-                                                                input.getKey(),
-                                                                input.getValue()))
                                                         .toSequential(), "addNewNotes"))
                         .performMethod(((PipeCallable<SimpleImmutableEntry<SimpleImmutableEntry<Long,TimestampedNewNotesWithEnvelope>, Collection<EnvelopeForFrequency>>, Long>)
-                                input -> addNewNotes(input.getKey().getKey(), input.getKey().getValue(), input.getValue()))
+                                input ->
+                                    addNewNotes(
+                                        input.getKey().getKey(),
+                                        input.getKey().getValue(),
+                                        input.getValue()))
                                 .toSequential(), "mixer - add new notes")
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
                                 this::mix)
