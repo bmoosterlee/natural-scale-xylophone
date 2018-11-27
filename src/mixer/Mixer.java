@@ -227,24 +227,39 @@ public class Mixer {
                 e.printStackTrace();
             }
 
+            removeUnfinishedSliceForCalculation(sampleCount);
+            removeFinishedSliceForCalculation(sampleCount);
+
             try {
-                Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
-                if(currentUnfinishedSlice==null){
-                    currentUnfinishedSlice = new HashSet<>();
-                }
-                groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
-
-                VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
-                if(oldFinishedVolumeSlice==null){
-                    oldFinishedVolumeSlice = new VolumeState(new HashMap<>());
-                }
-                oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
-
                 return newVolumeStateInputPort.consume();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             return null;
+        }
+
+        private void removeFinishedSliceForCalculation(Long sampleCount) {
+            VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
+            if(oldFinishedVolumeSlice==null){
+                oldFinishedVolumeSlice = new VolumeState(new HashMap<>());
+            }
+            try {
+                oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void removeUnfinishedSliceForCalculation(Long sampleCount) {
+            Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+            if(currentUnfinishedSlice==null){
+                currentUnfinishedSlice = new HashSet<>();
+            }
+            try {
+                groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -279,6 +294,51 @@ public class Mixer {
 
         }
 
+        private AmplitudeState calculateAmplitude(Long sampleCount) {
+            try {
+                sampleCountOutputPort.produce(sampleCount);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            removeUnfinishedSliceForCalculation(sampleCount);
+            removeOldFinishedSliceForCalculation(sampleCount);
+
+            try{
+                return newAmplitudeStateInputPort.consume();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        private void removeOldFinishedSliceForCalculation(Long sampleCount) {
+            AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
+            if(oldFinishedAmplitudeSlice==null){
+                oldFinishedAmplitudeSlice = new AmplitudeState(new HashMap<>());
+            }
+            try{
+                oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void removeUnfinishedSliceForCalculation(Long sampleCount) {
+            Map<Frequency, Wave> currentUnfinishedWaveSlice;
+            synchronized (unfinishedWaveSlices) {
+                currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
+            }
+            if(currentUnfinishedWaveSlice==null){
+                currentUnfinishedWaveSlice = new HashMap<>();
+            }
+            try {
+                waveOutputPort.produce(currentUnfinishedWaveSlice);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
             Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
             for (Frequency frequency : wavesPerFrequency.keySet()) {
@@ -291,36 +351,6 @@ public class Mixer {
                 }
             }
             return newAmplitudeCollections;
-        }
-
-        private AmplitudeState calculateAmplitude(Long sampleCount) {
-            try {
-                sampleCountOutputPort.produce(sampleCount);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                synchronized (unfinishedWaveSlices) {
-                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
-                }
-                if(currentUnfinishedWaveSlice==null){
-                    currentUnfinishedWaveSlice = new HashMap<>();
-                }
-                waveOutputPort.produce(currentUnfinishedWaveSlice);
-
-                AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
-                if(oldFinishedAmplitudeSlice==null){
-                    oldFinishedAmplitudeSlice = new AmplitudeState(new HashMap<>());
-                }
-                oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
-
-                return newAmplitudeStateInputPort.consume();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return null;
         }
 
         private void addNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, SampleRate sampleRate) {
