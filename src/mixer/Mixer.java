@@ -174,7 +174,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             unfinishedEnvelopeSlices = new HashMap<>();
             finishedVolumeSlices = new HashMap<>();
 
-
             groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
             oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
             newVolumeStateInputPort =
@@ -197,12 +196,17 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         }
 
         private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
-            Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(w -> w.getFrequency()));
-            Map<Frequency, Collection<Envelope>> result = groupedEnvelopeFroFrequencies.entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey,
-                            e -> e.getValue().stream().map(EnvelopeForFrequency::getEnvelope).collect(Collectors.toList())));
-            return result;
+            Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(EnvelopeForFrequency::getFrequency));
+            return
+                groupedEnvelopeFroFrequencies.entrySet()
+                .stream()
+                .collect(
+                    Collectors.toMap(Map.Entry::getKey,
+                    e ->
+                        e.getValue()
+                        .stream()
+                        .map(EnvelopeForFrequency::getEnvelope)
+                        .collect(Collectors.toList())));
         }
 
         private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
