@@ -46,14 +46,14 @@ public class Pianola {
 
         outputPort = outputBuffer.createOutputPort();
 
-        new TickRunningStrategy(new AbstractComponent() {
+        new TickRunningStrategy(new AbstractComponent<Buckets, List<Frequency>>() {
             @Override
-            protected Collection<BoundedBuffer> getInputBuffers() {
+            protected Collection<BoundedBuffer<Buckets>> getInputBuffers() {
                 return Arrays.asList(preparedNotesInput.getBuffer(), preparedHarmonicsInput.getBuffer());
             }
 
             @Override
-            protected Collection<BoundedBuffer> getOutputBuffers() {
+            protected Collection<BoundedBuffer<List<Frequency>>> getOutputBuffers() {
                 return Collections.singleton(outputPort.getBuffer());
             }
 
