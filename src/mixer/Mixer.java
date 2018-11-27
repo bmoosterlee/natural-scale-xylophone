@@ -22,9 +22,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
     public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new PipeCallable<>() {
             private BoundedBuffer<Pulse> inputBuffer;
-            private InputPort<TimestampedNewNotesWithEnvelope> timestampedNewNotesWithEnvelopeInputPort;
-
-            private InputPort<Collection<EnvelopeForFrequency>> envelopeDistributorInputPort;
 
             private OutputPort<Long> sampleCountOutputPort;
 
@@ -52,25 +49,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                 .performMethod(EnvelopeBuilder.buildEnvelopeWave(sampleRate), "build envelope wave")
                                 .broadcast(2));
 
-                timestampedNewNotesWithEnvelopeInputPort =
-                        timestampedNewNotesWithEnvelopeBroadcast.poll()
-                        .createInputPort();
-
-                envelopeDistributorInputPort =
-                        timestampedNewNotesWithEnvelopeBroadcast.poll()
-                        .performMethod(
-                                timestampedNewNotesWithEnvelope ->
-                                        new SimpleImmutableEntry<>(
-                                                timestampedNewNotesWithEnvelope.getEnvelope(),
-                                                timestampedNewNotesWithEnvelope.getFrequencies()))
-                        .performMethod(
-                                ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
-                                        input -> distribute(
-                                                input.getKey(),
-                                                input.getValue()))
-                                        .toSequential(), "addNewNotes")
-                        .createInputPort();
-
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
 
@@ -78,8 +56,23 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 amplitudeCalculator = new AmplitudeCalculator(sampleBroadcast.poll());
 
                 return inputBroadcast.poll()
-                        .performMethod(((PipeCallable<Long, Long>)
-                                this::addNewNotes)
+                        .pairWith(
+                                timestampedNewNotesWithEnvelopeBroadcast.poll())
+                        .pairWith(
+                                timestampedNewNotesWithEnvelopeBroadcast.poll()
+                                        .performMethod(
+                                                timestampedNewNotesWithEnvelope ->
+                                                        new SimpleImmutableEntry<>(
+                                                                timestampedNewNotesWithEnvelope.getEnvelope(),
+                                                                timestampedNewNotesWithEnvelope.getFrequencies()))
+                                        .performMethod(
+                                                ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
+                                                        input -> distribute(
+                                                                input.getKey(),
+                                                                input.getValue()))
+                                                        .toSequential(), "addNewNotes"))
+                        .performMethod(((PipeCallable<SimpleImmutableEntry<SimpleImmutableEntry<Long,TimestampedNewNotesWithEnvelope>, Collection<EnvelopeForFrequency>>, Long>)
+                                input -> addNewNotes(input.getKey().getKey(), input.getKey().getValue(), input.getValue()))
                                 .toSequential(), "mixer - add new notes")
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
                                 this::mix)
@@ -129,20 +122,13 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
-            private Long addNewNotes(Long sampleCount) {
-                try {
-                    TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = timestampedNewNotesWithEnvelopeInputPort.consume();
-                    Collection<EnvelopeForFrequency> newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
+            private Long addNewNotes(Long sampleCount, TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
+                long endingSampleCount = timestampedNewNotesWithEnvelope.getEnvelope().getEndingSampleCount();
 
-                    long endingSampleCount = timestampedNewNotesWithEnvelope.getEnvelope().getEndingSampleCount();
+                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
 
-                    volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
-
-                    Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
-                    amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, sampleRate);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
+                amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, sampleRate);
 
                 return sampleCount;
             }
