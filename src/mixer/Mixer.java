@@ -125,16 +125,16 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             private Long addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
-                Long sampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
+                Long startingSampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
                 DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 long endingSampleCount = envelope.getEndingSampleCount();
 
-                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotes, envelope);
+                volumeCalculator.addNewEnvelopes(startingSampleCount, endingSampleCount, newNotes, envelope);
 
-                amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, sampleRate);
+                amplitudeCalculator.addNewWaves(startingSampleCount, endingSampleCount, newNotes, sampleRate);
 
-                return sampleCount;
+                return startingSampleCount;
             }
 
             @Override
