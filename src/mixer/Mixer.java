@@ -65,7 +65,7 @@ public class Mixer {
                         .relayTo(mixInputBuffer);
 
                 //Mix
-                LinkedList<SimpleBuffer<Long>> mixInputBroadcast = new LinkedList<>(mixInputBuffer.broadcast(2));
+                LinkedList<SimpleBuffer<Long>> mixInputBroadcast = new LinkedList<>(mixInputBuffer.broadcast(2, "mixer - input broadcast"));
                 return new SimpleImmutableEntry<>(
                         mixInputBroadcast.poll()
                                 .performMethod(((PipeCallable<Long, VolumeState>)
@@ -148,7 +148,7 @@ public class Mixer {
             finishedVolumeSlices = new HashMap<>();
 
             sampleCountOutputPort = new OutputPort<>("volume calculator - sample count");
-            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3));
+            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3, "volume calculator - sample broadcast"));
             newVolumeStateInputPort =
                     sampleCountBroadcast.poll()
                     .performMethod(((PipeCallable<Long, VolumeState>) VolumeCalculator.this::removeFinishedSliceForCalculation).toSequential())
@@ -260,7 +260,7 @@ public class Mixer {
             finishedAmplitudeSlices = new HashMap<>();
 
             sampleCountOutputPort = new OutputPort<>("amplitude calculator - sample count");
-            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3));
+            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3, "amplitude calculator - sample broadcast"));
 
             newAmplitudeStateInputPort =
                     sampleCountBroadcast.poll().performMethod(((PipeCallable<Long, AmplitudeState>) AmplitudeCalculator.this::removeOldFinishedSliceForCalculation).toSequential())
