@@ -14,10 +14,10 @@ import java.util.Collection;
 public class EnvelopeBuilder extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
 
     public EnvelopeBuilder(SimpleBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
-        super(inputBuffer, outputBuffer, buildEnvelopeWave(sampleRate));
+        super(inputBuffer, outputBuffer, buildEnvelope(sampleRate));
     }
 
-    public static PipeCallable<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelopeWave(SampleRate sampleRate1){
+    public static PipeCallable<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelope(SampleRate sampleRate1){
         return new PipeCallable<>() {
             private final SampleRate sampleRate = sampleRate1;
             private final DeterministicFunction envelopeFunction = LinearFunctionMemoizer.ENVELOPE_MEMOIZER.get(sampleRate, 0.10, new TimeInSeconds(0.7));
