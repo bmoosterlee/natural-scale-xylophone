@@ -227,21 +227,18 @@ public class Mixer {
                 e.printStackTrace();
             }
 
-            Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
-            VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
-
             try {
-                try {
-                    groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
-                } catch (NullPointerException e) {
-                    groupEnvelopesByFrequencyOutputPort.produce(new LinkedList<>());
+                Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+                if(currentUnfinishedSlice==null){
+                    currentUnfinishedSlice = new HashSet<>();
                 }
+                groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
 
-                try {
-                    oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
-                } catch (NullPointerException e) {
-                    oldVolumeStateOutputPort.produce(new VolumeState(new HashMap<>()));
+                VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
+                if(oldFinishedVolumeSlice==null){
+                    oldFinishedVolumeSlice = new VolumeState(new HashMap<>());
                 }
+                oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
 
                 return newVolumeStateInputPort.consume();
             } catch (InterruptedException e) {
@@ -303,25 +300,21 @@ public class Mixer {
                 e.printStackTrace();
             }
 
-            Map<Frequency, Wave> currentUnfinishedWaveSlice;
-            synchronized (unfinishedWaveSlices) {
-                currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
-            }
-
-            AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
-
             try {
-                try {
-                    waveOutputPort.produce(currentUnfinishedWaveSlice);
-                } catch (NullPointerException e) {
-                    waveOutputPort.produce(new HashMap<>());
+                Map<Frequency, Wave> currentUnfinishedWaveSlice;
+                synchronized (unfinishedWaveSlices) {
+                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
                 }
+                if(currentUnfinishedWaveSlice==null){
+                    currentUnfinishedWaveSlice = new HashMap<>();
+                }
+                waveOutputPort.produce(currentUnfinishedWaveSlice);
 
-                try {
-                    oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
-                } catch (NullPointerException e) {
-                    oldAmplitudeStateOutputPort.produce(new AmplitudeState(new HashMap<>()));
+                AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
+                if(oldFinishedAmplitudeSlice==null){
+                    oldFinishedAmplitudeSlice = new AmplitudeState(new HashMap<>());
                 }
+                oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
 
                 return newAmplitudeStateInputPort.consume();
             } catch (InterruptedException e) {
