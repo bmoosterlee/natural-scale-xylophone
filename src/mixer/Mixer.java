@@ -84,45 +84,39 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
                 oldAmplitudeStateOutputPort = new OutputPort<>("mixer - old amplitude state");
 
-                BufferChainLink<SimpleImmutableEntry<VolumeState, AmplitudeState>> newVolumeAmplitudeStatesBuffer = oldVolumeStateOutputPort.getBuffer()
+                LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
+
+                newVolumeStateInputPort =
+                        oldVolumeStateOutputPort.getBuffer()
                         .pairWith(
-                                oldAmplitudeStateOutputPort.getBuffer())
-                        .pairWith(
-                                sampleCountOutputPort.getBuffer()
+                                sampleBroadcast.poll()
                                         .pairWith(
                                                 groupEnvelopesByFrequencyOutputPort.getBuffer()
                                                         .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>)
                                                                 Mixer::groupEnvelopesByFrequency)
-                                                                .toSequential(), "group envelopes by frequency precalc")
-                                                        .pairWith(
-                                                                waveOutputPort.getBuffer()))
-                                        .performMethod(
-                                                ((PipeCallable<SimpleImmutableEntry<Long, SimpleImmutableEntry<Map<Frequency, Collection<Envelope>>, Map<Frequency, Wave>>>, EnvelopeWaveSlice>)
-                                                        input11 -> new EnvelopeWaveSlice(
-                                                                input11.getKey(),
-                                                                input11.getValue().getKey(),
-                                                                input11.getValue().getValue()))
-                                                        .toSequential(), "build envelope wave slice precalc")
-                                        .performMethod(((PipeCallable<EnvelopeWaveSlice, Map<Frequency, Collection<VolumeAmplitude>>>)
-                                                Mixer::calculateValuesPerFrequency)
-                                                .toSequential(), "calculate values per frequency precalc")
-                                        .performMethod(((PipeCallable<Map<Frequency, Collection<VolumeAmplitude>>, Map<Frequency, VolumeAmplitude>>)
-                                                Mixer::sumValuesPerFrequency)
-                                                .toSequential(), "sum values per frequency precalc")
-                                        .performMethod(Mixer::split))
+                                                                .toSequential(), "group envelopes by frequency precalc"))
+                                        .performMethod(input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()))
+                                        .performMethod(Mixer::sumValuesPerFrequency)
+                                        .performMethod(VolumeState::new))
                         .performMethod(
-                                ((PipeCallable<SimpleImmutableEntry<SimpleImmutableEntry<VolumeState, AmplitudeState>, SimpleImmutableEntry<VolumeState, AmplitudeState>>, SimpleImmutableEntry<VolumeState, AmplitudeState>>)
-                                        input1 ->
-                                                new SimpleImmutableEntry<>(
-                                                        input1.getKey().getKey()
-                                                                .add(input1.getValue().getKey()),
-                                                        input1.getKey().getValue()
-                                                                .add(input1.getValue().getValue())))
-                                        .toSequential(), "add new and old state precalc");
+                            input1 ->
+                                input1.getKey()
+                                .add(input1.getValue()))
+                .createInputPort();
 
-                SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> newVolumeAmplitudeStatesPair = Unpairer.unpair(newVolumeAmplitudeStatesBuffer);
-                newVolumeStateInputPort = newVolumeAmplitudeStatesPair.getKey().createInputPort();
-                newAmplitudeStateInputPort = newVolumeAmplitudeStatesPair.getValue().createInputPort();
+                newAmplitudeStateInputPort =
+                        oldAmplitudeStateOutputPort.getBuffer()
+                        .pairWith(
+                                sampleBroadcast.poll()
+                                        .pairWith(
+                                                waveOutputPort.getBuffer())
+                                        .performMethod(input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()))
+                                        .performMethod(AmplitudeState::new))
+                        .performMethod(
+                            input1 ->
+                                input1.getKey()
+                                .add(input1.getValue()))
+                    .createInputPort();
 
                 return outputBuffer;
             }
@@ -287,26 +281,66 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         };
     }
 
-    private static SimpleImmutableEntry<VolumeState, AmplitudeState> split(Map<Frequency, VolumeAmplitude> frequencyVolumeAmplitudeMap) {
-        HashMap<Frequency, Double> volumes = new HashMap<>();
-        HashMap<Frequency, Double> amplitudes = new HashMap<>();
-        for(Frequency frequency : frequencyVolumeAmplitudeMap.keySet()){
-            VolumeAmplitude volumeAmplitude = frequencyVolumeAmplitudeMap.get(frequency);
-            volumes.put(frequency, volumeAmplitude.volume);
-            amplitudes.put(frequency, volumeAmplitude.amplitude);
+    private static SimpleImmutableEntry<Map<Frequency,Collection<Double>>, Map<Frequency,Collection<Double>>> split2(Map<Frequency,Collection<VolumeAmplitude>> frequencyCollectionMap) {
+        HashMap<Frequency, Collection<Double>> volumeCollections = new HashMap<>();
+        HashMap<Frequency, Collection<Double>> amplitudeCollections = new HashMap<>();
+        for(Frequency frequency : frequencyCollectionMap.keySet()){
+            Collection<VolumeAmplitude> volumeAmplitudes = frequencyCollectionMap.get(frequency);
+            Collection<Double> volumes = new HashSet<>();
+            Collection<Double> amplitudes = new HashSet<>();
+            for(VolumeAmplitude volumeAmplitude : volumeAmplitudes) {
+                volumes.add(volumeAmplitude.volume);
+                amplitudes.add(volumeAmplitude.amplitude);
+            }
+            volumeCollections.put(frequency, volumes);
+            volumeCollections.put(frequency, amplitudes);
         }
-        return new SimpleImmutableEntry<>(new VolumeState(volumes), new AmplitudeState(amplitudes));
+        return new SimpleImmutableEntry<>(volumeCollections, amplitudeCollections);
     }
 
-    private static Map<Frequency, VolumeAmplitude> sumValuesPerFrequency(Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections) {
-        Map<Frequency, VolumeAmplitude> newVolumeAmplitudes = new HashMap<>();
-        for(Frequency frequency : newVolumeAmplitudeCollections.keySet()) {
-            Collection<VolumeAmplitude> volumeAmplitudeCollection = newVolumeAmplitudeCollections.get(frequency);
-            VolumeAmplitude totalVolumeAmplitude = VolumeAmplitude.sum(volumeAmplitudeCollection);
-            newVolumeAmplitudes.put(frequency, totalVolumeAmplitude);
+    private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
+        Map<Frequency, Double> totalMap = new HashMap<>();
+        for(Frequency frequency : collectionMap.keySet()) {
+            Collection<Double> collection = collectionMap.get(frequency);
+            Double total = collection.stream().mapToDouble(f -> f).sum();
+            totalMap.put(frequency, total);
         }
-        return newVolumeAmplitudes;
+        return totalMap;
     }
+
+    private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
+        Map<Frequency, Collection<Double>> newVolumeCollections = new HashMap<>();
+        for (Frequency frequency : envelopesPerFrequency.keySet()) {
+            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
+            try {
+                Collection<Double> volumes = new LinkedList<>();
+                for (Envelope envelope : envelopes) {
+                    double volume = envelope.getVolume(sampleCount);
+                    volumes.add(volume);
+                }
+
+                newVolumeCollections.put(frequency, volumes);
+            }
+            catch(NullPointerException ignored){
+            }
+        }
+        return newVolumeCollections;
+    }
+
+    private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
+        Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
+        for (Frequency frequency : wavesPerFrequency.keySet()) {
+            Wave wave = wavesPerFrequency.get(frequency);
+            try {
+                double amplitude = wave.getAmplitude(sampleCount);
+                newAmplitudeCollections.put(frequency, amplitude);
+            }
+            catch(NullPointerException ignored){
+            }
+        }
+        return newAmplitudeCollections;
+    }
+
 
     private static Map<Frequency, Collection<VolumeAmplitude>> calculateValuesPerFrequency(EnvelopeWaveSlice envelopeWaveSlice) {
         long sampleCount = envelopeWaveSlice.getSampleCount();
