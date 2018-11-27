@@ -17,70 +17,23 @@ import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 import java.util.*;
 
 public class Pianola {
-    private final PianolaPattern pianolaPattern;
-
-    private final InputPort<Buckets> preparedNotesInput;
-    private final InputPort<Buckets> preparedHarmonicsInput;
-
-    private final OutputPort<List<Frequency>> outputPort;
 
     public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
-        this.pianolaPattern = pianolaPattern;
-
         int repetitionDampener = 3;
 
         LinkedList<SimpleBuffer<Pulse>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
-        preparedNotesInput =
-            tickBroadcast.poll()
-            .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
-            .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
-            .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
-            .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average buckets")
-            .createInputPort();
 
-        preparedHarmonicsInput =
+        tickBroadcast.poll()
+        .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
+        .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
+        .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
+        .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average buckets")
+        .pairWith(
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer), "pianola - consume from harmonic spectrum buffer")
-            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - buckets averager")
-            .createInputPort();
-
-        outputPort = outputBuffer.createOutputPort();
-
-        new TickRunningStrategy(new AbstractComponent<Buckets, List<Frequency>>() {
-            @Override
-            protected Collection<BoundedBuffer<Buckets>> getInputBuffers() {
-                return Arrays.asList(preparedNotesInput.getBuffer(), preparedHarmonicsInput.getBuffer());
-            }
-
-            @Override
-            protected Collection<BoundedBuffer<List<Frequency>>> getOutputBuffers() {
-                return Collections.singleton(outputPort.getBuffer());
-            }
-
-            @Override
-            protected void tick() {
-                Pianola.this.tick();
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
-
-        });
-    }
-
-    private void tick() {
-        try {
-            Buckets noteBuckets = preparedNotesInput.consume();
-            Buckets harmonicsBuckets = preparedHarmonicsInput.consume();
-
-            LinkedList<Frequency> results = new LinkedList<>(pianolaPattern.playPattern(noteBuckets, harmonicsBuckets));
-
-            outputPort.produce(results);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - buckets averager"))
+        .performMethod(input -> new LinkedList<>(pianolaPattern.playPattern(input.getKey(), input.getValue())), "pianola - play pattern")
+        .relayTo(outputBuffer);
     }
 
 }
