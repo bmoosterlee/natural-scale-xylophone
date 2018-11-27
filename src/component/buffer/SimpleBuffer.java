@@ -109,7 +109,7 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
+    public SimpleBuffer<?> relayTo(SimpleBuffer<? super T> outputBuffer) {
         new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
         return outputBuffer;
     }

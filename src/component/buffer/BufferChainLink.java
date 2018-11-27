@@ -115,7 +115,7 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public SimpleBuffer<T> relayTo(SimpleBuffer<T> outputBuffer) {
+    public SimpleBuffer<?> relayTo(SimpleBuffer<? super T> outputBuffer) {
         return breakChain().relayTo(outputBuffer);
     }
 
