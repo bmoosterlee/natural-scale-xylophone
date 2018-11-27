@@ -11,9 +11,9 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeWaveBuilder extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
+public class EnvelopeBuilder extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
 
-    public EnvelopeWaveBuilder(SimpleBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
+    public EnvelopeBuilder(SimpleBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
         super(inputBuffer, outputBuffer, buildEnvelopeWave(sampleRate));
     }
 
