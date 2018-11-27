@@ -57,7 +57,7 @@ public class BucketsAverager extends MethodPipeComponent<Buckets, Buckets> {
                                 .performMethod(input1 -> input1.transpose(-(finalI)), "buckets averager transpose negative"));
             }
 
-            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(Buckets::add);
+            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(Buckets::add, "buckets averager - add buckets");
         };
     }
 
