@@ -21,8 +21,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
     public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new PipeCallable<>() {
-            private Map<Long, Collection<EnvelopeForFrequency>> unfinishedSlices;
-            private final Map<Long, Map<Frequency, Wave>> unfinishedSlicesWaves;
+            private Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
+            private final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices;
             private Map<Long, VolumeState> finishedVolumeSlices;
             private Map<Long, AmplitudeState> finishedAmplitudeSlices;
 
@@ -40,8 +40,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             private InputPort<AmplitudeState> newAmplitudeStateInputPort;
 
             {
-                unfinishedSlices = new HashMap<>();
-                unfinishedSlicesWaves = new HashMap<>();
+                unfinishedEnvelopeSlices = new HashMap<>();
+                unfinishedWaveSlices = new HashMap<>();
                 finishedVolumeSlices = new HashMap<>();
                 finishedAmplitudeSlices = new HashMap<>();
             }
@@ -123,11 +123,11 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             private void precalculateInBackground() {
                 while (timestampedNewNotesWithEnvelopeInputPort.isEmpty()) {
                     try {
-                        Long futureSampleCount = unfinishedSlices.keySet().iterator().next();
-                        Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedSlices.remove(futureSampleCount);
+                        Long futureSampleCount = unfinishedEnvelopeSlices.keySet().iterator().next();
+                        Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(futureSampleCount);
                         Map<Frequency, Wave> currentUnfinishedSliceWaves;
-                        synchronized (unfinishedSlicesWaves) {
-                            currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(futureSampleCount);
+                        synchronized (unfinishedWaveSlices) {
+                            currentUnfinishedSliceWaves = unfinishedWaveSlices.remove(futureSampleCount);
                         }
 
                         try {
@@ -214,15 +214,15 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     return;
                 }
                 for (Long i = sampleCount; i < endingSampleCount; i++) {
-                    synchronized (unfinishedSlicesWaves) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
+                    synchronized (unfinishedWaveSlices) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
                         try {
                             Map<Frequency, Wave> missingNoteWaves = new HashMap<>(newNoteWaves);
                             missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
                             oldUnfinishedSliceWaves.putAll(missingNoteWaves);
                         } catch (NullPointerException e) {
                             Map<Frequency, Wave> newUnfinishedSliceWaves = new HashMap<>(newNoteWaves);
-                            unfinishedSlicesWaves.put(i, newUnfinishedSliceWaves);
+                            unfinishedWaveSlices.put(i, newUnfinishedSliceWaves);
                         }
                     }
                 }
@@ -233,22 +233,22 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     return;
                 }
                 for (Long i = sampleCount; i < endingSampleCount; i++) {
-                    Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSlices.remove(i);
+                    Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
                     try {
                         newUnfinishedSlice.addAll(newNotesWithEnvelopes);
                     } catch (NullPointerException e) {
                         newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
                     }
-                    unfinishedSlices.put(i, newUnfinishedSlice);
+                    unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
                 }
             }
 
             private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes) {
                 Map<Frequency, Wave> newNoteWaves = new HashMap<>();
                 Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                synchronized (unfinishedSlicesWaves) {
-                    for (Long i : unfinishedSlicesWaves.keySet()) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSlicesWaves.get(i);
+                synchronized (unfinishedWaveSlices) {
+                    for (Long i : unfinishedWaveSlices.keySet()) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
 
                         Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
                         foundWaves.keySet().retainAll(missingWaveFrequencies);
@@ -273,10 +273,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
                     addNewNotes(sampleCount, envelope, newNotes);
 
-                    Collection<EnvelopeForFrequency> currentFinishedSlice = unfinishedSlices.remove(sampleCount);
+                    Collection<EnvelopeForFrequency> currentFinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
                     Map<Frequency, Wave> currentUnfinishedSliceWaves;
-                    synchronized (unfinishedSlicesWaves) {
-                        currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
+                    synchronized (unfinishedWaveSlices) {
+                        currentUnfinishedSliceWaves = unfinishedWaveSlices.remove(sampleCount);
                     }
                     sampleCountOutputPort.produce(sampleCount);
                     VolumeState finishedVolumeSlice = calculateVolume(currentFinishedSlice, finishedVolumeSlices.remove(sampleCount));
