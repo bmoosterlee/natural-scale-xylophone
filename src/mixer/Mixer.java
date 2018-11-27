@@ -2,7 +2,6 @@ package mixer;
 
 import component.Counter;
 import component.Pulse;
-import component.Unpairer;
 import component.buffer.*;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
@@ -17,14 +16,14 @@ import java.util.stream.Collectors;
 
 public class Mixer {
 
-    public static SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> buildComponent(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
-        Callable<SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>>> o = new Callable<>() {
+    public static SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> buildComponent(BoundedBuffer<Pulse> inputBuffer, BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
+        Callable<SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>>> o = new Callable<>() {
 
             private VolumeCalculator volumeCalculator;
             private AmplitudeCalculator amplitudeCalculator;
 
             @Override
-            public SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> call(){
+            public SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> call(){
                 volumeCalculator = new VolumeCalculator();
                 amplitudeCalculator = new AmplitudeCalculator();
 
@@ -66,11 +65,16 @@ public class Mixer {
                         .relayTo(mixInputBuffer);
 
                 //Mix
-                return Unpairer.unpair(
-                        mixInputBuffer
-                        .performMethod(((PipeCallable<Long, SimpleImmutableEntry<VolumeState, AmplitudeState>>)
-                                sampleCount -> calculateVolumeAmplitude(sampleCount))
-                                .toSequential(), "mixer - mix"));
+                LinkedList<SimpleBuffer<Long>> mixInputBroadcast = new LinkedList<>(mixInputBuffer.broadcast(2));
+                return new SimpleImmutableEntry<>(
+                        mixInputBroadcast.poll()
+                                .performMethod(((PipeCallable<Long, VolumeState>)
+                                        sampleCount -> volumeCalculator.calculateVolume(sampleCount))
+                                        .toSequential(), "mixer - calculate volume"),
+                        mixInputBroadcast.poll()
+                                .performMethod(((PipeCallable<Long, AmplitudeState>)
+                                        sampleCount -> amplitudeCalculator.calculateAmplitude(sampleCount))
+                                        .toSequential(), "mixer - calculate amplitude"));
             }
 
             private void precalculateInBackground() {
@@ -78,10 +82,11 @@ public class Mixer {
                     try {
                         Long futureSampleCount = volumeCalculator.unfinishedEnvelopeSlices.keySet().iterator().next();
 
-                        SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(futureSampleCount);
+                        VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(futureSampleCount);
+                        AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(futureSampleCount);
 
-                        volumeCalculator.finishedVolumeSlices.put(futureSampleCount, volumeAmplitudeState.getKey());
-                        amplitudeCalculator.finishedAmplitudeSlices.put(futureSampleCount, volumeAmplitudeState.getValue());
+                        volumeCalculator.finishedVolumeSlices.put(futureSampleCount, finishedVolumeSlice);
+                        amplitudeCalculator.finishedAmplitudeSlices.put(futureSampleCount, finishedAmplitudeSlice);
                     } catch (NoSuchElementException e) {
                         break;
                     } catch (NullPointerException ignored) {
@@ -89,13 +94,6 @@ public class Mixer {
                         //we throw a NullPointerException.
                     }
                 }
-            }
-
-            private SimpleImmutableEntry<VolumeState, AmplitudeState> calculateVolumeAmplitude(Long sampleCount) {
-                VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(sampleCount);
-                AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(sampleCount);
-
-                return new SimpleImmutableEntry<>(finishedVolumeSlice, finishedAmplitudeSlice);
             }
 
             private Long addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {

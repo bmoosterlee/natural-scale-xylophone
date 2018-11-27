@@ -52,7 +52,7 @@ class Main {
 
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        AbstractMap.SimpleImmutableEntry<SimpleBuffer<VolumeState>, SimpleBuffer<AmplitudeState>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
+        AbstractMap.SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                         sampleLookahead,
                         "sample ticker - output"),
