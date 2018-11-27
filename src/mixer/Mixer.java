@@ -42,13 +42,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                             Counter.build(), "count samples")
                         .broadcast(2, "mixer - sample count"));
 
-                LinkedList<SimpleBuffer<TimestampedNewNotesWithEnvelope>> timestampedNewNotesWithEnvelopeBroadcast =
-                    new LinkedList<>(
-                        inputBroadcast.poll()
-                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                                .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave")
-                                .broadcast(2));
-
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
 
@@ -57,20 +50,13 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
                 return inputBroadcast.poll()
                         .pairWith(
-                                timestampedNewNotesWithEnvelopeBroadcast.poll())
-                        .pairWith(
-                                timestampedNewNotesWithEnvelopeBroadcast.poll()
-                                        .performMethod(
-                                                ((PipeCallable<TimestampedNewNotesWithEnvelope, Collection<EnvelopeForFrequency>>)
-                                                        timestampedNewNotesWithEnvelope -> distribute(
-                                                                timestampedNewNotesWithEnvelope.getEnvelope(),
-                                                                timestampedNewNotesWithEnvelope.getFrequencies()))
-                                                        .toSequential(), "addNewNotes"))
-                        .performMethod(((PipeCallable<SimpleImmutableEntry<SimpleImmutableEntry<Long,TimestampedNewNotesWithEnvelope>, Collection<EnvelopeForFrequency>>, Long>)
+                                inputBroadcast.poll()
+                                        .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
+                                        .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave"))
+                        .performMethod(((PipeCallable<SimpleImmutableEntry<Long,TimestampedNewNotesWithEnvelope>, Long>)
                                 input ->
                                     addNewNotes(
-                                        input.getKey().getKey(),
-                                        input.getKey().getValue(),
+                                        input.getKey(),
                                         input.getValue()))
                                 .toSequential(), "mixer - add new notes")
                         .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
@@ -121,12 +107,13 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                 return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
 
-            private Long addNewNotes(Long sampleCount, TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
-                long endingSampleCount = timestampedNewNotesWithEnvelope.getEnvelope().getEndingSampleCount();
-
-                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
-
+            private Long addNewNotes(Long sampleCount, TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
+                DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
+                long endingSampleCount = envelope.getEndingSampleCount();
+
+                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotes, envelope);
+
                 amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, sampleRate);
 
                 return sampleCount;
@@ -223,10 +210,14 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             return newVolumeCollections;
         }
 
-        private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
-            if (newNotesWithEnvelopes.isEmpty()) {
+        private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
+            if (newNotes.isEmpty()) {
                 return;
             }
+            Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
+                    envelope,
+                    newNotes);
+
             for (Long i = sampleCount; i < endingSampleCount; i++) {
                 Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
                 try {
