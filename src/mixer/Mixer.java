@@ -110,6 +110,9 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             private Long addNewNotes(Long sampleCount, TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
                 DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
+                if(newNotes.isEmpty()){
+                    return sampleCount;
+                }
                 long endingSampleCount = envelope.getEndingSampleCount();
 
                 volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotes, envelope);
@@ -211,9 +214,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         }
 
         private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
-            if (newNotes.isEmpty()) {
-                return;
-            }
             Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
                     envelope,
                     newNotes);
@@ -316,10 +316,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         }
 
         private void addNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, SampleRate sampleRate) {
-            if (newNotes.isEmpty()) {
-                return;
-            }
-
             Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotes, sampleRate);
 
             for (Long i = sampleCount; i < endingSampleCount; i++) {
