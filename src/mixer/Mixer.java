@@ -23,7 +23,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         return new PipeCallable<>() {
             private InputPort<TimestampedNewNotesWithEnvelope> timestampedNewNotesWithEnvelopeInputPort;
 
-            private OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>> envelopeDistributorOutputPort;
             private InputPort<Collection<EnvelopeForFrequency>> envelopeDistributorInputPort;
 
             private OutputPort<Long> sampleCountOutputPort;
@@ -40,22 +39,31 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                             Counter.build(), "count samples")
                         .broadcast(2, "mixer - sample count"));
 
-                timestampedNewNotesWithEnvelopeInputPort =
+                LinkedList<SimpleBuffer<TimestampedNewNotesWithEnvelope>> timestampedNewNotesWithEnvelopeBroadcast =
+                    new LinkedList<>(
                         inputBroadcast.poll()
                                 .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave").createInputPort();
+                                .performMethod(EnvelopeWaveBuilder.buildEnvelopeWave(sampleRate), "build envelope wave")
+                                .broadcast(2));
 
-                envelopeDistributorOutputPort = new OutputPort<>();
+                timestampedNewNotesWithEnvelopeInputPort =
+                        timestampedNewNotesWithEnvelopeBroadcast.poll()
+                        .createInputPort();
+
                 envelopeDistributorInputPort =
-                    envelopeDistributorOutputPort.getBuffer()
-                    .performMethod(
-                            ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
-                                input -> distribute(
-                                    input.getKey(),
-                                    input.getValue()))
-                            .toSequential(), "addNewNotes")
-                    .createInputPort();
-
+                        timestampedNewNotesWithEnvelopeBroadcast.poll()
+                        .performMethod(
+                                timestampedNewNotesWithEnvelope ->
+                                        new SimpleImmutableEntry<>(
+                                                timestampedNewNotesWithEnvelope.getEnvelope(),
+                                                timestampedNewNotesWithEnvelope.getFrequencies()))
+                        .performMethod(
+                                ((PipeCallable<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>, Collection<EnvelopeForFrequency>>)
+                                        input -> distribute(
+                                                input.getKey(),
+                                                input.getValue()))
+                                        .toSequential(), "addNewNotes")
+                        .createInputPort();
 
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
                 LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
@@ -106,7 +114,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes) {
                 Collection<EnvelopeForFrequency> newNotesWithEnvelopes;
                 try {
-                    envelopeDistributorOutputPort.produce(new SimpleImmutableEntry<>(envelope, newNotes));
                     newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
 
                     Map<Frequency, Wave> newNoteWaves = amplitudeCalculator.reuseOrCreateNewWaves(newNotes, sampleRate);
