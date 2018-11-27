@@ -111,28 +111,23 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             //todo there might be duplicate frequencies added at a timestamp. Group by frequency as well.
-            private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes) {
-                Collection<EnvelopeForFrequency> newNotesWithEnvelopes;
-                try {
-                    newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
+            private void addNewNotes(Long sampleCount, DeterministicEnvelope envelope, Collection<Frequency> newNotes, Collection<EnvelopeForFrequency> newNotesWithEnvelopes) {
+                Map<Frequency, Wave> newNoteWaves = amplitudeCalculator.reuseOrCreateNewWaves(newNotes, sampleRate);
 
-                    Map<Frequency, Wave> newNoteWaves = amplitudeCalculator.reuseOrCreateNewWaves(newNotes, sampleRate);
-
-                    long endingSampleCount = envelope.getEndingSampleCount();
-                    volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
-                    amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, newNoteWaves);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                long endingSampleCount = envelope.getEndingSampleCount();
+                volumeCalculator.addNewEnvelopes(sampleCount, endingSampleCount, newNotesWithEnvelopes);
+                amplitudeCalculator.addNewWaves(sampleCount, endingSampleCount, newNotes, newNoteWaves);
             }
 
             private VolumeAmplitudeState mix(Long sampleCount) {
                 try {
                     TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = timestampedNewNotesWithEnvelopeInputPort.consume();
+                    Collection<EnvelopeForFrequency> newNotesWithEnvelopes = envelopeDistributorInputPort.consume();
+
                     DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                     Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
 
-                    addNewNotes(sampleCount, envelope, newNotes);
+                    addNewNotes(sampleCount, envelope, newNotes, newNotesWithEnvelopes);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
