@@ -21,6 +21,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
     public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new PipeCallable<>() {
+            private BoundedBuffer<Pulse> inputBuffer;
             private InputPort<TimestampedNewNotesWithEnvelope> timestampedNewNotesWithEnvelopeInputPort;
 
             private InputPort<Collection<EnvelopeForFrequency>> envelopeDistributorInputPort;
@@ -32,9 +33,14 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
             @Override
             public BoundedBuffer<VolumeAmplitudeState> call(BoundedBuffer<Pulse> inputBuffer) {
+                this.inputBuffer = inputBuffer;
                 LinkedList<SimpleBuffer<Long>> inputBroadcast =
                     new LinkedList<>(
                         inputBuffer
+                        .performMethod(input -> {
+//                            precalculateInBackground();
+                            return input;
+                        })
                         .performMethod(
                             Counter.build(), "count samples")
                         .broadcast(2, "mixer - sample count"));
@@ -81,7 +87,7 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
             }
 
             private void precalculateInBackground() {
-                while (timestampedNewNotesWithEnvelopeInputPort.isEmpty()) {
+                while (inputBuffer.isEmpty()) {
                     try {
                         Long futureSampleCount = volumeCalculator.unfinishedEnvelopeSlices.keySet().iterator().next();
 
@@ -91,6 +97,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         amplitudeCalculator.finishedAmplitudeSlices.put(futureSampleCount, volumeAmplitudeState.getValue());
                     } catch (NoSuchElementException e) {
                         break;
+                    }
+                    catch (NullPointerException ignored){
+                        //Before the volume calculator and amplitude calculator have been initialized,
+                        //we throw a NullPointerException.
                     }
                 }
             }
@@ -115,8 +125,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
             private VolumeAmplitudeState mix(Long sampleCount) {
                 SimpleImmutableEntry<VolumeState, AmplitudeState> volumeAmplitudeState = calculateVolumeAmplitude(sampleCount);
-
-                //            precalculateInBackground();
 
                 return new VolumeAmplitudeState(volumeAmplitudeState.getKey(), volumeAmplitudeState.getValue());
             }
