@@ -2,7 +2,6 @@ package mixer;
 
 import component.Counter;
 import component.Pulse;
-import component.Unpairer;
 import component.buffer.*;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
@@ -130,18 +129,24 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                         synchronized (unfinishedSlicesWaves) {
                             currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(futureSampleCount);
                         }
-                        VolumeAmplitudeState finishedSlice = calculateVolumeAmplitude(futureSampleCount, currentUnfinishedSlice, currentUnfinishedSliceWaves, finishedVolumeSlices.remove(futureSampleCount), finishedAmplitudeSlices.remove(futureSampleCount));
-                        finishedVolumeSlices.put(futureSampleCount, finishedSlice.toVolumeState());
-                        finishedAmplitudeSlices.put(futureSampleCount, finishedSlice.toAmplitudeState());
+
+                        try {
+                            sampleCountOutputPort.produce(futureSampleCount);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        VolumeState finishedVolumeSlice = calculateVolume(currentUnfinishedSlice, finishedVolumeSlices.remove(futureSampleCount));
+                        AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedSliceWaves, finishedAmplitudeSlices.remove(futureSampleCount));
+                        finishedVolumeSlices.put(futureSampleCount, finishedVolumeSlice);
+                        finishedAmplitudeSlices.put(futureSampleCount, finishedAmplitudeSlice);
                     } catch (NoSuchElementException e) {
                         break;
                     }
                 }
             }
 
-            private VolumeAmplitudeState calculateVolumeAmplitude(long sampleCount, Collection<EnvelopeForFrequency> currentUnfinishedSlice, Map<Frequency, Wave> currentUnfinishedSliceWaves, VolumeState oldFinishedVolumeSlice, AmplitudeState oldFinishedAmplitudeSlice) {
+            private VolumeState calculateVolume(Collection<EnvelopeForFrequency> currentUnfinishedSlice, VolumeState oldFinishedVolumeSlice) {
                 try {
-                    sampleCountOutputPort.produce(sampleCount);
 
                     try {
                         groupEnvelopesByFrequencyOutputPort.produce(currentUnfinishedSlice);
@@ -150,31 +155,41 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     }
 
                     try {
-                        waveOutputPort.produce(currentUnfinishedSliceWaves);
-                    } catch (NullPointerException e) {
-                        waveOutputPort.produce(new HashMap<>());
-                    }
-
-                    try {
                         oldVolumeStateOutputPort.produce(oldFinishedVolumeSlice);
                     } catch (NullPointerException e) {
                         oldVolumeStateOutputPort.produce(new VolumeState(new HashMap<>()));
                     }
-                    try {
-                        oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
-                    } catch (NullPointerException e) {
-                        oldAmplitudeStateOutputPort.produce(new AmplitudeState(new HashMap<>()));
-                    }
 
-                    VolumeAmplitudeState result = new VolumeAmplitudeState(newVolumeStateInputPort.consume(), newAmplitudeStateInputPort.consume());
-
-                    return result;
+                    return newVolumeStateInputPort.consume();
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 return null;
             }
+
+            private AmplitudeState calculateAmplitude(Map<Frequency, Wave> currentUnfinishedSliceWaves, AmplitudeState oldFinishedAmplitudeSlice) {
+                try {
+                    try {
+                        waveOutputPort.produce(currentUnfinishedSliceWaves);
+                    } catch (NullPointerException e) {
+                        waveOutputPort.produce(new HashMap<>());
+                    }
+
+                    try {
+                        oldAmplitudeStateOutputPort.produce(oldFinishedAmplitudeSlice);
+                    } catch (NullPointerException e) {
+                        oldAmplitudeStateOutputPort.produce(new AmplitudeState(new HashMap<>()));
+                    }
+
+                    return newAmplitudeStateInputPort.consume();
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
             //todo there might be duplicate frequencies added at a timestamp. Group by frequency as well.
             //todo combine unfinishedSlice and unfinishedSliceWaves into one object
 
@@ -263,7 +278,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                     synchronized (unfinishedSlicesWaves) {
                         currentUnfinishedSliceWaves = unfinishedSlicesWaves.remove(sampleCount);
                     }
-                    VolumeAmplitudeState result = calculateVolumeAmplitude(sampleCount, currentFinishedSlice, currentUnfinishedSliceWaves, finishedVolumeSlices.remove(sampleCount), finishedAmplitudeSlices.remove(sampleCount));
+                    sampleCountOutputPort.produce(sampleCount);
+                    VolumeState finishedVolumeSlice = calculateVolume(currentFinishedSlice, finishedVolumeSlices.remove(sampleCount));
+                    AmplitudeState finishedAmplitudeSlice = calculateAmplitude(currentUnfinishedSliceWaves, finishedAmplitudeSlices.remove(sampleCount));
+                    VolumeAmplitudeState result = new VolumeAmplitudeState(finishedVolumeSlice, finishedAmplitudeSlice);
 
     //            precalculateInBackground();
 
@@ -341,33 +359,6 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
         return newAmplitudeCollections;
     }
 
-
-    private static Map<Frequency, Collection<VolumeAmplitude>> calculateValuesPerFrequency(EnvelopeWaveSlice envelopeWaveSlice) {
-        long sampleCount = envelopeWaveSlice.getSampleCount();
-        Map<Frequency, Collection<Envelope>> envelopesPerFrequency = envelopeWaveSlice.getEnvelopesPerFrequency();
-        Map<Frequency, Wave> wavesPerFrequency = envelopeWaveSlice.getWavesPerFrequency();
-
-        Map<Frequency, Collection<VolumeAmplitude>> newVolumeAmplitudeCollections = new HashMap<>();
-        for (Frequency frequency : envelopesPerFrequency.keySet()) {
-            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
-            Wave wave = wavesPerFrequency.get(frequency);
-            try {
-                double amplitude = wave.getAmplitude(sampleCount);
-
-                Collection<VolumeAmplitude> volumeAmplitudes = new LinkedList<>();
-                for (Envelope envelope : envelopes) {
-                    double volume = envelope.getVolume(sampleCount);
-                    VolumeAmplitude volumeAmplitude = new VolumeAmplitude(volume, amplitude);
-                    volumeAmplitudes.add(volumeAmplitude);
-                }
-
-                newVolumeAmplitudeCollections.put(frequency, volumeAmplitudes);
-            }
-            catch(NullPointerException ignored){
-            }
-        }
-        return newVolumeAmplitudeCollections;
-    }
 
     private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
         Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(w -> w.getFrequency()));
