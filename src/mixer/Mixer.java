@@ -21,22 +21,23 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
 
     public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<VolumeAmplitudeState>> buildPipe(BoundedBuffer<Frequency> noteInputBuffer, SampleRate sampleRate){
         return new PipeCallable<>() {
-            private Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
-            private final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices;
-            private Map<Long, VolumeState> finishedVolumeSlices;
-            private Map<Long, AmplitudeState> finishedAmplitudeSlices;
-
             private InputPort<TimestampedNewNotesWithEnvelope> timestampedNewNotesWithEnvelopeInputPort;
 
             private OutputPort<SimpleImmutableEntry<DeterministicEnvelope, Collection<Frequency>>> addNewNotesOutputPort;
             private InputPort<Collection<EnvelopeForFrequency>> addNewNotesInputPort;
 
             private OutputPort<Long> sampleCountOutputPort;
+
+            private Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
+            private Map<Long, VolumeState> finishedVolumeSlices;
             private OutputPort<Collection<EnvelopeForFrequency>> groupEnvelopesByFrequencyOutputPort;
-            private OutputPort<Map<Frequency, Wave>> waveOutputPort;
             private OutputPort<VolumeState> oldVolumeStateOutputPort;
-            private OutputPort<AmplitudeState> oldAmplitudeStateOutputPort;
             private InputPort<VolumeState> newVolumeStateInputPort;
+
+            private final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices;
+            private Map<Long, AmplitudeState> finishedAmplitudeSlices;
+            private OutputPort<Map<Frequency, Wave>> waveOutputPort;
+            private OutputPort<AmplitudeState> oldAmplitudeStateOutputPort;
             private InputPort<AmplitudeState> newAmplitudeStateInputPort;
 
             {
@@ -71,20 +72,12 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                             .toSequential(), "addNewNotes")
                     .createInputPort();
 
-                BoundedBuffer<VolumeAmplitudeState> outputBuffer =
-                        inputBroadcast.poll()
-                        .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
-                                this::mix)
-                        .toSequential(), "mixer");
 
                 sampleCountOutputPort = new OutputPort<>("mixer - sample count");
-                groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
-                waveOutputPort = new OutputPort<>("mixer - wave output");
-                oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
-                oldAmplitudeStateOutputPort = new OutputPort<>("mixer - old amplitude state");
-
                 LinkedList<SimpleBuffer<Long>> sampleBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(2));
 
+                groupEnvelopesByFrequencyOutputPort = new OutputPort<>("mixer - group envelopes by frequency");
+                oldVolumeStateOutputPort = new OutputPort<>("mixer - old volume state");
                 newVolumeStateInputPort =
                         oldVolumeStateOutputPort.getBuffer()
                         .pairWith(
@@ -103,6 +96,8 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                 .add(input1.getValue()))
                 .createInputPort();
 
+                waveOutputPort = new OutputPort<>("mixer - wave output");
+                oldAmplitudeStateOutputPort = new OutputPort<>("mixer - old amplitude state");
                 newAmplitudeStateInputPort =
                         oldAmplitudeStateOutputPort.getBuffer()
                         .pairWith(
@@ -117,7 +112,10 @@ public class Mixer extends MethodPipeComponent<Pulse, VolumeAmplitudeState> {
                                 .add(input1.getValue()))
                     .createInputPort();
 
-                return outputBuffer;
+                return inputBroadcast.poll()
+                        .performMethod(((PipeCallable<Long, VolumeAmplitudeState>)
+                                this::mix)
+                                .toSequential(), "mixer");
             }
 
             private void precalculateInBackground() {
