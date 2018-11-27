@@ -66,10 +66,6 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
         private final InputPort<ImmutableLinkedList<Buckets>> historyInputPort;
         private final InputPort<Buckets> timeAverageInputPort;
 
-        private final OutputPort<Buckets> subtractionInput1;
-        private final OutputPort<Buckets> subtractionInput2;
-        private final InputPort<Buckets> subtractOutput;
-
         private final OutputPort<ImmutableLinkedList<Buckets>> historyOutputBufferPort;
         private final OutputPort<Buckets> timeAverageOutputOutputPort;
 
@@ -77,19 +73,6 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
             this.size = size;
             historyInputPort = historyBuffer.createInputPort();
             timeAverageInputPort = timeAverageBuffer.createInputPort();
-
-            subtractionInput1 = new OutputPort<>("bucket history - subtraction term 1");
-            subtractionInput2 = new OutputPort<>("bucket history - subtraction term 2");
-
-            subtractOutput =
-                subtractionInput1.getBuffer()
-                .pairWith(
-                        subtractionInput2.getBuffer())
-                .performMethod(
-                    input1 ->
-                        input1.getKey()
-                        .subtract(input1.getValue()), "precalculated bucket history component - subtract")
-                .createInputPort();
 
             historyOutputBufferPort = historyOutputBuffer.createOutputPort();
             timeAverageOutputOutputPort = timeAverageOutputBuffer.createOutputPort();
@@ -105,11 +88,7 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
                     AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = history.poll();
                     history = poll.getKey();
                     Buckets removed = poll.getValue();
-
-                    subtractionInput1.produce(timeAverage);
-                    subtractionInput2.produce(removed);
-
-                    timeAverage = subtractOutput.consume();
+                    timeAverage = timeAverage.subtract(removed);
                 }
 
                 historyOutputBufferPort.produce(history);
@@ -121,12 +100,12 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
 
         @Override
         protected Collection<BoundedBuffer> getInputBuffers() {
-            return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer(), subtractOutput.getBuffer());
+            return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer());
         }
 
         @Override
         protected Collection<BoundedBuffer> getOutputBuffers() {
-            return Arrays.asList(subtractionInput1.getBuffer(), subtractionInput2.getBuffer(), historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
+            return Arrays.asList(historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
         }
     }
 }
