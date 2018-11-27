@@ -33,10 +33,10 @@ public class Mixer {
 
                 //Precalculate
                 inputBuffer
-                        .performMethod(input1 -> {
+                        .performMethod(((PipeCallable<Pulse, Pulse>) input1 -> {
 //                            precalculateInBackground();
                             return input1;
-                        })
+                        }).toSequential())
                         //Determine whether to add new notes or mix
                         .performMethod(Counter.build(), "count samples")
                         .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
@@ -162,9 +162,10 @@ public class Mixer {
                                             .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) Mixer::sumValuesPerFrequency).toSequential())
                                             .performMethod(((PipeCallable<Map<Frequency, Double>, VolumeState>) VolumeState::new).toSequential()))
                             .performMethod(
-                                    input1 ->
+                                    ((PipeCallable<SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
                                             input1.getKey()
-                                                    .add(input1.getValue()))
+                                            .add(input1.getValue()))
+                                    .toSequential())
                             .createInputPort();
         }
 
@@ -271,9 +272,10 @@ public class Mixer {
                                             .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Wave>>, Map<Frequency, Double>>) input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue())).toSequential())
                                             .performMethod(((PipeCallable<Map<Frequency, Double>, AmplitudeState>) AmplitudeState::new).toSequential()))
                             .performMethod(
-                                    input1 ->
+                                    ((PipeCallable<SimpleImmutableEntry<AmplitudeState, AmplitudeState>, AmplitudeState>) input1 ->
                                             input1.getKey()
                                             .add(input1.getValue()))
+                                    .toSequential())
                             .createInputPort();
 
         }
