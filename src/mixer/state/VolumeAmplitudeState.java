@@ -69,4 +69,10 @@ public class VolumeAmplitudeState {
         return new AmplitudeState(amplitudeMap);
     }
 
+    public Double toDouble() {
+        return volumeAmplitudes.values().stream()
+                .map(VolumeAmplitude::getValue)
+                .reduce(0., Double::sum);
+    }
+
 }

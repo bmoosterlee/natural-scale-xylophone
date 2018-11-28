@@ -42,7 +42,7 @@ public class SoundEnvironment extends MethodInputComponent<VolumeAmplitudeState>
                 sourceDataLine.start();
 
                 inputBuffer
-                .performMethod(VolumeAmplitudeStateToSignal.build(), "volume amplitude to signal")
+                .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
                 .performMethod(((PipeCallable<Double, Byte>)
                         this::fitAmplitude)
                 .toSequential(), "fit amplitude")
