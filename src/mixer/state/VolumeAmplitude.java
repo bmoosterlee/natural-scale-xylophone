@@ -12,14 +12,9 @@ public class VolumeAmplitude {
     }
 
     public static VolumeAmplitude sum(Collection<VolumeAmplitude> volumeAmplitudeCollection) {
-        VolumeAmplitude total = null;
+        VolumeAmplitude total = new VolumeAmplitude(0., 0.);
         for(VolumeAmplitude element : volumeAmplitudeCollection){
-            try {
-                total = total.add(element.volume);
-            }
-            catch(NullPointerException e){
-                total = element;
-            }
+            total = total.add(element.volume);
         }
         return total;
     }
