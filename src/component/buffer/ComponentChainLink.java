@@ -42,10 +42,8 @@ public abstract class ComponentChainLink {
     protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
 
     void sequentialAwareTick() {
-        try{
+        if(previousSequentialComponentChainLink!=null) {
             previousSequentialComponentChainLink.sequentialAwareTick();
-        }
-        catch(NullPointerException ignored){
         }
 
         componentTick();
@@ -79,12 +77,10 @@ public abstract class ComponentChainLink {
     protected abstract <K, V> AbstractComponent<K, V> parallelWrap();
 
     void parallelisationAwareTick() {
-        try{
+        if(previousComponentChainLink!=null){
             if(previousComponentChainLink.isParallelisable()) {
                 previousComponentChainLink.parallelisationAwareTick();
             }
-        }
-        catch(NullPointerException ignored){
         }
 
         componentTick();
