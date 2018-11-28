@@ -14,16 +14,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
     }
 
     @Override
-    protected AbstractComponent parallelWrap() {
-        return new AbstractOutputComponent<>(getOutputPort()) {
-            @Override
-            protected void tick() {
-                parallelisationAwareTick();
-            }
-        };
-    }
-
-    @Override
     Boolean isParallelisable() {
         return methodOutputComponent.isParallelisable();
     }

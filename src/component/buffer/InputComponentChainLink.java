@@ -28,19 +28,8 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
         return methodInputComponent.isParallelisable();
     }
 
-    @Override
-    protected AbstractComponent parallelWrap() {
-        return new AbstractInputComponent<>(getParallelisationAwareFirstInputPort()) {
-            @Override
-            protected void tick() {
-                parallelisationAwareTick();
-            }
-        };
-    }
-
     static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
         MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
-        tryToBreakParallelChain(inputBuffer, component);
         new InputComponentChainLink<>(inputBuffer.previousComponent, component).breakChain();
     }
 

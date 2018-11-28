@@ -32,20 +32,9 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         return methodPipeComponent.isParallelisable();
     }
 
-    @Override
-    protected AbstractComponent parallelWrap() {
-        return new AbstractPipeComponent<>(getParallelisationAwareFirstInputPort(), getOutputPort()) {
-            @Override
-            protected void tick() {
-                parallelisationAwareTick();
-            }
-        };
-    }
-
     static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);
-        tryToBreakParallelChain(inputBuffer, component);
         return getBufferChainLink(inputBuffer, outputBuffer, component);
     }
 
@@ -70,7 +59,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
     static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
         MethodPipeComponent<K, K> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input);
-        tryToBreakParallelChain(inputBuffer, component);
         return getBufferChainLink(inputBuffer, outputBuffer, component);
     }
 
