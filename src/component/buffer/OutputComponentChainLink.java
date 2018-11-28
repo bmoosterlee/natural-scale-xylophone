@@ -38,22 +38,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
         return methodOutputComponent.output;
     }
 
-    @Override
-    protected AbstractOutputComponent sequentialWrap() {
-        return new AbstractOutputComponent<>(getOutputPort()) {
-
-            @Override
-            protected void tick() {
-                sequentialAwareTick();
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
-        };
-    }
-
     public static <V> BufferChainLink<V> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodOutputComponent<V> component = new MethodOutputComponent<>(outputBuffer, method);

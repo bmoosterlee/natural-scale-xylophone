@@ -38,22 +38,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink {
         };
     }
 
-    @Override
-    protected AbstractInputComponent sequentialWrap() {
-        return new AbstractInputComponent<>(getSequentialAwareFirstInputPort()) {
-
-            @Override
-            protected void tick() {
-                sequentialAwareTick();
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
-        };
-    }
-
     static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
         MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
         tryToBreakParallelChain(inputBuffer, component);

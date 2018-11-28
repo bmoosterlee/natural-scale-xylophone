@@ -42,22 +42,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink {
         };
     }
 
-    @Override
-    protected AbstractPipeComponent sequentialWrap() {
-        return new AbstractPipeComponent<>(getSequentialAwareFirstInputPort(), getOutputPort()) {
-
-            @Override
-            protected void tick() {
-                sequentialAwareTick();
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
-        };
-    }
-
     static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);

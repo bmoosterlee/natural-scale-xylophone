@@ -1,26 +1,12 @@
 package component.buffer;
 
+import java.util.LinkedList;
+
 public abstract class ComponentChainLink {
     private final ComponentChainLink previousComponentChainLink;
-    private final ComponentChainLink previousSequentialComponentChainLink;
 
     ComponentChainLink(ComponentChainLink previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
-
-        ComponentChainLink previousSequentialComponentChainLink1;
-        try {
-            if (!previousComponentChainLink.isParallelisable()) {
-                previousSequentialComponentChainLink1 = previousComponentChainLink;
-            }
-            else{
-                previousSequentialComponentChainLink1 = previousComponentChainLink.previousSequentialComponentChainLink;
-            }
-        }
-        catch(NullPointerException ignored){
-            previousSequentialComponentChainLink1 = null;
-        }
-
-        previousSequentialComponentChainLink = previousSequentialComponentChainLink1;
     }
 
     protected abstract void componentTick();
@@ -31,35 +17,22 @@ public abstract class ComponentChainLink {
     }
 
     private void tryToBreakSequentialChain() {
-        if(!isParallelisable()){
-            new TickRunningStrategy(sequentialWrap());
-        }
-        else if(previousSequentialComponentChainLink!=null) {
-            new TickRunningStrategy(previousSequentialComponentChainLink.sequentialWrap());
+        LinkedList<ComponentChainLink> sequentialChainLinks = listChainLinksByParallelisability(false);
+        if(!sequentialChainLinks.isEmpty()){
+            new TickRunningStrategy(new SequentialChain<>(sequentialChainLinks));
         }
     }
 
-    protected abstract <K, V> AbstractComponent<K, V> sequentialWrap();
-
-    void sequentialAwareTick() {
-        if(previousSequentialComponentChainLink!=null) {
-            previousSequentialComponentChainLink.sequentialAwareTick();
-        }
-
-        componentTick();
-    }
-
-    InputPort getSequentialAwareFirstInputPort() {
-        try{
-            InputPort sequentialAwareFirstInputPort = previousSequentialComponentChainLink.getSequentialAwareFirstInputPort();
-            if(sequentialAwareFirstInputPort!=null) {
-                return sequentialAwareFirstInputPort;
+    private LinkedList<ComponentChainLink> listChainLinksByParallelisability(boolean parallelisability) {
+        LinkedList<ComponentChainLink> accumulator = new LinkedList<>();
+        ComponentChainLink index = this;
+        while(index!=null){
+            if(index.isParallelisable() == parallelisability) {
+                accumulator.addFirst(index);
             }
+            index = index.previousComponentChainLink;
         }
-        catch(NullPointerException ignored) {
-        }
-
-        return getInputPort();
+        return accumulator;
     }
 
     static <K, V> void tryToBreakParallelChain(BufferChainLink<K> previousComponentOutputBuffer, AbstractComponent<K, V> newComponent) {
