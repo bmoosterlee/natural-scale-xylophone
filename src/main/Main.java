@@ -1,10 +1,8 @@
 package main;
 
+import component.Pulse;
 import component.Separator;
-import component.buffer.BoundedBuffer;
-import component.buffer.OutputComponentChainLink;
-import component.buffer.OutputPort;
-import component.buffer.SimpleBuffer;
+import component.buffer.*;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
@@ -50,12 +48,11 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
+        SimpleBuffer<Pulse> mixerPulserRelay = new SimpleBuffer<>(1, "mixer - pulser");
         SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
-                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
-                        sampleLookahead,
-                        "sample ticker - output"),
+                mixerPulserRelay,
                 newNoteBuffer,
                 sampleRate);
 
@@ -110,6 +107,10 @@ class Main {
             pianolaOutputBuffer,
             pianolaPattern,
             inaudibleFrequencyMargin);
+        OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
+                sampleLookahead,
+                "sample ticker - output")
+                .relayTo(mixerPulserRelay);
 
         playTestTone(newNoteBuffer, spectrumWindow);
     }
