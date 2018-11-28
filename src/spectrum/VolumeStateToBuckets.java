@@ -1,33 +1,17 @@
 package spectrum;
 
-import component.buffer.*;
 import frequency.Frequency;
+import mixer.state.VolumeState;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Bucket;
 import spectrum.buckets.Buckets;
-import mixer.state.VolumeState;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class VolumeStateToBuckets extends MethodPipeComponent<VolumeState, Buckets> {
-
-    public VolumeStateToBuckets(SimpleBuffer<VolumeState> volumeStateBuffer, SimpleBuffer<Buckets> notesBucketsBuffer, SpectrumWindow spectrumWindow) {
-        super(volumeStateBuffer, notesBucketsBuffer, build(spectrumWindow));
-    }
-
-    public static PipeCallable<VolumeState, Buckets> build(SpectrumWindow spectrumWindow){
-        return new PipeCallable<>() {
-            SpectrumWindow spectrumWindow1 = spectrumWindow;
-
-            @Override
-            public Buckets call(VolumeState input) {
-                return toBuckets(input, spectrumWindow1);
-            }
-        };
-    }
+public class VolumeStateToBuckets {
 
     public static Buckets toBuckets(VolumeState volumeState, SpectrumWindow spectrumWindow){
         Map<Frequency, Double> volumes = volumeState.volumes;

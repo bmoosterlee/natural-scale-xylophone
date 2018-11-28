@@ -1,19 +1,19 @@
 package spectrum;
 
-import component.*;
+import component.Pulse;
+import component.TimedConsumer;
 import component.buffer.*;
 import frequency.Frequency;
+import mixer.state.VolumeState;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BuffersToBuckets;
 import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
-import mixer.state.VolumeAmplitudeState;
-import mixer.state.VolumeState;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.*;
 
 public class SpectrumBuilder {
 
@@ -27,7 +27,7 @@ public class SpectrumBuilder {
 
         BoundedBuffer<Buckets> noteOutputBuffer =
             volumeBroadcast.poll()
-            .performMethod(VolumeStateToBuckets.build(spectrumWindow), "build volume state to buckets");
+            .performMethod(input -> VolumeStateToBuckets.toBuckets(input, spectrumWindow), "build volume state to buckets");
 
         InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorInput =
             volumeBroadcast.poll()
