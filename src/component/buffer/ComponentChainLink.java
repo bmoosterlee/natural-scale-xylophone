@@ -19,7 +19,7 @@ public abstract class ComponentChainLink {
     private void tryToBreakSequentialChain() {
         LinkedList<ComponentChainLink> sequentialChainLinks = listChainLinksByParallelisability(false);
         if(!sequentialChainLinks.isEmpty()){
-            new TickRunningStrategy(new SequentialChain<>(sequentialChainLinks));
+            new TickRunningStrategy(new SequentialChain<>(sequentialChainLinks), sequentialChainLinks.size());
         }
     }
 

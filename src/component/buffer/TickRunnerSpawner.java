@@ -9,8 +9,11 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
     private final LinkedList<SimpleTickRunner> liveRunners;
     private final AbstractComponent component;
     private final int minimumThreadCount;
+    private final int maxThreadCount;
 
-    public TickRunnerSpawner(AbstractComponent<K, V> component){
+    public TickRunnerSpawner(AbstractComponent<K, V> component, int maxThreadCount){
+        this.maxThreadCount = maxThreadCount;
+
         this.component = component;
         this.inputBuffers = component.getInputBuffers();
         this.outputBuffers = component.getOutputBuffers();
@@ -21,30 +24,39 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
         add();
     }
 
+    public TickRunnerSpawner(AbstractComponent<K, V> component){
+        this(component, Integer.MAX_VALUE);
+    }
+
     @Override
     protected void tick() {
         if(!anyClog(outputBuffers)){
             if(anyClog(inputBuffers)) {
                 add();
             }
-        }
-        else {
-            if (allEmpty(inputBuffers)) {
+            else{
                 tryRemove();
             }
         }
+        else {
+//            if (allEmpty(inputBuffers)) {
+                tryRemove();
+//            }
+        }
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     private void add() {
-        SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
-        firstTickRunner.start();
-        liveRunners.add(firstTickRunner);
+        if(liveRunners.size() < maxThreadCount) {
+            SimpleTickRunner firstTickRunner = new SimpleTickRunner(component);
+            firstTickRunner.start();
+            liveRunners.add(firstTickRunner);
+        }
     }
 
     private void tryRemove() {
