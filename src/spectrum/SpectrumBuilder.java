@@ -27,7 +27,7 @@ public class SpectrumBuilder {
 
         BoundedBuffer<Buckets> noteOutputBuffer =
             volumeBroadcast.poll()
-            .performMethod(input -> VolumeStateToBuckets.toBuckets(input, spectrumWindow), "build volume state to buckets");
+            .performMethod(input -> new Buckets(input, spectrumWindow), "build volume state to buckets");
 
         InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorInput =
             volumeBroadcast.poll()
