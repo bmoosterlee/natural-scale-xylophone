@@ -110,8 +110,18 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     }
 
     @Override
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other, String name){
+        return breakChain().pairWith(other, name);
+    }
+
+    @Override
     public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
         return breakChain().pairWith(other);
+    }
+
+    @Override
+    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other, String name){
+        return breakChain().pairWith(other, name);
     }
 
     @Override

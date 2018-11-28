@@ -39,7 +39,11 @@ public interface BoundedBuffer<T> {
 
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other);
 
+    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other, String name);
+
     <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
+
+    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other, String name);
 
     SimpleBuffer<?> relayTo(SimpleBuffer<? super T> outputBuffer);
 

@@ -30,7 +30,11 @@ public class Pairer<K, V> extends AbstractComponent {
     }
 
     public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>> pair(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2){
-        SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer = new SimpleBuffer<>(1, "pair");
+        return pair(inputBuffer1, inputBuffer2, "pair");
+    }
+
+    public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>> pair(BoundedBuffer<K> inputBuffer1, BoundedBuffer<V> inputBuffer2, String name){
+        SimpleBuffer<SimpleImmutableEntry<K, V>> outputBuffer = new SimpleBuffer<>(1, name);
         new TickRunningStrategy(new Pairer<>(inputBuffer1, inputBuffer2, outputBuffer));
         return outputBuffer;
     }
