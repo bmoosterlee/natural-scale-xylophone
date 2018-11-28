@@ -26,7 +26,7 @@ public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFreque
                 return sampleCountBroadcast.poll()
                         .pairWith(
                                 sampleCountBroadcast.poll()
-                                        .performMethod(input1 -> new Pulse(), "note time stamper - to pulse")
+                                        .performMethod(((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(), "note time stamper - to pulse")
                                         .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
                         .performMethod(
                                 ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
