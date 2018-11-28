@@ -8,6 +8,9 @@ public class VolumeAmplitude {
 
     public VolumeAmplitude(Double volume, Double amplitude) {
         this.volume = volume;
+        if(amplitude==null){
+            throw new NullPointerException();
+        }
         this.amplitude = amplitude;
     }
 

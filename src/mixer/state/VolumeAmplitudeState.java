@@ -15,14 +15,10 @@ public class VolumeAmplitudeState {
     public VolumeAmplitudeState(VolumeState volumeState, AmplitudeState amplitudeState) {
         volumeAmplitudes = new HashMap<>();
         for(Frequency frequency : volumeState.volumes.keySet()){
-            Double amplitude = amplitudeState.amplitudes.get(frequency);
-            if(amplitude==null){
-                throw new NullPointerException();
-            }
             volumeAmplitudes.put(frequency,
                     new VolumeAmplitude(
                             volumeState.volumes.get(frequency),
-                            amplitude));
+                            amplitudeState.amplitudes.get(frequency)));
         }
     }
 
