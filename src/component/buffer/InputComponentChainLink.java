@@ -14,7 +14,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
         this(previousComponentChainLink, method, inputBuffer.getBuffer());
     }
 
-
     @Override
     Boolean isParallelisable() {
         return method.isParallelisable();
