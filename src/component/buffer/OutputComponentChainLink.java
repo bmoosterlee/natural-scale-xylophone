@@ -43,7 +43,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     }
 
     @Override
-    protected <W> void wrap(InputCallable<V> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         if(!isParallelisable()) {
             Callable<Void> sequentialCallChain = new Callable<>() {
                 @Override

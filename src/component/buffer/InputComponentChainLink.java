@@ -36,10 +36,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
                         }
                     }
                 };
-                previousComponentChainLink.wrap(sequentialMethod, inputBuffer, 1);
+                previousComponentChainLink.wrap(sequentialMethod, 1);
             } else {
                 InputCallable<K> parallelMethod = method;
-                previousComponentChainLink.wrap(parallelMethod, inputBuffer, 1);
+                previousComponentChainLink.wrap(parallelMethod, 1);
             }
         }
         else{
@@ -57,7 +57,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     @Override
-    protected <W> void wrap(InputCallable<Void> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<Void> nextMethod, int chainLinks) {
 
     }
 

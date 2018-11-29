@@ -1,8 +1,5 @@
 package component.buffer;
 
-import java.util.Collection;
-import java.util.Collections;
-
 public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     private final PipeCallable<K, V> method;
     private final SimpleBuffer<K> inputBuffer;
@@ -99,7 +96,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected <W> void wrap(InputCallable<V> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
             InputCallable<K> sequentialCallChain = input -> {
@@ -109,7 +106,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
             };
             if (previousComponentChainLink != null){
                 if (!previousComponentChainLink.isParallelisable()) {
-                    previousComponentChainLink.wrap(sequentialCallChain, outputBuffer, newChainLinkCount);
+                    previousComponentChainLink.wrap(sequentialCallChain, newChainLinkCount);
                 } else {
                     startChainedSequentialComponent(sequentialCallChain, newChainLinkCount);
                     previousComponentChainLink.wrap();
@@ -122,7 +119,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
             InputCallable<K> parallelCallChain = input -> nextMethodChain.call(method.call(input));
             if(previousComponentChainLink!=null) {
                 if (previousComponentChainLink.isParallelisable()) {
-                    previousComponentChainLink.wrap(parallelCallChain, outputBuffer, newChainLinkCount);
+                    previousComponentChainLink.wrap(parallelCallChain, newChainLinkCount);
                 } else {
                     startChainedParallelComponent(parallelCallChain);
                     previousComponentChainLink.wrap();
