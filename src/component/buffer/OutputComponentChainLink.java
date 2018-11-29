@@ -20,30 +20,30 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     }
 
     @Override
-    protected void wrap(PipeCallable<V, ?> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         if(!isParallelisable()) {
-            OutputCallable<?> sequentialCallChain = () -> {
+            OutputCallable<W> sequentialCallChain = () -> {
                 synchronized (this) {
                     return nextMethodChain.call(method.call());
                 }
             };
             startChainedSequentialComponent(sequentialCallChain, outputBuffer, chainLinks);
         } else {
-            OutputCallable<?> parallelCallChain = () -> nextMethodChain.call(method.call());
+            OutputCallable<W> parallelCallChain = () -> nextMethodChain.call(method.call());
             startChainedParallelComponent(parallelCallChain, outputBuffer);
         }
     }
 
-    private void startChainedSequentialComponent(OutputCallable<?> sequentialCallChain, BoundedBuffer outputBuffer, int chainLinks) {
+    private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, sequentialCallChain), chainLinks + 1);
     }
 
-    private void startChainedParallelComponent(OutputCallable<?> parallelCallChain, BoundedBuffer outputBuffer) {
+    private <W> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
         new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, parallelCallChain));
     }
 
     @Override
-    protected void wrap(InputCallable<V> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<V> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         if(!isParallelisable()) {
             Callable<Void> sequentialCallChain = new Callable<>() {
                 @Override
@@ -74,7 +74,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         new TickRunningStrategy(createShutInComponent(parallelCallChain));
     }
 
-    private AbstractComponent<V, Object> createShutInComponent(Callable<Void> callChain) {
+    private AbstractComponent<V, Void> createShutInComponent(Callable<Void> callChain) {
         return new AbstractComponent<>() {
             @Override
             public Collection<BoundedBuffer<V>> getInputBuffers() {
@@ -82,7 +82,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
             }
 
             @Override
-            public Collection<BoundedBuffer<Object>> getOutputBuffers() {
+            public Collection<BoundedBuffer<Void>> getOutputBuffers() {
                 return Collections.emptyList();
             }
 

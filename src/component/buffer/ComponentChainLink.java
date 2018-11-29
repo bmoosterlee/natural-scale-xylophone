@@ -13,9 +13,9 @@ public abstract class ComponentChainLink<K, V> {
 
     protected abstract void wrap();
 
-    protected abstract void wrap(PipeCallable<V, ?> nextMethod, BoundedBuffer outputBuffer, int chainLinks);
+    protected abstract <W> void wrap(PipeCallable<V, W> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks);
 
-    protected abstract void wrap(InputCallable<V> nextMethod, BoundedBuffer outputBuffer, int chainLinks);
+    protected abstract <W> void wrap(InputCallable<V> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks);
 
     abstract Boolean isParallelisable();
 

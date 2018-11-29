@@ -19,7 +19,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         this(previousComponentChainLink, method, inputBuffer.getBuffer(), outputBuffer);
     }
 
-
     private PipeComponentChainLink(PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
         this(null, method, inputBuffer, outputBuffer);
     }
@@ -58,10 +57,10 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected void wrap(PipeCallable<V, ?> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
-            PipeCallable<K, Object> sequentialCallChain = input -> {
+            PipeCallable<K, W> sequentialCallChain = input -> {
                 synchronized (this) {
                     return nextMethodChain.call(method.call(input));
                 }
@@ -77,7 +76,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedSequentialComponent(sequentialCallChain, outputBuffer, newChainLinkCount);
             }
         } else {
-            PipeCallable<K, Object> parallelCallChain = input -> nextMethodChain.call(method.call(input));
+            PipeCallable<K, W> parallelCallChain = input -> nextMethodChain.call(method.call(input));
             if (previousComponentChainLink != null){
                 if (previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(parallelCallChain, outputBuffer, newChainLinkCount);
@@ -100,7 +99,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected void wrap(InputCallable<V> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<V> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
             InputCallable<K> sequentialCallChain = input -> {

@@ -52,12 +52,12 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     @Override
-    protected void wrap(PipeCallable<Void, ?> nextMethod, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(PipeCallable<Void, W> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks) {
 
     }
 
     @Override
-    protected void wrap(InputCallable<Void> nextMethod, BoundedBuffer outputBuffer, int chainLinks) {
+    protected <W> void wrap(InputCallable<Void> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks) {
 
     }
 
