@@ -34,14 +34,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         }
     }
 
-    private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
-        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, sequentialCallChain), chainLinks + 1);
-    }
-
-    private <W> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
-        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, parallelCallChain));
-    }
-
     @Override
     protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         if(!isParallelisable()) {
@@ -62,6 +54,14 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
             };
             startShutInParallelComponent(parallelCallChain);
         }
+    }
+
+    private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, sequentialCallChain), chainLinks + 1);
+    }
+
+    private <W> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
+        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, parallelCallChain));
     }
 
     private void startShutInSequentialComponent(Callable<Void> sequentialCallChain, int chainLinks) {

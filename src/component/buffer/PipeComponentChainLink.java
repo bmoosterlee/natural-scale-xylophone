@@ -114,8 +114,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
             } else {
                 startChainedSequentialComponent(sequentialCallChain, newChainLinkCount);
             }
-        }
-        else{
+        } else {
             InputCallable<K> parallelCallChain = input -> nextMethodChain.call(method.call(input));
             if(previousComponentChainLink!=null) {
                 if (previousComponentChainLink.isParallelisable()) {

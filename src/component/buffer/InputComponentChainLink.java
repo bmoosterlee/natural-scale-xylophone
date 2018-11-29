@@ -26,19 +26,21 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
                 startAutonomousComponent();
                 previousComponentChainLink.wrap();
             }
-            else if (!isParallelisable()) {
-                InputCallable<K> sequentialCall = new InputCallable<>() {
-                    @Override
-                    public void call(K input) {
-                        synchronized (this) {
-                            method.call(input);
+            else {
+                InputCallable<K> call;
+                if (!isParallelisable()) {
+                    call = new InputCallable<>() {
+                        @Override
+                        public void call(K input) {
+                            synchronized (this) {
+                                method.call(input);
+                            }
                         }
-                    }
-                };
-                previousComponentChainLink.wrap(sequentialCall, 1);
-            } else {
-                InputCallable<K> parallelCall = method;
-                previousComponentChainLink.wrap(parallelCall, 1);
+                    };
+                } else {
+                    call = method;
+                }
+                previousComponentChainLink.wrap(call, 1);
             }
         }
         else{
