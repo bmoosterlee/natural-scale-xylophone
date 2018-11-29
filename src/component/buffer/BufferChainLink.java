@@ -138,4 +138,8 @@ public class BufferChainLink<T> implements BoundedBuffer<T> {
     public BufferChainLink<T> resize(int size) {
         return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
     }
+
+    SimpleBuffer<T> getBuffer(){
+        return buffer;
+    }
 }
