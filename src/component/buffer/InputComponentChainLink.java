@@ -1,17 +1,18 @@
 package component.buffer;
 
 public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
-    private final MethodInputComponent<K> methodInputComponent;
+    private final InputCallable<K> method;
+    private final BoundedBuffer<K> inputBuffer;
 
-    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, MethodInputComponent<K> methodInputComponent){
+    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, BoundedBuffer<K> inputBuffer){
         super(previousComponentChainLink);
-        this.methodInputComponent = methodInputComponent;
         this.method = method;
+        this.inputBuffer = inputBuffer;
     }
 
     @Override
     protected InputPort<K> getInputPort() {
-        return methodInputComponent.input;
+        return null;
     }
 
     @Override
@@ -21,48 +22,54 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
 
     @Override
     Boolean isParallelisable() {
-        return methodInputComponent.isParallelisable();
+        return method.isParallelisable();
     }
 
     @Override
     protected void wrap() {
-        if(!isParallelisable()) {
-            if(previousComponentChainLink!=null) {
-                if (!previousComponentChainLink.isParallelisable()) {
-                    InputCallable<K> sequentialMethod = new InputCallable<>() {
-                        @Override
-                        public void call(K input) {
-                            synchronized (this) {
-                                methodInputComponent.method.call(input);
-                            }
-                        }
-                    };
-                    previousComponentChainLink.wrap(sequentialMethod, getInputPort().getBuffer(), 1);
-                } else {
-                    new TickRunningStrategy(methodInputComponent, 1);
-
-                    previousComponentChainLink.wrap();
-                }
+        if(previousComponentChainLink!=null) {
+            if(isParallelisable()!=previousComponentChainLink.isParallelisable()){
+                startAutonomousComponent();
+                previousComponentChainLink.wrap();
             }
-            else{
-                new TickRunningStrategy(methodInputComponent, 1);
+            else if (!isParallelisable()) {
+                InputCallable<K> sequentialMethod = new InputCallable<>() {
+                    @Override
+                    public void call(K input) {
+                        synchronized (this) {
+                            method.call(input);
+                        }
+                    }
+                };
+                previousComponentChainLink.wrap(sequentialMethod, inputBuffer, 1);
+            } else {
+                InputCallable<K> parallelMethod = method;
+                previousComponentChainLink.wrap(parallelMethod, inputBuffer, 1);
             }
         }
         else{
-            if(previousComponentChainLink!=null) {
-                if (previousComponentChainLink.isParallelisable()) {
-                    InputCallable<K> parallelMethod = methodInputComponent.method;
-                    previousComponentChainLink.wrap(parallelMethod, getInputPort().getBuffer(), 1);
-                } else {
-                    new TickRunningStrategy(methodInputComponent);
+            startAutonomousComponent();
+        }
+    }
 
-                    previousComponentChainLink.wrap();
+    private void startAutonomousComponent() {
+        InputPort<K> inputPort = inputBuffer.createInputPort();
+
+        new TickRunningStrategy(new AbstractInputComponent<>(inputPort) {
+            @Override
+            protected void tick() {
+                try {
+                    method.call(inputPort.consume());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-            else{
-                new TickRunningStrategy(methodInputComponent);
+
+            @Override
+            public Boolean isParallelisable(){
+                return method.isParallelisable();
             }
-        }
+        });
     }
 
     @Override
@@ -76,8 +83,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
-        MethodInputComponent<T> component = new MethodInputComponent<>(inputBuffer, method);
-        new InputComponentChainLink<>(inputBuffer.previousComponent, component).breakChain();
+        new InputComponentChainLink<T>(inputBuffer.previousComponent, method, inputBuffer).breakChain();
     }
 
 }
