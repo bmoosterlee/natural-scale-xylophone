@@ -16,16 +16,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
 
 
     @Override
-    protected InputPort<K> getInputPort() {
-        return null;
-    }
-
-    @Override
-    protected OutputPort getOutputPort() {
-        return null;
-    }
-
-    @Override
     Boolean isParallelisable() {
         return method.isParallelisable();
     }

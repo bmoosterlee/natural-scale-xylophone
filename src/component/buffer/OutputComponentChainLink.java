@@ -102,16 +102,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         return method.isParallelisable();
     }
 
-    @Override
-    protected InputPort getInputPort() {
-        return null;
-    }
-
-    @Override
-    protected OutputPort getOutputPort() {
-        return null;
-    }
-
     public static <V> BufferChainLink<V> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
         OutputComponentChainLink<V> componentChainLink = new OutputComponentChainLink<>(method, outputBuffer);

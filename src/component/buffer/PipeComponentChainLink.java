@@ -143,16 +143,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected InputPort<K> getInputPort() {
-        return null;
-    }
-
-    @Override
-    protected OutputPort getOutputPort() {
-        return null;
-    }
-
-    @Override
     Boolean isParallelisable() {
         return method.isParallelisable();
     }

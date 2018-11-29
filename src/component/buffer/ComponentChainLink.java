@@ -19,7 +19,4 @@ public abstract class ComponentChainLink<K, V> {
 
     abstract Boolean isParallelisable();
 
-    protected abstract InputPort getInputPort();
-
-    protected abstract OutputPort getOutputPort();
 }
