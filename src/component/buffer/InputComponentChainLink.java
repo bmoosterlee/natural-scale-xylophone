@@ -58,8 +58,6 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     private void startAutonomousComponent() {
-        InputPort<K> inputPort = inputBuffer.createInputPort();
-
         new TickRunningStrategy(new MethodInputComponent<>(inputBuffer, method));
     }
 

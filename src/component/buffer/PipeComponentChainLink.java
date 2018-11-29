@@ -92,61 +92,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     private <W> void startChainedParallelComponent(PipeCallable<K, W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
-        new TickRunningStrategy(new AbstractComponent<K, W>() {
-            private InputPort<K> inputPort = inputBuffer.createInputPort();
-            private OutputPort<W> outputPort = outputBuffer.createOutputPort();
-
-            @Override
-            protected Collection<BoundedBuffer<K>> getInputBuffers() {
-                return Collections.singleton(inputBuffer);
-            }
-
-            @Override
-            protected Collection<BoundedBuffer<W>> getOutputBuffers() {
-                return Collections.singleton(outputBuffer);
-            }
-
-            @Override
-            protected void tick() {
-                try {
-                    outputPort.produce(
-                            parallelCallChain.call(
-                                    inputPort.consume()));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        new TickRunningStrategy(new MethodPipeComponent<>(inputBuffer, outputBuffer, parallelCallChain));
     }
 
     private <W> void startChainedSequentialComponent(PipeCallable<K, W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
-        new TickRunningStrategy(
-                new AbstractComponent<K, W>() {
-
-                    private InputPort<K> inputPort = inputBuffer.createInputPort();
-                    private OutputPort<W> outputPort = outputBuffer.createOutputPort();
-
-                    @Override
-                    protected Collection<BoundedBuffer<K>> getInputBuffers() {
-                        return Collections.singleton(inputBuffer);
-                    }
-
-                    @Override
-                    protected Collection<BoundedBuffer<W>> getOutputBuffers() {
-                        return Collections.singleton(outputBuffer);
-                    }
-
-                    @Override
-                    protected void tick() {
-                        try {
-                            outputPort.produce(
-                                    sequentialCallChain.call(
-                                            inputPort.consume()));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, chainLinks);
+        new TickRunningStrategy(new MethodPipeComponent<>(inputBuffer, outputBuffer, sequentialCallChain), chainLinks);
     }
 
     @Override
