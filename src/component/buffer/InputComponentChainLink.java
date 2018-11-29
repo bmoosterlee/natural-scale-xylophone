@@ -6,11 +6,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, MethodInputComponent<K> methodInputComponent){
         super(previousComponentChainLink);
         this.methodInputComponent = methodInputComponent;
-    }
-
-    @Override
-    protected void componentTick() {
-        methodInputComponent.tick();
+        this.method = method;
     }
 
     @Override

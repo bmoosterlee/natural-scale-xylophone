@@ -7,8 +7,6 @@ public abstract class ComponentChainLink<K, V> {
         this.previousComponentChainLink = previousComponentChainLink;
     }
 
-    protected abstract void componentTick();
-
     public void breakChain(){
         wrap();
     }

@@ -12,11 +12,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     }
 
     @Override
-    protected void componentTick() {
-        methodOutputComponent.tick();
-    }
-
-    @Override
     protected void wrap() {
         new TickRunningStrategy(methodOutputComponent);
     }

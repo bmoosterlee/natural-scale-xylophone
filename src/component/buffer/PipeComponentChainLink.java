@@ -16,11 +16,6 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected void componentTick() {
-        methodPipeComponent.tick();
-    }
-
-    @Override
     protected void wrap() {
         if(!isParallelisable()) {
             if(previousComponentChainLink!=null) {
