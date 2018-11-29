@@ -31,7 +31,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startAutonomousComponent();
                 previousComponentChainLink.wrap();
             } else if(!isParallelisable()) {
-                PipeCallable<K, V> sequentialMethod = new PipeCallable<>() {
+                PipeCallable<K, V> sequentialCall = new PipeCallable<>() {
                     @Override
                     public V call(K input) {
                         synchronized (this) {
@@ -39,10 +39,10 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                         }
                     }
                 };
-                previousComponentChainLink.wrap(sequentialMethod, outputBuffer, 1);
+                previousComponentChainLink.wrap(sequentialCall, outputBuffer, 1);
             } else {
-                PipeCallable<K, V> parallelMethod = method;
-                previousComponentChainLink.wrap(parallelMethod, outputBuffer, 1);
+                PipeCallable<K, V> parallelCall = method;
+                previousComponentChainLink.wrap(parallelCall, outputBuffer, 1);
             }
         } else {
             startAutonomousComponent();
