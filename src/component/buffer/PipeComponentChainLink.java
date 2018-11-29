@@ -4,15 +4,28 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
-    private final MethodPipeComponent<K, V> methodPipeComponent;
+    private final PipeCallable<K, V> method;
+    private final SimpleBuffer<K> inputBuffer;
+    private final BoundedBuffer<V> outputBuffer;
 
-    private PipeComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, MethodPipeComponent<K, V> methodPipeComponent){
+    private PipeComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
         super(previousComponentChainLink);
-        this.methodPipeComponent = methodPipeComponent;
+        this.method = method;
+        this.inputBuffer = inputBuffer;
+        this.outputBuffer = outputBuffer;
     }
 
-    private PipeComponentChainLink(MethodPipeComponent<K, V> methodPipeComponent){
-        this(null, methodPipeComponent);
+    private PipeComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+        this(previousComponentChainLink, method, inputBuffer.getBuffer(), outputBuffer);
+    }
+
+
+    private PipeComponentChainLink(PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+        this(null, method, inputBuffer, outputBuffer);
+    }
+
+    private PipeComponentChainLink(PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+        this(null, method, inputBuffer, outputBuffer);
     }
 
     @Override
@@ -26,14 +39,14 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                     @Override
                     public V call(K input) {
                         synchronized (this) {
-                            return methodPipeComponent.method.call(input);
+                            return method.call(input);
                         }
                     }
                 };
-                previousComponentChainLink.wrap(sequentialMethod, getOutputPort().getBuffer(), 1);
+                previousComponentChainLink.wrap(sequentialMethod, outputBuffer, 1);
             } else {
-                PipeCallable<K, V> parallelMethod = methodPipeComponent.method;
-                previousComponentChainLink.wrap(parallelMethod, getOutputPort().getBuffer(), 1);
+                PipeCallable<K, V> parallelMethod = method;
+                previousComponentChainLink.wrap(parallelMethod, outputBuffer, 1);
             }
         } else {
             startAutonomousComponent();
@@ -41,7 +54,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     private void startAutonomousComponent() {
-        new TickRunningStrategy(methodPipeComponent);
+        new TickRunningStrategy(new MethodPipeComponent<>(inputBuffer, outputBuffer, method));
     }
 
     @Override
@@ -50,7 +63,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         if(!isParallelisable()) {
             PipeCallable<K, Object> sequentialCallChain = input -> {
                 synchronized (this) {
-                    return nextMethodChain.call(methodPipeComponent.method.call(input));
+                    return nextMethodChain.call(method.call(input));
                 }
             };
             if(previousComponentChainLink!=null) {
@@ -64,7 +77,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedSequentialComponent(sequentialCallChain, outputBuffer, newChainLinkCount);
             }
         } else {
-            PipeCallable<K, Object> parallelCallChain = input -> nextMethodChain.call(methodPipeComponent.method.call(input));
+            PipeCallable<K, Object> parallelCallChain = input -> nextMethodChain.call(method.call(input));
             if (previousComponentChainLink != null){
                 if (previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(parallelCallChain, outputBuffer, newChainLinkCount);
@@ -78,18 +91,18 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         }
     }
 
-    private void startChainedParallelComponent(PipeCallable<K, Object> parallelCallChain, BoundedBuffer outputBuffer) {
-        new TickRunningStrategy(new AbstractComponent<K, Object>() {
-
-            private OutputPort outputPort = outputBuffer.createOutputPort();
+    private <W> void startChainedParallelComponent(PipeCallable<K, W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
+        new TickRunningStrategy(new AbstractComponent<K, W>() {
+            private InputPort<K> inputPort = inputBuffer.createInputPort();
+            private OutputPort<W> outputPort = outputBuffer.createOutputPort();
 
             @Override
             protected Collection<BoundedBuffer<K>> getInputBuffers() {
-                return Collections.singleton(getInputPort().getBuffer());
+                return Collections.singleton(inputBuffer);
             }
 
             @Override
-            protected Collection<BoundedBuffer<Object>> getOutputBuffers() {
+            protected Collection<BoundedBuffer<W>> getOutputBuffers() {
                 return Collections.singleton(outputBuffer);
             }
 
@@ -98,7 +111,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 try {
                     outputPort.produce(
                             parallelCallChain.call(
-                                    getInputPort().consume()));
+                                    inputPort.consume()));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -106,19 +119,20 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         });
     }
 
-    private void startChainedSequentialComponent(PipeCallable<K, Object> sequentialCallChain, BoundedBuffer outputBuffer, int chainLinks) {
+    private <W> void startChainedSequentialComponent(PipeCallable<K, W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         new TickRunningStrategy(
-                new AbstractComponent<K, Object>() {
+                new AbstractComponent<K, W>() {
 
-                    private OutputPort outputPort = outputBuffer.createOutputPort();
+                    private InputPort<K> inputPort = inputBuffer.createInputPort();
+                    private OutputPort<W> outputPort = outputBuffer.createOutputPort();
 
                     @Override
                     protected Collection<BoundedBuffer<K>> getInputBuffers() {
-                        return Collections.singleton(getInputPort().getBuffer());
+                        return Collections.singleton(inputBuffer);
                     }
 
                     @Override
-                    protected Collection<BoundedBuffer<Object>> getOutputBuffers() {
+                    protected Collection<BoundedBuffer<W>> getOutputBuffers() {
                         return Collections.singleton(outputBuffer);
                     }
 
@@ -127,7 +141,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                         try {
                             outputPort.produce(
                                     sequentialCallChain.call(
-                                            getInputPort().consume()));
+                                            inputPort.consume()));
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -141,7 +155,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         if(!isParallelisable()) {
             InputCallable<K> sequentialCallChain = input -> {
                 synchronized (this) {
-                    nextMethodChain.call(methodPipeComponent.method.call(input));
+                    nextMethodChain.call(method.call(input));
                 }
             };
             if (previousComponentChainLink != null){
@@ -156,7 +170,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
             }
         }
         else{
-            InputCallable<K> parallelCallChain = input -> nextMethodChain.call(methodPipeComponent.method.call(input));
+            InputCallable<K> parallelCallChain = input -> nextMethodChain.call(method.call(input));
             if(previousComponentChainLink!=null) {
                 if (previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(parallelCallChain, outputBuffer, newChainLinkCount);
@@ -171,79 +185,59 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     private void startChainedParallelComponent(InputCallable<K> parallelCallChain) {
-        new TickRunningStrategy(new AbstractInputComponent<>(getInputPort()) {
-            @Override
-            protected void tick() {
-                try {
-                    parallelCallChain.call(getInputPort().consume());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        new TickRunningStrategy(new MethodInputComponent<>(inputBuffer, parallelCallChain));
     }
 
     private void startChainedSequentialComponent(InputCallable<K> sequentialCallChain, int newChainLinkCount) {
-        new TickRunningStrategy(new AbstractInputComponent<>(getInputPort()) {
-            @Override
-            protected void tick() {
-                try {
-                    sequentialCallChain.call(getInputPort().consume());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, newChainLinkCount);
+        new TickRunningStrategy(new MethodInputComponent<>(inputBuffer, sequentialCallChain), newChainLinkCount);
     }
 
     @Override
     protected InputPort<K> getInputPort() {
-        return methodPipeComponent.input;
+        return null;
     }
 
     @Override
     protected OutputPort getOutputPort() {
-        return methodPipeComponent.output;
+        return null;
     }
 
     @Override
     Boolean isParallelisable() {
-        return methodPipeComponent.isParallelisable();
+        return method.isParallelisable();
     }
 
     static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);
-        return getBufferChainLink(inputBuffer, outputBuffer, component);
+        return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    private static <K, V> BufferChainLink<V> getBufferChainLink(BufferChainLink<K> inputBuffer, SimpleBuffer<V> outputBuffer, MethodPipeComponent<K, V> component) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, component);
+    private static <K, V> BufferChainLink<V> getBufferChainLink(BufferChainLink<K> inputBuffer, SimpleBuffer<V> outputBuffer, PipeCallable<K, V> method) {
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, method, inputBuffer, outputBuffer);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
     static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
         SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
-        MethodPipeComponent<K, V> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, method);
-        return getBufferChainLink(outputBuffer, component);
+        return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    private static <K, V> BufferChainLink<V> getBufferChainLink(SimpleBuffer<V> outputBuffer, MethodPipeComponent<K, V> component) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(component);
+    private static <K, V> BufferChainLink<V> getBufferChainLink(SimpleBuffer<K> inputBuffer, SimpleBuffer<V> outputBuffer, PipeCallable<K, V> method) {
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
     static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        MethodPipeComponent<K, K> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input);
-        return getBufferChainLink(inputBuffer, outputBuffer, component);
+        PipeCallable<K, K> method = input -> input;
+        return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
     public static <K> BufferChainLink<K> chainToOverwritableBuffer(SimpleBuffer<K> inputBuffer, int capacity, String name) {
         SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
-        MethodPipeComponent<K, K> component = new MethodPipeComponent<>(inputBuffer, outputBuffer, input -> input);
-        return getBufferChainLink(outputBuffer, component);
+        PipeCallable<K, K> method = input -> input;
+        return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 }
