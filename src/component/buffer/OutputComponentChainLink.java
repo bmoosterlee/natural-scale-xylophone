@@ -1,7 +1,10 @@
 package component.buffer;
 
-public class OutputComponentChainLink<V> extends ComponentChainLink {
-    private final MethodOutputComponent methodOutputComponent;
+import java.util.Collection;
+import java.util.Collections;
+
+public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
+    private final MethodOutputComponent<V> methodOutputComponent;
 
     private OutputComponentChainLink(MethodOutputComponent<V> methodOutputComponent) {
         super(null);
@@ -11,6 +14,82 @@ public class OutputComponentChainLink<V> extends ComponentChainLink {
     @Override
     protected void componentTick() {
         methodOutputComponent.tick();
+    }
+
+    @Override
+    protected void wrap() {
+        new TickRunningStrategy(methodOutputComponent);
+    }
+
+    @Override
+    protected void wrap(PipeCallable<V, ?> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+        if(!isParallelisable()) {
+            new TickRunningStrategy(
+                    new MethodOutputComponent<>(outputBuffer, () -> {
+                        synchronized (this) {
+                            return nextMethodChain.call(methodOutputComponent.method.call());
+                        }
+                    }) {
+                        @Override
+                        public Collection<BoundedBuffer> getInputBuffers() {
+                            return Collections.singleton(getOutputPort().getBuffer());
+                        }
+                    }, chainLinks + 1);
+        }
+        else{
+            new TickRunningStrategy(
+                    new MethodOutputComponent<>(outputBuffer, () -> nextMethodChain.call(methodOutputComponent.method.call())) {
+                        @Override
+                        public Collection<BoundedBuffer> getInputBuffers() {
+                            return Collections.singleton(getOutputPort().getBuffer());
+                        }
+                    });
+        }
+    }
+
+    @Override
+    protected void wrap(InputCallable<V> nextMethodChain, BoundedBuffer outputBuffer, int chainLinks) {
+        if(!isParallelisable()) {
+            new TickRunningStrategy(
+                    new AbstractComponent<>() {
+                        @Override
+                        public Collection<BoundedBuffer<Object>> getInputBuffers() {
+                            return Collections.singleton(getOutputPort().getBuffer());
+                        }
+
+                        @Override
+                        public Collection<BoundedBuffer<Object>> getOutputBuffers() {
+                            return Collections.emptyList();
+                        }
+
+                        @Override
+                        protected void tick() {
+                            synchronized (this) {
+                                nextMethodChain.call(methodOutputComponent.method.call());
+                            }
+                        }
+                    },
+                    chainLinks + 1);
+        }
+        else{
+            new TickRunningStrategy(
+                    new AbstractComponent<>() {
+                        @Override
+                        public Collection<BoundedBuffer<Object>> getInputBuffers() {
+                            return Collections.singleton(getOutputPort().getBuffer());
+                        }
+
+                        @Override
+                        public Collection<BoundedBuffer<Object>> getOutputBuffers() {
+                            return Collections.emptyList();
+                        }
+
+                        @Override
+                        protected void tick() {
+                            nextMethodChain.call(methodOutputComponent.method.call());
+                        }
+                    });
+        }
     }
 
     @Override

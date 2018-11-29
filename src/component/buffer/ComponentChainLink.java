@@ -1,46 +1,23 @@
 package component.buffer;
 
-import java.util.LinkedList;
+public abstract class ComponentChainLink<K, V> {
+    protected final ComponentChainLink<?, K> previousComponentChainLink;
 
-public abstract class ComponentChainLink {
-    private final ComponentChainLink previousComponentChainLink;
-
-    ComponentChainLink(ComponentChainLink previousComponentChainLink) {
+    ComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
     }
 
     protected abstract void componentTick();
 
     public void breakChain(){
-        tryToBreakSequentialChain();
-        tryToBreakParallelChain();
+        wrap();
     }
 
-    private void tryToBreakSequentialChain() {
-        LinkedList<ComponentChainLink> sequentialChainLinks = listChainLinksByParallelisability(false);
-        if(!sequentialChainLinks.isEmpty()){
-            new TickRunningStrategy(new SequentialChain<>(sequentialChainLinks), sequentialChainLinks.size());
-        }
-    }
+    protected abstract void wrap();
 
-    private void tryToBreakParallelChain() {
-        LinkedList<ComponentChainLink> parallelChainLinks = listChainLinksByParallelisability(true);
-        if(!parallelChainLinks.isEmpty()){
-            new TickRunningStrategy(new ParallelChain<>(parallelChainLinks));
-        }
-    }
+    protected abstract void wrap(PipeCallable<V, ?> nextMethod, BoundedBuffer outputBuffer, int chainLinks);
 
-    private LinkedList<ComponentChainLink> listChainLinksByParallelisability(boolean parallelisability) {
-        LinkedList<ComponentChainLink> accumulator = new LinkedList<>();
-        ComponentChainLink index = this;
-        while(index!=null){
-            if(index.isParallelisable() == parallelisability) {
-                accumulator.addFirst(index);
-            }
-            index = index.previousComponentChainLink;
-        }
-        return accumulator;
-    }
+    protected abstract void wrap(InputCallable<V> nextMethod, BoundedBuffer outputBuffer, int chainLinks);
 
     abstract Boolean isParallelisable();
 

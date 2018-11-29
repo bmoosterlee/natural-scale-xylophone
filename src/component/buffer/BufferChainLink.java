@@ -7,9 +7,9 @@ import java.util.List;
 public class BufferChainLink<T> implements BoundedBuffer<T> {
 
     private final SimpleBuffer<T> buffer;
-    protected final ComponentChainLink previousComponent;
+    protected final ComponentChainLink<?, T> previousComponent;
 
-    protected BufferChainLink(SimpleBuffer<T> buffer, ComponentChainLink previousComponent) {
+    protected BufferChainLink(SimpleBuffer<T> buffer, ComponentChainLink<?, T> previousComponent) {
         this.buffer = buffer;
         this.previousComponent = previousComponent;
     }
