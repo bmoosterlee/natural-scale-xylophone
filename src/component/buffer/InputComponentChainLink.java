@@ -28,7 +28,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
                 previousComponentChainLink.wrap();
             }
             else if (!isParallelisable()) {
-                InputCallable<K> sequentialMethod = new InputCallable<>() {
+                InputCallable<K> sequentialCall = new InputCallable<>() {
                     @Override
                     public void call(K input) {
                         synchronized (this) {
@@ -36,10 +36,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
                         }
                     }
                 };
-                previousComponentChainLink.wrap(sequentialMethod, 1);
+                previousComponentChainLink.wrap(sequentialCall, 1);
             } else {
-                InputCallable<K> parallelMethod = method;
-                previousComponentChainLink.wrap(parallelMethod, 1);
+                InputCallable<K> parallelCall = method;
+                previousComponentChainLink.wrap(parallelCall, 1);
             }
         }
         else{
