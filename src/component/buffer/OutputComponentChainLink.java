@@ -57,11 +57,35 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     }
 
     private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
-        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, sequentialCallChain), chainLinks + 1);
+        new TickRunningStrategy(createMethodOutputComponent(sequentialCallChain, outputBuffer), chainLinks + 1);
     }
 
     private <W> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
-        new TickRunningStrategy(new MethodOutputComponent<>(outputBuffer, parallelCallChain));
+        new TickRunningStrategy(createMethodOutputComponent(parallelCallChain, outputBuffer));
+    }
+
+    private <W> AbstractComponent<V, W> createMethodOutputComponent(OutputCallable<W> callChain, BoundedBuffer<W> outputBuffer) {
+        return new AbstractComponent<>() {
+            @Override
+            public Collection<BoundedBuffer<V>> getInputBuffers() {
+                return Collections.singleton(OutputComponentChainLink.this.outputBuffer);
+            }
+
+            @Override
+            public Collection<BoundedBuffer<W>> getOutputBuffers() {
+                return Collections.singleton(outputBuffer);
+            }
+
+            @Override
+            protected void tick() {
+                try {
+                    callChain.call();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
     }
 
     private void startShutInSequentialComponent(Callable<Void> sequentialCallChain, int chainLinks) {
