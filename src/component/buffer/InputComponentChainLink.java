@@ -2,13 +2,18 @@ package component.buffer;
 
 public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     private final InputCallable<K> method;
-    private final BoundedBuffer<K> inputBuffer;
+    private final SimpleBuffer<K> inputBuffer;
 
-    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, BoundedBuffer<K> inputBuffer){
+    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, SimpleBuffer<K> inputBuffer){
         super(previousComponentChainLink);
         this.method = method;
         this.inputBuffer = inputBuffer;
     }
+
+    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, BufferChainLink<K> inputBuffer){
+        this(previousComponentChainLink, method, inputBuffer.getBuffer());
+    }
+
 
     @Override
     protected InputPort<K> getInputPort() {
@@ -55,21 +60,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     private void startAutonomousComponent() {
         InputPort<K> inputPort = inputBuffer.createInputPort();
 
-        new TickRunningStrategy(new AbstractInputComponent<>(inputPort) {
-            @Override
-            protected void tick() {
-                try {
-                    method.call(inputPort.consume());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return method.isParallelisable();
-            }
-        });
+        new TickRunningStrategy(new MethodInputComponent<>(inputBuffer, method));
     }
 
     @Override
