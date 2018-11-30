@@ -54,7 +54,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     @Override
-    protected <W> void wrap(InputCallable<Void> nextMethod, int chainLinks) {
+    protected void wrap(InputCallable<Void> nextMethod, int chainLinks) {
 
     }
 

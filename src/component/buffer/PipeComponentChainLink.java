@@ -112,7 +112,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
+    protected void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
             InputCallable<K> sequentialCallChain = createSequentialLink(nextMethodChain);
