@@ -251,7 +251,8 @@ public class Mixer {
                         .pairWith(
                                 sampleCountBroadcast.poll()
                                         .pairWith(
-                                                sampleCountBroadcast.poll().performMethod(((PipeCallable<Long, Map<Frequency, Wave>>) AmplitudeCalculator.this::removeUnfinishedSliceForCalculation).toSequential()))
+                                                sampleCountBroadcast.poll()
+                                                .performMethod(((PipeCallable<Long, Map<Frequency, Wave>>) AmplitudeCalculator.this::removeUnfinishedSliceForCalculation).toSequential()))
                                         .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Wave>>, Map<Frequency, Double>>) input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue())).toSequential())
                                         .performMethod(((PipeCallable<Map<Frequency, Double>, AmplitudeState>) AmplitudeState::new).toSequential()))
                         .performMethod(
