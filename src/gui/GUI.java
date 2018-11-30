@@ -16,35 +16,35 @@ public class GUI {
     private final double yScale = height * 0.95;
     private final double margin = height * 0.05;
 
-    private final InputPort<Map<Integer, Integer>> newNotesPort;
-    private final InputPort<Map<Integer, Integer>> newHarmonicsPort;
-    private final InputPort<Integer> newCursorXPort;
-
     private final GUIPanel guiPanel;
+    private final OutputPort<Graphics> graphicsPort;
 
     public GUI(SimpleBuffer<Buckets> noteInputBuffer, SimpleBuffer<Buckets> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin) {
         LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast =
                 new LinkedList<>(noteInputBuffer.broadcast(3, "GUI note spectrum - broadcast"));
 
-        newHarmonicsPort =
-                harmonicInputBuffer
-                        .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
-                        .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
-                        .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics")
-                        .createInputPort();
-        newNotesPort =
-                noteSpectrumBroadcast.poll()
-                        .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
-                        .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
-                        .resize(20)
-                        .createInputPort();
-
         guiPanel = new GUIPanel();
 
-        newCursorXPort =
+        graphicsPort = new OutputPort<>();
+
+        graphicsPort.getBuffer()
+        .pairWith(
+            harmonicInputBuffer
+            .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
+            .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
+            .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics"))
+        .performMethod(input -> {renderHarmonicsBuckets(input.getKey(), input.getValue()); return input.getKey();})
+        .pairWith(
+                noteSpectrumBroadcast.poll()
+                .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
+                .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
+                .resize(20))
+        .performMethod(input -> {renderNoteBuckets(input.getKey(), input.getValue()); return input.getKey();})
+        .pairWith(
                 noteSpectrumBroadcast.poll()
                 .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
-                .connectTo(CursorMover.buildPipe(guiPanel)).resize(20).createInputPort();
+                .connectTo(CursorMover.buildPipe(guiPanel)).resize(20))
+        .performMethod(input -> {renderCursorLine(input.getKey(), input.getValue()); return input.getKey();});
 
         noteSpectrumBroadcast.poll()
             .performMethod(input -> new Pulse(), "note - spectrum to pulse")
@@ -66,7 +66,7 @@ public class GUI {
 
             @Override
             protected Collection<BoundedBuffer> getInputBuffers() {
-                return Arrays.asList(newHarmonicsPort.getBuffer(), newNotesPort.getBuffer(), newCursorXPort.getBuffer());
+                return Collections.singleton(graphicsPort.getBuffer());
             }
 
             @Override
@@ -87,14 +87,7 @@ public class GUI {
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             try {
-                Map<Integer, Integer> harmonics = newHarmonicsPort.consume();
-                renderHarmonicsBuckets(g, harmonics);
-
-                Map<Integer, Integer> notes = newNotesPort.consume();
-                renderNoteBuckets(g, notes);
-
-                Integer cursorX = newCursorXPort.consume();
-                renderCursorLine(g, cursorX);
+                graphicsPort.produce(g);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
