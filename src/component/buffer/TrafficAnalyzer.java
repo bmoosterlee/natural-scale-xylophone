@@ -1,6 +1,7 @@
 package component.buffer;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TrafficAnalyzer {
@@ -10,7 +11,7 @@ public class TrafficAnalyzer {
     private Map<String, AtomicInteger> clogLog;
 
     public TrafficAnalyzer(){
-        clogLog = new HashMap<>();
+        clogLog = new ConcurrentHashMap<>();
         trafficAnalyzer = this;
         start();
     }
@@ -34,7 +35,7 @@ public class TrafficAnalyzer {
 
     private List<Map.Entry<String, AtomicInteger>> getClogLog(){
         Map<String, AtomicInteger> currentClogLog = clogLog;
-        clogLog = new HashMap<>();
+        clogLog = new ConcurrentHashMap<>();
         Comparator<Map.Entry<String, AtomicInteger>> entryComparator = Comparator.comparingInt(o -> o.getValue().get());
         PriorityQueue<Map.Entry<String, AtomicInteger>> priorityQueue = new PriorityQueue<>(entryComparator);
         for (Map.Entry<String, AtomicInteger> entry : currentClogLog.entrySet()) {
