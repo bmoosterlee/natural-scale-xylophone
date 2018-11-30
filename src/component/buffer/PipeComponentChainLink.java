@@ -30,23 +30,33 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
             if(isParallelisable()!=previousComponentChainLink.isParallelisable()){
                 startAutonomousComponent();
                 previousComponentChainLink.wrap();
-            } else if(!isParallelisable()) {
-                PipeCallable<K, V> sequentialCall = new PipeCallable<>() {
-                    @Override
-                    public V call(K input) {
-                        synchronized (this) {
-                            return method.call(input);
-                        }
-                    }
-                };
-                previousComponentChainLink.wrap(sequentialCall, outputBuffer, 1);
             } else {
-                PipeCallable<K, V> parallelCall = method;
-                previousComponentChainLink.wrap(parallelCall, outputBuffer, 1);
+                PipeCallable<K, V> call;
+                if (!isParallelisable()) {
+                    call = createSequentialCall();
+                } else {
+                    call = createParallelCall();
+                }
+                previousComponentChainLink.wrap(call, outputBuffer, 1);
             }
         } else {
             startAutonomousComponent();
         }
+    }
+
+    private PipeCallable<K, V> createSequentialCall() {
+        return new PipeCallable<>() {
+            @Override
+            public V call(K input) {
+                synchronized (this) {
+                    return method.call(input);
+                }
+            }
+        };
+    }
+
+    private PipeCallable<K, V> createParallelCall() {
+        return method;
     }
 
     private void startAutonomousComponent() {
@@ -57,11 +67,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
-            PipeCallable<K, W> sequentialCallChain = input -> {
-                synchronized (this) {
-                    return nextMethodChain.call(method.call(input));
-                }
-            };
+            PipeCallable<K, W> sequentialCallChain = createSequentialLink(nextMethodChain);
             if(previousComponentChainLink!=null) {
                 if (!previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(sequentialCallChain, outputBuffer, newChainLinkCount);
@@ -73,7 +79,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedSequentialComponent(sequentialCallChain, outputBuffer, newChainLinkCount);
             }
         } else {
-            PipeCallable<K, W> parallelCallChain = input -> nextMethodChain.call(method.call(input));
+            PipeCallable<K, W> parallelCallChain = createParallelLink(nextMethodChain);
             if (previousComponentChainLink != null){
                 if (previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(parallelCallChain, outputBuffer, newChainLinkCount);
@@ -85,6 +91,18 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedParallelComponent(parallelCallChain, outputBuffer);
             }
         }
+    }
+
+    private <W> PipeCallable<K, W> createSequentialLink(PipeCallable<V, W> nextMethodChain) {
+        return input -> {
+            synchronized (this) {
+                return nextMethodChain.call(method.call(input));
+            }
+        };
+    }
+
+    private <W> PipeCallable<K, W> createParallelLink(PipeCallable<V, W> nextMethodChain) {
+        return input -> nextMethodChain.call(method.call(input));
     }
 
     private <W> void startChainedParallelComponent(PipeCallable<K, W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
@@ -99,11 +117,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
-            InputCallable<K> sequentialCallChain = input -> {
-                synchronized (this) {
-                    nextMethodChain.call(method.call(input));
-                }
-            };
+            InputCallable<K> sequentialCallChain = createSequentialLink(nextMethodChain);
             if (previousComponentChainLink != null){
                 if (!previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(sequentialCallChain, newChainLinkCount);
@@ -115,7 +129,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedSequentialComponent(sequentialCallChain, newChainLinkCount);
             }
         } else {
-            InputCallable<K> parallelCallChain = input -> nextMethodChain.call(method.call(input));
+            InputCallable<K> parallelCallChain = createParallelLink(nextMethodChain);
             if(previousComponentChainLink!=null) {
                 if (previousComponentChainLink.isParallelisable()) {
                     previousComponentChainLink.wrap(parallelCallChain, newChainLinkCount);
@@ -127,6 +141,18 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
                 startChainedParallelComponent(parallelCallChain);
             }
         }
+    }
+
+    private InputCallable<K> createSequentialLink(InputCallable<V> nextMethodChain) {
+        return input -> {
+            synchronized (this) {
+                nextMethodChain.call(method.call(input));
+            }
+        };
+    }
+
+    private InputCallable<K> createParallelLink(InputCallable<V> nextMethodChain) {
+        return input -> nextMethodChain.call(method.call(input));
     }
 
     private void startChainedParallelComponent(InputCallable<K> parallelCallChain) {
