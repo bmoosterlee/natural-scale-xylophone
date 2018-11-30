@@ -4,7 +4,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     private final InputCallable<K> method;
     private final SimpleBuffer<K> inputBuffer;
 
-    public InputComponentChainLink(InputCallable<K> method, BufferChainLink<K> inputBuffer){
+    private InputComponentChainLink(InputCallable<K> method, BufferChainLink<K> inputBuffer){
         super(inputBuffer.previousComponent);
         this.method = method;
         this.inputBuffer = inputBuffer.getBuffer();
