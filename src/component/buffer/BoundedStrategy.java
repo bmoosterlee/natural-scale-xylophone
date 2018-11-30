@@ -44,7 +44,7 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
             throw new NullPointerException();
         }
         if (isFull()) {
-            System.out.println(name + " is clogged up.");
+            TrafficAnalyzer.logClog(name);
         }
         emptySpots.acquire();
         buffer.offer(packet);

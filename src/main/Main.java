@@ -29,6 +29,7 @@ class Main {
 
     public static void main(String[] args){
         new PerformanceTracker();
+        new TrafficAnalyzer();
 
         int SAMPLE_RATE = 44100/256;
         int sampleLookahead = SAMPLE_RATE / 4;
