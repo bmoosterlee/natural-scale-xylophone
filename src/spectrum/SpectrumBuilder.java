@@ -29,15 +29,20 @@ public class SpectrumBuilder {
             volumeBroadcast.poll()
             .performMethod(input -> new Buckets(input, spectrumWindow), "build volume state to buckets");
 
-        InputPort<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorInput =
-            volumeBroadcast.poll()
-            .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator")
-            .createInputPort();
 
         Map<Integer, OutputPort<AtomicBucket>> harmonicsOutput = new HashMap<>();
         for (Integer i = 0; i < width; i++) {
             harmonicsOutput.put(i, new OutputPort<>("harmonic bucket"));
         }
+
+        BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer = volumeBroadcast.poll()
+                .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator");
+
+        harmonicsIteratorBuffer.performInputMethod(input -> {
+                    while (harmonicsIteratorBuffer.isEmpty()) {
+                        if (!update(input, harmonicsOutput, spectrumWindow)) break;
+                    }
+                });
 
         Map<Integer, BoundedBuffer<AtomicBucket>> harmonicsMap = new HashMap<>();
         for (Integer index : harmonicsOutput.keySet()) {
@@ -48,41 +53,6 @@ public class SpectrumBuilder {
             tickBroadcast.poll()
             .connectTo(BuffersToBuckets.buildPipe(harmonicsMap))
             .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
-
-        new TickRunningStrategy(
-            new AbstractComponent<Iterator<Map.Entry<Harmonic, Double>>, AtomicBucket>() {
-                @Override
-                protected Collection<BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>>> getInputBuffers() {
-                    return Collections.singleton(harmonicsIteratorInput.getBuffer());
-                }
-
-                @Override
-                protected Collection<BoundedBuffer<AtomicBucket>> getOutputBuffers() {
-                    Collection<BoundedBuffer<AtomicBucket>> outputBuffers = new HashSet<>();
-                    for(OutputPort<AtomicBucket> outputPort : harmonicsOutput.values()){
-                        outputBuffers.add(outputPort.getBuffer());
-                    }
-                    return outputBuffers;
-                }
-
-                @Override
-                protected void tick() {
-                    try {
-                        Iterator<Map.Entry<Harmonic, Double>> harmonicHierarchyIterator = harmonicsIteratorInput.consume();
-
-                        while (harmonicsIteratorInput.isEmpty()) {
-                            if (!update(harmonicHierarchyIterator, harmonicsOutput, spectrumWindow)) break;
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public Boolean isParallelisable(){
-                    return false;
-                }
-        });
 
         return new SimpleImmutableEntry<>(noteOutputBuffer, harmonicsOutputBuffer);
     }
