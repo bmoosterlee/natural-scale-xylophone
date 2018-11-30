@@ -1,10 +1,9 @@
 package spectrum.buckets;
 
+import component.Unpairer;
 import component.buffer.*;
 
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.LinkedList;
 
 public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buckets, Buckets> {
@@ -29,25 +28,27 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
 
             LinkedList<BoundedBuffer<Buckets>> timeAverageBroadcast = new LinkedList<>(timeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
 
-            new TickRunningStrategy(
-                new OldHistoryRemover(
-                    historyBuffer
+            SimpleImmutableEntry<SimpleBuffer<ImmutableLinkedList<Buckets>>, SimpleBuffer<Buckets>> unpair =
+                    Unpairer.unpair(
+                        historyBuffer
                         .pairWith(
-                            preparedBucketsBroadcast.poll())
+                                preparedBucketsBroadcast.poll())
                         .performMethod(
-                            input1 ->
-                                input1.getKey()
-                                .add(input1.getValue()), "precalculated bucket history - add new buckets"),
-                    timeAverageBroadcast.poll()
+                                input1 ->
+                                        input1.getKey()
+                                        .add(input1.getValue()), "precalculated bucket history - add new buckets")
                         .pairWith(
-                            preparedBucketsBroadcast.poll())
-                        .performMethod(
-                            input1 ->
-                                input1.getKey()
-                                .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"),
-                    historyBuffer,
-                    timeAverageBuffer,
-                    size));
+                                timeAverageBroadcast.poll()
+                                .pairWith(
+                                        preparedBucketsBroadcast.poll())
+                                .performMethod(
+                                        input1 ->
+                                                input1.getKey()
+                                                .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"))
+                        .performMethod(removeOldHistory(size)));
+
+            unpair.getKey().relayTo(historyBuffer);
+            unpair.getValue().relayTo(timeAverageBuffer);
 
             try {
                 historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
@@ -60,52 +61,20 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
         };
     }
 
-    private static class OldHistoryRemover extends AbstractComponent {
-        private final int size;
+    public static PipeCallable<SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> removeOldHistory(int size){
+        return input -> {
+            ImmutableLinkedList<Buckets> history = input.getKey();
+            Buckets timeAverage = input.getValue();
 
-        private final InputPort<ImmutableLinkedList<Buckets>> historyInputPort;
-        private final InputPort<Buckets> timeAverageInputPort;
-
-        private final OutputPort<ImmutableLinkedList<Buckets>> historyOutputBufferPort;
-        private final OutputPort<Buckets> timeAverageOutputOutputPort;
-
-        OldHistoryRemover(BoundedBuffer<ImmutableLinkedList<Buckets>> historyBuffer, BoundedBuffer<Buckets> timeAverageBuffer, BoundedBuffer<ImmutableLinkedList<Buckets>> historyOutputBuffer, BoundedBuffer<Buckets> timeAverageOutputBuffer, int size) {
-            this.size = size;
-            historyInputPort = historyBuffer.createInputPort();
-            timeAverageInputPort = timeAverageBuffer.createInputPort();
-
-            historyOutputBufferPort = historyOutputBuffer.createOutputPort();
-            timeAverageOutputOutputPort = timeAverageOutputBuffer.createOutputPort();
-        }
-
-        @Override
-        protected void tick(){
-            try {
-                ImmutableLinkedList<Buckets> history = historyInputPort.consume();
-                Buckets timeAverage = timeAverageInputPort.consume();
-
-                if (history.size() >= size) {
-                    AbstractMap.SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = history.poll();
-                    history = poll.getKey();
-                    Buckets removed = poll.getValue();
-                    timeAverage = timeAverage.subtract(removed);
-                }
-
-                historyOutputBufferPort.produce(history);
-                timeAverageOutputOutputPort.produce(timeAverage);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            if (history.size() >= size) {
+                SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets> poll = history.poll();
+                history = poll.getKey();
+                Buckets removed = poll.getValue();
+                timeAverage = timeAverage.subtract(removed);
             }
-        }
 
-        @Override
-        protected Collection<BoundedBuffer> getInputBuffers() {
-            return Arrays.asList(historyInputPort.getBuffer(), timeAverageInputPort.getBuffer());
-        }
-
-        @Override
-        protected Collection<BoundedBuffer> getOutputBuffers() {
-            return Arrays.asList(historyOutputBufferPort.getBuffer(), timeAverageOutputOutputPort.getBuffer());
-        }
+            return new SimpleImmutableEntry<>(history, timeAverage);
+        };
     }
+
 }
