@@ -22,38 +22,54 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     @Override
     protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
         if(!isParallelisable()) {
-            OutputCallable<W> sequentialCallChain = () -> {
-                synchronized (this) {
-                    return nextMethodChain.call(method.call());
-                }
-            };
+            OutputCallable<W> sequentialCallChain = createSequentialLink(nextMethodChain);
             startChainedSequentialComponent(sequentialCallChain, outputBuffer, chainLinks);
         } else {
-            OutputCallable<W> parallelCallChain = () -> nextMethodChain.call(method.call());
+            OutputCallable<W> parallelCallChain = createParallelLink(nextMethodChain);
             startChainedParallelComponent(parallelCallChain, outputBuffer);
         }
+    }
+
+    private <W> OutputCallable<W> createSequentialLink(PipeCallable<V, W> nextMethodChain) {
+        return () -> {
+            synchronized (this) {
+                return nextMethodChain.call(method.call());
+            }
+        };
+    }
+
+    private <W> OutputCallable<W> createParallelLink(PipeCallable<V, W> nextMethodChain) {
+        return () -> nextMethodChain.call(method.call());
     }
 
     @Override
     protected <W> void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
         if(!isParallelisable()) {
-            Callable<Void> sequentialCallChain = new Callable<>() {
-                @Override
-                public Void call() {
-                    synchronized (this) {
-                        nextMethodChain.call(method.call());
-                    }
-                    return null;
-                }
-            };
+            Callable<Void> sequentialCallChain = createSequentialLink(nextMethodChain);
             startShutInSequentialComponent(sequentialCallChain, chainLinks);
         } else {
-            Callable<Void> parallelCallChain = () -> {
-                nextMethodChain.call(method.call());
-                return null;
-            };
+            Callable<Void> parallelCallChain = createParallelLink(nextMethodChain);
             startShutInParallelComponent(parallelCallChain);
         }
+    }
+
+    private Callable<Void> createSequentialLink(InputCallable<V> nextMethodChain) {
+        return new Callable<>() {
+            @Override
+            public Void call() {
+                synchronized (this) {
+                    nextMethodChain.call(method.call());
+                }
+                return null;
+            }
+        };
+    }
+
+    private Callable<Void> createParallelLink(InputCallable<V> nextMethodChain) {
+        return () -> {
+            nextMethodChain.call(method.call());
+            return null;
+        };
     }
 
     private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
