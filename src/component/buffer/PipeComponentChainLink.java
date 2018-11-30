@@ -12,15 +12,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         this.outputBuffer = outputBuffer;
     }
 
-    private PipeComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
-        this(previousComponentChainLink, method, inputBuffer.getBuffer(), outputBuffer);
+    private PipeComponentChainLink(PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+        this(inputBuffer.previousComponent, method, inputBuffer.getBuffer(), outputBuffer);
     }
 
     private PipeComponentChainLink(PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
-        this(null, method, inputBuffer, outputBuffer);
-    }
-
-    private PipeComponentChainLink(PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
         this(null, method, inputBuffer, outputBuffer);
     }
 
@@ -178,7 +174,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     private static <K, V> BufferChainLink<V> getBufferChainLink(BufferChainLink<K> inputBuffer, SimpleBuffer<V> outputBuffer, PipeCallable<K, V> method) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(inputBuffer.previousComponent, method, inputBuffer, outputBuffer);
+        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
         BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
