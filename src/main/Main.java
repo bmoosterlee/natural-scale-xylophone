@@ -61,8 +61,12 @@ class Main {
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
-        .pairWith(volumeAmplitudeStateBuffers.getValue())
-        .performMethod(input -> new VolumeAmplitudeState(input.getKey(), input.getValue()), "main - construct volume amplitude state")
+        .pairWith(volumeAmplitudeStateBuffers.getValue(), "main - pair volume and amplitude")
+        .performMethod(((PipeCallable<AbstractMap.SimpleImmutableEntry<VolumeState, AmplitudeState>, VolumeAmplitudeState>) input ->
+                new VolumeAmplitudeState(
+                    input.getKey(),
+                    input.getValue()))
+                .toSequential(), "main - construct volume amplitude state")
         .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
