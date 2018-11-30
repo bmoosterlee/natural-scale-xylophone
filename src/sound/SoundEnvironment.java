@@ -48,7 +48,7 @@ public class SoundEnvironment {
             }
 
             private byte fitAmplitude(double amplitude) {
-                return (byte) Math.max(Byte.MIN_VALUE, Math.min(Byte.MAX_VALUE, (byte) Math.floor(sampleSize * amplitude / 2)));
+                return (byte) (sampleSize * amplitude / 2);
             }
 
             private void writeToBuffer(byte amplitude) {
