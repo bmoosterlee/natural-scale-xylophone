@@ -1,4 +1,6 @@
-package component.buffer;
+package component.orderer;
+
+import component.buffer.PipeCallable;
 
 import java.util.Comparator;
 

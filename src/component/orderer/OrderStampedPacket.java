@@ -1,4 +1,4 @@
-package component.buffer;
+package component.orderer;
 
 public class OrderStampedPacket<T> implements Comparable<OrderStampedPacket<T>>{
     private final OrderStamper<T> orderStamper;
