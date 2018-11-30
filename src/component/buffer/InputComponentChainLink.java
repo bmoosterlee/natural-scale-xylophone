@@ -59,7 +59,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
-        new InputComponentChainLink<T>(method, inputBuffer).breakChain();
+        new InputComponentChainLink<>(method, inputBuffer).breakChain();
     }
 
 }
