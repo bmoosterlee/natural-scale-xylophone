@@ -22,10 +22,16 @@ public class Mixer {
             private VolumeCalculator volumeCalculator;
             private AmplitudeCalculator amplitudeCalculator;
 
+            private PipeCallable<Long, VolumeState> calculateVolume;
+            private PipeCallable<Long, AmplitudeState> calculateAmplitude;
+
             @Override
             public SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> call(){
                 volumeCalculator = new VolumeCalculator();
                 amplitudeCalculator = new AmplitudeCalculator();
+
+                calculateVolume = MethodPipeComponent.toMethod(volumeCalculator.buildPipe());
+                calculateAmplitude = MethodPipeComponent.toMethod(amplitudeCalculator.buildPipe());
 
                 //Add new notes
                 OutputPort<TimestampedFrequencies> noteAdderInputPort = new OutputPort<>();
@@ -65,13 +71,9 @@ public class Mixer {
 
                 return new SimpleImmutableEntry<>(
                         mixInputBroadcast.poll()
-                                .performMethod(((PipeCallable<Long, VolumeState>)
-                                        sampleCount -> volumeCalculator.calculateVolume(sampleCount))
-                                        .toSequential(), "mixer - calculate volume"),
+                        .connectTo(volumeCalculator.buildPipe().toSequential()),
                         mixInputBroadcast.poll()
-                                .performMethod(((PipeCallable<Long, AmplitudeState>)
-                                        sampleCount -> amplitudeCalculator.calculateAmplitude(sampleCount))
-                                        .toSequential(), "mixer - calculate amplitude"));
+                        .connectTo(amplitudeCalculator.buildPipe().toSequential()));
             }
 
             private void precalculateInBackground() {
@@ -79,8 +81,8 @@ public class Mixer {
                     try {
                         Long futureSampleCount = volumeCalculator.unfinishedEnvelopeSlices.keySet().iterator().next();
 
-                        VolumeState finishedVolumeSlice = volumeCalculator.calculateVolume(futureSampleCount);
-                        AmplitudeState finishedAmplitudeSlice = amplitudeCalculator.calculateAmplitude(futureSampleCount);
+                        VolumeState finishedVolumeSlice = calculateVolume.call(futureSampleCount);
+                        AmplitudeState finishedAmplitudeSlice = calculateAmplitude.call(futureSampleCount);
 
                         volumeCalculator.finishedVolumeSlices.put(futureSampleCount, finishedVolumeSlice);
                         amplitudeCalculator.finishedAmplitudeSlices.put(futureSampleCount, finishedAmplitudeSlice);
@@ -137,33 +139,10 @@ public class Mixer {
     private static class VolumeCalculator {
         final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
         final Map<Long, VolumeState> finishedVolumeSlices;
-        private OutputPort<Long> sampleCountOutputPort;
-        final InputPort<VolumeState> newVolumeStateInputPort;
 
         public VolumeCalculator(){
             unfinishedEnvelopeSlices = new HashMap<>();
             finishedVolumeSlices = new HashMap<>();
-
-            sampleCountOutputPort = new OutputPort<>("volume calculator - sample count");
-            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3, "volume calculator - sample broadcast"));
-            newVolumeStateInputPort =
-                    sampleCountBroadcast.poll()
-                    .performMethod(((PipeCallable<Long, VolumeState>) VolumeCalculator.this::removeFinishedSliceForCalculation).toSequential())
-                            .pairWith(
-                                    sampleCountBroadcast.poll()
-                                            .pairWith(
-                                                    sampleCountBroadcast.poll()
-                                                    .performMethod(((PipeCallable<Long, Collection<EnvelopeForFrequency>>) VolumeCalculator.this::removeUnfinishedSliceForCalculation).toSequential())
-                                                    .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>) VolumeCalculator::groupEnvelopesByFrequency).toSequential()))
-                                            .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Collection<Envelope>>>, Map<Frequency, Collection<Double>>>) input -> calculateVolumesPerFrequency(input.getKey(), input.getValue())).toSequential())
-                                            .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) Mixer::sumValuesPerFrequency).toSequential())
-                                            .performMethod(((PipeCallable<Map<Frequency, Double>, VolumeState>) VolumeState::new).toSequential()))
-                            .performMethod(
-                                    ((PipeCallable<SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
-                                            input1.getKey()
-                                            .add(input1.getValue()))
-                                    .toSequential())
-                            .createInputPort();
         }
 
         private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
@@ -215,19 +194,26 @@ public class Mixer {
             }
         }
 
-        private VolumeState calculateVolume(Long sampleCount) {
-            try {
-                sampleCountOutputPort.produce(sampleCount);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                return newVolumeStateInputPort.consume();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return null;
+        private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<VolumeState>> buildPipe() {
+            return inputBuffer -> {
+                LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(inputBuffer.broadcast(3, "volume calculator - sample broadcast"));
+                return sampleCountBroadcast.poll()
+                        .performMethod(((PipeCallable<Long, VolumeState>) VolumeCalculator.this::removeFinishedSliceForCalculation).toSequential())
+                        .pairWith(
+                            sampleCountBroadcast.poll()
+                            .pairWith(
+                                    sampleCountBroadcast.poll()
+                                    .performMethod(((PipeCallable<Long, Collection<EnvelopeForFrequency>>) VolumeCalculator.this::removeUnfinishedSliceForCalculation).toSequential())
+                                    .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>) VolumeCalculator::groupEnvelopesByFrequency).toSequential()))
+                            .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Collection<Envelope>>>, Map<Frequency, Collection<Double>>>) input -> calculateVolumesPerFrequency(input.getKey(), input.getValue())).toSequential())
+                            .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) Mixer::sumValuesPerFrequency).toSequential())
+                            .performMethod(((PipeCallable<Map<Frequency, Double>, VolumeState>) VolumeState::new).toSequential()))
+                        .performMethod(
+                                ((PipeCallable<SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
+                                        input1.getKey()
+                                                .add(input1.getValue()))
+                                        .toSequential());
+            };
         }
 
         private VolumeState removeFinishedSliceForCalculation(Long sampleCount) {
@@ -250,46 +236,30 @@ public class Mixer {
     private static class AmplitudeCalculator {
         final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices;
         final Map<Long, AmplitudeState> finishedAmplitudeSlices;
-        private OutputPort<Long> sampleCountOutputPort;
-        final InputPort<AmplitudeState> newAmplitudeStateInputPort;
 
         public AmplitudeCalculator() {
             unfinishedWaveSlices = new HashMap<>();
             finishedAmplitudeSlices = new HashMap<>();
-
-            sampleCountOutputPort = new OutputPort<>("amplitude calculator - sample count");
-            LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(sampleCountOutputPort.getBuffer().broadcast(3, "amplitude calculator - sample broadcast"));
-
-            newAmplitudeStateInputPort =
-                    sampleCountBroadcast.poll().performMethod(((PipeCallable<Long, AmplitudeState>) AmplitudeCalculator.this::removeOldFinishedSliceForCalculation).toSequential())
-                            .pairWith(
-                                    sampleCountBroadcast.poll()
-                                            .pairWith(
-                                                    sampleCountBroadcast.poll().performMethod(((PipeCallable<Long, Map<Frequency, Wave>>) AmplitudeCalculator.this::removeUnfinishedSliceForCalculation).toSequential()))
-                                            .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Wave>>, Map<Frequency, Double>>) input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue())).toSequential())
-                                            .performMethod(((PipeCallable<Map<Frequency, Double>, AmplitudeState>) AmplitudeState::new).toSequential()))
-                            .performMethod(
-                                    ((PipeCallable<SimpleImmutableEntry<AmplitudeState, AmplitudeState>, AmplitudeState>) input1 ->
-                                            input1.getKey()
-                                            .add(input1.getValue()))
-                                    .toSequential())
-                            .createInputPort();
-
         }
 
-        private AmplitudeState calculateAmplitude(Long sampleCount) {
-            try {
-                sampleCountOutputPort.produce(sampleCount);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<AmplitudeState>> buildPipe() {
+            return inputBuffer -> {
+                LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(inputBuffer.broadcast(3, "amplitude calculator - sample broadcast"));
 
-            try{
-                return newAmplitudeStateInputPort.consume();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return null;
+                return sampleCountBroadcast.poll()
+                        .performMethod(((PipeCallable<Long, AmplitudeState>) AmplitudeCalculator.this::removeOldFinishedSliceForCalculation).toSequential())
+                        .pairWith(
+                                sampleCountBroadcast.poll()
+                                        .pairWith(
+                                                sampleCountBroadcast.poll().performMethod(((PipeCallable<Long, Map<Frequency, Wave>>) AmplitudeCalculator.this::removeUnfinishedSliceForCalculation).toSequential()))
+                                        .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Wave>>, Map<Frequency, Double>>) input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue())).toSequential())
+                                        .performMethod(((PipeCallable<Map<Frequency, Double>, AmplitudeState>) AmplitudeState::new).toSequential()))
+                        .performMethod(
+                                ((PipeCallable<SimpleImmutableEntry<AmplitudeState, AmplitudeState>, AmplitudeState>) input1 ->
+                                        input1.getKey()
+                                                .add(input1.getValue()))
+                                        .toSequential());
+            };
         }
 
         private Map<Frequency, Wave> removeUnfinishedSliceForCalculation(Long sampleCount) {
