@@ -12,7 +12,12 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
     private final Semaphore filledSpots;
 
     public BoundedStrategy(int capacity, String name) {
-        this.name = name;
+        if (name == null) {
+            this.name = "unnamed";
+        }
+        else {
+            this.name = name;
+        }
         buffer = new ConcurrentLinkedQueue<>();
         emptySpots = new Semaphore(capacity);
         filledSpots = new Semaphore(capacity);
@@ -39,11 +44,7 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
             throw new NullPointerException();
         }
         if (isFull()) {
-            String fixedName = name;
-            if (fixedName == null) {
-                fixedName = "unnamed";
-            }
-            System.out.println(fixedName + " is clogged up.");
+            System.out.println(name + " is clogged up.");
         }
         emptySpots.acquire();
         buffer.offer(packet);
