@@ -95,9 +95,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
 
     private <W> PipeCallable<K, W> createSequentialLink(PipeCallable<V, W> nextMethodChain) {
         return input -> {
+            V output;
             synchronized (this) {
-                return nextMethodChain.call(method.call(input));
+                output = method.call(input);
             }
+            return nextMethodChain.call(output);
         };
     }
 
@@ -145,9 +147,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
 
     private InputCallable<K> createSequentialLink(InputCallable<V> nextMethodChain) {
         return input -> {
+            V output;
             synchronized (this) {
-                nextMethodChain.call(method.call(input));
+                output = method.call(input);
             }
+            nextMethodChain.call(output);
         };
     }
 

@@ -32,9 +32,11 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
 
     private <W> OutputCallable<W> createSequentialLink(PipeCallable<V, W> nextMethodChain) {
         return () -> {
+            V output;
             synchronized (this) {
-                return nextMethodChain.call(method.call());
+                output = method.call();
             }
+            return nextMethodChain.call(output);
         };
     }
 
@@ -57,9 +59,11 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         return new Callable<>() {
             @Override
             public Void call() {
+                V output;
                 synchronized (this) {
-                    nextMethodChain.call(method.call());
+                    output = method.call();
                 }
+                nextMethodChain.call(output);
                 return null;
             }
         };
