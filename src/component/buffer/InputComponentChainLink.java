@@ -4,14 +4,10 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     private final InputCallable<K> method;
     private final SimpleBuffer<K> inputBuffer;
 
-    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, SimpleBuffer<K> inputBuffer){
-        super(previousComponentChainLink);
+    public InputComponentChainLink(InputCallable<K> method, BufferChainLink<K> inputBuffer){
+        super(inputBuffer.previousComponent);
         this.method = method;
-        this.inputBuffer = inputBuffer;
-    }
-
-    public InputComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, InputCallable<K> method, BufferChainLink<K> inputBuffer){
-        this(previousComponentChainLink, method, inputBuffer.getBuffer());
+        this.inputBuffer = inputBuffer.getBuffer();
     }
 
     @Override
@@ -63,7 +59,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
-        new InputComponentChainLink<T>(inputBuffer.previousComponent, method, inputBuffer).breakChain();
+        new InputComponentChainLink<T>(method, inputBuffer).breakChain();
     }
 
 }
