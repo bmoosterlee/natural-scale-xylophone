@@ -11,6 +11,7 @@ public class PerformanceTracker implements Runnable{
 
     public PerformanceTracker(){
         performanceTracker = this;
+        start();
     }
 
     public static TimeKeeper startTracking(String stateName){
