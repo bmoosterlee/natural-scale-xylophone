@@ -1,5 +1,6 @@
 package spectrum;
 
+import component.Mapper;
 import component.Pulse;
 import component.Separator;
 import component.TimedConsumer;

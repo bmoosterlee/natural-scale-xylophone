@@ -1,4 +1,6 @@
-package component.buffer;
+package component;
+
+import component.buffer.*;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
