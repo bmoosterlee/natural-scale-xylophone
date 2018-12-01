@@ -22,35 +22,42 @@ import java.util.stream.IntStream;
 public class SpectrumBuilder {
 
     public static SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildComponent(BoundedBuffer<Pulse> frameTickBuffer, BoundedBuffer<VolumeState> inputBuffer, SpectrumWindow spectrumWindow) {
-        LinkedList<BoundedBuffer<Pulse>> tickBroadcast = new LinkedList<>(frameTickBuffer.broadcast(2, "spectrum builder tick - broadcast"));
         LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast =
             new LinkedList<>(
-                tickBroadcast.poll()
-                .performMethod(TimedConsumer.consumeFrom(inputBuffer), "consume from input buffer")
-                .broadcast(2, "Spectrum builder volume - broadcast"));
-
-        BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer =
-                volumeBroadcast.poll()
-                .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator");
+                frameTickBuffer
+                .performMethod(TimedConsumer.consumeFrom(inputBuffer), "spectrum builder - consume from volume state buffer")
+                .broadcast(2, "spectrum builder - volume broadcast"));
 
         return new SimpleImmutableEntry<>(
-                volumeBroadcast.poll()
-                .performMethod(input -> new Buckets(input, spectrumWindow), "build volume state to buckets"),
-                tickBroadcast.poll()
+                buildNoteSpectrumPipe(volumeBroadcast.poll(), spectrumWindow),
+                buildHarmonicSpectrumPipe(volumeBroadcast.poll(), spectrumWindow));
+    }
+
+    private static BufferChainLink<Buckets> buildNoteSpectrumPipe(BoundedBuffer<VolumeState> inputBuffer, SpectrumWindow spectrumWindow) {
+        return inputBuffer
+                .performMethod(input -> new Buckets(input, spectrumWindow), "build note spectrum");
+    }
+
+    private static BoundedBuffer<Buckets> buildHarmonicSpectrumPipe(BoundedBuffer<VolumeState> volumeBuffer, SpectrumWindow spectrumWindow) {
+        LinkedList<BoundedBuffer<VolumeState>> volumeBroadcast = new LinkedList<>(volumeBuffer.broadcast(2, "build harmonic spectrum - tick broadcast"));
+
+        return volumeBroadcast.poll()
+                .performMethod(input -> new Pulse(), "harmonic spectrum - to pulse")
                 .connectTo(
                         HarmonicBucketsUnmapper.buildPipe(
-                            Mapper.buildComponent(
-                                calculateHarmonicsContinuously(harmonicsIteratorBuffer)
-                                .connectTo((PipeCallable<BoundedBuffer<Collection<Map.Entry<Harmonic, Double>>>, BoundedBuffer<Map.Entry<Harmonic, Double>>>) Separator::separate)
-                                .performMethod(harmonicWithVolume -> {
-                                    Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
-                                    return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());
-                                })
-                                .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())))
-                                .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()))
-                                .connectTo(spectrumWindow.buildInBoundsFilterPipe()),
-                            IntStream.range(0, spectrumWindow.width).boxed().collect(Collectors.toSet()))))
-                .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200)));
+                                Mapper.buildComponent(
+                                        calculateHarmonicsContinuously(
+                                                volumeBroadcast.poll()
+                                                .performMethod(HarmonicCalculator.calculateHarmonics(100), "harmonic spectrum - build harmonics iterator"))
+                                        .connectTo((PipeCallable<BoundedBuffer<Collection<Map.Entry<Harmonic, Double>>>, BoundedBuffer<Map.Entry<Harmonic, Double>>>) Separator::separate)
+                                        .performMethod(harmonicWithVolume -> {
+                                            Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
+                                            return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());}, "harmonic spectrum - extract harmonic")
+                                        .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())), "harmonic spectrum - build bucket")
+                                        .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()), "harmonic spectrum - frequency to integer")
+                                        .connectTo(spectrumWindow.buildInBoundsFilterPipe()),
+                                IntStream.range(0, spectrumWindow.width).boxed().collect(Collectors.toSet()))))
+                .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
     }
 
     private static BufferChainLink<Collection<Map.Entry<Harmonic, Double>>> calculateHarmonicsContinuously(BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer) {
@@ -62,7 +69,7 @@ public class SpectrumBuilder {
                             newHarmonics.add(harmonicsIterator.next());
                         }
                         return newHarmonics;
-                });
+                }, "harmonic spectrum - calculate harmonics continuously");
     }
 
 }
