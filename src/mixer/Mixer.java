@@ -98,19 +98,11 @@ public class Mixer {
         }
         return null;
     }
-    
-    private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
-        Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
-        for(Frequency frequency : frequencies){
-            newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
-        }
-        return newNotesWithEnvelopes;
-    }
 
     private static class VolumeCalculator {
+
         final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices;
         final Map<Long, VolumeState> finishedVolumeSlices;
-
         public VolumeCalculator(){
             unfinishedEnvelopeSlices = new HashMap<>();
             finishedVolumeSlices = new HashMap<>();
@@ -130,6 +122,14 @@ public class Mixer {
                 }
                 unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
             }
+        }
+
+        private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
+            Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
+            for(Frequency frequency : frequencies){
+                newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
+            }
+            return newNotesWithEnvelopes;
         }
 
         private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
