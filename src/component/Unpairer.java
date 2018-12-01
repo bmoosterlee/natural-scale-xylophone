@@ -49,4 +49,8 @@ public class Unpairer<K, V> extends AbstractComponent {
         return Arrays.asList(output1.getBuffer(), output2.getBuffer());
     }
 
+    @Override
+    public Boolean isParallelisable() {
+        return false;
+    }
 }
