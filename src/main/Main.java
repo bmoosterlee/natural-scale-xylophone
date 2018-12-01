@@ -74,8 +74,7 @@ class Main {
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
             volumeBroadcast.poll()
                 .toOverwritable(),
-            spectrumWindow,
-            width);
+            spectrumWindow);
 
         LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
         LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
