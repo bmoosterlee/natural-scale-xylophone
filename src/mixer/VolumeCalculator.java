@@ -14,57 +14,6 @@ import java.util.stream.Collectors;
 
 class VolumeCalculator {
 
-    private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
-        Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
-        for(Frequency frequency : frequencies){
-            newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
-        }
-        return newNotesWithEnvelopes;
-    }
-
-    private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
-        Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(EnvelopeForFrequency::getFrequency));
-        return
-            groupedEnvelopeFroFrequencies.entrySet()
-            .stream()
-            .collect(
-                Collectors.toMap(Map.Entry::getKey,
-                e ->
-                    e.getValue()
-                    .stream()
-                    .map(EnvelopeForFrequency::getEnvelope)
-                    .collect(Collectors.toList())));
-    }
-
-    private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
-        Map<Frequency, Collection<Double>> newVolumeCollections = new HashMap<>();
-        for (Frequency frequency : envelopesPerFrequency.keySet()) {
-            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
-            try {
-                Collection<Double> volumes = new LinkedList<>();
-                for (Envelope envelope : envelopes) {
-                    double volume = envelope.getVolume(sampleCount);
-                    volumes.add(volume);
-                }
-
-                newVolumeCollections.put(frequency, volumes);
-            }
-            catch(NullPointerException ignored){
-            }
-        }
-        return newVolumeCollections;
-    }
-
-    private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
-        Map<Frequency, Double> totalMap = new HashMap<>();
-        for(Frequency frequency : collectionMap.keySet()) {
-            Collection<Double> collection = collectionMap.get(frequency);
-            Double total = collection.stream().mapToDouble(f -> f).sum();
-            totalMap.put(frequency, total);
-        }
-        return totalMap;
-    }
-
     static PipeCallable<BoundedBuffer<NewNotesVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
         return new PipeCallable<>() {
             final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices = new HashMap<>();
@@ -129,5 +78,56 @@ class VolumeCalculator {
                 return currentUnfinishedSlice;
             }
         };
+    }
+
+    private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
+        Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
+        for(Frequency frequency : frequencies){
+            newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
+        }
+        return newNotesWithEnvelopes;
+    }
+
+    private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
+        Map<Frequency, List<EnvelopeForFrequency>> groupedEnvelopeFroFrequencies = envelopesForFrequencies.stream().collect(Collectors.groupingBy(EnvelopeForFrequency::getFrequency));
+        return
+            groupedEnvelopeFroFrequencies.entrySet()
+            .stream()
+            .collect(
+                Collectors.toMap(Map.Entry::getKey,
+                e ->
+                    e.getValue()
+                    .stream()
+                    .map(EnvelopeForFrequency::getEnvelope)
+                    .collect(Collectors.toList())));
+    }
+
+    private static Map<Frequency, Collection<Double>> calculateVolumesPerFrequency(Long sampleCount, Map<Frequency, Collection<Envelope>> envelopesPerFrequency) {
+        Map<Frequency, Collection<Double>> newVolumeCollections = new HashMap<>();
+        for (Frequency frequency : envelopesPerFrequency.keySet()) {
+            Collection<Envelope> envelopes = envelopesPerFrequency.get(frequency);
+            try {
+                Collection<Double> volumes = new LinkedList<>();
+                for (Envelope envelope : envelopes) {
+                    double volume = envelope.getVolume(sampleCount);
+                    volumes.add(volume);
+                }
+
+                newVolumeCollections.put(frequency, volumes);
+            }
+            catch(NullPointerException ignored){
+            }
+        }
+        return newVolumeCollections;
+    }
+
+    private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
+        Map<Frequency, Double> totalMap = new HashMap<>();
+        for(Frequency frequency : collectionMap.keySet()) {
+            Collection<Double> collection = collectionMap.get(frequency);
+            Double total = collection.stream().mapToDouble(f -> f).sum();
+            totalMap.put(frequency, total);
+        }
+        return totalMap;
     }
 }

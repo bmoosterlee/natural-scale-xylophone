@@ -12,20 +12,6 @@ import java.util.*;
 
 class AmplitudeCalculator {
 
-    private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
-        Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
-        for (Frequency frequency : wavesPerFrequency.keySet()) {
-            Wave wave = wavesPerFrequency.get(frequency);
-            try {
-                double amplitude = wave.getAmplitude(sampleCount);
-                newAmplitudeCollections.put(frequency, amplitude);
-            }
-            catch(NullPointerException ignored){
-            }
-        }
-        return newAmplitudeCollections;
-    }
-
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
             final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices = new HashMap<>();
@@ -114,5 +100,19 @@ class AmplitudeCalculator {
                 return oldFinishedAmplitudeSlice;
             }
         };
+    }
+
+    private static Map<Frequency, Double> calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
+        Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
+        for (Frequency frequency : wavesPerFrequency.keySet()) {
+            Wave wave = wavesPerFrequency.get(frequency);
+            try {
+                double amplitude = wave.getAmplitude(sampleCount);
+                newAmplitudeCollections.put(frequency, amplitude);
+            }
+            catch(NullPointerException ignored){
+            }
+        }
+        return newAmplitudeCollections;
     }
 }
