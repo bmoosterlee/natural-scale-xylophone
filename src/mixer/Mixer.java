@@ -98,8 +98,7 @@ public class Mixer {
         }
         return null;
     }
-
-
+    
     private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
         Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
         for(Frequency frequency : frequencies){
@@ -115,6 +114,22 @@ public class Mixer {
         public VolumeCalculator(){
             unfinishedEnvelopeSlices = new HashMap<>();
             finishedVolumeSlices = new HashMap<>();
+        }
+
+        private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
+            Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
+                    envelope,
+                    newNotes);
+
+            for (Long i = sampleCount; i < endingSampleCount; i++) {
+                Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
+                try {
+                    newUnfinishedSlice.addAll(newNotesWithEnvelopes);
+                } catch (NullPointerException e) {
+                    newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
+                }
+                unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
+            }
         }
 
         private static Map<Frequency, Collection<Envelope>> groupEnvelopesByFrequency(Collection<EnvelopeForFrequency> envelopesForFrequencies) {
@@ -148,22 +163,6 @@ public class Mixer {
                 }
             }
             return newVolumeCollections;
-        }
-
-        private void addNewEnvelopes(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
-            Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
-                    envelope,
-                    newNotes);
-
-            for (Long i = sampleCount; i < endingSampleCount; i++) {
-                Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
-                try {
-                    newUnfinishedSlice.addAll(newNotesWithEnvelopes);
-                } catch (NullPointerException e) {
-                    newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
-                }
-                unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
-            }
         }
 
         private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
