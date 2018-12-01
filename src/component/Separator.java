@@ -6,19 +6,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class Separator<T> extends AbstractComponent<List<T>, T> {
+public class Separator<T, L extends Collection<T>> extends AbstractComponent<L, T> {
 
-    private final InputPort<List<T>> inputPort;
+    private final InputPort<L> inputPort;
     private final OutputPort<T> outputPort;
 
-    public Separator(BoundedBuffer<List<T>> inputBuffer, SimpleBuffer<T> outputBuffer) {
+    public Separator(BoundedBuffer<L> inputBuffer, SimpleBuffer<T> outputBuffer) {
         inputPort = inputBuffer.createInputPort();
         outputPort = outputBuffer.createOutputPort();
     }
 
     protected void tick() {
         try {
-            List<T> input = inputPort.consume();
+            L input = inputPort.consume();
             for(T element : input){
                 outputPort.produce(element);
             }
@@ -27,14 +27,14 @@ public class Separator<T> extends AbstractComponent<List<T>, T> {
         }
     }
 
-    public static <T> SimpleBuffer<T> separate(BoundedBuffer<List<T>> inputBuffer){
+    public static <T, L extends Collection<T>> SimpleBuffer<T> separate(BoundedBuffer<L> inputBuffer){
         SimpleBuffer<T> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
         new TickRunningStrategy(new Separator<>(inputBuffer, outputBuffer));
         return outputBuffer;
     }
 
     @Override
-    protected Collection<BoundedBuffer<List<T>>> getInputBuffers() {
+    protected Collection<BoundedBuffer<L>> getInputBuffers() {
         return Collections.singleton(inputPort.getBuffer());
     }
 
