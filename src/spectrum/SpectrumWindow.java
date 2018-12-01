@@ -49,4 +49,26 @@ public class SpectrumWindow {
         return centerFrequency;
     }
 
+    <V> PipeCallable<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>>, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>>> buildInBoundsFilterPipe() {
+        return inputBuffer1 -> {
+            SimpleBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>> outputBuffer = new SimpleBuffer<>(1, "spectrumBuilder - in bounds filter");
+
+            new TickRunningStrategy(
+                    new AbstractPipeComponent<>(inputBuffer1.createInputPort(), outputBuffer.createOutputPort()) {
+                        @Override
+                        protected void tick() {
+                            try {
+                                AbstractMap.SimpleImmutableEntry<Integer, V> consumed = input.consume();
+                                if (inBounds(consumed.getKey())) {
+                                    output.produce(consumed);
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+            return outputBuffer;
+        };
+    }
 }
