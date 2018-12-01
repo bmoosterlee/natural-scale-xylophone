@@ -28,9 +28,9 @@ public class SpectrumBuilder {
                 .performMethod(TimedConsumer.consumeFrom(inputBuffer), "consume from input buffer")
                 .broadcast(2, "Spectrum builder volume - broadcast"));
 
-        BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer = volumeBroadcast.poll()
+        BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer =
+                volumeBroadcast.poll()
                 .performMethod(HarmonicCalculator.calculateHarmonics(100), "calculate harmonics iterator");
-
 
         return new SimpleImmutableEntry<>(
                 volumeBroadcast.poll()
@@ -53,13 +53,14 @@ public class SpectrumBuilder {
     }
 
     private static BufferChainLink<Collection<Map.Entry<Harmonic, Double>>> calculateHarmonicsContinuously(BufferChainLink<Iterator<Map.Entry<Harmonic, Double>>> harmonicsIteratorBuffer) {
-        return harmonicsIteratorBuffer.performMethod(
-                harmonicsIterator -> {
-                    HashSet<Map.Entry<Harmonic, Double>> newHarmonics = new HashSet<>();
-                    while (harmonicsIteratorBuffer.isEmpty() && harmonicsIterator.hasNext()) {
-                        newHarmonics.add(harmonicsIterator.next());
-                    }
-                    return newHarmonics;
+        return harmonicsIteratorBuffer
+                .performMethod(
+                    harmonicsIterator -> {
+                        HashSet<Map.Entry<Harmonic, Double>> newHarmonics = new HashSet<>();
+                        while (harmonicsIteratorBuffer.isEmpty() && harmonicsIterator.hasNext()) {
+                            newHarmonics.add(harmonicsIterator.next());
+                        }
+                        return newHarmonics;
                 });
     }
 
