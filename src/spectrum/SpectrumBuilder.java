@@ -9,7 +9,7 @@ import frequency.Frequency;
 import mixer.state.VolumeState;
 import spectrum.buckets.AtomicBucket;
 import spectrum.buckets.Buckets;
-import spectrum.buckets.BuffersToBuckets;
+import spectrum.buckets.HarmonicBucketsUnmapper;
 import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
@@ -38,7 +38,7 @@ public class SpectrumBuilder {
                 .performMethod(input -> new Buckets(input, spectrumWindow), "build volume state to buckets"),
                 tickBroadcast.poll()
                 .connectTo(
-                        BuffersToBuckets.buildPipe(
+                        HarmonicBucketsUnmapper.buildPipe(
                             Mapper.buildComponent(
                                 calculateHarmonicsContinuously(harmonicsIteratorBuffer)
                                 .connectTo((PipeCallable<BoundedBuffer<Collection<Map.Entry<Harmonic, Double>>>, BoundedBuffer<Map.Entry<Harmonic, Double>>>) Separator::separate)

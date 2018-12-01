@@ -5,19 +5,19 @@ import component.buffer.*;
 
 import java.util.*;
 
-public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
+public class HarmonicBucketsUnmapper extends MethodPipeComponent<Pulse, Buckets> {
 
-    public BuffersToBuckets(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
+    public HarmonicBucketsUnmapper(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
         super(tickBuffer, outputBuffer, toMethod(buildPipe(inputMap)));
     }
 
     public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<Buckets>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         return inputBuffer -> toBucketMap(inputBuffer, bufferMap)
-            .performMethod(Buckets::new, "buffers to buckets - create buckets");
+            .performMethod(Buckets::new, "harmonic buckets unmapper - create buckets");
     }
 
     private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "buffers to buckets tick - broadcast"));
+        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "harmonic buckets unmapper - tick broadcast"));
         Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
             frameTickers.put(index, frameTickBroadcast.poll());
@@ -37,7 +37,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
     }
 
     private static BoundedBuffer<Map<Integer, MemoizedBucket>> toBucketMap2(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        OutputPort<ImmutableMap<Integer, MemoizedBucket>> incompleteMapOutputPort = new OutputPort<>("buffers to buckets - incomplete map");
+        OutputPort<ImmutableMap<Integer, MemoizedBucket>> incompleteMapOutputPort = new OutputPort<>("harmonic buckets unmapper - incomplete map");
         BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>> incompleteMap = incompleteMapOutputPort.getBuffer();
         try {
             incompleteMapOutputPort.produce(new ImmutableMap<>());
@@ -46,19 +46,19 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
         }
 
         for(Integer index : bufferMap.keySet()){
-            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> incompleteMapBroadcast = new LinkedList<>(incompleteMap.broadcast(2, "buffers to buckets toBucketsMap2 - broadcast"));
+            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> incompleteMapBroadcast = new LinkedList<>(incompleteMap.broadcast(2, "harmonic buckets unmapper - toBucketsMap2 broadcast"));
             incompleteMap =
                 incompleteMapBroadcast.poll()
                 .pairWith(
                     incompleteMapBroadcast.poll()
-                    .performMethod(in -> new Pulse(), "buffers to buckets - to pulse")
+                    .performMethod(in -> new Pulse(), "harmonic buckets unmapper - to pulse")
                     .performMethod(
-                        Flusher.flush(bufferMap.get(index)), "buffers to buckets - flush")
-                    .performMethod(input1 -> new MemoizedBucket(new CompositeBucket<>(input1)), "buffers to buckets - create bucket")
-                    .performMethod(input2 -> new AbstractMap.SimpleImmutableEntry<>(index, input2), "buffers to buckets - pair indrx new entry"))
-                .performMethod(input1 -> put(input1), "buffers to buckets - put entry");
+                        Flusher.flush(bufferMap.get(index)), "harmonic buckets unmapper - flush")
+                    .performMethod(input1 -> new MemoizedBucket(new CompositeBucket<>(input1)), "harmonic buckets unmapper - create bucket")
+                    .performMethod(input2 -> new AbstractMap.SimpleImmutableEntry<>(index, input2), "harmonic buckets unmapper - pair indrx new entry"))
+                .performMethod(input1 -> put(input1), "harmonic buckets unmapper - put entry");
         }
-        return incompleteMap.performMethod(input1 -> input1.map, "buffers to buckets - extract Map");
+        return incompleteMap.performMethod(input1 -> input1.map, "harmonic buckets unmapper - extract Map");
     }
 
     private static class ImmutableMap<K, V>{
