@@ -99,16 +99,6 @@ public class Mixer {
         return null;
     }
 
-    private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
-        Map<Frequency, Double> totalMap = new HashMap<>();
-        for(Frequency frequency : collectionMap.keySet()) {
-            Collection<Double> collection = collectionMap.get(frequency);
-            Double total = collection.stream().mapToDouble(f -> f).sum();
-            totalMap.put(frequency, total);
-        }
-        return totalMap;
-    }
-
 
     private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
         Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
@@ -176,6 +166,16 @@ public class Mixer {
             }
         }
 
+        private static Map<Frequency, Double> sumValuesPerFrequency(Map<Frequency, Collection<Double>> collectionMap) {
+            Map<Frequency, Double> totalMap = new HashMap<>();
+            for(Frequency frequency : collectionMap.keySet()) {
+                Collection<Double> collection = collectionMap.get(frequency);
+                Double total = collection.stream().mapToDouble(f -> f).sum();
+                totalMap.put(frequency, total);
+            }
+            return totalMap;
+        }
+
         private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<VolumeState>> buildPipe() {
             return inputBuffer -> {
                 LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(inputBuffer.broadcast(3, "volume calculator - sample broadcast"));
@@ -188,7 +188,7 @@ public class Mixer {
                                     .performMethod(((PipeCallable<Long, Collection<EnvelopeForFrequency>>) VolumeCalculator.this::removeUnfinishedSliceForCalculation).toSequential(), "volume calculator - remove unfinished slice")
                                     .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>) VolumeCalculator::groupEnvelopesByFrequency).toSequential(), "volume calculator - group envelopes by frequency"), "volume calculator - pair sample count and envelopes grouped by frequency")
                             .performMethod(((PipeCallable<SimpleImmutableEntry<Long, Map<Frequency, Collection<Envelope>>>, Map<Frequency, Collection<Double>>>) input -> calculateVolumesPerFrequency(input.getKey(), input.getValue())).toSequential(), "volume calculator - calculate volumes per frequency")
-                            .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) Mixer::sumValuesPerFrequency).toSequential(), "volume calculator - sum values per frequency")
+                            .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) VolumeCalculator::sumValuesPerFrequency).toSequential(), "volume calculator - sum values per frequency")
                             .performMethod(((PipeCallable<Map<Frequency, Double>, VolumeState>) VolumeState::new).toSequential(), "volume calculator - construct new volume state"), "volume calculator - pair old and new finished slices")
                         .performMethod(
                                 ((PipeCallable<SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
