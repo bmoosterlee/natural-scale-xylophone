@@ -4,9 +4,9 @@ import component.buffer.PipeCallable;
 
 import java.util.Comparator;
 
-public class OrderStamper<T> {
+public class OrderStamper {
     private long counter;
-    private final Comparator<OrderStampedPacket<T>> comparator;
+    private final Comparator<OrderStampedPacket<Object>> comparator;
 
     public OrderStamper(){
         counter = 0;
@@ -15,7 +15,7 @@ public class OrderStamper<T> {
 
     public static <T> PipeCallable<T, OrderStampedPacket<T>> build(){
         return new PipeCallable<>(){
-            OrderStamper<T> orderStamper = new OrderStamper<>();
+            OrderStamper orderStamper = new OrderStamper();
 
             @Override
             public OrderStampedPacket<T> call(T input) {
@@ -29,7 +29,7 @@ public class OrderStamper<T> {
         };
     }
 
-    public int compare(OrderStampedPacket<T> packet1, OrderStampedPacket<T> packet2) {
+    public int compare(OrderStampedPacket packet1, OrderStampedPacket packet2) {
         return comparator.compare(packet1, packet2);
     }
 
@@ -39,7 +39,7 @@ public class OrderStamper<T> {
         return orderStamp;
     }
 
-    public boolean successor(OrderStampedPacket<T> first, OrderStampedPacket<T> second) {
+    public boolean successor(OrderStampedPacket first, OrderStampedPacket second) {
         return first.orderStamp+1 == second.orderStamp;
     }
 }

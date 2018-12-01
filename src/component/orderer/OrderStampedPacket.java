@@ -1,18 +1,27 @@
 package component.orderer;
 
-public class OrderStampedPacket<T> implements Comparable<OrderStampedPacket<T>>{
-    private final OrderStamper<T> orderStamper;
-    public final long orderStamp;
-    private final T content;
+import component.buffer.Packet;
+import component.buffer.PipeCallable;
 
-    public OrderStampedPacket(OrderStamper<T> orderStamper, T content) {
+public class OrderStampedPacket<T> extends Packet<T> implements Comparable<OrderStampedPacket<T>>{
+    private final OrderStamper orderStamper;
+    final long orderStamp;
+
+    OrderStampedPacket(OrderStamper orderStamper, T content) {
+        super(content);
         this.orderStamper = orderStamper;
-        this.content = content;
         orderStamp = orderStamper.stamp();
     }
 
-    public T unwrap() {
-        return content;
+    private <K> OrderStampedPacket(OrderStampedPacket<K> previousPacket, PipeCallable<K, T> method) {
+        super(previousPacket, method);
+        this.orderStamper = previousPacket.orderStamper;
+        this.orderStamp = previousPacket.orderStamp;
+    }
+
+    @Override
+    public <V> Packet<V> transform(PipeCallable<T, V> method) {
+        return new OrderStampedPacket<V>(this, method);
     }
 
     public boolean successor(OrderStampedPacket<T> other) {
