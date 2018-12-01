@@ -33,16 +33,6 @@ public class Mixer {
                 calculateVolume = MethodPipeComponent.toMethod(volumeCalculator.buildPipe());
                 calculateAmplitude = MethodPipeComponent.toMethod(amplitudeCalculator.buildPipe());
 
-                //Add new notes
-                OutputPort<TimestampedFrequencies> noteAdderInputPort = new OutputPort<>();
-                InputPort<Long> noteAdderOutputPort =
-                        noteAdderInputPort.getBuffer()
-                                .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave")
-                                .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, Long>)
-                                        this::addNewNotes)
-                                        .toSequential(), "mixer - add new notes")
-                                .createInputPort();
-
                 //Mix
                 LinkedList<SimpleBuffer<Long>> mixInputBroadcast = new LinkedList<>(
                         inputBuffer
@@ -53,20 +43,11 @@ public class Mixer {
                         }).toSequential(), "mixer - precalculate")
                         //Determine whether to add new notes or mix
                         .performMethod(Counter.build(), "count samples")
+//                        .performMethod(OrderStamper.build(), "mixer - order stamp")
                         .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                        .performMethod(((PipeCallable<TimestampedFrequencies, Long>) timestampedFrequencies -> {
-                            if (timestampedFrequencies.getFrequencies().isEmpty()) {
-                                return timestampedFrequencies.getSampleCount();
-                            } else {
-                                try {
-                                    noteAdderInputPort.produce(timestampedFrequencies);
-                                    return noteAdderOutputPort.consume();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                                return null;
-                            }
-                        }).toSequential(), "mixer - add new notes or mix")
+                        .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope wave")
+                        .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, Long>) this::addNewNotes)
+                        .toSequential(), "mixer - add new notes")
                         .broadcast(2, "mixer - input broadcast"));
 
                 return new SimpleImmutableEntry<>(
@@ -98,13 +79,14 @@ public class Mixer {
             private Long addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
                 Long startingSampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
-                DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
-                long endingSampleCount = envelope.getEndingSampleCount();
+                if(!newNotes.isEmpty()){
+                    DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
+                    long endingSampleCount = envelope.getEndingSampleCount();
 
-                volumeCalculator.addNewEnvelopes(startingSampleCount, endingSampleCount, newNotes, envelope);
+                    volumeCalculator.addNewEnvelopes(startingSampleCount, endingSampleCount, newNotes, envelope);
 
-                amplitudeCalculator.addNewWaves(startingSampleCount, endingSampleCount, newNotes, sampleRate);
-
+                    amplitudeCalculator.addNewWaves(startingSampleCount, endingSampleCount, newNotes, sampleRate);
+                }
                 return startingSampleCount;
             }
         };
