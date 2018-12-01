@@ -1,5 +1,7 @@
 package component.buffer;
 
+import java.util.concurrent.Callable;
+
 public interface OutputCallable<V> extends ComponentCallable {
 
     V call();
@@ -31,6 +33,17 @@ public interface OutputCallable<V> extends ComponentCallable {
             public Boolean isParallelisable() {
                 return true;
             }
+        };
+    }
+
+    default <W> OutputCallable<W> chainTo(PipeCallable<V, W> nextMethod){
+        return () -> nextMethod.call(OutputCallable.this.call());
+    }
+
+    default Callable<Void> chainTo(InputCallable<V> nextMethod){
+        return () -> {
+            nextMethod.call(OutputCallable.this.call());
+            return null;
         };
     }
 
