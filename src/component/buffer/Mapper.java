@@ -39,7 +39,7 @@ public class Mapper<K, V> extends AbstractComponent<SimpleImmutableEntry<K, V>, 
         return outputBuffers;
     }
 
-    public static <K, V> Map<K, BoundedBuffer<V>> toBufferMap(BoundedBuffer<SimpleImmutableEntry<K, V>> inputBuffer, Collection<K> range){
+    public static <K, V> Map<K, BoundedBuffer<V>> buildComponent(BoundedBuffer<SimpleImmutableEntry<K, V>> inputBuffer, Collection<K> range){
         Map<K, BoundedBuffer<V>> outputBufferMap = new HashMap<>();
         for (K index : range) {
             outputBufferMap.put(index, new SimpleBuffer<>(1,"map bucket"));

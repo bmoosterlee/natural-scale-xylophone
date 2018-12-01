@@ -38,7 +38,7 @@ public class SpectrumBuilder {
                 tickBroadcast.poll()
                 .connectTo(
                         BuffersToBuckets.buildPipe(
-                            Mapper.toBufferMap(
+                            Mapper.buildComponent(
                                 calculateHarmonicsContinuously(harmonicsIteratorBuffer)
                                 .connectTo((PipeCallable<BoundedBuffer<Collection<Map.Entry<Harmonic, Double>>>, BoundedBuffer<Map.Entry<Harmonic, Double>>>) Separator::separate)
                                 .performMethod(harmonicWithVolume -> {
