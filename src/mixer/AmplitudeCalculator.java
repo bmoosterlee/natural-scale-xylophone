@@ -20,11 +20,10 @@ class AmplitudeCalculator {
             @Override
             public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNotesAmplitudeData> inputBuffer) {
                 LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(
-                        inputBuffer.performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) input -> {
-                            addNewWaves(input);
-                            return input.getSampleCount();
-                        }).toSequential(), "amplitude calculator - add new notes")
-                                .broadcast(3, "amplitude calculator - sample broadcast"));
+                        inputBuffer
+                        .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
+                        .broadcast(3, "amplitude calculator - sample broadcast"));
+
                 return sampleCountBroadcast.poll()
                         .performMethod(((PipeCallable<Long, AmplitudeState>) this::removeOldFinishedSliceForCalculation).toSequential(), "amplitude calculator - remove finished slice")
                         .pairWith(
@@ -37,14 +36,16 @@ class AmplitudeCalculator {
                         .performMethod(
                                 ((PipeCallable<AbstractMap.SimpleImmutableEntry<AmplitudeState, AmplitudeState>, AmplitudeState>) input1 ->
                                         input1.getKey()
-                                                .add(input1.getValue()))
+                                        .add(input1.getValue()))
                                         .toSequential(), "amplitude calculator - add new and old finished slices");
             }
 
-            private void addNewWaves(NewNotesAmplitudeData newNotesAmplitudeData) {
+            private Long addNewWaves(NewNotesAmplitudeData newNotesAmplitudeData) {
+                Long sampleCount = newNotesAmplitudeData.getSampleCount();
+
                 Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotesAmplitudeData.getNewNotes(), sampleRate);
 
-                for (Long i = newNotesAmplitudeData.getSampleCount(); i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
+                for (Long i = sampleCount; i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
                     synchronized (unfinishedWaveSlices) {
                         Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
                         try {
@@ -57,6 +58,7 @@ class AmplitudeCalculator {
                         }
                     }
                 }
+                return sampleCount;
             }
 
             private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes, SampleRate sampleRate) {

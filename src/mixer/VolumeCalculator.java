@@ -21,13 +21,11 @@ class VolumeCalculator {
 
             @Override
             public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNotesVolumeData> inputBuffer) {
-
                 LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(
-                        inputBuffer.performMethod(((PipeCallable<NewNotesVolumeData, Long>) input -> {
-                            addNewEnvelopes(input);
-                            return input.getSampleCount();
-                        }).toSequential(), "volume calculator - add new notes")
-                                .broadcast(3, "volume calculator - sample broadcast"));
+                        inputBuffer
+                        .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewEnvelopes).toSequential(), "volume calculator - add new notes")
+                        .broadcast(3, "volume calculator - sample broadcast"));
+
                 return sampleCountBroadcast.poll()
                         .performMethod(((PipeCallable<Long, VolumeState>) this::removeFinishedSliceForCalculation).toSequential(), "volume calculator - remove finished slice")
                         .pairWith(
@@ -42,16 +40,18 @@ class VolumeCalculator {
                         .performMethod(
                                 ((PipeCallable<AbstractMap.SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
                                         input1.getKey()
-                                                .add(input1.getValue()))
+                                        .add(input1.getValue()))
                                         .toSequential(), "volume calculator - add old and new finished slices");
             }
 
-            private void addNewEnvelopes(NewNotesVolumeData newNotesVolumeData) {
+            private Long addNewEnvelopes(NewNotesVolumeData newNotesVolumeData) {
+                Long sampleCount = newNotesVolumeData.getSampleCount();
+
                 Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
                         newNotesVolumeData.getEnvelope(),
                         newNotesVolumeData.getNewNotes());
 
-                for (Long i = newNotesVolumeData.getSampleCount(); i < newNotesVolumeData.getEndingSampleCount(); i++) {
+                for (Long i = sampleCount; i < newNotesVolumeData.getEndingSampleCount(); i++) {
                     Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
                     try {
                         newUnfinishedSlice.addAll(newNotesWithEnvelopes);
@@ -60,6 +60,8 @@ class VolumeCalculator {
                     }
                     unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
                 }
+
+                return sampleCount;
             }
 
             private VolumeState removeFinishedSliceForCalculation(Long sampleCount) {
