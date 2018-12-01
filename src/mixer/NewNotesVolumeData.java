@@ -5,13 +5,13 @@ import mixer.envelope.DeterministicEnvelope;
 
 import java.util.Collection;
 
-public class NewNoteVolumeData {
+public class NewNotesVolumeData {
     private final Long sampleCount;
     private final Long endingSampleCount;
     private final Collection<Frequency> newNotes;
     private final DeterministicEnvelope envelope;
 
-    public NewNoteVolumeData(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
+    public NewNotesVolumeData(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, DeterministicEnvelope envelope) {
         this.sampleCount = sampleCount;
         this.endingSampleCount = endingSampleCount;
         this.newNotes = newNotes;

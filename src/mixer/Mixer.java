@@ -22,7 +22,7 @@ public class Mixer {
             @Override
             public SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> call(){
                 //Mix
-                LinkedList<SimpleBuffer<NewNoteVolumeData>> newNoteDataBroadcast = new LinkedList<>(
+                LinkedList<SimpleBuffer<NewNotesVolumeData>> newNoteDataBroadcast = new LinkedList<>(
                         inputBuffer
                         //Precalculate future samples
                         .performMethod(((PipeCallable<Pulse, Pulse>) input1 -> {
@@ -34,15 +34,15 @@ public class Mixer {
 //                        .performMethod(OrderStamper.build(), "mixer - order stamp")
                         .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                         .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope")
-                        .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, NewNoteVolumeData>) this::extractNewNoteData).toSequential(), "mixer - add new notes")
+                        .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, NewNotesVolumeData>) this::extractNewNotesData).toSequential(), "mixer - add new notes")
                         .broadcast(2, "mixer - new note data"));
 
                 return new SimpleImmutableEntry<>(
                         newNoteDataBroadcast.poll()
                         .connectTo(VolumeCalculator.buildPipe().toSequential()),
                         newNoteDataBroadcast.poll()
-                        .performMethod(((PipeCallable<NewNoteVolumeData, NewNoteAmplitudeData>) input ->
-                                new NewNoteAmplitudeData(input.getSampleCount(), input.getEndingSampleCount(), input.getNewNotes())).toSequential(), "mixer - extract amplitude data from new note data")
+                        .performMethod(((PipeCallable<NewNotesVolumeData, NewNotesAmplitudeData>) input ->
+                                new NewNotesAmplitudeData(input.getSampleCount(), input.getEndingSampleCount(), input.getNewNotes())).toSequential(), "mixer - extract amplitude data from new note data")
                         .connectTo(AmplitudeCalculator.buildPipe(sampleRate).toSequential()));
             }
 
@@ -65,13 +65,13 @@ public class Mixer {
 //                }
 //            }
 
-            private NewNoteVolumeData extractNewNoteData(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
+            private NewNotesVolumeData extractNewNotesData(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
                 Long startingSampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
                 DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 long endingSampleCount = envelope.getEndingSampleCount();
 
-                return new NewNoteVolumeData(startingSampleCount, endingSampleCount, newNotes, envelope);
+                return new NewNotesVolumeData(startingSampleCount, endingSampleCount, newNotes, envelope);
             }
         };
 
@@ -136,16 +136,16 @@ public class Mixer {
             return totalMap;
         }
 
-        private static PipeCallable<BoundedBuffer<NewNoteVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
+        private static PipeCallable<BoundedBuffer<NewNotesVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
             return new PipeCallable<>() {
                 final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices = new HashMap<>();
                 final Map<Long, VolumeState> finishedVolumeSlices = new HashMap<>();
 
                 @Override
-                public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNoteVolumeData> inputBuffer) {
+                public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNotesVolumeData> inputBuffer) {
 
                     LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(
-                            inputBuffer.performMethod(((PipeCallable<NewNoteVolumeData, Long>) input -> {
+                            inputBuffer.performMethod(((PipeCallable<NewNotesVolumeData, Long>) input -> {
                                 addNewEnvelopes(input);
                                 return input.getSampleCount();
                             }).toSequential(), "volume calculator - add new notes")
@@ -168,12 +168,12 @@ public class Mixer {
                                             .toSequential(), "volume calculator - add old and new finished slices");
                 }
 
-                private void addNewEnvelopes(NewNoteVolumeData newNoteVolumeData) {
+                private void addNewEnvelopes(NewNotesVolumeData newNotesVolumeData) {
                     Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
-                            newNoteVolumeData.getEnvelope(),
-                            newNoteVolumeData.getNewNotes());
+                            newNotesVolumeData.getEnvelope(),
+                            newNotesVolumeData.getNewNotes());
 
-                    for (Long i = newNoteVolumeData.getSampleCount(); i < newNoteVolumeData.getEndingSampleCount(); i++) {
+                    for (Long i = newNotesVolumeData.getSampleCount(); i < newNotesVolumeData.getEndingSampleCount(); i++) {
                         Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
                         try {
                             newUnfinishedSlice.addAll(newNotesWithEnvelopes);
@@ -219,15 +219,15 @@ public class Mixer {
             return newAmplitudeCollections;
         }
 
-        private static PipeCallable<BoundedBuffer<NewNoteAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
+        private static PipeCallable<BoundedBuffer<NewNotesAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
             return new PipeCallable<>() {
                 final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices = new HashMap<>();
                 final Map<Long, AmplitudeState> finishedAmplitudeSlices = new HashMap<>();
 
                 @Override
-                public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNoteAmplitudeData> inputBuffer) {
+                public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNotesAmplitudeData> inputBuffer) {
                     LinkedList<SimpleBuffer<Long>> sampleCountBroadcast = new LinkedList<>(
-                            inputBuffer.performMethod(((PipeCallable<NewNoteAmplitudeData, Long>) input -> {
+                            inputBuffer.performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) input -> {
                                 addNewWaves(input);
                                 return input.getSampleCount();
                             }).toSequential(), "amplitude calculator - add new notes")
@@ -248,10 +248,10 @@ public class Mixer {
                                             .toSequential(), "amplitude calculator - add new and old finished slices");
                 }
 
-                private void addNewWaves(NewNoteAmplitudeData newNoteAmplitudeData) {
-                    Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNoteAmplitudeData.getNewNotes(), sampleRate);
+                private void addNewWaves(NewNotesAmplitudeData newNotesAmplitudeData) {
+                    Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotesAmplitudeData.getNewNotes(), sampleRate);
 
-                    for (Long i = newNoteAmplitudeData.getSampleCount(); i < newNoteAmplitudeData.getEndingSampleCount(); i++) {
+                    for (Long i = newNotesAmplitudeData.getSampleCount(); i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
                         synchronized (unfinishedWaveSlices) {
                             Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
                             try {
