@@ -1,18 +1,13 @@
 package spectrum;
 
+import component.buffer.*;
 import frequency.Frequency;
 
-public class SpectrumWindow {
-    private final int width;
-    //todo first step is to get X out of the bucket world. Start dealing with frequencies.
-    //todo one way to do this is to keep a link between the frequencies that buckets were built on.
-    //todo then we don't need to translate back and forth. The issue is that buckets which cache the real value
-    //todo will not keep the frequencies, but the translated frequencies.
-    //todo we probably should just move to frequency buckets.
-    //todo we might index frequencies of buckets though such that we can still do easy manipulations on buckets using
-    //todo these indices
+import java.util.AbstractMap;
 
+public class SpectrumWindow {
     private final Frequency centerFrequency = new Frequency(2 * 261.63);
+    final int width;
     public final Frequency lowerBound;
     public final Frequency upperBound;
     private final double logFrequencyMultiplier;
@@ -33,13 +28,16 @@ public class SpectrumWindow {
         xMultiplier = logRange / this.width;
     }
 
-    public boolean inBounds(Frequency frequency) {
-        int x = getX(frequency);
-        return x >= 0 && x < width;
-    }
-
     public int getX(Frequency frequency) {
         return (int) (Math.log(frequency.getValue()) * logFrequencyMultiplier - logFrequencyAdditive);
+    }
+
+    public boolean inBounds(Frequency frequency) {
+        return inBounds(getX(frequency));
+    }
+
+    public boolean inBounds(Integer x) {
+        return x >= 0 && x < width;
     }
 
     public Frequency getFrequency(double x) {
