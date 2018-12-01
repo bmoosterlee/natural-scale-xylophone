@@ -2,7 +2,6 @@ package mixer;
 
 import component.Counter;
 import component.Pulse;
-import component.Unpairer;
 import component.buffer.*;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
@@ -23,24 +22,27 @@ public class Mixer {
             @Override
             public SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> call(){
                 //Mix
-                SimpleImmutableEntry<SimpleBuffer<NewNoteVolumeData>, SimpleBuffer<NewNoteAmplitudeData>> newNoteCalculationData = Unpairer.unpair(
+                LinkedList<SimpleBuffer<NewNoteVolumeData>> newNoteDataBroadcast = new LinkedList<>(
                         inputBuffer
-                                //Precalculate future samples
-                                .performMethod(((PipeCallable<Pulse, Pulse>) input1 -> {
+                        //Precalculate future samples
+                        .performMethod(((PipeCallable<Pulse, Pulse>) input1 -> {
 //                            precalculateInBackground();
-                                    return input1;
-                                }).toSequential(), "mixer - precalculate")
-                                //Determine whether to add new notes or mix
-                                .performMethod(Counter.build(), "count samples")
+                            return input1;
+                        }).toSequential(), "mixer - precalculate")
+                        //Determine whether to add new notes or mix
+                        .performMethod(Counter.build(), "count samples")
 //                        .performMethod(OrderStamper.build(), "mixer - order stamp")
-                                .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                                .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope")
-                                .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, SimpleImmutableEntry<NewNoteVolumeData, NewNoteAmplitudeData>>) this::addNewNotes).toSequential(), "mixer - add new notes"));
+                        .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
+                        .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope")
+                        .performMethod(((PipeCallable<TimestampedNewNotesWithEnvelope, NewNoteVolumeData>) this::extractNewNoteData).toSequential(), "mixer - add new notes")
+                        .broadcast(2, "mixer - new note data"));
 
                 return new SimpleImmutableEntry<>(
-                        newNoteCalculationData.getKey()
+                        newNoteDataBroadcast.poll()
                         .connectTo(VolumeCalculator.buildPipe().toSequential()),
-                        newNoteCalculationData.getValue()
+                        newNoteDataBroadcast.poll()
+                        .performMethod(((PipeCallable<NewNoteVolumeData, NewNoteAmplitudeData>) input ->
+                                new NewNoteAmplitudeData(input.getSampleCount(), input.getEndingSampleCount(), input.getNewNotes())).toSequential(), "mixer - extract amplitude data from new note data")
                         .connectTo(AmplitudeCalculator.buildPipe(sampleRate).toSequential()));
             }
 
@@ -63,15 +65,13 @@ public class Mixer {
 //                }
 //            }
 
-            private SimpleImmutableEntry<NewNoteVolumeData, NewNoteAmplitudeData> addNewNotes(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
+            private NewNoteVolumeData extractNewNoteData(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {
                 Long startingSampleCount = timestampedNewNotesWithEnvelope.getSampleCount();
                 Collection<Frequency> newNotes = timestampedNewNotesWithEnvelope.getFrequencies();
                 DeterministicEnvelope envelope = timestampedNewNotesWithEnvelope.getEnvelope();
                 long endingSampleCount = envelope.getEndingSampleCount();
 
-                return new SimpleImmutableEntry<>(
-                        new NewNoteVolumeData(startingSampleCount, endingSampleCount, newNotes, envelope),
-                        new NewNoteAmplitudeData(startingSampleCount, endingSampleCount, newNotes));
+                return new NewNoteVolumeData(startingSampleCount, endingSampleCount, newNotes, envelope);
             }
         };
 
