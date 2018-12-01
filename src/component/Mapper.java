@@ -27,6 +27,22 @@ public class Mapper<K, V> extends AbstractComponent<SimpleImmutableEntry<K, V>, 
         }
     }
 
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, PipeCallable<K, V>> methods) {
+        Map<I, BoundedBuffer<V>> output = new HashMap<>();
+        for (I index : input.keySet()) {
+            output.put(index, input.get(index).performMethod(methods.get(index), "buffer map - method application"));
+        }
+        return output;
+    }
+
+    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, PipeCallable<K, V> method) {
+        Map<I, BoundedBuffer<V>> output = new HashMap<>();
+        for (I index : input.keySet()) {
+            output.put(index, input.get(index).performMethod(method, "buffer map - single method application"));
+        }
+        return output;
+    }
+
     @Override
     protected Collection<BoundedBuffer<SimpleImmutableEntry<K, V>>> getInputBuffers() {
         return Collections.singleton(inputPort.getBuffer());

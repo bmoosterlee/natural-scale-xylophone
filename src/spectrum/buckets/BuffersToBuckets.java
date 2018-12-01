@@ -16,7 +16,7 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
             .performMethod(Buckets::new, "buffers to buckets - create buckets");
     }
 
-    private static BufferChainLink<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
         LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "buffers to buckets tick - broadcast"));
         Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
@@ -28,57 +28,12 @@ public class BuffersToBuckets extends MethodPipeComponent<Pulse, Buckets> {
             flushers.put(index, Flusher.flush(bufferMap.get(index)));
         }
 
-        return collect(
-                toInputPorts(
-                        forEach(
-                            forEach(
-                                forEach(frameTickers, flushers),
-                                CompositeBucket::new),
-                            MemoizedBucket::new)));
-    }
-
-    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, Map<I, PipeCallable<K, V>> methods) {
-        Map<I, BoundedBuffer<V>> output = new HashMap<>();
-        for (I index : input.keySet()) {
-            output.put(index, input.get(index).performMethod(methods.get(index), "buffers to buckets - for each method application"));
-        }
-        return output;
-    }
-
-    public static <I, K, V> Map<I, BoundedBuffer<V>> forEach(Map<I, BoundedBuffer<K>> input, PipeCallable<K, V> method) {
-        Map<I, BoundedBuffer<V>> output = new HashMap<>();
-        for (I index : input.keySet()) {
-            output.put(index, input.get(index).performMethod(method, "buffers to buckets - for each single method application"));
-        }
-        return output;
-    }
-
-    public static <I, K> Map<I, InputPort<K>> toInputPorts(Map<I, BoundedBuffer<K>> input){
-        Map<I, InputPort<K>> map = new HashMap<>();
-        for (I index : input.keySet()) {
-            map.put(index, input.get(index).toOverwritable().createInputPort());
-        }
-        return map;
-    }
-
-    public static <I, K> BufferChainLink<Map<I, K>> collect(Map<I, InputPort<K>> input){
-        return OutputComponentChainLink.buildOutputBuffer(
-            () -> {
-                try {
-                    Map<I, K> map = new HashMap<>();
-                    for (I index : input.keySet()) {
-                        map.put(index, input.get(index).consume());
-                    }
-
-                    return map;
-                }
-                catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-                return null;
-            },
-        1,
-        "buffers to buckets - collect");
+        return Unmapper.buildComponent(
+                Mapper.forEach(
+                    Mapper.forEach(
+                        Mapper.forEach(frameTickers, flushers),
+                        CompositeBucket::new),
+                MemoizedBucket::new));
     }
 
     private static BoundedBuffer<Map<Integer, MemoizedBucket>> toBucketMap2(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
