@@ -6,19 +6,18 @@ import mixer.state.AmplitudeState;
 import mixer.state.Wave;
 import sound.SampleRate;
 
-import java.nio.channels.Pipe;
 import java.util.*;
 
 class AmplitudeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
-            final Map<Long, Map<Frequency, Wave>> unfinishedWaveSlices = new HashMap<>();
-            final Map<Long, AmplitudeState> finishedAmplitudeSlices = new HashMap<>();
+            final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new HashMap<>();
+            final Map<Long, AmplitudeState> finishedSampleFragments = new HashMap<>();
 
             @Override
             public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNotesAmplitudeData> inputBuffer) {
-                LinkedList<SimpleBuffer<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>>> precalculatorOutputBroadcast =
+                LinkedList<SimpleBuffer<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>>> precalculatorOutputBroadcast =
                         new LinkedList<>(
                                 inputBuffer
                                 .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
@@ -27,13 +26,13 @@ class AmplitudeCalculator {
 
                 return
                     precalculatorOutputBroadcast.poll()
-                    .performMethod(((PipeCallable<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>, AmplitudeState>) CalculatorSlice::getFinishedSliceUntilNow).toSequential(), "amplitude calculator - remove finished slice")
+                    .performMethod(((PipeCallable<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>, AmplitudeState>) CalculatorSampleData::getFinishedSampleFragmentsUntilNow).toSequential(), "amplitude calculator - remove finished slice")
                     .pairWith(
                             precalculatorOutputBroadcast.poll()
-                            .performMethod(((PipeCallable<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>, Long>) CalculatorSlice::getSampleCount).toSequential(), "amplitude calculator - extract sample count from precalculator")
+                            .performMethod(((PipeCallable<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>, Long>) CalculatorSampleData::getSampleCount).toSequential(), "amplitude calculator - extract sample count from precalculator")
                             .pairWith(
                                     precalculatorOutputBroadcast.poll()
-                                    .performMethod(((PipeCallable<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>, Map<Frequency, Wave>>) CalculatorSlice::getFinalUnfinishedSlice).toSequential(), "amplitude calculator - remove unfinished slice"), "amplitude calculator - pair sample count and unfinished slice")
+                                    .performMethod(((PipeCallable<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>, Map<Frequency, Wave>>) CalculatorSampleData::getFinalUnfinishedSampleFragments).toSequential(), "amplitude calculator - remove unfinished slice"), "amplitude calculator - pair sample count and unfinished slice")
                             .performMethod(((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, Map<Frequency, Wave>>, Map<Frequency, Double>>) input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue())).toSequential(), "amplitude calculator - calculate amplitudes per frequency")
                             .performMethod(((PipeCallable<Map<Frequency, Double>, AmplitudeState>) AmplitudeState::new).toSequential(), "amplitude calculator - construct new amplitude state"), "amplitude calculator - pair new and old finished slices")
                     .performMethod(
@@ -49,15 +48,15 @@ class AmplitudeCalculator {
                 Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotesAmplitudeData.getNewNotes(), sampleRate);
 
                 for (Long i = sampleCount; i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
-                    synchronized (unfinishedWaveSlices) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
+                    synchronized (unfinishedSampleFragments) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.get(i);
                         try {
                             Map<Frequency, Wave> missingNoteWaves = new HashMap<>(newNoteWaves);
                             missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
                             oldUnfinishedSliceWaves.putAll(missingNoteWaves);
                         } catch (NullPointerException e) {
                             Map<Frequency, Wave> newUnfinishedSliceWaves = new HashMap<>(newNoteWaves);
-                            unfinishedWaveSlices.put(i, newUnfinishedSliceWaves);
+                            unfinishedSampleFragments.put(i, newUnfinishedSliceWaves);
                         }
                     }
                 }
@@ -67,9 +66,9 @@ class AmplitudeCalculator {
             private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes, SampleRate sampleRate) {
                 Map<Frequency, Wave> newNoteWaves = new HashMap<>();
                 Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                synchronized (unfinishedWaveSlices) {
-                    for (Long i : unfinishedWaveSlices.keySet()) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedWaveSlices.get(i);
+                synchronized (unfinishedSampleFragments) {
+                    for (Long i : unfinishedSampleFragments.keySet()) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.get(i);
 
                         Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
                         foundWaves.keySet().retainAll(missingWaveFrequencies);
@@ -86,9 +85,9 @@ class AmplitudeCalculator {
                 return newNoteWaves;
             }
 
-            private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>>> buildPrecalculatorPipe() {
+            private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>>> buildPrecalculatorPipe() {
                 return inputBuffer -> {
-                    SimpleBuffer<CalculatorSlice<Map<Frequency, Wave>, AmplitudeState>> outputBuffer = new SimpleBuffer<>(1, "amplitude calculator - precalculator output");
+                    SimpleBuffer<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>> outputBuffer = new SimpleBuffer<>(1, "amplitude calculator - precalculator output");
                     new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
                         @Override
                         protected void tick() {
@@ -96,25 +95,25 @@ class AmplitudeCalculator {
                                 Long sampleCount = input.consume();
 
                                 Map<Frequency, Wave> unfinishedSlice;
-                                synchronized (unfinishedWaveSlices) {
-                                    if (unfinishedWaveSlices.containsKey(sampleCount)) {
-                                        unfinishedSlice = unfinishedWaveSlices.remove(sampleCount);
+                                synchronized (unfinishedSampleFragments) {
+                                    if (unfinishedSampleFragments.containsKey(sampleCount)) {
+                                        unfinishedSlice = unfinishedSampleFragments.remove(sampleCount);
                                     } else {
                                         unfinishedSlice = new HashMap<>();
                                     }
                                 }
 
                                 AmplitudeState finishedSlice;
-                                synchronized (finishedAmplitudeSlices) {
-                                    if (finishedAmplitudeSlices.containsKey(sampleCount)) {
-                                        finishedSlice = finishedAmplitudeSlices.remove(sampleCount);
+                                synchronized (finishedSampleFragments) {
+                                    if (finishedSampleFragments.containsKey(sampleCount)) {
+                                        finishedSlice = finishedSampleFragments.remove(sampleCount);
                                     } else {
                                         finishedSlice = new AmplitudeState(new HashMap<>());
                                     }
                                 }
 
                                 output.produce(
-                                        new CalculatorSlice<>(
+                                        new CalculatorSampleData<>(
                                                 sampleCount,
                                                 unfinishedSlice,
                                                 finishedSlice));
@@ -133,8 +132,8 @@ class AmplitudeCalculator {
 
             private Map<Frequency, Wave> removeUnfinishedSliceForCalculation(Long sampleCount) {
                 Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                synchronized (unfinishedWaveSlices) {
-                    currentUnfinishedWaveSlice = unfinishedWaveSlices.remove(sampleCount);
+                synchronized (unfinishedSampleFragments) {
+                    currentUnfinishedWaveSlice = unfinishedSampleFragments.remove(sampleCount);
                 }
                 if (currentUnfinishedWaveSlice == null) {
                     currentUnfinishedWaveSlice = new HashMap<>();
@@ -143,7 +142,7 @@ class AmplitudeCalculator {
             }
 
             private AmplitudeState removeOldFinishedSliceForCalculation(Long sampleCount) {
-                AmplitudeState oldFinishedAmplitudeSlice = finishedAmplitudeSlices.remove(sampleCount);
+                AmplitudeState oldFinishedAmplitudeSlice = finishedSampleFragments.remove(sampleCount);
                 if (oldFinishedAmplitudeSlice == null) {
                     oldFinishedAmplitudeSlice = new AmplitudeState(new HashMap<>());
                 }

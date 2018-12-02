@@ -14,12 +14,12 @@ class VolumeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
         return new PipeCallable<>() {
-            final Map<Long, Collection<EnvelopeForFrequency>> unfinishedEnvelopeSlices = new HashMap<>();
-            final Map<Long, VolumeState> finishedVolumeSlices = new HashMap<>();
+            final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSampleFragments = new HashMap<>();
+            final Map<Long, VolumeState> finishedSampleFragments = new HashMap<>();
 
             @Override
             public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNotesVolumeData> inputBuffer) {
-                LinkedList<SimpleBuffer<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>>> precalculatorOutputBroadcast =
+                LinkedList<SimpleBuffer<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>>> precalculatorOutputBroadcast =
                         new LinkedList<>(
                             inputBuffer
                             .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewEnvelopes).toSequential(), "volume calculator - add new notes")
@@ -27,11 +27,11 @@ class VolumeCalculator {
                             .broadcast(3, "volume calculator - precalculator output broadcast"));
 
                 return
-                        ((BoundedBuffer<VolumeState>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>, VolumeState>) CalculatorSlice::getFinishedSliceUntilNow).toSequential(), "volume calculator - extract finished slice until now from precalculator output"))
+                        ((BoundedBuffer<VolumeState>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>, VolumeState>) CalculatorSampleData::getFinishedSampleFragmentsUntilNow).toSequential(), "volume calculator - extract finished slice until now from precalculator output"))
                         .pairWith(
-                                ((BoundedBuffer<Long>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>, Long>) CalculatorSlice::getSampleCount).toSequential(), "volume calculator - extract sample count from precalculator output"))
+                                ((BoundedBuffer<Long>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>, Long>) CalculatorSampleData::getSampleCount).toSequential(), "volume calculator - extract sample count from precalculator output"))
                                 .pairWith(
-                                        ((BoundedBuffer<Collection<EnvelopeForFrequency>>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>, Collection<EnvelopeForFrequency>>) CalculatorSlice::getFinalUnfinishedSlice).toSequential(), "volume calculator - extract final unfinished slice from precalculator output"))
+                                        ((BoundedBuffer<Collection<EnvelopeForFrequency>>) precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>, Collection<EnvelopeForFrequency>>) CalculatorSampleData::getFinalUnfinishedSampleFragments).toSequential(), "volume calculator - extract final unfinished slice from precalculator output"))
                                         .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>) VolumeCalculator::groupEnvelopesByFrequency).toSequential(), "volume calculator - group envelopes by frequency"), "volume calculator - pair sample count and envelopes grouped by frequency")
                                 .performMethod(((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, Map<Frequency, Collection<Envelope>>>, Map<Frequency, Collection<Double>>>) input -> calculateVolumesPerFrequency(input.getKey(), input.getValue())).toSequential(), "volume calculator - calculate volumes per frequency")
                                 .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, Map<Frequency, Double>>) VolumeCalculator::sumValuesPerFrequency).toSequential(), "volume calculator - sum values per frequency")
@@ -51,21 +51,21 @@ class VolumeCalculator {
                         newNotesVolumeData.getNewNotes());
 
                 for (Long i = sampleCount; i < newNotesVolumeData.getEndingSampleCount(); i++) {
-                    Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedEnvelopeSlices.remove(i);
+                    Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSampleFragments.remove(i);
                     try {
                         newUnfinishedSlice.addAll(newNotesWithEnvelopes);
                     } catch (NullPointerException e) {
                         newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
                     }
-                    unfinishedEnvelopeSlices.put(i, newUnfinishedSlice);
+                    unfinishedSampleFragments.put(i, newUnfinishedSlice);
                 }
 
                 return sampleCount;
             }
 
-            private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>>> buildPrecalculatorPipe() {
+            private PipeCallable<BoundedBuffer<Long>, BoundedBuffer<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>>> buildPrecalculatorPipe() {
                 return inputBuffer -> {
-                    SimpleBuffer<CalculatorSlice<Collection<EnvelopeForFrequency>, VolumeState>> outputBuffer = new SimpleBuffer<>(1, "amplitude calculator - precalculator output");
+                    SimpleBuffer<CalculatorSampleData<Collection<EnvelopeForFrequency>, VolumeState>> outputBuffer = new SimpleBuffer<>(1, "amplitude calculator - precalculator output");
                     new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
                         @Override
                         protected void tick() {
@@ -73,25 +73,25 @@ class VolumeCalculator {
                                 Long sampleCount = input.consume();
 
                                 Collection<EnvelopeForFrequency> unfinishedSlice;
-                                synchronized (unfinishedEnvelopeSlices) {
-                                    if (unfinishedEnvelopeSlices.containsKey(sampleCount)) {
-                                        unfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+                                synchronized (unfinishedSampleFragments) {
+                                    if (unfinishedSampleFragments.containsKey(sampleCount)) {
+                                        unfinishedSlice = unfinishedSampleFragments.remove(sampleCount);
                                     } else {
                                         unfinishedSlice = new HashSet<>();
                                     }
                                 }
 
                                 VolumeState finishedSlice;
-                                synchronized (finishedVolumeSlices) {
-                                    if (finishedVolumeSlices.containsKey(sampleCount)) {
-                                        finishedSlice = finishedVolumeSlices.remove(sampleCount);
+                                synchronized (finishedSampleFragments) {
+                                    if (finishedSampleFragments.containsKey(sampleCount)) {
+                                        finishedSlice = finishedSampleFragments.remove(sampleCount);
                                     } else {
                                         finishedSlice = new VolumeState(new HashMap<>());
                                     }
                                 }
 
                                 output.produce(
-                                        new CalculatorSlice<>(
+                                        new CalculatorSampleData<>(
                                                 sampleCount,
                                                 unfinishedSlice,
                                                 finishedSlice));
@@ -109,7 +109,7 @@ class VolumeCalculator {
             }
 
             private VolumeState removeFinishedSliceForCalculation(Long sampleCount) {
-                VolumeState oldFinishedVolumeSlice = finishedVolumeSlices.remove(sampleCount);
+                VolumeState oldFinishedVolumeSlice = finishedSampleFragments.remove(sampleCount);
                 if (oldFinishedVolumeSlice == null) {
                     oldFinishedVolumeSlice = new VolumeState(new HashMap<>());
                 }
@@ -117,7 +117,7 @@ class VolumeCalculator {
             }
 
             private Collection<EnvelopeForFrequency> removeUnfinishedSliceForCalculation(Long sampleCount) {
-                Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedEnvelopeSlices.remove(sampleCount);
+                Collection<EnvelopeForFrequency> currentUnfinishedSlice = unfinishedSampleFragments.remove(sampleCount);
                 if (currentUnfinishedSlice == null) {
                     currentUnfinishedSlice = new HashSet<>();
                 }
