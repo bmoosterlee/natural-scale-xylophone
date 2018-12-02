@@ -94,29 +94,29 @@ class AmplitudeCalculator {
                             try {
                                 Long sampleCount = input.consume();
 
-                                Map<Frequency, Wave> unfinishedSlice;
+                                Map<Frequency, Wave> unfinishedSampleFragment;
                                 synchronized (unfinishedSampleFragments) {
                                     if (unfinishedSampleFragments.containsKey(sampleCount)) {
-                                        unfinishedSlice = unfinishedSampleFragments.remove(sampleCount);
+                                        unfinishedSampleFragment = unfinishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        unfinishedSlice = new HashMap<>();
+                                        unfinishedSampleFragment = new HashMap<>();
                                     }
                                 }
 
-                                AmplitudeState finishedSlice;
+                                AmplitudeState finishedSampleFragment;
                                 synchronized (finishedSampleFragments) {
                                     if (finishedSampleFragments.containsKey(sampleCount)) {
-                                        finishedSlice = finishedSampleFragments.remove(sampleCount);
+                                        finishedSampleFragment = finishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        finishedSlice = new AmplitudeState(new HashMap<>());
+                                        finishedSampleFragment = new AmplitudeState(new HashMap<>());
                                     }
                                 }
 
                                 output.produce(
                                         new CalculatorSampleData<>(
                                                 sampleCount,
-                                                unfinishedSlice,
-                                                finishedSlice));
+                                                unfinishedSampleFragment,
+                                                finishedSampleFragment));
 
 //                                while (input.isEmpty()) {
 //                                    //Precalculate here
