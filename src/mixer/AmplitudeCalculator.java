@@ -124,6 +124,11 @@ class AmplitudeCalculator {
                                 e.printStackTrace();
                             }
                         }
+
+                        @Override
+                        public Boolean isParallelisable() {
+                            return false;
+                        }
                     });
                     return outputBuffer;
                 };
