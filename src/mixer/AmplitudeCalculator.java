@@ -103,7 +103,6 @@ class AmplitudeCalculator {
                                         finalUnfinishedSampleFragment = new HashMap<>();
                                     }
                                 }
-
                                 AmplitudeState finishedSampleFragmentUntilNow;
                                 synchronized (finishedSampleFragments) {
                                     if (finishedSampleFragments.containsKey(sampleCount)) {
@@ -116,12 +115,31 @@ class AmplitudeCalculator {
                                 output.produce(
                                         new CalculatorSampleData<>(
                                                 sampleCount,
+                                                finalUnfinishedSampleFragment,
+                                                finishedSampleFragmentUntilNow));
 
-//                                while (input.isEmpty()) {
-//                                    //Precalculate here
-//                                }
+                                calculateAmplitudesContinuously();
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
+                            }
+                        }
+
+                        private void calculateAmplitudesContinuously() {
+                            Iterator<Long> unfinishedSampleFragmentsIterator = unfinishedSampleFragments.keySet().iterator();
+                            while (input.isEmpty() && unfinishedSampleFragmentsIterator.hasNext()) {
+                                if(unfinishedSampleFragmentsIterator.hasNext()) {
+                                    Long unfinshedSampleCount = unfinishedSampleFragmentsIterator.next();
+                                    Map<Frequency, Wave> unfinishedSampleFragment;
+                                    synchronized (unfinishedSampleFragments) {
+                                        unfinishedSampleFragment = unfinishedSampleFragments.remove(unfinshedSampleCount);
+                                    }
+                                    finishedSampleFragments.put(
+                                            unfinshedSampleCount,
+                                            new AmplitudeState(
+                                                calculateAmplitudesPerFrequency(
+                                                        unfinshedSampleCount,
+                                                        unfinishedSampleFragment)));
+                                }
                             }
                         }
 
