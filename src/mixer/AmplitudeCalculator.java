@@ -7,13 +7,14 @@ import mixer.state.Wave;
 import sound.SampleRate;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 class AmplitudeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
-            final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new HashMap<>();
-            final Map<Long, AmplitudeState> finishedSampleFragments = new HashMap<>();
+            final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new ConcurrentHashMap<>();
+            final Map<Long, AmplitudeState> finishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
             public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNotesAmplitudeData> inputBuffer) {

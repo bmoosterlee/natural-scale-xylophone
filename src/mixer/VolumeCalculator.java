@@ -8,14 +8,15 @@ import mixer.state.EnvelopeForFrequency;
 import mixer.state.VolumeState;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 class VolumeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
         return new PipeCallable<>() {
-            final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSampleFragments = new HashMap<>();
-            final Map<Long, VolumeState> finishedSampleFragments = new HashMap<>();
+            final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSampleFragments = new ConcurrentHashMap<>();
+            final Map<Long, VolumeState> finishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
             public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNotesVolumeData> inputBuffer) {
