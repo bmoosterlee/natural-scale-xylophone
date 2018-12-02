@@ -95,29 +95,27 @@ class AmplitudeCalculator {
                             try {
                                 Long sampleCount = input.consume();
 
-                                Map<Frequency, Wave> unfinishedSampleFragment;
+                                Map<Frequency, Wave> finalUnfinishedSampleFragment;
                                 synchronized (unfinishedSampleFragments) {
                                     if (unfinishedSampleFragments.containsKey(sampleCount)) {
-                                        unfinishedSampleFragment = unfinishedSampleFragments.remove(sampleCount);
+                                        finalUnfinishedSampleFragment = unfinishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        unfinishedSampleFragment = new HashMap<>();
+                                        finalUnfinishedSampleFragment = new HashMap<>();
                                     }
                                 }
 
-                                AmplitudeState finishedSampleFragment;
+                                AmplitudeState finishedSampleFragmentUntilNow;
                                 synchronized (finishedSampleFragments) {
                                     if (finishedSampleFragments.containsKey(sampleCount)) {
-                                        finishedSampleFragment = finishedSampleFragments.remove(sampleCount);
+                                        finishedSampleFragmentUntilNow = finishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        finishedSampleFragment = new AmplitudeState(new HashMap<>());
+                                        finishedSampleFragmentUntilNow = new AmplitudeState(new HashMap<>());
                                     }
                                 }
 
                                 output.produce(
                                         new CalculatorSampleData<>(
                                                 sampleCount,
-                                                unfinishedSampleFragment,
-                                                finishedSampleFragment));
 
 //                                while (input.isEmpty()) {
 //                                    //Precalculate here

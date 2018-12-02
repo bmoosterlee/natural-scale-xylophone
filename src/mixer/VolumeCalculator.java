@@ -73,29 +73,29 @@ class VolumeCalculator {
                             try {
                                 Long sampleCount = input.consume();
 
-                                Collection<EnvelopeForFrequency> unfinishedSampleFragment;
+                                Collection<EnvelopeForFrequency> finalUnfinishedSampleFragment;
                                 synchronized (unfinishedSampleFragments) {
                                     if (unfinishedSampleFragments.containsKey(sampleCount)) {
-                                        unfinishedSampleFragment = unfinishedSampleFragments.remove(sampleCount);
+                                        finalUnfinishedSampleFragment = unfinishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        unfinishedSampleFragment = new HashSet<>();
+                                        finalUnfinishedSampleFragment = new HashSet<>();
                                     }
                                 }
 
-                                VolumeState finishedSampleFragment;
+                                VolumeState finishedSampleFragmentUntilNow;
                                 synchronized (finishedSampleFragments) {
                                     if (finishedSampleFragments.containsKey(sampleCount)) {
-                                        finishedSampleFragment = finishedSampleFragments.remove(sampleCount);
+                                        finishedSampleFragmentUntilNow = finishedSampleFragments.remove(sampleCount);
                                     } else {
-                                        finishedSampleFragment = new VolumeState(new HashMap<>());
+                                        finishedSampleFragmentUntilNow = new VolumeState(new HashMap<>());
                                     }
                                 }
 
                                 output.produce(
                                         new CalculatorSampleData<>(
                                                 sampleCount,
-                                                unfinishedSampleFragment,
-                                                finishedSampleFragment));
+                                                finalUnfinishedSampleFragment,
+                                                finishedSampleFragmentUntilNow));
 
 //                                while (input.isEmpty()) {
 //                                    //Precalculate here
