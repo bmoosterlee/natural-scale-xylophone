@@ -151,25 +151,6 @@ class AmplitudeCalculator {
                     return outputBuffer;
                 };
             }
-
-            private Map<Frequency, Wave> removeUnfinishedSliceForCalculation(Long sampleCount) {
-                Map<Frequency, Wave> currentUnfinishedWaveSlice;
-                synchronized (unfinishedSampleFragments) {
-                    currentUnfinishedWaveSlice = unfinishedSampleFragments.remove(sampleCount);
-                }
-                if (currentUnfinishedWaveSlice == null) {
-                    currentUnfinishedWaveSlice = new HashMap<>();
-                }
-                return currentUnfinishedWaveSlice;
-            }
-
-            private AmplitudeState removeOldFinishedSliceForCalculation(Long sampleCount) {
-                AmplitudeState oldFinishedAmplitudeSlice = finishedSampleFragments.remove(sampleCount);
-                if (oldFinishedAmplitudeSlice == null) {
-                    oldFinishedAmplitudeSlice = new AmplitudeState(new HashMap<>());
-                }
-                return oldFinishedAmplitudeSlice;
-            }
         };
     }
 
