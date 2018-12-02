@@ -4,6 +4,7 @@ import component.buffer.*;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
+import mixer.state.AmplitudeState;
 import mixer.state.EnvelopeForFrequency;
 import mixer.state.VolumeState;
 
@@ -23,7 +24,12 @@ class VolumeCalculator {
                         new LinkedList<>(
                             inputBuffer
                             .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewEnvelopes).toSequential(), "volume calculator - add new notes")
-                            .connectTo(MapPrecalculator.buildPipe(unfinishedSampleFragments, input -> sumValuesPerFrequency(calculateVolumesPerFrequency(input.getKey(), groupEnvelopesByFrequency(input.getValue()))), HashSet::new, () -> new VolumeState(new HashMap<>())))
+                            .connectTo(MapPrecalculator.buildPipe(
+                                    unfinishedSampleFragments,
+                                    input -> sumValuesPerFrequency(calculateVolumesPerFrequency(input.getKey(), groupEnvelopesByFrequency(input.getValue()))),
+                                    VolumeState::add,
+                                    HashSet::new,
+                                    () -> new VolumeState(new HashMap<>())))
                             .broadcast(3, "volume calculator - precalculator output broadcast"));
 
                 return

@@ -8,6 +8,7 @@ import sound.SampleRate;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 
 class AmplitudeCalculator {
 
@@ -21,7 +22,12 @@ class AmplitudeCalculator {
                         new LinkedList<>(
                                 inputBuffer
                                 .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
-                                .connectTo(MapPrecalculator.buildPipe(unfinishedSampleFragments, input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()), HashMap::new, () -> new AmplitudeState(new HashMap<>())))
+                                .connectTo(MapPrecalculator.buildPipe(
+                                        unfinishedSampleFragments,
+                                        input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()),
+                                        AmplitudeState::add,
+                                        HashMap::new,
+                                        () -> new AmplitudeState(new HashMap<>())))
                                 .broadcast(3, "precalculator output - broadcast"));
 
                 return
