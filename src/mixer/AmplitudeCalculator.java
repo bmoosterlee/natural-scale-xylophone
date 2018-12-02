@@ -14,7 +14,6 @@ class AmplitudeCalculator {
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData>, BoundedBuffer<AmplitudeState>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
             final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new ConcurrentHashMap<>();
-            final Map<Long, AmplitudeState> finishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
             public BoundedBuffer<AmplitudeState> call(BoundedBuffer<NewNotesAmplitudeData> inputBuffer) {
@@ -90,6 +89,8 @@ class AmplitudeCalculator {
                 return inputBuffer -> {
                     SimpleBuffer<CalculatorSampleData<Map<Frequency, Wave>, AmplitudeState>> outputBuffer = new SimpleBuffer<>(1, "amplitude calculator - precalculator output");
                     new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+                        final Map<Long, AmplitudeState> finishedSampleFragments = new HashMap<>();
+
                         @Override
                         protected void tick() {
                             try {
@@ -104,12 +105,10 @@ class AmplitudeCalculator {
                                     }
                                 }
                                 AmplitudeState finishedSampleFragmentUntilNow;
-                                synchronized (finishedSampleFragments) {
-                                    if (finishedSampleFragments.containsKey(sampleCount)) {
-                                        finishedSampleFragmentUntilNow = finishedSampleFragments.remove(sampleCount);
-                                    } else {
-                                        finishedSampleFragmentUntilNow = new AmplitudeState(new HashMap<>());
-                                    }
+                                if (finishedSampleFragments.containsKey(sampleCount)) {
+                                    finishedSampleFragmentUntilNow = finishedSampleFragments.remove(sampleCount);
+                                } else {
+                                    finishedSampleFragmentUntilNow = new AmplitudeState(new HashMap<>());
                                 }
 
                                 output.produce(
