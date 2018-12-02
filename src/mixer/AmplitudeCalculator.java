@@ -49,12 +49,12 @@ class AmplitudeCalculator {
 
                 for (Long i = sampleCount; i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
                     synchronized (unfinishedSampleFragments) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.get(i);
-                        try {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.remove(i);
+                        if(oldUnfinishedSliceWaves!=null){
                             Map<Frequency, Wave> missingNoteWaves = new HashMap<>(newNoteWaves);
                             missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
                             oldUnfinishedSliceWaves.putAll(missingNoteWaves);
-                        } catch (NullPointerException e) {
+                        } else {
                             Map<Frequency, Wave> newUnfinishedSliceWaves = new HashMap<>(newNoteWaves);
                             unfinishedSampleFragments.put(i, newUnfinishedSliceWaves);
                         }
@@ -66,18 +66,20 @@ class AmplitudeCalculator {
             private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes, SampleRate sampleRate) {
                 Map<Frequency, Wave> newNoteWaves = new HashMap<>();
                 Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                synchronized (unfinishedSampleFragments) {
                     for (Long i : unfinishedSampleFragments.keySet()) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.get(i);
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves;
+                        synchronized (unfinishedSampleFragments) {
+                            oldUnfinishedSliceWaves = unfinishedSampleFragments.get(i);
+                        }
+                        if(oldUnfinishedSliceWaves!=null) {
+                            Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
+                            foundWaves.keySet().retainAll(missingWaveFrequencies);
+                            newNoteWaves.putAll(foundWaves);
 
-                        Map<Frequency, Wave> foundWaves = new HashMap<>(oldUnfinishedSliceWaves);
-                        foundWaves.keySet().retainAll(missingWaveFrequencies);
-                        newNoteWaves.putAll(foundWaves);
-
-                        missingWaveFrequencies = new HashSet<>(missingWaveFrequencies);
-                        missingWaveFrequencies.removeAll(oldUnfinishedSliceWaves.keySet());
+                            missingWaveFrequencies = new HashSet<>(missingWaveFrequencies);
+                            missingWaveFrequencies.removeAll(oldUnfinishedSliceWaves.keySet());
+                        }
                     }
-                }
                 for (Frequency frequency : missingWaveFrequencies) {
                     Wave newWave = new Wave(frequency, sampleRate);
                     newNoteWaves.put(frequency, newWave);
@@ -126,12 +128,12 @@ class AmplitudeCalculator {
                         private void calculateAmplitudesContinuously() {
                             Iterator<Long> unfinishedSampleFragmentsIterator = unfinishedSampleFragments.keySet().iterator();
                             while (input.isEmpty() && unfinishedSampleFragmentsIterator.hasNext()) {
-                                if(unfinishedSampleFragmentsIterator.hasNext()) {
-                                    Long unfinshedSampleCount = unfinishedSampleFragmentsIterator.next();
-                                    Map<Frequency, Wave> unfinishedSampleFragment;
-                                    synchronized (unfinishedSampleFragments) {
-                                        unfinishedSampleFragment = unfinishedSampleFragments.remove(unfinshedSampleCount);
-                                    }
+                                Long unfinshedSampleCount = unfinishedSampleFragmentsIterator.next();
+                                Map<Frequency, Wave> unfinishedSampleFragment;
+                                synchronized (unfinishedSampleFragments) {
+                                    unfinishedSampleFragment = unfinishedSampleFragments.remove(unfinshedSampleCount);
+                                }
+                                if(unfinishedSampleFragment!=null) {
                                     finishedSampleFragments.put(
                                             unfinshedSampleCount,
                                             new AmplitudeState(
