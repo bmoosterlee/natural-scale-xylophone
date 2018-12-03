@@ -58,9 +58,4 @@ public class Broadcast<K, T extends Packet<K>> extends AbstractComponent<K, K, T
         }
         return outputBuffers;
     }
-
-    @Override
-    public Boolean isParallelisable(){
-        return false;
-    }
 }
