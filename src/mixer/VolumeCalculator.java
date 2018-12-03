@@ -2,12 +2,9 @@ package mixer;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
-import component.orderer.OrderStamper;
-import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
-import mixer.state.AmplitudeState;
 import mixer.state.EnvelopeForFrequency;
 import mixer.state.VolumeState;
 
@@ -24,7 +21,7 @@ class VolumeCalculator {
             @Override
             public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
                 return inputBuffer
-                        .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewEnvelopes).toSequential(), "volume calculator - add new notes")
+                        .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewNotes).toSequential(), "volume calculator - add new notes")
                         .<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>>>connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> sumValuesPerFrequency(calculateVolumesPerFrequency(input2.getKey(), groupEnvelopesByFrequency(input2.getValue()))),
@@ -39,7 +36,7 @@ class VolumeCalculator {
                                             input.getFinalUnfinishedData())))));
             }
 
-            private Long addNewEnvelopes(NewNotesVolumeData newNotesVolumeData) {
+            private Long addNewNotes(NewNotesVolumeData newNotesVolumeData) {
                 Long sampleCount = newNotesVolumeData.getSampleCount();
 
                 Collection<Frequency> newNotes = newNotesVolumeData.getNewNotes();

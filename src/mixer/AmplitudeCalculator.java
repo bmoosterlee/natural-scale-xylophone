@@ -20,7 +20,7 @@ class AmplitudeCalculator {
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
                 return inputBuffer
-                        .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
+                        .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
                         .<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>>>connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue()),
@@ -32,7 +32,7 @@ class AmplitudeCalculator {
                                         input.getFinalUnfinishedData())));
             }
 
-            private Long addNewWaves(NewNotesAmplitudeData newNotesAmplitudeData) {
+            private Long addNewNotes(NewNotesAmplitudeData newNotesAmplitudeData) {
                 Long sampleCount = newNotesAmplitudeData.getSampleCount();
 
                 Collection<Frequency> newNotes = newNotesAmplitudeData.getNewNotes();
