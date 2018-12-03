@@ -39,7 +39,6 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
     }
 
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(){
-
         return inputBuffer -> {
             SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "orderer");
             new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
