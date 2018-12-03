@@ -80,11 +80,11 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
         Iterator<Map.Entry<I, Set<K>>> unfinishedKeyIterator = unfinishedData.entrySet().iterator();
         while (input.isEmpty() && unfinishedKeyIterator.hasNext()) {
             Map.Entry<I, Set<K>> unfinishedEntry = unfinishedKeyIterator.next();
-            Set<K> unfinishedItemsInMap = unfinishedEntry.getValue();
+            I unfinishedKey = unfinishedEntry.getKey();
+            Set<K> unfinishedItemsInMap = unfinishedData.get(unfinishedKey);
             if(!unfinishedItemsInMap.isEmpty()) {
-                I unfinishedKey = unfinishedEntry.getKey();
                 Set<K> unfinishedItems = new HashSet<>(unfinishedData.get(unfinishedKey));
-                unfinishedItemsInMap.removeAll(unfinishedItems);
+                unfinishedData.get(unfinishedKey).removeAll(unfinishedItems);
                 calculate(unfinishedKey, unfinishedItems);
             }
         }
