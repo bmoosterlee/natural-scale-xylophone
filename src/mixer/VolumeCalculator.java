@@ -1,6 +1,9 @@
 package mixer;
 
 import component.buffer.*;
+import component.orderer.OrderStampedPacket;
+import component.orderer.OrderStamper;
+import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
@@ -14,59 +17,68 @@ import java.util.stream.Collectors;
 
 class VolumeCalculator {
 
-    static PipeCallable<BoundedBuffer<NewNotesVolumeData>, BoundedBuffer<VolumeState>> buildPipe() {
+    static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>> buildPipe() {
         return new PipeCallable<>() {
             final Map<Long, Collection<EnvelopeForFrequency>> unfinishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
-            public BoundedBuffer<VolumeState> call(BoundedBuffer<NewNotesVolumeData> inputBuffer) {
-                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>>> precalculatorOutputBroadcast =
+            public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
+                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>>>> precalculatorOutputBroadcast =
                         new LinkedList<>(
                             inputBuffer
-                            .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewEnvelopes).toSequential(), "volume calculator - add new notes")
-                            .connectTo(MapPrecalculator.buildPipe(
-                                    unfinishedSampleFragments,
-                                    input -> sumValuesPerFrequency(calculateVolumesPerFrequency(input.getKey(), groupEnvelopesByFrequency(input.getValue()))),
-                                    VolumeState::add,
-                                    HashSet::new,
-                                    () -> new VolumeState(new HashMap<>())))
+                                    .performMethod(this::addNewEnvelopes, "volume calculator - add new notes")
+                                    .<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>>>connectTo(MapPrecalculator.buildPipe(
+                                            unfinishedSampleFragments,
+                                            input2 -> sumValuesPerFrequency(calculateVolumesPerFrequency(input2.getKey(), groupEnvelopesByFrequency(input2.getValue()))),
+                                            VolumeState::add,
+                                            HashSet::new,
+                                            () -> new VolumeState(new HashMap<>())))
                             .broadcast(3, "volume calculator - precalculator output broadcast"));
 
                 return
-                        precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, VolumeState>) PrecalculatorOutputData::getFinishedDataUntilNow).toSequential(), "volume calculator - extract finished slice until now from precalculator output")
+                        precalculatorOutputBroadcast.poll().<VolumeState, OrderStampedPacket<VolumeState>>performMethod(PrecalculatorOutputData::getFinishedDataUntilNow, "volume calculator - extract finished slice until now from precalculator output")
+                        .connectTo(Orderer.buildPipe())
                         .pairWith(
-                                precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, Long>) PrecalculatorOutputData::getIndex).toSequential(), "volume calculator - extract sample count from precalculator output")
-                                .pairWith(
-                                        precalculatorOutputBroadcast.poll().performMethod(((PipeCallable<PrecalculatorOutputData<Long, Collection<EnvelopeForFrequency>, VolumeState>, Collection<EnvelopeForFrequency>>) PrecalculatorOutputData::getFinalUnfinishedData).toSequential(), "volume calculator - extract final unfinished slice from precalculator output")
-                                        .performMethod(((PipeCallable<Collection<EnvelopeForFrequency>, Map<Frequency, Collection<Envelope>>>) VolumeCalculator::groupEnvelopesByFrequency).toSequential(), "volume calculator - group envelopes by frequency"), "volume calculator - pair sample count and envelopes grouped by frequency")
-                                .performMethod(((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, Map<Frequency, Collection<Envelope>>>, Map<Frequency, Collection<Double>>>) input -> calculateVolumesPerFrequency(input.getKey(), input.getValue())).toSequential(), "volume calculator - calculate volumes per frequency")
-                                .performMethod(((PipeCallable<Map<Frequency, Collection<Double>>, VolumeState>) VolumeCalculator::sumValuesPerFrequency).toSequential(), "volume calculator - sum values per frequency"), "volume calculator - pair old and new finished slices")
+                                precalculatorOutputBroadcast.poll().<Long, OrderStampedPacket<Long>>performMethod(PrecalculatorOutputData::getIndex, "volume calculator - extract sample count from precalculator output")
+                                        .connectTo(Orderer.buildPipe())
+                                        .pairWith(
+                                                precalculatorOutputBroadcast.poll().performMethod(PrecalculatorOutputData::getFinalUnfinishedData, "volume calculator - extract final unfinished slice from precalculator output")
+                                                        .<Map<Frequency, Collection<Envelope>>, OrderStampedPacket<Map<Frequency, Collection<Envelope>>>>performMethod(VolumeCalculator::groupEnvelopesByFrequency, "volume calculator - group envelopes by frequency")
+                                                        .connectTo(Orderer.buildPipe()),
+                                                "volume calculator - pair sample count and envelopes grouped by frequency")
+                                        .performMethod(input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()), "volume calculator - calculate volumes per frequency")
+                                        .<VolumeState, OrderStampedPacket<VolumeState>>performMethod(VolumeCalculator::sumValuesPerFrequency, "volume calculator - sum values per frequency")
+                                .connectTo(Orderer.buildPipe()),
+                                "volume calculator - pair old and new finished slices")
                         .performMethod(
-                                ((PipeCallable<AbstractMap.SimpleImmutableEntry<VolumeState, VolumeState>, VolumeState>) input1 ->
+                                input1 ->
                                         input1.getKey()
-                                        .add(input1.getValue()))
-                        .toSequential(), "volume calculator - add old and new finished slices");
+                                        .add(input1.getValue())
+                        , "volume calculator - add old and new finished slices");
             }
 
             private Long addNewEnvelopes(NewNotesVolumeData newNotesVolumeData) {
                 Long sampleCount = newNotesVolumeData.getSampleCount();
 
-                Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
-                        newNotesVolumeData.getEnvelope(),
-                        newNotesVolumeData.getNewNotes());
+                Collection<Frequency> newNotes = newNotesVolumeData.getNewNotes();
 
-                for (Long i = sampleCount; i < newNotesVolumeData.getEndingSampleCount(); i++) {
-                    synchronized (unfinishedSampleFragments) {
-                        Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSampleFragments.remove(i);
-                        if(newUnfinishedSlice!=null){
-                            newUnfinishedSlice.addAll(newNotesWithEnvelopes);
-                        } else {
-                            newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
+                if(!newNotes.isEmpty()) {
+                    Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
+                            newNotesVolumeData.getEnvelope(),
+                            newNotes);
+
+                    for (Long i = sampleCount; i < newNotesVolumeData.getEndingSampleCount(); i++) {
+                        synchronized (unfinishedSampleFragments) {
+                            Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSampleFragments.remove(i);
+                            if (newUnfinishedSlice != null) {
+                                newUnfinishedSlice.addAll(newNotesWithEnvelopes);
+                            } else {
+                                newUnfinishedSlice = new LinkedList<>(newNotesWithEnvelopes);
+                            }
+                            unfinishedSampleFragments.put(i, newUnfinishedSlice);
                         }
-                        unfinishedSampleFragments.put(i, newUnfinishedSlice);
                     }
                 }
-
                 return sampleCount;
             }
         };

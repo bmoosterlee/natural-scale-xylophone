@@ -11,16 +11,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-public class GUI {
+public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends Packet<java.util.List<Frequency>>> {
     private final int height = 600;
     private final double yScale = height * 0.95;
     private final double margin = height * 0.05;
 
     private final GUIPanel guiPanel;
-    private final OutputPort<Graphics> graphicsPort;
+    private final OutputPort<Graphics, SimplePacket<Graphics>> graphicsPort;
 
-    public GUI(SimpleBuffer<Buckets> noteInputBuffer, SimpleBuffer<Buckets> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>> outputBuffer, SpectrumWindow spectrumWindow, int width, int inaudibleFrequencyMargin) {
-        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast =
+    public GUI(SimpleBuffer<Buckets, N> noteInputBuffer, SimpleBuffer<Buckets, H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+        LinkedList<SimpleBuffer<Buckets, N>> noteSpectrumBroadcast =
                 new LinkedList<>(noteInputBuffer.broadcast(3, "GUI note spectrum - broadcast"));
 
         guiPanel = new GUIPanel();
@@ -53,7 +53,7 @@ public class GUI {
 
         JFrame frame = new JFrame("Natural scale xylophone");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        guiPanel.setPreferredSize(new Dimension(width, height));
+        guiPanel.setPreferredSize(new Dimension(spectrumWindow.width, height));
         frame.setContentPane(guiPanel);
         frame.pack();
         frame.setVisible(true);
@@ -87,7 +87,7 @@ public class GUI {
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             try {
-                graphicsPort.produce(g);
+                graphicsPort.produce(new SimplePacket<>(g));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

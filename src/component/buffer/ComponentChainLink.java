@@ -1,9 +1,9 @@
 package component.buffer;
 
-public abstract class ComponentChainLink<K, V> {
-    protected final ComponentChainLink<?, K> previousComponentChainLink;
+public abstract class ComponentChainLink<K, V, A extends Packet<K>, B extends Packet<V>> {
+    protected final ComponentChainLink<?, K, ?, A> previousComponentChainLink;
 
-    ComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink) {
+    ComponentChainLink(ComponentChainLink<?, K, ?, A> previousComponentChainLink) {
         this.previousComponentChainLink = previousComponentChainLink;
     }
 
@@ -13,7 +13,7 @@ public abstract class ComponentChainLink<K, V> {
 
     protected abstract void wrap();
 
-    protected abstract <W> void wrap(PipeCallable<V, W> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks);
+    protected abstract <W, Y extends Packet<W>> void wrap(PipeCallable<V, W> nextMethod, BoundedBuffer<W, Y> outputBuffer, int chainLinks);
 
     protected abstract void wrap(InputCallable<V> nextMethod, int chainLinks);
 

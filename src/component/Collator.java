@@ -4,14 +4,14 @@ import component.buffer.*;
 
 import java.util.*;
 
-public class Collator<T> extends AbstractComponent<T, List<T>> {
+public class Collator<T, A extends Packet<T>> extends AbstractComponent<T, List<T>, A, SimplePacket<List<T>>> {
 
-    private final List<InputPort<T>> inputPorts;
-    private final OutputPort<List<T>> outputPort;
+    private final List<InputPort<T, A>> inputPorts;
+    private final OutputPort<List<T>, SimplePacket<List<T>>> outputPort;
 
-    public Collator(List<BoundedBuffer<T>> inputBuffers, SimpleBuffer<List<T>> outputBuffer) {
+    public Collator(List<BoundedBuffer<T, A>> inputBuffers, SimpleBuffer<List<T>, SimplePacket<List<T>>> outputBuffer) {
         inputPorts = new ArrayList<>();
-        for(BoundedBuffer<T> inputBuffer : inputBuffers){
+        for(BoundedBuffer<T, A> inputBuffer : inputBuffers){
             inputPorts.add(inputBuffer.createInputPort());
         }
         outputPort = outputBuffer.createOutputPort();
@@ -21,34 +21,34 @@ public class Collator<T> extends AbstractComponent<T, List<T>> {
         try {
             final List<T> accumulator = new ArrayList<>();
 
-            for(InputPort<T> input : inputPorts){
-                accumulator.add(input.consume());
+            for(InputPort<T, A> input : inputPorts){
+                accumulator.add(input.consume().unwrap());
             }
 
-            outputPort.produce(accumulator);
+            outputPort.produce(new SimplePacket<>(accumulator));
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static <T> SimpleBuffer<List<T>> collate(List<BoundedBuffer<T>> inputBuffers){
-        SimpleBuffer<List<T>> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
+    public static <T, B extends Packet<T>> SimpleBuffer<List<T>, SimplePacket<List<T>>> collate(List<BoundedBuffer<T, B>> inputBuffers){
+        SimpleBuffer<List<T>, SimplePacket<List<T>>> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
         new TickRunningStrategy(new Collator<>(inputBuffers, outputBuffer));
         return outputBuffer;
     }
 
     @Override
-    protected Collection<BoundedBuffer<T>> getInputBuffers() {
-        List<BoundedBuffer<T>> inputBuffers = new ArrayList<>();
-        for(InputPort<T> inputPort : inputPorts) {
+    protected Collection<BoundedBuffer<T, A>> getInputBuffers() {
+        List<BoundedBuffer<T, A>> inputBuffers = new ArrayList<>();
+        for(InputPort<T, A> inputPort : inputPorts) {
             inputBuffers.add(inputPort.getBuffer());
         }
         return inputBuffers;
     }
 
     @Override
-    protected Collection<BoundedBuffer<List<T>>> getOutputBuffers() {
+    protected Collection<BoundedBuffer<List<T>, SimplePacket<List<T>>>> getOutputBuffers() {
         return Collections.singleton(outputPort.getBuffer());
     }
 

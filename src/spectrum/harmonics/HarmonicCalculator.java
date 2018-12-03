@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class HarmonicCalculator extends MethodPipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>> {
+public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<Iterator<Entry<Harmonic, Double>>>> extends MethodPipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>, A, B> {
 
-    public HarmonicCalculator(SimpleBuffer<VolumeState> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>> outputBuffer, int maxHarmonics){
+    public HarmonicCalculator(SimpleBuffer<VolumeState, A> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>, B> outputBuffer, int maxHarmonics){
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 

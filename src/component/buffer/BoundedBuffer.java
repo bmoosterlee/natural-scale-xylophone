@@ -1,53 +1,55 @@
 package component.buffer;
 
-import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
 
-public interface BoundedBuffer<T> {
+public interface BoundedBuffer<K, A extends Packet<K>> {
     String getName();
 
-    List<T> flush() throws InterruptedException;
+    List<A> flush() throws InterruptedException;
 
-    void offer(T packet) throws InterruptedException;
+    void offer(A packet) throws InterruptedException;
 
-    T poll() throws InterruptedException;
+    A poll() throws InterruptedException;
 
-    T tryPoll();
+    A tryPoll();
 
     boolean isEmpty();
 
     boolean isFull();
 
-    InputPort<T> createInputPort();
+    InputPort<K, A> createInputPort();
 
-    OutputPort<T> createOutputPort();
+    OutputPort<K, A> createOutputPort();
 
-    <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method);
+    <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method);
 
-    <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method, String name);
+    <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, String name);
 
-    void performInputMethod(InputCallable<T> method);
+    void performInputMethod(InputCallable<K> method);
 
-    <V> BoundedBuffer<V> connectTo(PipeCallable<BoundedBuffer<T>, BoundedBuffer<V>> pipe);
+    <V, B extends Packet<V>> BoundedBuffer<V, B> connectTo(PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> pipe);
 
-    void connectTo(InputCallable<BoundedBuffer<T>> pipe);
+    void connectTo(InputCallable<BoundedBuffer<K, A>> pipe);
 
-    Collection<SimpleBuffer<T>> broadcast(int size);
+    Collection<SimpleBuffer<K, A>> broadcast(int size);
 
-    Collection<SimpleBuffer<T>> broadcast(int size, String name);
+    Collection<SimpleBuffer<K, A>> broadcast(int size, String name);
 
-    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other);
+    <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other);
 
-    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other, String name);
+    <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other, String name);
 
-    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other);
+    <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other);
 
-    <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other, String name);
+    <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other, String name);
 
-    SimpleBuffer<?> relayTo(SimpleBuffer<? super T> outputBuffer);
+    SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer);
 
-    BufferChainLink<T> toOverwritable();
+    BufferChainLink<K, A> toOverwritable();
 
-    BufferChainLink<T> resize(int size);
+    BufferChainLink<K, A> resize(int size);
+
+    BoundedBuffer<K, SimplePacket<K>> rewrap();
 }

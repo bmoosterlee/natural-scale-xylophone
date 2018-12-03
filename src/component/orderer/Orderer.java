@@ -1,17 +1,14 @@
 package component.orderer;
 
-import component.buffer.AbstractPipeComponent;
-import component.buffer.BoundedBuffer;
-import component.buffer.PipeCallable;
-import component.buffer.SimpleBuffer;
+import component.buffer.*;
 
 import java.util.PriorityQueue;
 
-public class Orderer<T> extends AbstractPipeComponent<OrderStampedPacket<T>, T> {
+public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T>, OrderStampedPacket<T>> {
     private final PriorityQueue<OrderStampedPacket<T>> backLog;
     private OrderStampedPacket<T> index;
 
-    public Orderer(BoundedBuffer<OrderStampedPacket<T>> input, BoundedBuffer<T> output) {
+    public Orderer(BoundedBuffer<T, OrderStampedPacket<T>> input, BoundedBuffer<T, OrderStampedPacket<T>> output) {
         super(input.createInputPort(), output.createOutputPort());
         backLog = new PriorityQueue<>();
     }
@@ -22,28 +19,31 @@ public class Orderer<T> extends AbstractPipeComponent<OrderStampedPacket<T>, T> 
             OrderStampedPacket<T> newPacket = input.consume();
             if (index != null) {
                 backLog.add(newPacket);
-                if(!backLog.isEmpty()) {
-                    if (index.successor(backLog.peek())){
-                        index = backLog.poll();
-                        output.produce(index.unwrap());
-                    }
+                while (!backLog.isEmpty() && index.successor(backLog.peek())) {
+                    index = backLog.poll();
+                    output.produce(index);
                 }
             } else {
                 index = newPacket;
-                output.produce(index.unwrap());
+                output.produce(index);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static <T> PipeCallable<BoundedBuffer<OrderStampedPacket<T>>, BoundedBuffer<T>> buildPipe(){
+    @Override
+    public Boolean isParallelisable(){
+        return false;
+    }
+
+    public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(){
 
         return new PipeCallable<>() {
             @Override
-            public BoundedBuffer<T> call(BoundedBuffer<OrderStampedPacket<T>> inputBuffer) {
-                SimpleBuffer<T> outputBuffer = new SimpleBuffer<>(1, "orderer");
-                new Orderer<T>(inputBuffer, outputBuffer);
+            public BoundedBuffer<T, OrderStampedPacket<T>> call(BoundedBuffer<T, OrderStampedPacket<T>> inputBuffer) {
+                SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "orderer");
+                new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
                 return outputBuffer;
             }
 

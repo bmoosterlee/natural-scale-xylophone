@@ -1,6 +1,9 @@
 package sound;
 
 import component.buffer.*;
+import component.orderer.OrderStampedPacket;
+import component.orderer.Orderer;
+import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
 
 import javax.sound.sampled.AudioFormat;
@@ -10,14 +13,14 @@ import javax.sound.sampled.SourceDataLine;
 
 public class SoundEnvironment {
 
-    public static InputCallable<BoundedBuffer<VolumeAmplitudeState>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
+    public static InputCallable<BoundedBuffer<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate){
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
             private double marginalSampleSize;
 
             @Override
-            public void call(BoundedBuffer<VolumeAmplitudeState> inputBuffer) {
+            public void call(BoundedBuffer<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>> inputBuffer) {
                 sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
                 marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -38,10 +41,9 @@ public class SoundEnvironment {
                 sourceDataLine.start();
 
                 inputBuffer
-                .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
-                .performMethod(((PipeCallable<Double, Byte>)
-                        this::fitAmplitude)
-                .toSequential(), "fit amplitude")
+                        .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
+                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "fit amplitude")
+                .connectTo(Orderer.buildPipe())
                 .performInputMethod(((InputCallable<Byte>)
                         this::writeToBuffer)
                 .toSequential());
@@ -63,11 +65,6 @@ public class SoundEnvironment {
 //                sourceDataLine.drain();
 //                sourceDataLine.stop();
 //            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
         };
     }
 }

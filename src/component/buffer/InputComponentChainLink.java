@@ -1,10 +1,10 @@
 package component.buffer;
 
-public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
+public class InputComponentChainLink<K, A extends Packet<K>> extends ComponentChainLink<K, Void, A, Packet<Void>> {
     private final InputCallable<K> method;
-    private final SimpleBuffer<K> inputBuffer;
+    private final SimpleBuffer<K, A> inputBuffer;
 
-    private InputComponentChainLink(InputCallable<K> method, BufferChainLink<K> inputBuffer){
+    private InputComponentChainLink(InputCallable<K> method, BufferChainLink<K, A> inputBuffer){
         super(inputBuffer.previousComponent);
         this.method = method;
         this.inputBuffer = inputBuffer.getBuffer();
@@ -49,7 +49,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
     }
 
     @Override
-    protected <W> void wrap(PipeCallable<Void, W> nextMethod, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W, C extends Packet<W>> void wrap(PipeCallable<Void, W> nextMethod, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
 
     }
 
@@ -58,7 +58,7 @@ public class InputComponentChainLink<K> extends ComponentChainLink<K, Void> {
 
     }
 
-    static <T> void methodToInputComponent(BufferChainLink<T> inputBuffer, InputCallable<T> method) {
+    static <T, A extends Packet<T>> void methodToInputComponent(BufferChainLink<T, A> inputBuffer, InputCallable<T> method) {
         new InputComponentChainLink<>(method, inputBuffer).breakChain();
     }
 

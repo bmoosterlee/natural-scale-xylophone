@@ -2,9 +2,9 @@ package component;
 
 import component.buffer.*;
 
-public class Counter extends MethodPipeComponent<Pulse, Long> {
+public class Counter<A extends Packet<Pulse>, B extends Packet<Long>> extends MethodPipeComponent<Pulse, Long, A, B> {
 
-    public Counter(SimpleBuffer<Pulse> inputBuffer, SimpleBuffer<Long> outputBuffer) {
+    public Counter(SimpleBuffer<Pulse, A> inputBuffer, SimpleBuffer<Long, B> outputBuffer) {
         super(inputBuffer, outputBuffer, build());
     }
 

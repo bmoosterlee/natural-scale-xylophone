@@ -4,10 +4,11 @@ import component.Pulse;
 import component.buffer.MethodOutputComponent;
 import component.buffer.SimpleBuffer;
 import component.buffer.OutputCallable;
+import component.buffer.SimplePacket;
 
 public class Pulser extends MethodOutputComponent<Pulse> {
 
-    public Pulser(SimpleBuffer<Pulse> outputBuffer, TimeInNanoSeconds frameTime){
+    public Pulser(SimpleBuffer<Pulse, SimplePacket<Pulse>> outputBuffer, TimeInNanoSeconds frameTime){
         super(outputBuffer, build(frameTime));
     }
 

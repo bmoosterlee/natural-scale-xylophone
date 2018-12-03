@@ -1,9 +1,9 @@
 package component.buffer;
 
-public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
+public class MethodOutputComponent<V> extends AbstractOutputComponent<V, SimplePacket<V>> {
     protected final OutputCallable<V> method;
 
-    public MethodOutputComponent(BoundedBuffer<V> outputBuffer, OutputCallable<V> method) {
+    public MethodOutputComponent(BoundedBuffer<V, SimplePacket<V>> outputBuffer, OutputCallable<V> method) {
         super(new OutputPort<>(outputBuffer));
         this.method = method;
     }
@@ -11,7 +11,7 @@ public class MethodOutputComponent<V> extends AbstractOutputComponent<V> {
     public void tick() {
         try {
             V result = method.call();
-            output.produce(result);
+            output.produce(new SimplePacket<>(result));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

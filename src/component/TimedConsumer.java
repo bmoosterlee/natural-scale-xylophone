@@ -2,33 +2,29 @@ package component;
 
 import component.buffer.*;
 
-public class TimedConsumer<T> extends MethodPipeComponent<Pulse, T> {
+public class TimedConsumer {
 
-    public TimedConsumer(SimpleBuffer<Pulse> timeBuffer, BoundedBuffer<T> inputBuffer, SimpleBuffer<T> outputBuffer){
-        super(timeBuffer, outputBuffer, consumeFrom(inputBuffer));
-    }
-
-    public static <T> PipeCallable<Pulse, T> consumeFrom(BoundedBuffer<T> inputBuffer){
+    public static <K, A extends Packet<K>> PipeCallable<Pulse, K> consumeFrom(BoundedBuffer<K, A> inputBuffer){
         return new PipeCallable<>() {
-            final InputPort<T> inputPort;
+            final InputPort<K, A> inputPort;
 
             {
                 inputPort = inputBuffer.createInputPort();
             }
 
 
-            private T consume() {
+            @Override
+            public K call(Pulse input) {
+                return consume().unwrap();
+            }
+
+            private A consume() {
                 try {
                     return inputPort.consume();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 return null;
-            }
-
-            @Override
-            public T call(Pulse input) {
-                return consume();
             }
         };
     }

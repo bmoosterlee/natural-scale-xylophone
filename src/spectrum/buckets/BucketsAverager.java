@@ -7,10 +7,10 @@ import java.util.*;
 
 public class BucketsAverager {
 
-    public static PipeCallable<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int averagingWidth) {
+    public static <A extends Packet<Buckets>, B extends Packet<Buckets>> PipeCallable<BoundedBuffer<Buckets, A>, BoundedBuffer<Buckets, B>> buildPipe(int averagingWidth) {
         return inputBuffer -> {
 
-            LinkedList<SimpleBuffer<Buckets>> methodInputBroadcast =
+            LinkedList<SimpleBuffer<Buckets, A>> methodInputBroadcast =
                     new LinkedList<>(
                             inputBuffer
                                     .broadcast(2, "buckets averager - broadcast"));
@@ -20,22 +20,22 @@ public class BucketsAverager {
                 multipliers[i] = ((double) averagingWidth - (i + 1)) / averagingWidth;
             }
 
-            Set<BoundedBuffer<Buckets>> adderBuffers = new HashSet<>();
+            Set<BoundedBuffer<Buckets, A>> adderBuffers = new HashSet<>();
             adderBuffers.add(methodInputBroadcast.poll());
 
-            LinkedList<SimpleBuffer<Buckets>> hollowBucketsBroadcast =
+            LinkedList<SimpleBuffer<Buckets, A>> hollowBucketsBroadcast =
                     new LinkedList<>(
                             methodInputBroadcast.poll()
-                                    .performMethod(BucketsAverager::getHollowBuckets, "hollow buckets - output")
+                                    .<Buckets, A>performMethod(BucketsAverager::getHollowBuckets, "hollow buckets - output")
                                     .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
 
             for (int i = 0; i < averagingWidth - 1; i++) {
                 int finalIMultiplier = i;
 
-                LinkedList<SimpleBuffer<Buckets>> multiplierBroadcast =
+                LinkedList<SimpleBuffer<Buckets, A>> multiplierBroadcast =
                         new LinkedList<>(
                                 hollowBucketsBroadcast.poll()
-                                        .performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]), "buckets averager multiplier - output")
+                                        .<Buckets, A>performMethod(input2 -> input2.multiply(multipliers[finalIMultiplier]), "buckets averager multiplier - output")
                                         .broadcast(2, "buckets averager multiplier - broadcast"));
 
                 int finalI = i + 1;

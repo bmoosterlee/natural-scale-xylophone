@@ -8,17 +8,13 @@ import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 
-public class NoteTimestamper extends MethodPipeComponent<Long, TimestampedFrequencies> {
+public class NoteTimestamper {
 
-    public NoteTimestamper(SimpleBuffer<Long> sampleCountBuffer, BoundedBuffer<Frequency> newNoteBuffer, SimpleBuffer<TimestampedFrequencies> outputBuffer) {
-        super(sampleCountBuffer, outputBuffer, toMethod(buildPipe(newNoteBuffer)));
-    }
-
-    public static PipeCallable<BoundedBuffer<Long>, BoundedBuffer<TimestampedFrequencies>> buildPipe(BoundedBuffer<Frequency> newNoteBuffer) {
+    public static <A extends Packet<Long>, B extends Packet<TimestampedFrequencies>, C extends Packet<Frequency>> PipeCallable<BoundedBuffer<Long, A>, BoundedBuffer<TimestampedFrequencies, B>> buildPipe(BoundedBuffer<Frequency, C> newNoteBuffer) {
         return new PipeCallable<>() {
             @Override
-            public BoundedBuffer<TimestampedFrequencies> call(BoundedBuffer<Long> inputBuffer) {
-                LinkedList<BoundedBuffer<Long>> sampleCountBroadcast =
+            public BoundedBuffer<TimestampedFrequencies, B> call(BoundedBuffer<Long, A> inputBuffer) {
+                LinkedList<BoundedBuffer<Long, A>> sampleCountBroadcast =
                         new LinkedList<>(
                                 inputBuffer
                                         .broadcast(2, "note timestamper - broadcast"));

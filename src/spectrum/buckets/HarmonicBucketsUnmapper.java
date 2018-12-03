@@ -5,20 +5,16 @@ import component.buffer.*;
 
 import java.util.*;
 
-public class HarmonicBucketsUnmapper extends MethodPipeComponent<Pulse, Buckets> {
+public class HarmonicBucketsUnmapper {
 
-    public HarmonicBucketsUnmapper(SimpleBuffer<Pulse> tickBuffer, Map<Integer, BoundedBuffer<AtomicBucket>> inputMap, SimpleBuffer<Buckets> outputBuffer) {
-        super(tickBuffer, outputBuffer, toMethod(buildPipe(inputMap)));
-    }
-
-    public static PipeCallable<BoundedBuffer<Pulse>, BoundedBuffer<Buckets>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
+    public static <A extends Packet<Pulse>, B extends Packet<Buckets>> PipeCallable<BoundedBuffer<Pulse, A>, BoundedBuffer<Buckets, B>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket, SimplePacket<AtomicBucket>>> bufferMap) {
         return inputBuffer -> toBucketMap(inputBuffer, bufferMap)
             .performMethod(Buckets::new, "harmonic buckets unmapper - create buckets");
     }
 
-    private static SimpleBuffer<Map<Integer, MemoizedBucket>> toBucketMap(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        LinkedList<BoundedBuffer<Pulse>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "harmonic buckets unmapper - tick broadcast"));
-        Map<Integer, BoundedBuffer<Pulse>> frameTickers = new HashMap<>();
+    private static <A extends Packet<Pulse>> SimpleBuffer<Map<Integer, MemoizedBucket>, SimplePacket<Map<Integer, MemoizedBucket>>> toBucketMap(BoundedBuffer<Pulse, A> input, Map<Integer, BoundedBuffer<AtomicBucket, SimplePacket<AtomicBucket>>> bufferMap) {
+        LinkedList<BoundedBuffer<Pulse, A>> frameTickBroadcast = new LinkedList<>(input.broadcast(bufferMap.size(), "harmonic buckets unmapper - tick broadcast"));
+        Map<Integer, BoundedBuffer<Pulse, A>> frameTickers = new HashMap<>();
         for (Integer index : bufferMap.keySet()) {
             frameTickers.put(index, frameTickBroadcast.poll());
         }
@@ -36,17 +32,17 @@ public class HarmonicBucketsUnmapper extends MethodPipeComponent<Pulse, Buckets>
                 MemoizedBucket::new));
     }
 
-    private static BoundedBuffer<Map<Integer, MemoizedBucket>> toBucketMap2(BoundedBuffer<Pulse> input, Map<Integer, BoundedBuffer<AtomicBucket>> bufferMap) {
-        OutputPort<ImmutableMap<Integer, MemoizedBucket>> incompleteMapOutputPort = new OutputPort<>("harmonic buckets unmapper - incomplete map");
-        BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>> incompleteMap = incompleteMapOutputPort.getBuffer();
+    private static <A extends Packet<Pulse>, B extends Packet<Map<Integer, MemoizedBucket>>, C extends Packet<AtomicBucket>, D extends Packet<ImmutableMap<Integer, MemoizedBucket>>> BoundedBuffer<Map<Integer, MemoizedBucket>, B> toBucketMap2(BoundedBuffer<Pulse, A> input, Map<Integer, BoundedBuffer<AtomicBucket, C>> bufferMap) {
+        OutputPort<ImmutableMap<Integer, MemoizedBucket>, D> incompleteMapOutputPort = new OutputPort<>("harmonic buckets unmapper - incomplete map");
+        BoundedBuffer<ImmutableMap<Integer, MemoizedBucket>, D> incompleteMap = incompleteMapOutputPort.getBuffer();
         try {
-            incompleteMapOutputPort.produce(new ImmutableMap<>());
+            incompleteMapOutputPort.produce((D) new SimplePacket<>(new ImmutableMap<Integer, MemoizedBucket>()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         for(Integer index : bufferMap.keySet()){
-            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>>> incompleteMapBroadcast = new LinkedList<>(incompleteMap.broadcast(2, "harmonic buckets unmapper - toBucketsMap2 broadcast"));
+            LinkedList<SimpleBuffer<ImmutableMap<Integer, MemoizedBucket>, D>> incompleteMapBroadcast = new LinkedList<>(incompleteMap.broadcast(2, "harmonic buckets unmapper - toBucketsMap2 broadcast"));
             incompleteMap =
                 incompleteMapBroadcast.poll()
                 .pairWith(

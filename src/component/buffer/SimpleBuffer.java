@@ -2,19 +2,19 @@ package component.buffer;
 
 import component.*;
 
-import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
 
-public class SimpleBuffer<T> implements BoundedBuffer<T> {
+public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A> {
 
-    private final BoundedStrategy<T> boundedStrategy;
+    private final BoundedStrategy<A> boundedStrategy;
 
     public SimpleBuffer(int capacity, String name){
         this(new BoundedStrategy<>(capacity, name));
     }
 
-    public SimpleBuffer(BoundedStrategy<T> strategy){
+    public SimpleBuffer(BoundedStrategy<A> strategy){
         boundedStrategy = strategy;
     }
 
@@ -24,22 +24,22 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public List<T> flush() throws InterruptedException {
+    public List<A> flush() throws InterruptedException {
         return boundedStrategy.flush();
     }
 
     @Override
-    public void offer(T packet) throws InterruptedException {
+    public void offer(A packet) throws InterruptedException {
         boundedStrategy.offer(packet);
     }
 
     @Override
-    public T poll() throws InterruptedException {
+    public A poll() throws InterruptedException {
         return boundedStrategy.poll();
     }
 
     @Override
-    public T tryPoll() {
+    public A tryPoll() {
         return boundedStrategy.tryPoll();
     }
 
@@ -54,83 +54,101 @@ public class SimpleBuffer<T> implements BoundedBuffer<T> {
     }
 
     @Override
-    public InputPort<T> createInputPort(){
+    public InputPort<K, A> createInputPort(){
         return new InputPort<>(this);
     }
 
     @Override
-    public OutputPort<T> createOutputPort(){
+    public OutputPort<K, A> createOutputPort(){
         return new OutputPort<>(this);
     }
 
     @Override
-    public <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method){
+    public <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method){
         return performMethod(method, "simpleBuffer - performMethod");
     }
 
     @Override
-    public <V> BufferChainLink<V> performMethod(PipeCallable<T, V> method, String name) {
+    public <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, String name) {
         return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
     @Override
-    public void performInputMethod(InputCallable<T> method){
+    public void performInputMethod(InputCallable<K> method){
         new TickRunningStrategy(new MethodInputComponent<>(this, method));
     }
 
     @Override
-    public <V> BoundedBuffer<V> connectTo(PipeCallable<BoundedBuffer<T>, BoundedBuffer<V>> pipe) {
+    public <V, B extends Packet<V>> BoundedBuffer<V, B> connectTo(PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> pipe) {
         return pipe.call(this);
     }
 
     @Override
-    public void connectTo(InputCallable<BoundedBuffer<T>> pipe) {
+    public void connectTo(InputCallable<BoundedBuffer<K, A>> pipe) {
         pipe.call(this);
     }
 
     @Override
-    public Collection<SimpleBuffer<T>> broadcast(int size) {
+    public Collection<SimpleBuffer<K, A>> broadcast(int size) {
         return Broadcast.broadcast(this, Math.max(10, size));
     }
 
     @Override
-    public Collection<SimpleBuffer<T>> broadcast(int size, String name) {
+    public Collection<SimpleBuffer<K, A>> broadcast(int size, String name) {
         return Broadcast.broadcast(this, size, name);
     }
 
     @Override
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other){
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other){
         return Pairer.pair(this, other);
     }
 
     @Override
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BoundedBuffer<V> other, String name){
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other, String name){
         return Pairer.pair(this, other, name);
     }
 
     @Override
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other){
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other){
         return Pairer.pair(this, other.breakChain());
     }
 
     @Override
-    public <V> SimpleBuffer<AbstractMap.SimpleImmutableEntry<T, V>> pairWith(BufferChainLink<V> other, String name){
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other, String name){
         return Pairer.pair(this, other.breakChain(), name);
     }
 
     @Override
-    public SimpleBuffer<?> relayTo(SimpleBuffer<? super T> outputBuffer) {
+    public SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer) {
         new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
         return outputBuffer;
     }
 
     @Override
-    public BufferChainLink<T> toOverwritable() {
+    public BufferChainLink<K, A> toOverwritable() {
         return PipeComponentChainLink.chainToOverwritableBuffer(this, 1, "to overwritable - output");
     }
 
     @Override
-    public BufferChainLink<T> resize(int size) {
+    public BufferChainLink<K, A> resize(int size) {
         return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
+    }
+
+    @Override
+    public BoundedBuffer<K, SimplePacket<K>> rewrap() {
+        SimpleBuffer<K, SimplePacket<K>> rewrap = new SimpleBuffer<>(1, "rewrap");
+
+        new TickRunningStrategy(new AbstractPipeComponent<>(this.createInputPort(), rewrap.createOutputPort()) {
+            @Override
+            protected void tick() {
+                try {
+                    output.produce(new SimplePacket<>(input.consume().unwrap()));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        return rewrap;
     }
 }

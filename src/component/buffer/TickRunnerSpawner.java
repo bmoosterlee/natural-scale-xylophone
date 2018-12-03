@@ -3,15 +3,15 @@ package component.buffer;
 import java.util.Collection;
 import java.util.LinkedList;
 
-public class TickRunnerSpawner<K, V> extends TickRunner{
-    private final Collection<BoundedBuffer<K>> inputBuffers;
-    private final Collection<BoundedBuffer<V>> outputBuffers;
+public class TickRunnerSpawner extends TickRunner{
+    private final Collection<BoundedBuffer> inputBuffers;
+    private final Collection<BoundedBuffer> outputBuffers;
     private final LinkedList<SimpleTickRunner> liveRunners;
     private final AbstractComponent component;
     private final int minimumThreadCount;
     private final int maxThreadCount;
 
-    public TickRunnerSpawner(AbstractComponent<K, V> component, int maxThreadCount){
+    public TickRunnerSpawner(AbstractComponent component, int maxThreadCount){
         this.maxThreadCount = maxThreadCount;
 
         this.component = component;
@@ -24,7 +24,7 @@ public class TickRunnerSpawner<K, V> extends TickRunner{
         add();
     }
 
-    public TickRunnerSpawner(AbstractComponent<K, V> component){
+    public TickRunnerSpawner(AbstractComponent component){
         this(component, Integer.MAX_VALUE);
     }
 

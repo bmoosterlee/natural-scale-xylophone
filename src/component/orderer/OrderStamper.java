@@ -1,6 +1,6 @@
 package component.orderer;
 
-import component.buffer.PipeCallable;
+import component.buffer.*;
 
 import java.util.Comparator;
 
@@ -13,13 +13,35 @@ public class OrderStamper {
         comparator = Comparator.comparingLong(o -> o.orderStamp);
     }
 
-    public static <T> PipeCallable<T, OrderStampedPacket<T>> build(){
+    public static <T, A extends Packet<T>> PipeCallable<BoundedBuffer<T, A>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(){
         return new PipeCallable<>(){
-            OrderStamper orderStamper = new OrderStamper();
-
             @Override
-            public OrderStampedPacket<T> call(T input) {
-                return new OrderStampedPacket<>(orderStamper, input);
+            public BoundedBuffer<T, OrderStampedPacket<T>> call(BoundedBuffer<T, A> inputBuffer) {
+                SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "order stamper");
+
+                InputPort<T, A> inputPort = inputBuffer.createInputPort();
+                new TickRunningStrategy(new AbstractPipeComponent<>(inputPort, outputBuffer.createOutputPort()) {
+                    OrderStamper orderStamper = new OrderStamper();
+
+                    @Override
+                    protected void tick() {
+                        try {
+                            output.produce(
+                                    new OrderStampedPacket<>(
+                                            orderStamper,
+                                            input.consume().unwrap()));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public Boolean isParallelisable(){
+                        return false;
+                    }
+                });
+
+                return outputBuffer;
             }
 
             @Override

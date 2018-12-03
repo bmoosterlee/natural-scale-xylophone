@@ -6,29 +6,27 @@ import component.buffer.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.LinkedList;
 
-public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buckets, Buckets> {
+public class PrecalculatedBucketHistoryComponent {
 
-    public PrecalculatedBucketHistoryComponent(SimpleBuffer<Buckets> inputBuffer, SimpleBuffer<Buckets> outputBuffer, int size) {
-        super(inputBuffer, outputBuffer, toMethod(buildPipe(size)));
-    }
-
-    public static PipeCallable<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> buildPipe(int size){
+    public static <A extends Packet<Buckets>> PipeCallable<BoundedBuffer<Buckets, A>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> buildPipe(int size){
         return inputBuffer -> {
             int capacity = 100;
             double multiplier = 1. / size;
 
-            LinkedList<BoundedBuffer<Buckets>> preparedBucketsBroadcast =
+            BufferChainLink<Buckets, SimplePacket<Buckets>> bucketsPacketBufferChainLink = inputBuffer
+                    .rewrap()
+                    .performMethod(input1 -> input1.multiply(multiplier), "precalculated bucket history component - multiply");
+            LinkedList<BoundedBuffer<Buckets, SimplePacket<Buckets>>> preparedBucketsBroadcast =
                 new LinkedList<>(
-                    inputBuffer
-                    .performMethod(input1 -> input1.multiply(multiplier), "precalculated bucket history component - multiply")
+                    bucketsPacketBufferChainLink
                     .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
-            SimpleBuffer<ImmutableLinkedList<Buckets>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
-            SimpleBuffer<Buckets> timeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
+            SimpleBuffer<ImmutableLinkedList<Buckets>, SimplePacket<ImmutableLinkedList<Buckets>>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
+            SimpleBuffer<Buckets, SimplePacket<Buckets>> timeAverageBuffer = new SimpleBuffer<>(capacity, "output time average");
 
-            LinkedList<BoundedBuffer<Buckets>> timeAverageBroadcast = new LinkedList<>(timeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
+            LinkedList<BoundedBuffer<Buckets, SimplePacket<Buckets>>> timeAverageBroadcast = new LinkedList<>(timeAverageBuffer.broadcast(2, "precalculatedBucketHistoryComponent output - broadcast"));
 
-            SimpleImmutableEntry<SimpleBuffer<ImmutableLinkedList<Buckets>>, SimpleBuffer<Buckets>> unpair =
+            SimpleImmutableEntry<SimpleBuffer<ImmutableLinkedList<Buckets>, SimplePacket<ImmutableLinkedList<Buckets>>>, SimpleBuffer<Buckets, SimplePacket<Buckets>>> unpair =
                     Unpairer.unpair(
                         historyBuffer
                         .pairWith(
@@ -51,8 +49,8 @@ public class PrecalculatedBucketHistoryComponent extends MethodPipeComponent<Buc
             unpair.getValue().relayTo(timeAverageBuffer);
 
             try {
-                historyBuffer.createOutputPort().produce(new ImmutableLinkedList<>());
-                timeAverageBuffer.createOutputPort().produce(new Buckets());
+                historyBuffer.createOutputPort().produce(new SimplePacket<>(new ImmutableLinkedList<>()));
+                timeAverageBuffer.createOutputPort().produce(new SimplePacket<>(new Buckets()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

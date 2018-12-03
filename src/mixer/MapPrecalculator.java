@@ -2,14 +2,11 @@ package mixer;
 
 import component.buffer.*;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 
-class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOutputData<I, K, V>> {
+class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, K, V>>> extends AbstractPipeComponent<I, PrecalculatorOutputData<I, K, V>, A, B> {
     private final Map<I, K> unfinishedData;
     private final PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator;
     private final BiFunction<V, V, V> adder;
@@ -17,8 +14,9 @@ class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOu
     private final Callable<V> emptyFinishedDataBuilder;
 
     final Map<I, V> finishedData;
+    private PipeCallable<I, PrecalculatorOutputData<I, K, V>> transform;
 
-    public MapPrecalculator(BoundedBuffer<I> inputBuffer, SimpleBuffer<PrecalculatorOutputData<I, K, V>> outputBuffer, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, Map<I, K> unfinishedData, BiFunction<V, V, V> adder, Callable<K> emptyUnfinshedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
+    public MapPrecalculator(BoundedBuffer<I, A> inputBuffer, SimpleBuffer<PrecalculatorOutputData<I, K, V>, B> outputBuffer, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, Map<I, K> unfinishedData, BiFunction<V, V, V> adder, Callable<K> emptyUnfinshedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
         super(inputBuffer.createInputPort(), outputBuffer.createOutputPort());
         this.calculator = calculator;
         this.unfinishedData = unfinishedData;
@@ -26,25 +24,36 @@ class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOu
         this.emptyUnfinshedDataBuilder = emptyUnfinshedDataBuilder;
         this.emptyFinishedDataBuilder = emptyFinishedDataBuilder;
         finishedData = new HashMap<>();
+        transform = input -> {
+            K finalUnfinishedData = null;
+            try {
+                finalUnfinishedData = getUnfinishedData(input);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            V finishedDataUntilNow = null;
+            try {
+                finishedDataUntilNow = getFinishedData(input);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return new PrecalculatorOutputData<>(
+                    input,
+                    finalUnfinishedData,
+                    finishedDataUntilNow);
+        };
+
     }
 
     @Override
     protected void tick() {
         try {
-            I key = input.consume();
-            K finalUnfinishedData = getUnfinishedData(key);
-            V finishedDataUntilNow = getFinishedData(key);
-
+            A key = input.consume();
             output.produce(
-                    new PrecalculatorOutputData<>(
-                            key,
-                            finalUnfinishedData,
-                            finishedDataUntilNow));
+                    key.transform(transform));
 
             calculateContinuously();
         } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -72,7 +81,10 @@ class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOu
     }
 
     private void calculateContinuously() {
-        Iterator<I> unfinishedKeyIterator = unfinishedData.keySet().iterator();
+        Iterator<I> unfinishedKeyIterator;
+        synchronized (unfinishedData) {
+            unfinishedKeyIterator = new HashSet<>(unfinishedData.keySet()).iterator();
+        }
         while (input.isEmpty() && unfinishedKeyIterator.hasNext()) {
             I unfinishedKey = unfinishedKeyIterator.next();
             K unfinishedItem;
@@ -80,15 +92,20 @@ class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOu
                 unfinishedItem = unfinishedData.remove(unfinishedKey);
             }
             if(unfinishedItem!=null) {
-                V finishedItem = calculator.call(
-                        new AbstractMap.SimpleImmutableEntry<>(
-                                unfinishedKey,
-                                unfinishedItem));
-                if(finishedData.containsKey(unfinishedKey)) {
+                V finishedItem = null;
+                try {
+                    finishedItem = calculator.call(
+                            new AbstractMap.SimpleImmutableEntry<>(
+                                    unfinishedKey,
+                                    unfinishedItem));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (finishedData.containsKey(unfinishedKey)) {
                     finishedData.put(
                             unfinishedKey,
                             adder.apply(
-                                    finishedData.get(unfinishedKey),
+                                    finishedData.remove(unfinishedKey),
                                     finishedItem));
                 } else {
                     finishedData.put(
@@ -100,13 +117,14 @@ class MapPrecalculator<I, K, V> extends AbstractPipeComponent<I, PrecalculatorOu
         }
     }
 
-    public static <I, K, V> PipeCallable<BoundedBuffer<I>, BoundedBuffer<PrecalculatorOutputData<I, K, V>>> buildPipe(final Map<I, K> unfinishedData, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, BiFunction<V, V, V> adder, Callable<K> emptyUnfinshedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
+    public static <I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, K, V>>> PipeCallable<BoundedBuffer<I, A>, BoundedBuffer<PrecalculatorOutputData<I, K, V>, B>> buildPipe(final Map<I, K> unfinishedData, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, BiFunction<V, V, V> adder, Callable<K> emptyUnfinshedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
         return inputBuffer -> {
-            SimpleBuffer<PrecalculatorOutputData<I, K, V>> outputBuffer = new SimpleBuffer<>(1, "precalculator - output");
+            SimpleBuffer<PrecalculatorOutputData<I, K, V>, B> outputBuffer = new SimpleBuffer<>(1, "precalculator - output");
             new TickRunningStrategy(new MapPrecalculator<>(inputBuffer, outputBuffer, calculator, unfinishedData, adder, emptyUnfinshedDataBuilder, emptyFinishedDataBuilder));
             return outputBuffer;
         };
     }
+
 
     @Override
     public Boolean isParallelisable() {

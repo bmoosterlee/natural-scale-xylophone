@@ -16,12 +16,12 @@ import spectrum.buckets.PrecalculatedBucketHistoryComponent;
 
 import java.util.*;
 
-public class Pianola {
+public class Pianola<I extends Packet<Pulse>, N extends Packet<Buckets>, H extends Packet<Buckets>, O extends Packet<List<Frequency>>> {
 
-    public Pianola(BoundedBuffer<Pulse> tickBuffer, BoundedBuffer<Buckets> noteSpectrumBuffer, BoundedBuffer<Buckets> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
+    public Pianola(BoundedBuffer<Pulse, I> tickBuffer, BoundedBuffer<Buckets, N> noteSpectrumBuffer, BoundedBuffer<Buckets, H> harmonicSpectrumBuffer, SimpleBuffer<List<Frequency>, O> outputBuffer, PianolaPattern pianolaPattern, int inaudibleFrequencyMargin) {
         int repetitionDampener = 3;
 
-        LinkedList<SimpleBuffer<Pulse>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
+        LinkedList<SimpleBuffer<Pulse, I>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
 
         tickBroadcast.poll()
         .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")

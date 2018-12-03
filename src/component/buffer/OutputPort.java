@@ -1,10 +1,10 @@
 package component.buffer;
 
-public class OutputPort<T> {
+public class OutputPort<K, A extends Packet<K>> {
 
-    private final BoundedBuffer<T> buffer;
+    private final BoundedBuffer<K, A> buffer;
 
-    public OutputPort(BoundedBuffer<T> buffer){
+    public OutputPort(BoundedBuffer<K, A> buffer){
         this.buffer = buffer;
     }
 
@@ -16,11 +16,11 @@ public class OutputPort<T> {
         this(new SimpleBuffer<>(1, name));
     }
 
-    public void produce(T packet) throws InterruptedException {
+    public <Z extends A> void produce(Z packet) throws InterruptedException {
         buffer.offer(packet);
     }
 
-    public BoundedBuffer<T> getBuffer() {
+    public BoundedBuffer<K, A> getBuffer() {
         return buffer;
     }
 

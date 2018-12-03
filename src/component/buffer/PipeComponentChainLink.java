@@ -1,22 +1,22 @@
 package component.buffer;
 
-public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
+public class PipeComponentChainLink<K, V, A extends Packet<K>, B extends Packet<V>> extends ComponentChainLink<K, V, A, B> {
     private final PipeCallable<K, V> method;
-    private final SimpleBuffer<K> inputBuffer;
-    private final BoundedBuffer<V> outputBuffer;
+    private final SimpleBuffer<K, A> inputBuffer;
+    private final BoundedBuffer<V, B> outputBuffer;
 
-    private PipeComponentChainLink(ComponentChainLink<?, K> previousComponentChainLink, PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+    private PipeComponentChainLink(ComponentChainLink<?, K, ?, A> previousComponentChainLink, PipeCallable<K, V> method, SimpleBuffer<K, A> inputBuffer, BoundedBuffer<V, B> outputBuffer){
         super(previousComponentChainLink);
         this.method = method;
         this.inputBuffer = inputBuffer;
         this.outputBuffer = outputBuffer;
     }
 
-    private PipeComponentChainLink(PipeCallable<K, V> method, BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+    private PipeComponentChainLink(PipeCallable<K, V> method, BufferChainLink<K, A> inputBuffer, BoundedBuffer<V, B> outputBuffer){
         this(inputBuffer.previousComponent, method, inputBuffer.getBuffer(), outputBuffer);
     }
 
-    private PipeComponentChainLink(PipeCallable<K, V> method, SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer){
+    private PipeComponentChainLink(PipeCallable<K, V> method, SimpleBuffer<K, A> inputBuffer, BoundedBuffer<V, B> outputBuffer){
         this(null, method, inputBuffer, outputBuffer);
     }
 
@@ -60,7 +60,7 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
     }
 
     @Override
-    protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W, C extends Packet<W>> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
         int newChainLinkCount = chainLinks + 1;
         if(!isParallelisable()) {
             PipeCallable<K, W> sequentialCallChain = createSequentialLink(nextMethodChain);
@@ -103,11 +103,11 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         return input -> nextMethodChain.call(method.call(input));
     }
 
-    private <W> void startChainedParallelComponent(PipeCallable<K, W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
+    private <W, C extends Packet<W>> void startChainedParallelComponent(PipeCallable<K, W> parallelCallChain, BoundedBuffer<W, C> outputBuffer) {
         new TickRunningStrategy(new MethodPipeComponent<>(inputBuffer, outputBuffer, parallelCallChain));
     }
 
-    private <W> void startChainedSequentialComponent(PipeCallable<K, W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    private <W, C extends Packet<W>> void startChainedSequentialComponent(PipeCallable<K, W> sequentialCallChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
         new TickRunningStrategy(new MethodPipeComponent<>(inputBuffer, outputBuffer, sequentialCallChain), chainLinks);
     }
 
@@ -168,36 +168,36 @@ public class PipeComponentChainLink<K, V> extends ComponentChainLink<K, V> {
         return method.isParallelisable();
     }
 
-    static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(BufferChainLink<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
-        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
+    static <K, V, A extends Packet<K>, B extends Packet<V>> BufferChainLink<V, B> methodToComponentWithOutputBuffer(BufferChainLink<K, A> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
+        SimpleBuffer<V, B> outputBuffer = new SimpleBuffer<>(capacity, name);
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    private static <K, V> BufferChainLink<V> getBufferChainLink(BufferChainLink<K> inputBuffer, SimpleBuffer<V> outputBuffer, PipeCallable<K, V> method) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
-        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
+    private static <K, V, A extends Packet<K>, B extends Packet<V>> BufferChainLink<V, B> getBufferChainLink(BufferChainLink<K, A> inputBuffer, SimpleBuffer<V, B> outputBuffer, PipeCallable<K, V> method) {
+        PipeComponentChainLink<K, V, A, B> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
+        BufferChainLink<V, B> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
-    static <K, V> BufferChainLink<V> methodToComponentWithOutputBuffer(SimpleBuffer<K> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
-        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
+    static <K, V, A extends Packet<K>, B extends Packet<V>> BufferChainLink<V, B> methodToComponentWithOutputBuffer(SimpleBuffer<K, A> inputBuffer, PipeCallable<K, V> method, int capacity, String name) {
+        SimpleBuffer<V, B> outputBuffer = new SimpleBuffer<>(capacity, name);
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    private static <K, V> BufferChainLink<V> getBufferChainLink(SimpleBuffer<K> inputBuffer, SimpleBuffer<V> outputBuffer, PipeCallable<K, V> method) {
-        PipeComponentChainLink<K, V> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
-        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
+    private static <K, V, A extends Packet<K>, B extends Packet<V>> BufferChainLink<V, B> getBufferChainLink(SimpleBuffer<K, A> inputBuffer, SimpleBuffer<V, B> outputBuffer, PipeCallable<K, V> method) {
+        PipeComponentChainLink<K, V, A, B> componentChainLink = new PipeComponentChainLink<>(method, inputBuffer, outputBuffer);
+        BufferChainLink<V, B> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 
-    static <K> BufferChainLink<K> chainToOverwritableBuffer(BufferChainLink<K> inputBuffer, int capacity, String name) {
-        SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+    static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(BufferChainLink<K, A> inputBuffer, int capacity, String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
         PipeCallable<K, K> method = input -> input;
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    public static <K> BufferChainLink<K> chainToOverwritableBuffer(SimpleBuffer<K> inputBuffer, int capacity, String name) {
-        SimpleBuffer<K> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+    public static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(SimpleBuffer<K, A> inputBuffer, int capacity, String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
         PipeCallable<K, K> method = input -> input;
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }

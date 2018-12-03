@@ -3,27 +3,27 @@ package component.buffer;
 import java.util.Collections;
 import java.util.List;
 
-public class InputPort<T> {
+public class InputPort<K, A extends Packet<K>> {
 
-    private final BoundedBuffer<T> buffer;
+    private final BoundedBuffer<K, A> buffer;
 
-    protected InputPort(BoundedBuffer<T> buffer){
+    protected InputPort(BoundedBuffer<K, A> buffer){
         this.buffer = buffer;
     }
 
-    public T consume() throws InterruptedException {
+    public A consume() throws InterruptedException {
         return buffer.poll();
     }
 
-    public T tryConsume() {
+    public A tryConsume() {
         return buffer.tryPoll();
     }
 
-    public List<T> flush() throws InterruptedException {
+    public List<A> flush() throws InterruptedException {
         return buffer.flush();
     }
 
-    public List<T> flushOrConsume() throws InterruptedException {
+    public List<A> flushOrConsume() throws InterruptedException {
         if(isEmpty()){
             return Collections.singletonList(consume());
         }
@@ -36,7 +36,7 @@ public class InputPort<T> {
         return buffer.isEmpty();
     }
 
-    public BoundedBuffer<T> getBuffer() {
+    public BoundedBuffer<K, A> getBuffer() {
         return buffer;
     }
 }

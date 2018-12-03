@@ -11,9 +11,9 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeBuilder extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> {
+public class EnvelopeBuilder<A extends Packet<TimestampedFrequencies>, B extends Packet<TimestampedNewNotesWithEnvelope>> extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope, A, B> {
 
-    public EnvelopeBuilder(SimpleBuffer<TimestampedFrequencies> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope> outputBuffer, SampleRate sampleRate) {
+    public EnvelopeBuilder(SimpleBuffer<TimestampedFrequencies, A> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope, B> outputBuffer, SampleRate sampleRate) {
         super(inputBuffer, outputBuffer, buildEnvelope(sampleRate));
     }
 
@@ -26,13 +26,7 @@ public class EnvelopeBuilder extends MethodPipeComponent<TimestampedFrequencies,
                 long sampleCount = input.getSampleCount();
                 DeterministicEnvelope envelope = new SimpleDeterministicEnvelope(sampleCount, sampleRate, envelopeFunction);
                 Collection<Frequency> newNotes = input.getFrequencies();
-                TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope = new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
-                return timestampedNewNotesWithEnvelope;
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
+                return new TimestampedNewNotesWithEnvelope(sampleCount, envelope, newNotes);
             }
         };
     }

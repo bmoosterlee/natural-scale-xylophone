@@ -1,9 +1,10 @@
 package component.orderer;
 
-import component.buffer.Packet;
 import component.buffer.PipeCallable;
+import component.buffer.Packet;
+import component.buffer.SimplePacket;
 
-public class OrderStampedPacket<T> extends Packet<T> implements Comparable<OrderStampedPacket<T>>{
+public class OrderStampedPacket<T> extends SimplePacket<T> implements Comparable<OrderStampedPacket<T>>{
     private final OrderStamper orderStamper;
     final long orderStamp;
 
@@ -20,8 +21,8 @@ public class OrderStampedPacket<T> extends Packet<T> implements Comparable<Order
     }
 
     @Override
-    public <V> Packet<V> transform(PipeCallable<T, V> method) {
-        return new OrderStampedPacket<V>(this, method);
+    public <V, Y extends Packet<V>> Y transform(PipeCallable<T, V> method) {
+        return (Y) new OrderStampedPacket<>(this, method);
     }
 
     public boolean successor(OrderStampedPacket<T> other) {

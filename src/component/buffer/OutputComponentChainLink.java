@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 
-public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
+public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Packet<Void>, SimplePacket<V>> {
     private final OutputCallable<V> method;
-    private final BoundedBuffer<V> outputBuffer;
+    private final BoundedBuffer<V, SimplePacket<V>> outputBuffer;
 
-    private OutputComponentChainLink(OutputCallable<V> method, BoundedBuffer<V> outputBuffer) {
+    private OutputComponentChainLink(OutputCallable<V> method, BoundedBuffer<V, SimplePacket<V>> outputBuffer) {
         super(null);
         this.method = method;
         this.outputBuffer = outputBuffer;
@@ -20,7 +20,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
     }
 
     @Override
-    protected <W> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    protected <W, C extends Packet<W>> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
         if(!isParallelisable()) {
             OutputCallable<W> sequentialCallChain = createSequentialLink(nextMethodChain);
             startChainedSequentialComponent(sequentialCallChain, outputBuffer, chainLinks);
@@ -76,23 +76,23 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         };
     }
 
-    private <W> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W> outputBuffer, int chainLinks) {
+    private <W, C extends Packet<W>> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
         new TickRunningStrategy(createMethodOutputComponent(sequentialCallChain, outputBuffer), chainLinks + 1);
     }
 
-    private <W> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W> outputBuffer) {
+    private <W, C extends Packet<W>> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W, C> outputBuffer) {
         new TickRunningStrategy(createMethodOutputComponent(parallelCallChain, outputBuffer));
     }
 
-    private <W> AbstractComponent<V, W> createMethodOutputComponent(OutputCallable<W> callChain, BoundedBuffer<W> outputBuffer) {
+    private <W, C extends Packet<W>> AbstractComponent<V, W, SimplePacket<V>, C> createMethodOutputComponent(OutputCallable<W> callChain, BoundedBuffer<W, C> outputBuffer) {
         return new AbstractComponent<>() {
             @Override
-            public Collection<BoundedBuffer<V>> getInputBuffers() {
+            public Collection<BoundedBuffer<V, SimplePacket<V>>> getInputBuffers() {
                 return Collections.singleton(OutputComponentChainLink.this.outputBuffer);
             }
 
             @Override
-            public Collection<BoundedBuffer<W>> getOutputBuffers() {
+            public Collection<BoundedBuffer<W, C>> getOutputBuffers() {
                 return Collections.singleton(outputBuffer);
             }
 
@@ -118,15 +118,15 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         new TickRunningStrategy(createShutInComponent(parallelCallChain));
     }
 
-    private AbstractComponent<V, Void> createShutInComponent(Callable<Void> callChain) {
+    private AbstractComponent<V, Void, SimplePacket<V>, Packet<Void>> createShutInComponent(Callable<Void> callChain) {
         return new AbstractComponent<>() {
             @Override
-            public Collection<BoundedBuffer<V>> getInputBuffers() {
+            public Collection<BoundedBuffer<V, SimplePacket<V>>> getInputBuffers() {
                 return Collections.singleton(OutputComponentChainLink.this.outputBuffer);
             }
 
             @Override
-            public Collection<BoundedBuffer<Void>> getOutputBuffers() {
+            public Collection<BoundedBuffer<Void, Packet<Void>>> getOutputBuffers() {
                 return Collections.emptyList();
             }
 
@@ -146,10 +146,10 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V> {
         return method.isParallelisable();
     }
 
-    public static <V> BufferChainLink<V> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
-        SimpleBuffer<V> outputBuffer = new SimpleBuffer<>(capacity, name);
+    public static <V> BufferChainLink<V, SimplePacket<V>> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
+        SimpleBuffer<V, SimplePacket<V>> outputBuffer = new SimpleBuffer<>(capacity, name);
         OutputComponentChainLink<V> componentChainLink = new OutputComponentChainLink<>(method, outputBuffer);
-        BufferChainLink<V> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
+        BufferChainLink<V, SimplePacket<V>> outputChainLink = new BufferChainLink<>(outputBuffer, componentChainLink);
         return outputChainLink;
     }
 }

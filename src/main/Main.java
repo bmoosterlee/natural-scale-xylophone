@@ -3,6 +3,8 @@ package main;
 import component.Pulse;
 import component.Separator;
 import component.buffer.*;
+import component.orderer.OrderStampedPacket;
+import component.orderer.Orderer;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
@@ -23,6 +25,7 @@ import time.TimeInSeconds;
 
 import java.awt.*;
 import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.LinkedList;
 
 class Main {
@@ -48,46 +51,54 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        SimpleBuffer<Pulse> mixerPulserRelay = new SimpleBuffer<>(1, "mixer - pulser");
-        SimpleBuffer<Frequency> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
+        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, frameLookahead, spectrumWindow, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+    }
 
-        AbstractMap.SimpleImmutableEntry<BoundedBuffer<VolumeState>, BoundedBuffer<AmplitudeState>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
+    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, int frameLookahead, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> mixerPulserRelay = new SimpleBuffer<>(1, "mixer - pulser");
+        SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
+
+        SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
                 mixerPulserRelay,
                 newNoteBuffer,
                 sampleRate);
 
-        LinkedList<SimpleBuffer<VolumeState>> volumeBroadcast =
+        LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
-        .pairWith(volumeAmplitudeStateBuffers.getValue(), "main - pair volume and amplitude")
-        .performMethod(((PipeCallable<AbstractMap.SimpleImmutableEntry<VolumeState, AmplitudeState>, VolumeAmplitudeState>) input ->
-                new VolumeAmplitudeState(
-                    input.getKey(),
-                    input.getValue()))
-                .toSequential(), "main - construct volume amplitude state")
-        .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
+                .connectTo(Orderer.buildPipe())
+                .pairWith(
+                        volumeAmplitudeStateBuffers.getValue()
+                        .connectTo(Orderer.buildPipe()), "main - pair volume and amplitude")
+                .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>performMethod(input ->
+                                new VolumeAmplitudeState(
+                                        input.getKey(),
+                                        input.getValue())
+                        , "main - construct volume amplitude state")
+                .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
 
-        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets>, BoundedBuffer<Buckets>> spectrumPair =
+        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
             SpectrumBuilder.buildComponent(
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
             volumeBroadcast.poll()
+                .rewrap()
                 .toOverwritable(),
             spectrumWindow);
 
-        LinkedList<SimpleBuffer<Buckets>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Buckets>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
 
-        SimpleBuffer<java.util.List<Frequency>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
+        SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         Separator.separate(guiOutputBuffer).relayTo(newNoteBuffer);
         new GUI(
             noteSpectrumBroadcast.poll(),
             harmonicSpectrumBroadcast.poll(),
             guiOutputBuffer,
             spectrumWindow,
-            width,
-            inaudibleFrequencyMargin);
+            inaudibleFrequencyMargin
+        );
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
@@ -95,7 +106,7 @@ class Main {
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
 
 
-        SimpleBuffer<java.util.List<Frequency>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
+        SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
         Separator.separate(pianolaOutputBuffer).relayTo(newNoteBuffer);
 
         new Pianola(
@@ -110,6 +121,7 @@ class Main {
             pianolaOutputBuffer,
             pianolaPattern,
             inaudibleFrequencyMargin);
+
         OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
                 sampleLookahead,
                 "sample ticker - output")
@@ -118,16 +130,18 @@ class Main {
         playTestTone(newNoteBuffer, spectrumWindow);
     }
 
-    private static void playTestTone(SimpleBuffer<Frequency> newNoteBuffer, SpectrumWindow spectrumWindow) {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        try {
-            new OutputPort<>(newNoteBuffer).produce(spectrumWindow.getCenterFrequency());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private static void playTestTone(SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer, SpectrumWindow spectrumWindow) {
+        OutputPort<Frequency, SimplePacket<Frequency>> frequencyOutputPort = new OutputPort<>(newNoteBuffer);
+        Frequency centerFrequency = spectrumWindow.getCenterFrequency();
+            try {
+                frequencyOutputPort.produce(new SimplePacket<>(centerFrequency));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
         }
     }
 

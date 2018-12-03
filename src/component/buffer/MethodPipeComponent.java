@@ -1,31 +1,31 @@
 package component.buffer;
 
-public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
+public class MethodPipeComponent<K, V, A extends Packet<K>, B extends Packet<V>> extends AbstractPipeComponent<K, V, A, B> {
     protected final PipeCallable<K, V> method;
 
-    public MethodPipeComponent(SimpleBuffer<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
+    public MethodPipeComponent(SimpleBuffer<K, A> inputBuffer, BoundedBuffer<V, B> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
 
-    public MethodPipeComponent(BufferChainLink<K> inputBuffer, BoundedBuffer<V> outputBuffer, PipeCallable<K, V> method) {
+    public MethodPipeComponent(BufferChainLink<K, A> inputBuffer, BoundedBuffer<V, B> outputBuffer, PipeCallable<K, V> method) {
         super(inputBuffer.createMethodInternalInputPort(), new OutputPort<>(outputBuffer));
         this.method = method;
     }
 
     protected void tick() {
-        K consumed = consume();
+        A consumed = consume();
         procesAndProduce(consumed);
     }
 
     protected void tryTick() {
-        K consumed = tryConsume();
+        A consumed = tryConsume();
         if(consumed!=null) {
             procesAndProduce(consumed);
         }
     }
 
-    private K consume() {
+    private A consume() {
         try{
             return input.consume();
         } catch (InterruptedException e) {
@@ -34,13 +34,13 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
         return null;
     }
 
-    private K tryConsume() {
+    private A tryConsume() {
         return input.tryConsume();
     }
 
-    private void procesAndProduce(K consumed) {
+    private void procesAndProduce(A consumed) {
         try {
-            V result = method.call(consumed);
+            B result = consumed.transform(method);
             output.produce(result);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -50,30 +50,6 @@ public class MethodPipeComponent<K, V> extends AbstractPipeComponent<K, V> {
     @Override
     public Boolean isParallelisable(){
         return method.isParallelisable();
-    }
-
-    public static <K, V> PipeCallable<K, V> toMethod(PipeCallable<BoundedBuffer<K>, BoundedBuffer<V>> pipe){
-        return new PipeCallable<>() {
-            SimpleBuffer<K> inputBuffer = new SimpleBuffer<>(1, "pipe to method - input");
-            OutputPort<K> methodInput = inputBuffer.createOutputPort();
-            InputPort<V> methodOutput = pipe.call(inputBuffer).createInputPort();
-
-            @Override
-            public V call(K input) {
-                try {
-                    methodInput.produce(input);
-                    return methodOutput.consume();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return pipe.isParallelisable();
-            }
-        };
     }
 
 }

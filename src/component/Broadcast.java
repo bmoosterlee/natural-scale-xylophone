@@ -7,16 +7,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-public class Broadcast<T> extends AbstractComponent<T, T> {
+public class Broadcast<K, T extends Packet<K>> extends AbstractComponent<K, K, T, T> {
 
-    private final InputPort<T> input;
-    private final Collection<OutputPort<T>> outputs;
+    private final InputPort<K, T> input;
+    private final Collection<OutputPort<K, T>> outputs;
 
-    public Broadcast(SimpleBuffer<T> inputBuffer, Collection<SimpleBuffer<T>> outputBuffers) {
+    public Broadcast(SimpleBuffer<K, T> inputBuffer, Collection<SimpleBuffer<K, T>> outputBuffers) {
         input = inputBuffer.createInputPort();
 
         outputs = new HashSet<>();
-        for(SimpleBuffer<T> buffer : outputBuffers){
+        for(SimpleBuffer<K, T> buffer : outputBuffers){
             outputs.add(new OutputPort<>(buffer));
         }
     }
@@ -24,7 +24,7 @@ public class Broadcast<T> extends AbstractComponent<T, T> {
     protected void tick() {
         try {
             T item = input.consume();
-            for(OutputPort<T> output : outputs){
+            for(OutputPort<K, T> output : outputs){
                 output.produce(item);
             }
         } catch (InterruptedException e) {
@@ -32,12 +32,12 @@ public class Broadcast<T> extends AbstractComponent<T, T> {
         }
     }
 
-    public static <T> Collection<SimpleBuffer<T>> broadcast(SimpleBuffer<T> inputBuffer, int size){
+    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int size){
         return broadcast(inputBuffer, size, "unnamed broadcast");
     }
 
-    public static <T> Collection<SimpleBuffer<T>> broadcast(SimpleBuffer<T> inputBuffer, int size, String name) {
-        Collection<SimpleBuffer<T>> outputBuffers = new LinkedList<>();
+    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int size, String name) {
+        Collection<SimpleBuffer<K, T>> outputBuffers = new LinkedList<>();
         for(int i = 0; i<size; i++){
             outputBuffers.add(new SimpleBuffer<>(1, name + ": buffer " + String.valueOf(i)));
         }
@@ -46,14 +46,14 @@ public class Broadcast<T> extends AbstractComponent<T, T> {
     }
 
     @Override
-    protected Collection<BoundedBuffer<T>> getInputBuffers() {
+    protected Collection<BoundedBuffer<K, T>> getInputBuffers() {
         return Collections.singleton(input.getBuffer());
     }
 
     @Override
-    protected Collection<BoundedBuffer<T>> getOutputBuffers() {
-        Collection<BoundedBuffer<T>> outputBuffers = new HashSet<>();
-        for(OutputPort<T> outputPort : outputs){
+    protected Collection<BoundedBuffer<K, T>> getOutputBuffers() {
+        Collection<BoundedBuffer<K, T>> outputBuffers = new HashSet<>();
+        for(OutputPort<K, T> outputPort : outputs){
             outputBuffers.add(outputPort.getBuffer());
         }
         return outputBuffers;

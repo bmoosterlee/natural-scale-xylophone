@@ -7,7 +7,7 @@ import java.util.AbstractMap;
 
 public class SpectrumWindow {
     private final Frequency centerFrequency = new Frequency(2 * 261.63);
-    final int width;
+    public final int width;
     public final Frequency lowerBound;
     public final Frequency upperBound;
     private final double logFrequencyMultiplier;
@@ -49,17 +49,17 @@ public class SpectrumWindow {
         return centerFrequency;
     }
 
-    <V> PipeCallable<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>>, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>>> buildInBoundsFilterPipe() {
+    <V, A extends Packet<Integer>, B extends Packet<V>, Y extends Packet<AbstractMap.SimpleImmutableEntry<Integer, V>>> PipeCallable<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>> buildInBoundsFilterPipe() {
         return inputBuffer1 -> {
-            SimpleBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>> outputBuffer = new SimpleBuffer<>(1, "spectrumBuilder - in bounds filter");
+            SimpleBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y> outputBuffer = new SimpleBuffer<>(1, "spectrumBuilder - in bounds filter");
 
             new TickRunningStrategy(
                     new AbstractPipeComponent<>(inputBuffer1.createInputPort(), outputBuffer.createOutputPort()) {
                         @Override
                         protected void tick() {
                             try {
-                                AbstractMap.SimpleImmutableEntry<Integer, V> consumed = input.consume();
-                                if (inBounds(consumed.getKey())) {
+                                Y consumed = input.consume();
+                                if (inBounds(consumed.unwrap().getKey())) {
                                     output.produce(consumed);
                                 }
                             } catch (InterruptedException e) {
