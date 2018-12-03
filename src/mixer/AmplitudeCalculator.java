@@ -2,17 +2,12 @@ package mixer;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
-import component.orderer.OrderStamper;
-import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.state.AmplitudeState;
 import mixer.state.Wave;
 import sound.SampleRate;
 
 import java.util.*;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 
 class AmplitudeCalculator {
 
@@ -43,50 +38,87 @@ class AmplitudeCalculator {
                 Collection<Frequency> newNotes = newNotesAmplitudeData.getNewNotes();
 
                 if(!newNotes.isEmpty()) {
-                    Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(sampleCount, newNotesAmplitudeData.getEndingSampleCount(), newNotes, sampleRate);
+                    removeDeadNotes(sampleCount);
 
-                    for (Long i = sampleCount; i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
-                        synchronized (unfinishedSampleFragments) {
-                            Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.remove(i);
-                            if (oldUnfinishedSliceWaves != null) {
-                                Map<Frequency, Wave> missingNoteWaves = new HashMap<>(newNoteWaves);
-                                missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
-                                oldUnfinishedSliceWaves.putAll(missingNoteWaves);
-                            } else {
-                                oldUnfinishedSliceWaves = new HashMap<>(newNoteWaves);
-                            }
-                            unfinishedSampleFragments.put(i, oldUnfinishedSliceWaves);
-                        }
-                    }
+                    Long endingSampleCount = newNotesAmplitudeData.getEndingSampleCount();
+                    AbstractMap.SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycledWavesWithTimeOuts = recycleWaves(endingSampleCount, newNotes);
+                    Map<Frequency, Wave> recycledWaves = addRecycledWaves(endingSampleCount, recycledWavesWithTimeOuts.getKey(), recycledWavesWithTimeOuts.getValue());
+
+                    HashSet<Frequency> missingNotes = new HashSet<>(newNotes);
+                    missingNotes.removeAll(recycledWaves.keySet());
+                    Map<Frequency, Wave> missingWaves = createWaves(endingSampleCount, missingNotes, sampleRate);
+                    addWaves(sampleCount, endingSampleCount, missingWaves);
                 }
                 return sampleCount;
             }
 
-            private Map<Frequency, Wave> reuseOrCreateNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, SampleRate sampleRate) {
-                Map<Frequency, Wave> foundWaves = new HashMap<>(liveWaves);
-                foundWaves.keySet().retainAll(newNotes);
-                Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                missingWaveFrequencies.removeAll(foundWaves.keySet());
+            private void addWaves(Long sampleCount, Long endingSampleCount, Map<Frequency, Wave> missingWaves) {
+                for (Long i = sampleCount; i < endingSampleCount; i++) {
+                    synchronized (unfinishedSampleFragments) {
+                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.remove(i);
+                        if (oldUnfinishedSliceWaves != null) {
+                            Map<Frequency, Wave> missingNoteWaves = new HashMap<>(missingWaves);
+                            missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
+                            oldUnfinishedSliceWaves.putAll(missingNoteWaves);
+                        } else {
+                            oldUnfinishedSliceWaves = new HashMap<>(missingWaves);
+                        }
+                        unfinishedSampleFragments.put(i, oldUnfinishedSliceWaves);
+                    }
+                }
+            }
+
+            private Map<Frequency, Wave> addRecycledWaves(Long endingSampleCount, Map<Frequency, Wave> recycledWaves, Map<Frequency, Long> recycledWaveTimeOuts) {
+                for(Frequency frequency : recycledWaves.keySet()){
+                    for (Long i = recycledWaveTimeOuts.get(frequency)+1; i < endingSampleCount; i++) {
+                        synchronized (unfinishedSampleFragments) {
+                            Map<Frequency, Wave> unfinishedSampleFragment = unfinishedSampleFragments.remove(i);
+                            Wave wave = recycledWaves.get(frequency);
+                            if (unfinishedSampleFragment != null) {
+                                unfinishedSampleFragment.put(frequency, wave);
+                            } else {
+                                unfinishedSampleFragment = new HashMap<>(Collections.singletonMap(frequency, wave));
+                            }
+                            unfinishedSampleFragments.put(i, unfinishedSampleFragment);
+                        }
+                    }
+                }
+                return recycledWaves;
+            }
+
+            private Map<Frequency, Wave> createWaves(Long endingSampleCount, Set<Frequency> missingNotes, SampleRate sampleRate) {
                 Map<Frequency, Wave> createdWaves = new HashMap<>();
-                for (Frequency frequency : missingWaveFrequencies) {
+                for (Frequency frequency : missingNotes) {
                     Wave newWave = new Wave(frequency, sampleRate);
                     createdWaves.put(frequency, newWave);
                 }
                 liveWaves.putAll(createdWaves);
-                for(Frequency frequency : newNotes){
+                for(Frequency frequency : createdWaves.keySet()){
                     waveTimeOuts.put(frequency, endingSampleCount);
                 }
+                return createdWaves;
+            }
+
+            private AbstractMap.SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycleWaves(Long endingSampleCount, Collection<Frequency> newNotes) {
+                Map<Frequency, Wave> foundWaves = new HashMap<>(liveWaves);
+                foundWaves.keySet().retainAll(newNotes);
+                Map<Frequency, Long> foundTimeOuts = new HashMap<>(waveTimeOuts);
+                foundTimeOuts.keySet().retainAll(newNotes);
+                for(Frequency frequency : foundWaves.keySet()){
+                    waveTimeOuts.put(frequency, endingSampleCount);
+                }
+                return new AbstractMap.SimpleImmutableEntry<>(foundWaves, foundTimeOuts);
+            }
+
+            private void removeDeadNotes(Long sampleCount) {
                 HashSet<Frequency> deadFrequencies = new HashSet<>();
                 for(Frequency frequency : waveTimeOuts.keySet()){
-                    if(waveTimeOuts.get(frequency)<=sampleCount){
+                    if(waveTimeOuts.get(frequency)<sampleCount){
                         deadFrequencies.add(frequency);
                     }
                 }
                 waveTimeOuts.keySet().removeAll(deadFrequencies);
                 liveWaves.keySet().removeAll(deadFrequencies);
-                Map<Frequency, Wave> allWaves = new HashMap<>(foundWaves);
-                allWaves.putAll(createdWaves);
-                return allWaves;
             }
         };
     }
