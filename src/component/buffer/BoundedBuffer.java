@@ -27,7 +27,7 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, String name);
 
-    void performInputMethod(InputCallable<K> method);
+    void performMethod(InputCallable<K> method);
 
     <V, B extends Packet<V>> BoundedBuffer<V, B> connectTo(PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> pipe);
 

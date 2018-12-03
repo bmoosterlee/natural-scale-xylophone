@@ -80,7 +80,7 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
-    public void performInputMethod(InputCallable<K> method){
+    public void performMethod(InputCallable<K> method){
         InputComponentChainLink.methodToInputComponent(this, method);
     }
 

@@ -74,7 +74,7 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
-    public void performInputMethod(InputCallable<K> method){
+    public void performMethod(InputCallable<K> method){
         new TickRunningStrategy(new MethodInputComponent<>(this, method));
     }
 

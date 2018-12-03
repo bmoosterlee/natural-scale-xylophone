@@ -3,7 +3,6 @@ package sound;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import component.orderer.Orderer;
-import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
 
 import javax.sound.sampled.AudioFormat;
@@ -44,7 +43,7 @@ public class SoundEnvironment {
                         .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
                         .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "fit amplitude")
                 .connectTo(Orderer.buildPipe())
-                .performInputMethod(((InputCallable<Byte>)
+                .performMethod(((InputCallable<Byte>)
                         this::writeToBuffer)
                 .toSequential());
             }
