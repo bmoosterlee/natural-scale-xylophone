@@ -21,39 +21,17 @@ class AmplitudeCalculator {
 
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
-                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>>>> precalculatorOutputBroadcast =
-                        new LinkedList<>(
-                                inputBuffer
-                                        .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
-                                        .<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>>>connectTo(MapPrecalculator.buildPipe(
-                                                unfinishedSampleFragments,
-                                                input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue()),
-                                                AmplitudeState::add,
-                                                HashMap::new,
-                                                () -> new AmplitudeState(new HashMap<>())))
-                                .broadcast(3, "precalculator output - broadcast"));
-
-                return
-                    precalculatorOutputBroadcast.poll()
-                            .<AmplitudeState, OrderStampedPacket<AmplitudeState>>performMethod(PrecalculatorOutputData::getFinishedDataUntilNow, "amplitude calculator - remove finished slice")
-                    .connectTo(Orderer.buildPipe())
-                    .pairWith(
-                            precalculatorOutputBroadcast.poll()
-                                    .<Long, OrderStampedPacket<Long>>performMethod(PrecalculatorOutputData::getIndex, "amplitude calculator - extract sample count from precalculator")
-                                    .connectTo(Orderer.buildPipe())
-                                    .pairWith(
-                                            precalculatorOutputBroadcast.poll()
-                                                    .<Map<Frequency, Wave>, OrderStampedPacket<Map<Frequency, Wave>>>performMethod(PrecalculatorOutputData::getFinalUnfinishedData, "amplitude calculator - remove unfinished slice")
-                                                    .connectTo(Orderer.buildPipe()),
-                                            "amplitude calculator - pair sample count and unfinished slice")
-                                    .<AmplitudeState, OrderStampedPacket<AmplitudeState>>performMethod(input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()), "amplitude calculator - calculate amplitudes per frequency")
-                            .connectTo(Orderer.buildPipe()),
-                            "amplitude calculator - pair new and old finished slices")
-                    .performMethod(
-                            input1 ->
-                                    input1.getKey()
-                                    .add(input1.getValue())
-                            , "amplitude calculator - add new and old finished slices");
+                return inputBuffer
+                        .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewWaves).toSequential(), "amplitude calculator - add new notes")
+                        .<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>>>connectTo(MapPrecalculator.buildPipe(
+                                unfinishedSampleFragments,
+                                input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue()),
+                                AmplitudeState::add,
+                                HashMap::new,
+                                () -> new AmplitudeState(new HashMap<>()))).performMethod(input -> input.getFinishedDataUntilNow()
+                                .add(calculateAmplitudesPerFrequency(
+                                        input.getIndex(),
+                                        input.getFinalUnfinishedData())));
             }
 
             private Long addNewWaves(NewNotesAmplitudeData newNotesAmplitudeData) {
