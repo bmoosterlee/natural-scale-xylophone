@@ -4,16 +4,17 @@ import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
-import mixer.state.EnvelopeForFrequency;
+import mixer.envelope.Envelope;
 import mixer.state.VolumeState;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 class VolumeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>> buildPipe() {
         return new PipeCallable<>() {
-            final Map<Long, Set<EnvelopeForFrequency>> unfinishedSampleFragments = new HashMap<>();
+            final Map<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>> unfinishedSampleFragments = new HashMap<>();
 
             @Override
             public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
@@ -28,7 +29,7 @@ class VolumeCalculator {
                                 for(VolumeState finishedSampleFragment : input.getFinishedDataUntilNow()){
                                     sum = sum.add(finishedSampleFragment);
                                 }
-                                for(EnvelopeForFrequency unfinishedSampleFragment : input.getFinalUnfinishedData()){
+                                for(SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input.getFinalUnfinishedData()){
                                     sum = sum.add(
                                                 calculateVolumesPerFrequency(
                                                     input.getIndex(),
@@ -44,12 +45,12 @@ class VolumeCalculator {
                 Collection<Frequency> newNotes = newNotesVolumeData.getNewNotes();
 
                 if(!newNotes.isEmpty()) {
-                    Collection<EnvelopeForFrequency> newNotesWithEnvelopes = distribute(
+                    Collection<SimpleImmutableEntry<Frequency, Envelope>> newNotesWithEnvelopes = distribute(
                             newNotesVolumeData.getEnvelope(),
                             newNotes);
 
                     for (Long i = sampleCount; i <= newNotesVolumeData.getEndingSampleCount(); i++) {
-                        Set<EnvelopeForFrequency> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
+                        Set<SimpleImmutableEntry<Frequency, Envelope>> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
                         if (unfinishedFragmentsForThisSample != null) {
                             synchronized (unfinishedFragmentsForThisSample) {
                                 unfinishedFragmentsForThisSample.addAll(newNotesWithEnvelopes);
@@ -66,15 +67,15 @@ class VolumeCalculator {
         };
     }
 
-    private static Collection<EnvelopeForFrequency> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
-        Collection<EnvelopeForFrequency> newNotesWithEnvelopes = new LinkedList<>();
+    private static Collection<SimpleImmutableEntry<Frequency, Envelope>> distribute(DeterministicEnvelope envelope, Collection<Frequency> frequencies) {
+        Collection<SimpleImmutableEntry<Frequency, Envelope>> newNotesWithEnvelopes = new LinkedList<>();
         for(Frequency frequency : frequencies){
-            newNotesWithEnvelopes.add(new EnvelopeForFrequency(frequency, envelope));
+            newNotesWithEnvelopes.add(new SimpleImmutableEntry<>(frequency, envelope));
         }
         return newNotesWithEnvelopes;
     }
 
-    private static VolumeState calculateVolumesPerFrequency(Long sampleCount, EnvelopeForFrequency envelopePerFrequency) {
-        return new VolumeState(Collections.singletonMap(envelopePerFrequency.getFrequency(), envelopePerFrequency.getEnvelope().getVolume(sampleCount)));
+    private static VolumeState calculateVolumesPerFrequency(Long sampleCount, SimpleImmutableEntry<Frequency, Envelope> envelopePerFrequency) {
+        return new VolumeState(Collections.singletonMap(envelopePerFrequency.getKey(), envelopePerFrequency.getValue().getVolume(sampleCount)));
     }
 }
