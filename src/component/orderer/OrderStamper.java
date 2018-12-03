@@ -6,10 +6,12 @@ import java.util.Comparator;
 
 public class OrderStamper {
     private long counter;
-    private final Comparator<OrderStampedPacket<Object>> comparator;
+    private long firstStamp;
+    private final Comparator<OrderStampedPacket<?>> comparator;
 
-    public OrderStamper(){
-        counter = 0;
+    private OrderStamper(){
+        firstStamp = 0;
+        counter = firstStamp;
         comparator = Comparator.comparingLong(o -> o.orderStamp);
     }
 
@@ -51,17 +53,21 @@ public class OrderStamper {
         };
     }
 
-    public int compare(OrderStampedPacket packet1, OrderStampedPacket packet2) {
+    int compare(OrderStampedPacket packet1, OrderStampedPacket packet2) {
         return comparator.compare(packet1, packet2);
     }
 
-    public long stamp() {
+    long stamp() {
         long orderStamp = counter;
         counter++;
         return orderStamp;
     }
 
-    public boolean successor(OrderStampedPacket first, OrderStampedPacket second) {
+    boolean successor(OrderStampedPacket first, OrderStampedPacket second) {
         return first.orderStamp+1 == second.orderStamp;
+    }
+
+    public boolean firstStamp(OrderStampedPacket packet) {
+        return packet.orderStamp == firstStamp;
     }
 }

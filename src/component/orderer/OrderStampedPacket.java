@@ -33,4 +33,8 @@ public class OrderStampedPacket<T> extends SimplePacket<T> implements Comparable
     public int compareTo(OrderStampedPacket<T> other) {
         return orderStamper.compare(this, other);
     }
+
+    public boolean hasFirstStamp() {
+        return orderStamper.firstStamp(this);
+    }
 }
