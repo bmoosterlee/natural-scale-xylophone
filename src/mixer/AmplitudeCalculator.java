@@ -39,7 +39,7 @@ class AmplitudeCalculator {
                                                 unfinishedSampleFragment));
                                 }
                                 return sum;
-                        });
+                        }, "finish amplitude calculation");
             }
 
             private Long addNewNotes(NewNotesAmplitudeData newNotesAmplitudeData) {

@@ -37,7 +37,7 @@ class VolumeCalculator {
                                                     unfinishedSampleFragment));
                                 }
                                 return sum;
-                        });
+                        }, "finish volume calculation");
             }
 
             private Long addNewNotes(NewNotesVolumeData newNotesVolumeData) {
