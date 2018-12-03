@@ -39,19 +39,10 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
 
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(){
 
-        return new PipeCallable<>() {
-            @Override
-            public BoundedBuffer<T, OrderStampedPacket<T>> call(BoundedBuffer<T, OrderStampedPacket<T>> inputBuffer) {
-                SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "orderer");
-                new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
-                return outputBuffer;
-            }
-
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
+        return inputBuffer -> {
+            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "orderer");
+            new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
+            return outputBuffer;
         };
-
     }
 }
