@@ -43,8 +43,8 @@ public class SoundEnvironment {
                         .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
                         .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "fit amplitude")
                 .connectTo(Orderer.buildPipe())
-                .performMethod(((InputCallable<Byte>)
-                        this::writeToBuffer)
+                .performMethod(input -> new byte[]{input}, "sound environment - byte to array")
+                .performMethod(((InputCallable<byte[]>) this::writeToBuffer)
                 .toSequential());
             }
 
@@ -53,7 +53,12 @@ public class SoundEnvironment {
             }
 
             private void writeToBuffer(byte amplitude) {
-                sourceDataLine.write(new byte[]{amplitude}, 0, 1);
+                byte[] ar = {amplitude};
+                writeToBuffer(ar);
+            }
+
+            private void writeToBuffer(byte[] ar) {
+                sourceDataLine.write(ar, 0, 1);
             }
 
 //            public boolean isAudible(Double volume) {
