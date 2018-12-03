@@ -24,11 +24,13 @@ class AmplitudeCalculator {
                         .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
-                                input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue()),
-                                AmplitudeState::add,
-                                () -> new AmplitudeState(new HashMap<>())))
+                                input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue())
+                        ))
                         .performMethod(input -> {
-                                AmplitudeState sum = input.getFinishedDataUntilNow();
+                                AmplitudeState sum = new AmplitudeState(new HashMap<>());
+                                for(AmplitudeState finishedSampleFragment : input.getFinishedDataUntilNow()) {
+                                    sum = sum.add(finishedSampleFragment);
+                                }
                                 for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getFinalUnfinishedData()){
                                     sum = sum.add(
                                             calculateAmplitudesPerFrequency(

@@ -21,11 +21,13 @@ class VolumeCalculator {
                         .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewNotes).toSequential(), "volume calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
-                                input2 -> calculateVolumesPerFrequency(input2.getKey(), input2.getValue()),
-                                VolumeState::add,
-                                () -> new VolumeState(new HashMap<>())))
+                                input2 -> calculateVolumesPerFrequency(input2.getKey(), input2.getValue())
+                        ))
                         .performMethod(input -> {
-                                VolumeState sum = input.getFinishedDataUntilNow();
+                                VolumeState sum = new VolumeState(new HashMap<>());
+                                for(VolumeState finishedSampleFragment : input.getFinishedDataUntilNow()){
+                                    sum = sum.add(finishedSampleFragment);
+                                }
                                 for(EnvelopeForFrequency unfinishedSampleFragment : input.getFinalUnfinishedData()){
                                     sum = sum.add(
                                                 calculateVolumesPerFrequency(
