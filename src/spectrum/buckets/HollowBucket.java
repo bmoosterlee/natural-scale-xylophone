@@ -4,12 +4,10 @@ import frequency.Frequency;
 
 import java.util.*;
 
-public class AtomicBucket implements Bucket {
-    private final Frequency frequency;
+public class HollowBucket implements Bucket {
     private final Double volume;
 
-    public AtomicBucket(Frequency frequency, Double volume) {
-        this.frequency = frequency;
+    HollowBucket(double volume) {
         this.volume = volume;
     }
 
@@ -20,7 +18,7 @@ public class AtomicBucket implements Bucket {
 
     @Override
     public Bucket multiply(double v) {
-        return new AtomicBucket(frequency, volume * v);
+        return new HollowBucket(volume * v);
     }
 
     @Override
@@ -30,15 +28,12 @@ public class AtomicBucket implements Bucket {
 
     @Override
     public Set<Frequency> getFrequencies() {
-        return new HashSet<>(Collections.singletonList(frequency));
+        return new HashSet<>(Collections.emptySet());
     }
 
     @Override
     public Map<Frequency, Double> getVolumes() {
-        Map<Frequency, Double> map = new HashMap<>();
-
-        map.put(frequency, volume);
-
-        return map;
+        return Collections.emptyMap();
     }
+
 }

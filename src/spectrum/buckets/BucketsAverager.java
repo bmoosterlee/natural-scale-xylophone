@@ -59,7 +59,7 @@ public class BucketsAverager {
 
         for (Integer x : indices) {
             Double volume = buckets.getValue(x).getVolume();
-            voidEntries.put(x, new AtomicBucket(volume));
+            voidEntries.put(x, new HollowBucket(volume));
         }
 
         return new Buckets(indices, voidEntries);
