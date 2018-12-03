@@ -7,6 +7,10 @@ public class EnvelopeForFrequency {
     private final Frequency frequency;
     private final Envelope envelope;
 
+    public EnvelopeForFrequency() {
+        this(null, null);
+    }
+
     public EnvelopeForFrequency(Frequency frequency, Envelope envelope) {
         this.frequency = frequency;
         this.envelope = envelope;

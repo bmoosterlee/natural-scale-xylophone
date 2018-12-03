@@ -14,7 +14,7 @@ class AmplitudeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
-            final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new HashMap<>();
+            final Map<Long, Set<SimpleImmutableEntry<Frequency, Wave>>> unfinishedSampleFragments = new HashMap<>();
             final Map<Frequency, Wave> liveWaves = new HashMap<>();
             final Map<Frequency, Long> waveTimeOuts = new HashMap<>();
 
@@ -22,15 +22,21 @@ class AmplitudeCalculator {
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
                 return inputBuffer
                         .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
-                        .<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>, OrderStampedPacket<PrecalculatorOutputData<Long, Map<Frequency, Wave>, AmplitudeState>>>connectTo(MapPrecalculator.buildPipe(
+                        .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue()),
                                 AmplitudeState::add,
-                                HashMap::new,
-                                () -> new AmplitudeState(new HashMap<>()))).performMethod(input -> input.getFinishedDataUntilNow()
-                                .add(calculateAmplitudesPerFrequency(
-                                        input.getIndex(),
-                                        input.getFinalUnfinishedData())));
+                                () -> new AmplitudeState(new HashMap<>())))
+                        .performMethod(input -> {
+                                AmplitudeState sum = input.getFinishedDataUntilNow();
+                                for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getFinalUnfinishedData()){
+                                    sum = sum.add(
+                                            calculateAmplitudesPerFrequency(
+                                                input.getIndex(),
+                                                unfinishedSampleFragment));
+                                }
+                                return sum;
+                        });
             }
 
             private Long addNewNotes(NewNotesAmplitudeData newNotesAmplitudeData) {
@@ -54,17 +60,24 @@ class AmplitudeCalculator {
             }
 
             private void addWaves(Long sampleCount, Long endingSampleCount, Map<Frequency, Wave> missingWaves) {
-                for (Long i = sampleCount; i <= endingSampleCount; i++) {
-                    synchronized (unfinishedSampleFragments) {
-                        Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.remove(i);
-                        if (oldUnfinishedSliceWaves != null) {
-                            Map<Frequency, Wave> missingNoteWaves = new HashMap<>(missingWaves);
-                            missingNoteWaves.keySet().removeAll(oldUnfinishedSliceWaves.keySet());
-                            oldUnfinishedSliceWaves.putAll(missingNoteWaves);
+                if(!missingWaves.isEmpty()) {
+                    HashSet<SimpleImmutableEntry<Frequency, Wave>> missingWavesEntries = new HashSet<>();
+                    Set<Map.Entry<Frequency, Wave>> entries = missingWaves.entrySet();
+                    for(Map.Entry<Frequency, Wave> entry: entries){
+                        missingWavesEntries.add(new SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+                    }
+
+                    for (Long i = sampleCount; i <= endingSampleCount; i++) {
+                        Set<SimpleImmutableEntry<Frequency, Wave>> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
+                        if(unfinishedFragmentsForThisSample!=null) {
+                            synchronized (unfinishedFragmentsForThisSample) {
+                                unfinishedFragmentsForThisSample.addAll(missingWavesEntries);
+                            }
                         } else {
-                            oldUnfinishedSliceWaves = new HashMap<>(missingWaves);
+                            synchronized (unfinishedSampleFragments){
+                                unfinishedSampleFragments.put(i, new HashSet<>(missingWavesEntries));
+                            }
                         }
-                        unfinishedSampleFragments.put(i, oldUnfinishedSliceWaves);
                     }
                 }
             }
@@ -72,15 +85,19 @@ class AmplitudeCalculator {
             private Map<Frequency, Wave> addRecycledWaves(Long endingSampleCount, Map<Frequency, Wave> recycledWaves, Map<Frequency, Long> recycledWaveTimeOuts) {
                 for(Frequency frequency : recycledWaves.keySet()){
                     for (Long i = recycledWaveTimeOuts.get(frequency)+1; i <= endingSampleCount; i++) {
-                        synchronized (unfinishedSampleFragments) {
-                            Map<Frequency, Wave> unfinishedSampleFragment = unfinishedSampleFragments.remove(i);
-                            Wave wave = recycledWaves.get(frequency);
-                            if (unfinishedSampleFragment != null) {
-                                unfinishedSampleFragment.put(frequency, wave);
-                            } else {
-                                unfinishedSampleFragment = new HashMap<>(Collections.singletonMap(frequency, wave));
+                        Wave wave = recycledWaves.get(frequency);
+                        SimpleImmutableEntry<Frequency, Wave> entry = new SimpleImmutableEntry<>(frequency, wave);
+                        Set<SimpleImmutableEntry<Frequency, Wave>> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
+                        if(unfinishedFragmentsForThisSample!=null) {
+                            synchronized (unfinishedFragmentsForThisSample) {
+                                unfinishedFragmentsForThisSample.add(entry);
                             }
-                            unfinishedSampleFragments.put(i, unfinishedSampleFragment);
+                        } else {
+                            synchronized (unfinishedSampleFragments){
+                                HashSet<SimpleImmutableEntry<Frequency, Wave>> newSet = new HashSet<>();
+                                newSet.add(entry);
+                                unfinishedSampleFragments.put(i, newSet);
+                            }
                         }
                     }
                 }
@@ -124,13 +141,7 @@ class AmplitudeCalculator {
         };
     }
 
-    private static AmplitudeState calculateAmplitudesPerFrequency(Long sampleCount, Map<Frequency, Wave> wavesPerFrequency) {
-        Map<Frequency, Double> newAmplitudeCollections = new HashMap<>();
-        for (Frequency frequency : wavesPerFrequency.keySet()) {
-            Wave wave = wavesPerFrequency.get(frequency);
-            double amplitude = wave.getAmplitude(sampleCount);
-            newAmplitudeCollections.put(frequency, amplitude);
-        }
-        return new AmplitudeState(newAmplitudeCollections);
+    private static AmplitudeState calculateAmplitudesPerFrequency(Long sampleCount, Map.Entry<Frequency, Wave> wavesPerFrequency) {
+        return new AmplitudeState(Collections.singletonMap(wavesPerFrequency.getKey(), wavesPerFrequency.getValue().getAmplitude(sampleCount)));
     }
 }
