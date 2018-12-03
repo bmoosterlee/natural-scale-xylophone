@@ -10,18 +10,18 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
     private final Map<I, K> unfinishedData;
     private final PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator;
     private final BiFunction<V, V, V> adder;
-    private final Callable<K> emptyUnfinshedDataBuilder;
+    private final Callable<K> emptyUnfinishedDataBuilder;
     private final Callable<V> emptyFinishedDataBuilder;
 
-    final Map<I, V> finishedData;
+    private final Map<I, V> finishedData;
     private PipeCallable<I, PrecalculatorOutputData<I, K, V>> transform;
 
-    public MapPrecalculator(BoundedBuffer<I, A> inputBuffer, SimpleBuffer<PrecalculatorOutputData<I, K, V>, B> outputBuffer, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, Map<I, K> unfinishedData, BiFunction<V, V, V> adder, Callable<K> emptyUnfinshedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
+    public MapPrecalculator(BoundedBuffer<I, A> inputBuffer, SimpleBuffer<PrecalculatorOutputData<I, K, V>, B> outputBuffer, PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator, Map<I, K> unfinishedData, BiFunction<V, V, V> adder, Callable<K> emptyUnfinishedDataBuilder, Callable<V> emptyFinishedDataBuilder) {
         super(inputBuffer.createInputPort(), outputBuffer.createOutputPort());
         this.calculator = calculator;
         this.unfinishedData = unfinishedData;
         this.adder = adder;
-        this.emptyUnfinshedDataBuilder = emptyUnfinshedDataBuilder;
+        this.emptyUnfinishedDataBuilder = emptyUnfinishedDataBuilder;
         this.emptyFinishedDataBuilder = emptyFinishedDataBuilder;
         finishedData = new HashMap<>();
         transform = input -> {
@@ -74,7 +74,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
             if (unfinishedData.containsKey(sampleCount)) {
                 finalUnfinishedData = unfinishedData.remove(sampleCount);
             } else {
-                finalUnfinishedData = emptyUnfinshedDataBuilder.call();
+                finalUnfinishedData = emptyUnfinishedDataBuilder.call();
             }
         }
         return finalUnfinishedData;
