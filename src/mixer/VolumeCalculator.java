@@ -49,7 +49,7 @@ class VolumeCalculator {
                             newNotesVolumeData.getEnvelope(),
                             newNotes);
 
-                    for (Long i = sampleCount; i < newNotesVolumeData.getEndingSampleCount(); i++) {
+                    for (Long i = sampleCount; i <= newNotesVolumeData.getEndingSampleCount(); i++) {
                         synchronized (unfinishedSampleFragments) {
                             Collection<EnvelopeForFrequency> newUnfinishedSlice = unfinishedSampleFragments.remove(i);
                             if (newUnfinishedSlice != null) {

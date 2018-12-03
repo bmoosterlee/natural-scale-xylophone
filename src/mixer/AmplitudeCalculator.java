@@ -53,7 +53,7 @@ class AmplitudeCalculator {
             }
 
             private void addWaves(Long sampleCount, Long endingSampleCount, Map<Frequency, Wave> missingWaves) {
-                for (Long i = sampleCount; i < endingSampleCount; i++) {
+                for (Long i = sampleCount; i <= endingSampleCount; i++) {
                     synchronized (unfinishedSampleFragments) {
                         Map<Frequency, Wave> oldUnfinishedSliceWaves = unfinishedSampleFragments.remove(i);
                         if (oldUnfinishedSliceWaves != null) {
@@ -70,7 +70,7 @@ class AmplitudeCalculator {
 
             private Map<Frequency, Wave> addRecycledWaves(Long endingSampleCount, Map<Frequency, Wave> recycledWaves, Map<Frequency, Long> recycledWaveTimeOuts) {
                 for(Frequency frequency : recycledWaves.keySet()){
-                    for (Long i = recycledWaveTimeOuts.get(frequency)+1; i < endingSampleCount; i++) {
+                    for (Long i = recycledWaveTimeOuts.get(frequency)+1; i <= endingSampleCount; i++) {
                         synchronized (unfinishedSampleFragments) {
                             Map<Frequency, Wave> unfinishedSampleFragment = unfinishedSampleFragments.remove(i);
                             Wave wave = recycledWaves.get(frequency);
