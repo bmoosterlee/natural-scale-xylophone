@@ -10,6 +10,7 @@ import mixer.state.Wave;
 import sound.SampleRate;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
@@ -18,6 +19,8 @@ class AmplitudeCalculator {
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
             final Map<Long, Map<Frequency, Wave>> unfinishedSampleFragments = new HashMap<>();
+            final Map<Frequency, Wave> liveWaves = new HashMap<>();
+            final Map<Frequency, Long> waveTimeOuts = new HashMap<>();
 
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
@@ -40,7 +43,7 @@ class AmplitudeCalculator {
                 Collection<Frequency> newNotes = newNotesAmplitudeData.getNewNotes();
 
                 if(!newNotes.isEmpty()) {
-                    Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(newNotes, sampleRate);
+                    Map<Frequency, Wave> newNoteWaves = reuseOrCreateNewWaves(sampleCount, newNotesAmplitudeData.getEndingSampleCount(), newNotes, sampleRate);
 
                     for (Long i = sampleCount; i < newNotesAmplitudeData.getEndingSampleCount(); i++) {
                         synchronized (unfinishedSampleFragments) {
@@ -59,30 +62,31 @@ class AmplitudeCalculator {
                 return sampleCount;
             }
 
-            private Map<Frequency, Wave> reuseOrCreateNewWaves(Collection<Frequency> newNotes, SampleRate sampleRate) {
-                Map<Frequency, Wave> newNoteWaves = new HashMap<>();
+            private Map<Frequency, Wave> reuseOrCreateNewWaves(Long sampleCount, Long endingSampleCount, Collection<Frequency> newNotes, SampleRate sampleRate) {
+                Map<Frequency, Wave> foundWaves = new HashMap<>(liveWaves);
+                foundWaves.keySet().retainAll(newNotes);
                 Set<Frequency> missingWaveFrequencies = new HashSet<>(newNotes);
-                Set<Long> keys;
-                synchronized (unfinishedSampleFragments) {
-                    keys = new HashSet<>(unfinishedSampleFragments.keySet());
-                }
-                for (Long i : keys) {
-                        synchronized (unfinishedSampleFragments) {
-                            Map<Frequency, Wave> unfinishedSampleFragment = unfinishedSampleFragments.get(i);
-                            if (unfinishedSampleFragment != null) {
-                                Map<Frequency, Wave> foundWaves = new HashMap<>(unfinishedSampleFragment);
-                                foundWaves.keySet().retainAll(missingWaveFrequencies);
-                                newNoteWaves.putAll(foundWaves);
-
-                                missingWaveFrequencies.removeAll(foundWaves.keySet());
-                            }
-                        }
-                    }
+                missingWaveFrequencies.removeAll(foundWaves.keySet());
+                Map<Frequency, Wave> createdWaves = new HashMap<>();
                 for (Frequency frequency : missingWaveFrequencies) {
                     Wave newWave = new Wave(frequency, sampleRate);
-                    newNoteWaves.put(frequency, newWave);
+                    createdWaves.put(frequency, newWave);
                 }
-                return newNoteWaves;
+                liveWaves.putAll(createdWaves);
+                for(Frequency frequency : newNotes){
+                    waveTimeOuts.put(frequency, endingSampleCount);
+                }
+                HashSet<Frequency> deadFrequencies = new HashSet<>();
+                for(Frequency frequency : waveTimeOuts.keySet()){
+                    if(waveTimeOuts.get(frequency)<=sampleCount){
+                        deadFrequencies.add(frequency);
+                    }
+                }
+                waveTimeOuts.keySet().removeAll(deadFrequencies);
+                liveWaves.keySet().removeAll(deadFrequencies);
+                Map<Frequency, Wave> allWaves = new HashMap<>(foundWaves);
+                allWaves.putAll(createdWaves);
+                return allWaves;
             }
         };
     }
