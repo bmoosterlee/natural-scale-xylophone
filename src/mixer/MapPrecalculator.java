@@ -3,10 +3,11 @@ package mixer;
 import component.buffer.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, Set<K>, Set<V>>>>
         extends AbstractPipeComponent<I, PrecalculatorOutputData<I, Set<K>, Set<V>>, A, B> {
-    private final Map<I, Set<K>> unfinishedData;
+    private final ConcurrentHashMap<I, Set<K>> unfinishedData;
     private final PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator;
 
     private final Map<I, Set<V>> finishedData;
@@ -16,7 +17,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
             BoundedBuffer<I, A> inputBuffer,
             SimpleBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B> outputBuffer,
             PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator,
-            Map<I, Set<K>> unfinishedData) {
+            ConcurrentHashMap<I, Set<K>> unfinishedData) {
         super(inputBuffer.createInputPort(), outputBuffer.createOutputPort());
         this.calculator = calculator;
         this.unfinishedData = unfinishedData;
@@ -67,30 +68,23 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
 
     private Set<K> getUnfinishedData(I sampleCount) {
         Set<K> finalUnfinishedData;
-        synchronized (unfinishedData) {
-            if (unfinishedData.containsKey(sampleCount)) {
-                finalUnfinishedData = unfinishedData.remove(sampleCount);
-            } else {
-                finalUnfinishedData = Collections.emptySet();
-            }
+        if (unfinishedData.containsKey(sampleCount)) {
+            finalUnfinishedData = unfinishedData.remove(sampleCount);
+        } else {
+            finalUnfinishedData = Collections.emptySet();
         }
         return finalUnfinishedData;
     }
 
     private void calculateContinuously() {
-        Iterator<I> unfinishedKeyIterator;
-        synchronized (unfinishedData) {
-            unfinishedKeyIterator = new HashSet<>(unfinishedData.keySet()).iterator();
-        }
+        Iterator<Map.Entry<I, Set<K>>> unfinishedKeyIterator = unfinishedData.entrySet().iterator();
         while (input.isEmpty() && unfinishedKeyIterator.hasNext()) {
-            I unfinishedKey = unfinishedKeyIterator.next();
-            Set<K> unfinishedItemsInMap = unfinishedData.get(unfinishedKey);
+            Map.Entry<I, Set<K>> unfinishedEntry = unfinishedKeyIterator.next();
+            Set<K> unfinishedItemsInMap = unfinishedEntry.getValue();
             if(!unfinishedItemsInMap.isEmpty()) {
-                Set<K> unfinishedItems;
-                synchronized (unfinishedItemsInMap) {
-                    unfinishedItems = new HashSet<>(unfinishedItemsInMap);
-                    unfinishedItemsInMap.clear();
-                }
+                I unfinishedKey = unfinishedEntry.getKey();
+                Set<K> unfinishedItems = new HashSet<>(unfinishedData.get(unfinishedKey));
+                unfinishedItemsInMap.removeAll(unfinishedItems);
                 calculate(unfinishedKey, unfinishedItems);
             }
         }
@@ -122,7 +116,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
 
     public static <I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, Set<K>, Set<V>>>>
         PipeCallable<BoundedBuffer<I, A>, BoundedBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B>> buildPipe(
-            final Map<I, Set<K>> unfinishedData,
+            final ConcurrentHashMap<I, Set<K>> unfinishedData,
             PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator) {
         return inputBuffer -> {
             SimpleBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B> outputBuffer =

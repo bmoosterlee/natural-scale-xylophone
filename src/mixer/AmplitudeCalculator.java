@@ -9,12 +9,13 @@ import sound.SampleRate;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.concurrent.ConcurrentHashMap;
 
 class AmplitudeCalculator {
 
     static PipeCallable<BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildPipe(SampleRate sampleRate) {
         return new PipeCallable<>() {
-            final Map<Long, Set<SimpleImmutableEntry<Frequency, Wave>>> unfinishedSampleFragments = new HashMap<>();
+            final ConcurrentHashMap<Long, Set<SimpleImmutableEntry<Frequency, Wave>>> unfinishedSampleFragments = new ConcurrentHashMap<>();
             final Map<Frequency, Wave> liveWaves = new HashMap<>();
             final Map<Frequency, Long> waveTimeOuts = new HashMap<>();
 
@@ -72,13 +73,9 @@ class AmplitudeCalculator {
                     for (Long i = sampleCount; i <= endingSampleCount; i++) {
                         Set<SimpleImmutableEntry<Frequency, Wave>> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
                         if(unfinishedFragmentsForThisSample!=null) {
-                            synchronized (unfinishedFragmentsForThisSample) {
                                 unfinishedFragmentsForThisSample.addAll(missingWavesEntries);
-                            }
                         } else {
-                            synchronized (unfinishedSampleFragments){
-                                unfinishedSampleFragments.put(i, new HashSet<>(missingWavesEntries));
-                            }
+                            unfinishedSampleFragments.put(i, new HashSet<>(missingWavesEntries));
                         }
                     }
                 }
@@ -91,15 +88,11 @@ class AmplitudeCalculator {
                         SimpleImmutableEntry<Frequency, Wave> entry = new SimpleImmutableEntry<>(frequency, wave);
                         Set<SimpleImmutableEntry<Frequency, Wave>> unfinishedFragmentsForThisSample = unfinishedSampleFragments.get(i);
                         if(unfinishedFragmentsForThisSample!=null) {
-                            synchronized (unfinishedFragmentsForThisSample) {
-                                unfinishedFragmentsForThisSample.add(entry);
-                            }
+                            unfinishedFragmentsForThisSample.add(entry);
                         } else {
-                            synchronized (unfinishedSampleFragments){
-                                HashSet<SimpleImmutableEntry<Frequency, Wave>> newSet = new HashSet<>();
-                                newSet.add(entry);
-                                unfinishedSampleFragments.put(i, newSet);
-                            }
+                            HashSet<SimpleImmutableEntry<Frequency, Wave>> newSet = new HashSet<>();
+                            newSet.add(entry);
+                            unfinishedSampleFragments.put(i, newSet);
                         }
                     }
                 }
