@@ -71,7 +71,8 @@ class Main {
                 .connectTo(Orderer.buildPipe())
                 .pairWith(
                         volumeAmplitudeStateBuffers.getValue()
-                        .connectTo(Orderer.buildPipe()), "main - pair volume and amplitude")
+                        .connectTo(Orderer.buildPipe()), 
+                        "main - pair volume and amplitude")
                 .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>performMethod(input ->
                                 new VolumeAmplitudeState(
                                         input.getKey(),
