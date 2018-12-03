@@ -8,6 +8,7 @@ import mixer.state.Wave;
 import sound.SampleRate;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 
 class AmplitudeCalculator {
 
@@ -41,7 +42,7 @@ class AmplitudeCalculator {
                     removeDeadNotes(sampleCount);
 
                     Long endingSampleCount = newNotesAmplitudeData.getEndingSampleCount();
-                    AbstractMap.SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycledWavesWithTimeOuts = recycleWaves(endingSampleCount, newNotes);
+                    SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycledWavesWithTimeOuts = recycleWaves(endingSampleCount, newNotes);
                     Map<Frequency, Wave> recycledWaves = addRecycledWaves(endingSampleCount, recycledWavesWithTimeOuts.getKey(), recycledWavesWithTimeOuts.getValue());
 
                     HashSet<Frequency> missingNotes = new HashSet<>(newNotes);
@@ -99,7 +100,7 @@ class AmplitudeCalculator {
                 return createdWaves;
             }
 
-            private AbstractMap.SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycleWaves(Long endingSampleCount, Collection<Frequency> newNotes) {
+            private SimpleImmutableEntry<Map<Frequency, Wave>, Map<Frequency, Long>> recycleWaves(Long endingSampleCount, Collection<Frequency> newNotes) {
                 Map<Frequency, Wave> foundWaves = new HashMap<>(liveWaves);
                 foundWaves.keySet().retainAll(newNotes);
                 Map<Frequency, Long> foundTimeOuts = new HashMap<>(waveTimeOuts);
@@ -107,7 +108,7 @@ class AmplitudeCalculator {
                 for(Frequency frequency : foundWaves.keySet()){
                     waveTimeOuts.put(frequency, endingSampleCount);
                 }
-                return new AbstractMap.SimpleImmutableEntry<>(foundWaves, foundTimeOuts);
+                return new SimpleImmutableEntry<>(foundWaves, foundTimeOuts);
             }
 
             private void removeDeadNotes(Long sampleCount) {
