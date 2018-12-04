@@ -3,52 +3,75 @@ package mixer;
 import component.buffer.*;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.concurrent.ConcurrentHashMap;
 
-class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, Set<K>, Set<V>>>>
-        extends AbstractPipeComponent<I, PrecalculatorOutputData<I, Set<K>, Set<V>>, A, B> {
+class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C extends Packet<SimpleImmutableEntry<I, Set<K>>>>
+        extends AbstractComponent {
     private final ConcurrentHashMap<I, Set<K>> unfinishedData;
-    private final PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator;
+    private final PipeCallable<SimpleImmutableEntry<I, K>, V> calculator;
 
     private final Map<I, Set<V>> finishedData;
-    private PipeCallable<I, PrecalculatorOutputData<I, Set<K>, Set<V>>> transform;
+    private PipeCallable<I, SimpleImmutableEntry<I, Set<K>>> transformUnfinished;
+    private final InputPort<I, A> inputPort;
+    private final OutputPort<SimpleImmutableEntry<I, Set<K>>, C> unfinishedOutputPort;
+    private final OutputPort<Set<V>, B> finishedOutputPort;
+    private final PipeCallable<I, Set<V>> transformFinished;
 
     private MapPrecalculator(
             BoundedBuffer<I, A> inputBuffer,
-            SimpleBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B> outputBuffer,
-            PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator,
+            SimpleBuffer<SimpleImmutableEntry<I, Set<K>>, C> unfinishedOutputBuffer,
+            SimpleBuffer<Set<V>, B> finishedOutputBuffer,
+            PipeCallable<SimpleImmutableEntry<I, K>, V> calculator,
             ConcurrentHashMap<I, Set<K>> unfinishedData) {
-        super(inputBuffer.createInputPort(), outputBuffer.createOutputPort());
+        inputPort = inputBuffer.createInputPort();
+        unfinishedOutputPort = unfinishedOutputBuffer.createOutputPort();
+        finishedOutputPort = finishedOutputBuffer.createOutputPort();
         this.calculator = calculator;
         this.unfinishedData = unfinishedData;
         finishedData = new HashMap<>();
-        transform = input -> {
+        transformUnfinished = input -> {
             Set<K> finalUnfinishedData = null;
             try {
                 finalUnfinishedData = getUnfinishedData(input);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            return new SimpleImmutableEntry<>(
+                    input,
+                    finalUnfinishedData);
+        };
+        transformFinished = input -> {
             Set<V> finishedDataUntilNow = null;
             try {
                 finishedDataUntilNow = getFinishedData(input);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return new PrecalculatorOutputData<>(
-                    input,
-                    finalUnfinishedData,
-                    finishedDataUntilNow);
+            return finishedDataUntilNow;
         };
+    }
 
+    @Override
+    protected Collection<BoundedBuffer<I, A>> getInputBuffers() {
+        return Collections.singleton(inputPort.getBuffer());
+    }
+
+    @Override
+    protected Collection<BoundedBuffer<?, ? extends Packet<? extends Object>>> getOutputBuffers() {
+        return Arrays.asList(unfinishedOutputPort.getBuffer(), finishedOutputPort.getBuffer());
     }
 
     @Override
     protected void tick() {
         try {
-            A key = input.consume();
-            output.produce(
-                    key.transform(transform));
+            A key = inputPort.consume();
+            unfinishedOutputPort.produce(
+                    key.transform(transformUnfinished)
+            );
+            finishedOutputPort.produce(
+                    key.transform(transformFinished)
+            );
 
             calculateContinuously();
         } catch (InterruptedException e) {
@@ -78,7 +101,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
 
     private void calculateContinuously() {
         Iterator<Map.Entry<I, Set<K>>> unfinishedKeyIterator = unfinishedData.entrySet().iterator();
-        while (input.isEmpty() && unfinishedKeyIterator.hasNext()) {
+        while (inputPort.isEmpty() && unfinishedKeyIterator.hasNext()) {
             Map.Entry<I, Set<K>> unfinishedEntry = unfinishedKeyIterator.next();
             I unfinishedKey = unfinishedEntry.getKey();
             Set<K> unfinishedItemsInMap = unfinishedData.get(unfinishedKey);
@@ -95,7 +118,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
         for(K unfinishedItem : unfinishedItems) {
             try {
                 finishedItems.add(calculator.call(
-                        new AbstractMap.SimpleImmutableEntry<>(
+                        new SimpleImmutableEntry<>(
                                 unfinishedKey,
                                 unfinishedItem)));
             } catch (Exception e) {
@@ -114,21 +137,24 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Precalcula
         }
     }
 
-    public static <I, K, V, A extends Packet<I>, B extends Packet<PrecalculatorOutputData<I, Set<K>, Set<V>>>>
-        PipeCallable<BoundedBuffer<I, A>, BoundedBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B>> buildPipe(
+    public static <I, K, V, A extends Packet<I>, C extends Packet<SimpleImmutableEntry<I, Set<K>>>, B extends Packet<Set<V>>>
+        PipeCallable<BoundedBuffer<I, A>, SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<I, Set<K>>, C>, BoundedBuffer<Set<V>, B>>> buildPipe(
             final ConcurrentHashMap<I, Set<K>> unfinishedData,
-            PipeCallable<AbstractMap.SimpleImmutableEntry<I, K>, V> calculator) {
+            PipeCallable<SimpleImmutableEntry<I, K>, V> calculator) {
         return inputBuffer -> {
-            SimpleBuffer<PrecalculatorOutputData<I, Set<K>, Set<V>>, B> outputBuffer =
-                    new SimpleBuffer<>(1, "precalculator - output");
+            SimpleBuffer<SimpleImmutableEntry<I, Set<K>>, C> unfinishedOutputBuffer =
+                    new SimpleBuffer<>(1, "precalculator - unfinished output");
+            SimpleBuffer<Set<V>, B> finishedOutputBuffer =
+                    new SimpleBuffer<>(1, "precalculator - finished output");
             new TickRunningStrategy(
                     new MapPrecalculator<>(
                             inputBuffer,
-                            outputBuffer,
+                            unfinishedOutputBuffer,
+                            finishedOutputBuffer,
                             calculator,
                             unfinishedData
                     ));
-            return outputBuffer;
+            return new SimpleImmutableEntry<>(unfinishedOutputBuffer, finishedOutputBuffer);
         };
     }
 

@@ -21,30 +21,31 @@ class AmplitudeCalculator {
 
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
-                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Wave>>, Set<AmplitudeState>>, Packet<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Wave>>, Set<AmplitudeState>>>>> precalculatorBroadcast = new LinkedList<>(inputBuffer
+                SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Wave>>>, Packet<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Wave>>>>>, BoundedBuffer<Set<AmplitudeState>, Packet<Set<AmplitudeState>>>> precalculatorOutputs = inputBuffer
                         .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue())
-                        )).broadcast(2, "amplitude calculator - precalculator broadcast"));
+                        ));
 
-                return precalculatorBroadcast.poll()
+                return precalculatorOutputs.getValue()
                         .performMethod(input -> {
                                 AmplitudeState sum = new AmplitudeState(new HashMap<>());
-                                for(AmplitudeState finishedSampleFragment : input.getFinishedDataUntilNow()) {
+                                for(AmplitudeState finishedSampleFragment : input) {
                                     sum = sum.add(finishedSampleFragment);
                                 }
                                 return sum;
                         },
                         "amplitude calculator - fold precalculated sample fragments")
                         .pairWith(
-                                precalculatorBroadcast.poll()
+                                precalculatorOutputs.getKey()
                                         .performMethod(input -> {
                                             AmplitudeState sum = new AmplitudeState(new HashMap<>());
-                                            for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getFinalUnfinishedData()){
+                                            Long sampleCount = input.getKey();
+                                            for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getValue()){
                                                 sum = sum.add(
                                                         calculateAmplitudesPerFrequency(
-                                                                input.getIndex(),
+                                                                sampleCount,
                                                                 unfinishedSampleFragment));
                                             }
                                             return sum;
