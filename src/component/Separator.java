@@ -4,6 +4,8 @@ import component.buffer.*;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Separator{
 
@@ -15,7 +17,7 @@ public class Separator{
         return separateInternal(Separator::separatePackets);
     }
 
-    private static <T, L extends Collection<?>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> separateInternal(final PipeCallable<B, Collection<A>> separationStrategy) {
+    private static <T, L extends Collection<?>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> separateInternal(final PipeCallable<B, List<A>> separationStrategy) {
         return inputBuffer -> {
             SimpleBuffer<T, A> outputBuffer = new SimpleBuffer<>(1, "separator - output");
             new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
@@ -24,7 +26,7 @@ public class Separator{
                     try {
                         B consumed = input.consume();
 
-                        Collection<A> col = separationStrategy.call(consumed);
+                        List<A> col = separationStrategy.call(consumed);
 
                         for (A element : col) {
                             output.produce(element);
@@ -44,15 +46,15 @@ public class Separator{
         };
     }
 
-    private static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> Collection<A> separate(B consumed) {
-        Collection<A> col = new HashSet<>();
+    private static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> List<A> separate(B consumed) {
+        List<A> col = new LinkedList<>();
         for (T element : consumed.unwrap()) {
             col.add(consumed.transform(in -> element));
         }
         return col;
     }
 
-    private static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> Collection<A> separatePackets(B consumed) {
-        return new HashSet<>(consumed.unwrap());
+    private static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> List<A> separatePackets(B consumed) {
+        return new LinkedList<>(consumed.unwrap());
     }
 }
