@@ -102,38 +102,38 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
     private void calculateContinuously() {
         Iterator<Map.Entry<I, Set<K>>> unfinishedKeyIterator = unfinishedData.entrySet().iterator();
         while (inputPort.isEmpty() && unfinishedKeyIterator.hasNext()) {
-            Map.Entry<I, Set<K>> unfinishedEntry = unfinishedKeyIterator.next();
-            I unfinishedKey = unfinishedEntry.getKey();
-            Set<K> unfinishedItemsInMap = unfinishedData.get(unfinishedKey);
-            if(!unfinishedItemsInMap.isEmpty()) {
-                Set<K> unfinishedItems = new HashSet<>(unfinishedData.get(unfinishedKey));
-                unfinishedData.get(unfinishedKey).removeAll(unfinishedItems);
-                calculate(unfinishedKey, unfinishedItems);
+            I unfinishedKey = unfinishedKeyIterator.next().getKey();
+            if(!unfinishedData.get(unfinishedKey).isEmpty()) {
+                HashSet<K> finishedItems = new HashSet<>();
+                for(K unfinishedItem : unfinishedData.get(unfinishedKey)) {
+                    calculate(unfinishedKey, unfinishedItem);
+                    finishedItems.add(unfinishedItem);
+                }
+                unfinishedData.get(unfinishedKey).removeAll(finishedItems);
             }
         }
     }
 
-    private void calculate(I unfinishedKey, Set<K> unfinishedItems) {
-        Set<V> finishedItems = new HashSet<>();
-        for(K unfinishedItem : unfinishedItems) {
-            try {
-                finishedItems.add(calculator.call(
-                        new SimpleImmutableEntry<>(
-                                unfinishedKey,
-                                unfinishedItem)));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    private void calculate(I unfinishedKey, K unfinishedItem) {
+        try {
+            V finishedItem = calculator.call(
+                    new SimpleImmutableEntry<>(
+                            unfinishedKey,
+                            unfinishedItem));
             if (finishedData.containsKey(unfinishedKey)) {
-                finishedData.get(
-                        unfinishedKey)
-                        .addAll(finishedItems);
+                    finishedData.get(
+                            unfinishedKey)
+                            .add(finishedItem);
             } else {
+                Set<V> finishedItems = new HashSet<>();
+                finishedItems.add(finishedItem);
                 finishedData.put(
                         unfinishedKey,
                         finishedItems
                 );
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

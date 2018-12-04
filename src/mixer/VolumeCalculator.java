@@ -72,7 +72,7 @@ class VolumeCalculator {
                         if (unfinishedFragmentsForThisSample != null) {
                             unfinishedFragmentsForThisSample.addAll(newNotesWithEnvelopes);
                         } else {
-                            unfinishedSampleFragments.put(i, new HashSet<>(newNotesWithEnvelopes));
+                            unfinishedSampleFragments.put(i, Collections.synchronizedSet(new HashSet<>(newNotesWithEnvelopes)));
                         }
                     }
                 }

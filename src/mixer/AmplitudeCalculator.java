@@ -92,7 +92,7 @@ class AmplitudeCalculator {
                         if(unfinishedFragmentsForThisSample!=null) {
                                 unfinishedFragmentsForThisSample.addAll(missingWavesEntries);
                         } else {
-                            unfinishedSampleFragments.put(i, new HashSet<>(missingWavesEntries));
+                            unfinishedSampleFragments.put(i, Collections.synchronizedSet(new HashSet<>(missingWavesEntries)));
                         }
                     }
                 }
@@ -107,7 +107,7 @@ class AmplitudeCalculator {
                         if(unfinishedFragmentsForThisSample!=null) {
                             unfinishedFragmentsForThisSample.add(entry);
                         } else {
-                            HashSet<SimpleImmutableEntry<Frequency, Wave>> newSet = new HashSet<>();
+                            Set<SimpleImmutableEntry<Frequency, Wave>> newSet = Collections.synchronizedSet(new HashSet<>());
                             newSet.add(entry);
                             unfinishedSampleFragments.put(i, newSet);
                         }
