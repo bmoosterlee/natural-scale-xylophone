@@ -50,7 +50,7 @@ public class SpectrumBuilder {
                                         calculateHarmonicsContinuously(
                                                 volumeBroadcast.poll()
                                                 .performMethod(HarmonicCalculator.calculateHarmonics(100), "harmonic spectrum - build harmonics iterator"))
-                                        .connectTo((PipeCallable<BoundedBuffer<Collection<Map.Entry<Harmonic, Double>>, Packet<Collection<Map.Entry<Harmonic, Double>>>>, BoundedBuffer<Map.Entry<Harmonic, Double>, Packet<Map.Entry<Harmonic, Double>>>>) Separator::separate)
+                                        .connectTo(Separator.buildPipe())
                                         .performMethod(harmonicWithVolume -> {
                                             Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
                                             return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());}, "harmonic spectrum - extract harmonic")

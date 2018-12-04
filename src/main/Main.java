@@ -92,7 +92,7 @@ class Main {
         LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
 
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        Separator.separate(guiOutputBuffer).relayTo(newNoteBuffer);
+        guiOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
         new GUI(
             noteSpectrumBroadcast.poll(),
             harmonicSpectrumBroadcast.poll(),
@@ -108,7 +108,7 @@ class Main {
 
 
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        Separator.separate(pianolaOutputBuffer).relayTo(newNoteBuffer);
+        pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
 
         new Pianola(
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),

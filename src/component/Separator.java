@@ -5,7 +5,6 @@ import component.buffer.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 
 public class Separator<T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> extends AbstractComponent<L, T, B, A> {
 
@@ -34,10 +33,12 @@ public class Separator<T, L extends Collection<T>, A extends Packet<T>, B extend
         }
     }
 
-    public static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> SimpleBuffer<T, A> separate(BoundedBuffer<L, B> inputBuffer){
-        SimpleBuffer<T, A> outputBuffer = new SimpleBuffer<>(1, "toBuffer - output");
-        new TickRunningStrategy(new Separator<>(inputBuffer, outputBuffer));
-        return outputBuffer;
+    public static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPipe(){
+        return inputBuffer -> {
+            SimpleBuffer<T, A> outputBuffer = new SimpleBuffer<>(1, "separator - output");
+            new TickRunningStrategy(new Separator<>(inputBuffer, outputBuffer));
+            return outputBuffer;
+        };
     }
 
     @Override
