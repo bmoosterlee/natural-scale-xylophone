@@ -58,7 +58,7 @@ public class SoundEnvironment {
             }
 
             private void writeToBuffer(byte[] ar) {
-                sourceDataLine.write(ar, 0, 1);
+                sourceDataLine.write(ar, 0, ar.length);
             }
 
 //            public boolean isAudible(Double volume) {
