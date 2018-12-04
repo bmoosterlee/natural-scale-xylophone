@@ -11,11 +11,7 @@ import time.TimeInSeconds;
 
 import java.util.Collection;
 
-public class EnvelopeBuilder<A extends Packet<TimestampedFrequencies>, B extends Packet<TimestampedNewNotesWithEnvelope>> extends MethodPipeComponent<TimestampedFrequencies, TimestampedNewNotesWithEnvelope, A, B> {
-
-    public EnvelopeBuilder(SimpleBuffer<TimestampedFrequencies, A> inputBuffer, SimpleBuffer<TimestampedNewNotesWithEnvelope, B> outputBuffer, SampleRate sampleRate) {
-        super(inputBuffer, outputBuffer, buildEnvelope(sampleRate));
-    }
+public class EnvelopeBuilder {
 
     public static PipeCallable<TimestampedFrequencies, TimestampedNewNotesWithEnvelope> buildEnvelope(SampleRate sampleRate){
         return new PipeCallable<>() {
