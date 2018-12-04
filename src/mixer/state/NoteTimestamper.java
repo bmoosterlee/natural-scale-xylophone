@@ -11,31 +11,23 @@ import java.util.List;
 public class NoteTimestamper {
 
     public static <A extends Packet<Long>, B extends Packet<TimestampedFrequencies>, C extends Packet<Frequency>> PipeCallable<BoundedBuffer<Long, A>, BoundedBuffer<TimestampedFrequencies, B>> buildPipe(BoundedBuffer<Frequency, C> newNoteBuffer) {
-        return new PipeCallable<>() {
-            @Override
-            public BoundedBuffer<TimestampedFrequencies, B> call(BoundedBuffer<Long, A> inputBuffer) {
-                LinkedList<BoundedBuffer<Long, A>> sampleCountBroadcast =
-                        new LinkedList<>(
-                                inputBuffer
-                                        .broadcast(2, "note timestamper - broadcast"));
+        return inputBuffer -> {
+            LinkedList<BoundedBuffer<Long, A>> sampleCountBroadcast =
+                    new LinkedList<>(
+                            inputBuffer
+                                    .broadcast(2, "note timestamper - broadcast"));
 
-                return sampleCountBroadcast.poll()
-                        .pairWith(
-                                sampleCountBroadcast.poll()
-                                        .performMethod(((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(), "note time stamper - to pulse")
-                                        .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
-                        .performMethod(
-                                ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
-                                        input1 -> new TimestampedFrequencies(
-                                                input1.getKey(),
-                                                input1.getValue()))
-                                        .toSequential(), "build timestamped frequencies");
-            }
-
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
+            return sampleCountBroadcast.poll()
+                    .pairWith(
+                            sampleCountBroadcast.poll()
+                                    .performMethod(((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(), "note time stamper - to pulse")
+                                    .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "flush new notes"))
+                    .performMethod(
+                            ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
+                                    input1 -> new TimestampedFrequencies(
+                                            input1.getKey(),
+                                            input1.getValue()))
+                                    .toSequential(), "build timestamped frequencies");
         };
     }
 
