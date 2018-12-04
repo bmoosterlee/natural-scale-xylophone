@@ -13,7 +13,7 @@ public abstract class ComponentChainLink<K, V, A extends Packet<K>, B extends Pa
 
     protected abstract void wrap();
 
-    protected abstract <W, Y extends Packet<W>> void wrap(PipeCallable<V, W> nextMethod, BoundedBuffer<W, Y> outputBuffer, int chainLinks);
+    protected abstract <W, Y extends Packet<W>> void wrap(PipeCallable<V, W> nextMethod, SimpleBuffer<W, Y> outputBuffer, int chainLinks);
 
     protected abstract void wrap(InputCallable<V> nextMethod, int chainLinks);
 

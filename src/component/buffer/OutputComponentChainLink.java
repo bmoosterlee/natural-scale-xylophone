@@ -20,7 +20,7 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
     }
 
     @Override
-    protected <W, C extends Packet<W>> void wrap(PipeCallable<V, W> nextMethodChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
+    protected <W, C extends Packet<W>> void wrap(PipeCallable<V, W> nextMethodChain, SimpleBuffer<W, C> outputBuffer, int chainLinks) {
         if(!isParallelisable()) {
             OutputCallable<W> sequentialCallChain = createSequentialLink(nextMethodChain);
             startChainedSequentialComponent(sequentialCallChain, outputBuffer, chainLinks);

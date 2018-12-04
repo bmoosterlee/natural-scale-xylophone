@@ -49,7 +49,7 @@ public class InputComponentChainLink<K, A extends Packet<K>> extends ComponentCh
     }
 
     @Override
-    protected <W, C extends Packet<W>> void wrap(PipeCallable<Void, W> nextMethod, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
+    protected <W, C extends Packet<W>> void wrap(PipeCallable<Void, W> nextMethod, SimpleBuffer<W, C> outputBuffer, int chainLinks) {
 
     }
 
