@@ -29,7 +29,7 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     void performMethod(InputCallable<K> method);
 
-    <V, B extends Packet<V>> BoundedBuffer<V, B> connectTo(PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> pipe);
+    <Z> Z connectTo(PipeCallable<BoundedBuffer<K, A>, Z> pipe);
 
     void connectTo(InputCallable<BoundedBuffer<K, A>> pipe);
 

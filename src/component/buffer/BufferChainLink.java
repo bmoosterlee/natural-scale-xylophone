@@ -85,7 +85,7 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
-    public <V, B extends Packet<V>> BoundedBuffer<V, B> connectTo(PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> pipe) {
+    public <Z> Z connectTo(PipeCallable<BoundedBuffer<K, A>, Z> pipe) {
         return pipe.call(this);
     }
 
