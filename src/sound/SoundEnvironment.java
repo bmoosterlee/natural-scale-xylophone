@@ -42,7 +42,7 @@ public class SoundEnvironment {
                 inputBuffer
                         .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
                         .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "fit amplitude")
-                .connectTo(Orderer.buildPipe())
+                .connectTo(Orderer.buildPipe("sound environment - sample orderer"))
                 .performMethod(input -> new byte[]{input}, "sound environment - byte to array")
                 .performMethod(((InputCallable<byte[]>) this::writeToBuffer)
                 .toSequential());

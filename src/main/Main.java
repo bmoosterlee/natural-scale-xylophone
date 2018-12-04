@@ -68,10 +68,10 @@ class Main {
                 .broadcast(2, "main volume - broadcast"));
 
         volumeBroadcast.poll()
-                .connectTo(Orderer.buildPipe())
+                .connectTo(Orderer.buildPipe("main - sample volume orderer"))
                 .pairWith(
                         volumeAmplitudeStateBuffers.getValue()
-                        .connectTo(Orderer.buildPipe()), 
+                        .connectTo(Orderer.buildPipe("main - sample amplitude orderer")),
                         "main - pair volume and amplitude")
                 .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>performMethod(input ->
                                 new VolumeAmplitudeState(
