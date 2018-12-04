@@ -21,25 +21,37 @@ class AmplitudeCalculator {
 
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
-                return inputBuffer
+                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Wave>>, Set<AmplitudeState>>, Packet<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Wave>>, Set<AmplitudeState>>>>> precalculatorBroadcast = new LinkedList<>(inputBuffer
                         .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> calculateAmplitudesPerFrequency(input2.getKey(), input2.getValue())
-                        ))
+                        )).broadcast(2, "amplitude calculator - precalculator broadcast"));
+
+                return precalculatorBroadcast.poll()
                         .performMethod(input -> {
                                 AmplitudeState sum = new AmplitudeState(new HashMap<>());
                                 for(AmplitudeState finishedSampleFragment : input.getFinishedDataUntilNow()) {
                                     sum = sum.add(finishedSampleFragment);
                                 }
-                                for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getFinalUnfinishedData()){
-                                    sum = sum.add(
-                                            calculateAmplitudesPerFrequency(
-                                                input.getIndex(),
-                                                unfinishedSampleFragment));
-                                }
                                 return sum;
-                        }, "finish amplitude calculation");
+                        },
+                        "amplitude calculator - fold precalculated sample fragments")
+                        .pairWith(
+                                precalculatorBroadcast.poll()
+                                        .performMethod(input -> {
+                                            AmplitudeState sum = new AmplitudeState(new HashMap<>());
+                                            for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getFinalUnfinishedData()){
+                                                sum = sum.add(
+                                                        calculateAmplitudesPerFrequency(
+                                                                input.getIndex(),
+                                                                unfinishedSampleFragment));
+                                            }
+                                            return sum;
+                                        },
+                                        "amplitude calculator - finish fragment calculation"),
+                                "amplitude calculator - pair calculated and precalculated sample fragments")
+                        .performMethod(input -> input.getKey().add(input.getValue()), "amplitude calculator - construct finished sample");
             }
 
             private Long addNewNotes(NewNotesAmplitudeData newNotesAmplitudeData) {

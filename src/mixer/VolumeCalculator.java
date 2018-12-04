@@ -19,25 +19,37 @@ class VolumeCalculator {
 
             @Override
             public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
-                return inputBuffer
+
+                LinkedList<SimpleBuffer<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>, Set<VolumeState>>, Packet<PrecalculatorOutputData<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>, Set<VolumeState>>>>> precalculatorBroadcast = new LinkedList<>(inputBuffer
                         .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewNotes).toSequential(), "volume calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
                                 input2 -> calculateVolumesPerFrequency(input2.getKey(), input2.getValue())
-                        ))
+                        )).broadcast(2, "volume calculator - precalculator broadcast"));
+
+                return precalculatorBroadcast.poll()
                         .performMethod(input -> {
                                 VolumeState sum = new VolumeState(new HashMap<>());
                                 for(VolumeState finishedSampleFragment : input.getFinishedDataUntilNow()){
                                     sum = sum.add(finishedSampleFragment);
                                 }
-                                for(SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input.getFinalUnfinishedData()){
-                                    sum = sum.add(
-                                                calculateVolumesPerFrequency(
-                                                    input.getIndex(),
-                                                    unfinishedSampleFragment));
-                                }
                                 return sum;
-                        }, "finish volume calculation");
+                        }, "volume calculator - fold precalculated sample fragments")
+                        .pairWith(
+                                precalculatorBroadcast.poll()
+                                        .performMethod(input -> {
+                                            VolumeState sum = new VolumeState(new HashMap<>());
+                                            for(SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input.getFinalUnfinishedData()){
+                                                sum = sum.add(
+                                                        calculateVolumesPerFrequency(
+                                                                input.getIndex(),
+                                                                unfinishedSampleFragment));
+                                            }
+                                            return sum;
+                                        },
+                                        "volume calculator - final fragment calculation"),
+                                "volume calculator - pair calculated and precalculated sample fragments")
+                        .performMethod(input -> input.getKey().add(input.getValue()), "volume calculator - construct finished sample");
             }
 
             private Long addNewNotes(NewNotesVolumeData newNotesVolumeData) {
