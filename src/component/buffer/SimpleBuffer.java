@@ -73,6 +73,12 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
         return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
     }
 
+    public <V, B extends Packet<V>> SimpleBuffer<V, B> performMethodUnchained(PipeCallable<K, V> method, String name) {
+        SimpleBuffer<V, B> outputBuffer = new SimpleBuffer<>(1, name);
+        new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, method));
+        return outputBuffer;
+    }
+
     @Override
     public void performMethod(InputCallable<K> method){
         new TickRunningStrategy(new MethodInputComponent<>(this, method));
