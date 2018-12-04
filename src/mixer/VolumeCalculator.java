@@ -2,6 +2,7 @@ package mixer;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
+import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
@@ -21,6 +22,7 @@ class VolumeCalculator {
             public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
 
                 SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>>, Packet<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>>>>, BoundedBuffer<Set<VolumeState>, Packet<Set<VolumeState>>>> precalculatorOutputs = inputBuffer
+                        .connectTo(Orderer.buildPipe("volume calculator - order input"))
                         .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewNotes).toSequential(), "volume calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
@@ -28,27 +30,29 @@ class VolumeCalculator {
                         ));
 
                 return precalculatorOutputs.getValue()
-                        .performMethod(input -> {
-                                VolumeState sum = new VolumeState(new HashMap<>());
-                                for(VolumeState finishedSampleFragment : input){
-                                    sum = sum.add(finishedSampleFragment);
-                                }
-                                return sum;
+                        .<VolumeState, OrderStampedPacket<VolumeState>>performMethod(input2 -> {
+                            VolumeState sum1 = new VolumeState(new HashMap<>());
+                            for (VolumeState finishedSampleFragment : input2) {
+                                sum1 = sum1.add(finishedSampleFragment);
+                            }
+                            return sum1;
                         }, "volume calculator - fold precalculated sample fragments")
+                        .connectTo(Orderer.buildPipe("volume calculator - order folded precalculated sample fragments"))
                         .pairWith(
                                 precalculatorOutputs.getKey()
-                                        .performMethod(input -> {
-                                            VolumeState sum = new VolumeState(new HashMap<>());
-                                            Long sampleCount = input.getKey();
-                                            for(SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input.getValue()){
-                                                sum = sum.add(
-                                                calculateVolumesPerFrequency(
-                                                        sampleCount,
-                                                        unfinishedSampleFragment));
-                                            }
-                                            return sum;
-                                        },
-                                        "volume calculator - final fragment calculation"),
+                                        .<VolumeState, OrderStampedPacket<VolumeState>>performMethod(input1 -> {
+                                                    VolumeState sum = new VolumeState(new HashMap<>());
+                                                    Long sampleCount = input1.getKey();
+                                                    for (SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input1.getValue()) {
+                                                        sum = sum.add(
+                                                                calculateVolumesPerFrequency(
+                                                                        sampleCount,
+                                                                        unfinishedSampleFragment));
+                                                    }
+                                                    return sum;
+                                                },
+                                                "volume calculator - final fragment calculation")
+                                .connectTo(Orderer.buildPipe("volume calculator - order finished fragment calculations")),
                                 "volume calculator - pair calculated and precalculated sample fragments")
                         .performMethod(input -> input.getKey().add(input.getValue()), "volume calculator - construct finished sample");
             }

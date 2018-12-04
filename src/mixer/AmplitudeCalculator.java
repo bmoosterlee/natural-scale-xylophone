@@ -2,6 +2,7 @@ package mixer;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
+import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.state.AmplitudeState;
 import mixer.state.Wave;
@@ -22,6 +23,7 @@ class AmplitudeCalculator {
             @Override
             public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
                 SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Wave>>>, Packet<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Wave>>>>>, BoundedBuffer<Set<AmplitudeState>, Packet<Set<AmplitudeState>>>> precalculatorOutputs = inputBuffer
+                        .connectTo(Orderer.buildPipe("amplitude calculator - order input"))
                         .performMethod(((PipeCallable<NewNotesAmplitudeData, Long>) this::addNewNotes).toSequential(), "amplitude calculator - add new notes")
                         .connectTo(MapPrecalculator.buildPipe(
                                 unfinishedSampleFragments,
@@ -29,28 +31,30 @@ class AmplitudeCalculator {
                         ));
 
                 return precalculatorOutputs.getValue()
-                        .performMethod(input -> {
-                                AmplitudeState sum = new AmplitudeState(new HashMap<>());
-                                for(AmplitudeState finishedSampleFragment : input) {
-                                    sum = sum.add(finishedSampleFragment);
-                                }
-                                return sum;
-                        },
-                        "amplitude calculator - fold precalculated sample fragments")
+                        .<AmplitudeState, OrderStampedPacket<AmplitudeState>>performMethod(input1 -> {
+                                    AmplitudeState sum = new AmplitudeState(new HashMap<>());
+                                    for (AmplitudeState finishedSampleFragment : input1) {
+                                        sum = sum.add(finishedSampleFragment);
+                                    }
+                                    return sum;
+                                },
+                                "amplitude calculator - fold precalculated sample fragments")
+                        .connectTo(Orderer.buildPipe("amplitude calculator - order folded precalculated sample fragments"))
                         .pairWith(
                                 precalculatorOutputs.getKey()
-                                        .performMethod(input -> {
-                                            AmplitudeState sum = new AmplitudeState(new HashMap<>());
-                                            Long sampleCount = input.getKey();
-                                            for(Map.Entry<Frequency, Wave> unfinishedSampleFragment : input.getValue()){
-                                                sum = sum.add(
-                                                        calculateAmplitudesPerFrequency(
-                                                                sampleCount,
-                                                                unfinishedSampleFragment));
-                                            }
-                                            return sum;
-                                        },
-                                        "amplitude calculator - finish fragment calculation"),
+                                        .<AmplitudeState, OrderStampedPacket<AmplitudeState>>performMethod(input2 -> {
+                                                    AmplitudeState sum1 = new AmplitudeState(new HashMap<>());
+                                                    Long sampleCount = input2.getKey();
+                                                    for (Map.Entry<Frequency, Wave> unfinishedSampleFragment : input2.getValue()) {
+                                                        sum1 = sum1.add(
+                                                                calculateAmplitudesPerFrequency(
+                                                                        sampleCount,
+                                                                        unfinishedSampleFragment));
+                                                    }
+                                                    return sum1;
+                                                },
+                                                "amplitude calculator - finish fragment calculation")
+                                .connectTo(Orderer.buildPipe("amplitude calculator - order finished fragment calculations")),
                                 "amplitude calculator - pair calculated and precalculated sample fragments")
                         .performMethod(input -> input.getKey().add(input.getValue()), "amplitude calculator - construct finished sample");
             }
