@@ -78,7 +78,7 @@ class Main {
                                         input.getKey(),
                                         input.getValue())
                         , "main - construct volume amplitude state")
-                .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate));
+                .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead));
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
             SpectrumBuilder.buildComponent(
