@@ -2,6 +2,7 @@ package component.orderer;
 
 import component.buffer.*;
 
+import java.util.List;
 import java.util.PriorityQueue;
 
 public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T>, OrderStampedPacket<T>> {
@@ -16,25 +17,26 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
     @Override
     protected void tick() {
         try {
-            OrderStampedPacket<T> newPacket = input.consume();
+            List<OrderStampedPacket<T>> newPackets = input.flushOrConsume();
             if (index != null) {
-                if(index.successor(newPacket)){
-                    index = newPacket;
-                    output.produce(newPacket);
-                } else {
-                    backLog.add(newPacket);
-                }
-                while (!output.getBuffer().isFull() && !backLog.isEmpty() && index.successor(backLog.peek())) {
+                backLog.addAll(newPackets);
+                while (!backLog.isEmpty() && index.successor(backLog.peek())) {
                     index = backLog.poll();
                     output.produce(index);
                 }
             } else {
-                if(newPacket.hasFirstStamp()) {
-                    index = newPacket;
-                    output.produce(newPacket);
-                } else {
-                    backLog.add(newPacket);
-                }
+                newPackets.forEach(newPacket -> {
+                    if(newPacket.hasFirstStamp()) {
+                        index = newPacket;
+                        try {
+                            output.produce(newPacket);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        backLog.add(newPacket);
+                    }
+                });
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
