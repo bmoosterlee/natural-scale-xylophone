@@ -25,7 +25,7 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
                 clearBacklog();
                 defragmentContinuously();
             } else {
-                addPacketsBeforeFindingFirstStamp();
+                tryProduceFirstPacket();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
         }
     }
 
-    private void addPacketsBeforeFindingFirstStamp() {
+    private void tryProduceFirstPacket() {
         if(backlog.peek().hasFirstStamp()) {
             OrderStampedPacket<T> firstPacket = backlog.poll();
             index = firstPacket;
