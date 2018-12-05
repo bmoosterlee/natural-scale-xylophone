@@ -21,12 +21,12 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
                 if(index.successor(newPacket)){
                     index = newPacket;
                     output.produce(newPacket);
-                    while (!backLog.isEmpty() && index.successor(backLog.peek())) {
-                        index = backLog.poll();
-                        output.produce(index);
-                    }
                 } else {
                     backLog.add(newPacket);
+                }
+                while (!output.getBuffer().isFull() && !backLog.isEmpty() && index.successor(backLog.peek())) {
+                    index = backLog.poll();
+                    output.produce(index);
                 }
             } else {
                 if(newPacket.hasFirstStamp()) {
