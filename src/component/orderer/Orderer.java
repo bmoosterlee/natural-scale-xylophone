@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T>, OrderStampedPacket<T>> {
-    private final PriorityQueue<OrderStampedPacket<T>> backLog;
+    private final PriorityQueue<OrderStampedPacket<T>> backlog;
     private OrderStampedPacket<T> index;
 
     public Orderer(BoundedBuffer<T, OrderStampedPacket<T>> input, BoundedBuffer<T, OrderStampedPacket<T>> output) {
         super(input.createInputPort(), output.createOutputPort());
-        backLog = new PriorityQueue<>();
+        backlog = new PriorityQueue<>();
     }
 
     @Override
@@ -19,9 +19,9 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
         try {
             List<OrderStampedPacket<T>> newPackets = input.flushOrConsume();
             if (index != null) {
-                backLog.addAll(newPackets);
-                while (!backLog.isEmpty() && index.successor(backLog.peek())) {
-                    index = backLog.poll();
+                backlog.addAll(newPackets);
+                while (!backlog.isEmpty() && index.successor(backlog.peek())) {
+                    index = backlog.poll();
                     output.produce(index);
                 }
             } else {
@@ -34,7 +34,7 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
                             e.printStackTrace();
                         }
                     } else {
-                        backLog.add(newPacket);
+                        backlog.add(newPacket);
                     }
                 });
             }
