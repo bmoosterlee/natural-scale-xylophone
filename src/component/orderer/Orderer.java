@@ -6,13 +6,13 @@ import java.util.*;
 
 public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<OrderStampedPacket<T>>>, T, SimplePacket<LinkedList<LinkedList<OrderStampedPacket<T>>>>, OrderStampedPacket<T>> {
     private final PriorityQueue<LinkedList<OrderStampedPacket<T>>> backlog;
-    private final PriorityQueue<LinkedList<OrderStampedPacket<T>>> defragmentedBacklog;
+    private LinkedList<LinkedList<OrderStampedPacket<T>>> defragmentedBacklog;
     private OrderStampedPacket<T> index;
 
     public Orderer(BoundedBuffer<LinkedList<LinkedList<OrderStampedPacket<T>>>, SimplePacket<LinkedList<LinkedList<OrderStampedPacket<T>>>>> input, BoundedBuffer<T, OrderStampedPacket<T>> output) {
         super(input.createInputPort(), output.createOutputPort());
         backlog = new PriorityQueue<>(Comparator.comparing(o -> o.peek()));
-        defragmentedBacklog = new PriorityQueue<>(Comparator.comparing(LinkedList::peek));
+        defragmentedBacklog = new LinkedList<>();
     }
 
     @Override
@@ -67,7 +67,7 @@ public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<Orde
 
     private void defragmentBacklog() {
         LinkedList<OrderStampedPacket<T>> fragmentToBePlaced = new LinkedList<>(backlog.poll());
-        HashSet<LinkedList<OrderStampedPacket<T>>> fragmentsLowerThanFragmentToBePlaced = new HashSet<>();
+        LinkedList<LinkedList<OrderStampedPacket<T>>> fragmentsLowerThanFragmentToBePlaced = new LinkedList<>();
         while(!defragmentedBacklog.isEmpty()){
             LinkedList<OrderStampedPacket<T>> otherFragment = defragmentedBacklog.poll();
             if(fragmentToBePlaced.peekLast().successor(otherFragment.peek())){
@@ -77,14 +77,15 @@ public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<Orde
                 otherFragment.addAll(fragmentToBePlaced);
                 fragmentToBePlaced = otherFragment;
             } else if(fragmentToBePlaced.peekLast().compareTo(otherFragment.peek()) < 0){
-                defragmentedBacklog.add(otherFragment);
+                defragmentedBacklog.addFirst(otherFragment);
                 break;
             } else {
                 fragmentsLowerThanFragmentToBePlaced.add(otherFragment);
             }
         }
-        defragmentedBacklog.addAll(fragmentsLowerThanFragmentToBePlaced);
-        defragmentedBacklog.add(fragmentToBePlaced);
+        defragmentedBacklog.addFirst(fragmentToBePlaced);
+        fragmentsLowerThanFragmentToBePlaced.addAll(defragmentedBacklog);
+        defragmentedBacklog = fragmentsLowerThanFragmentToBePlaced;
     }
 
     private static <T> LinkedList<LinkedList<OrderStampedPacket<T>>> defragment(PriorityQueue<OrderStampedPacket<T>> newPackets) {
