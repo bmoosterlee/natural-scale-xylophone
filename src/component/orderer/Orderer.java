@@ -20,26 +20,34 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
             List<OrderStampedPacket<T>> newPackets = input.flushOrConsume();
             if (index != null) {
                 backlog.addAll(newPackets);
-                while (!backlog.isEmpty() && index.successor(backlog.peek())) {
-                    index = backlog.poll();
-                    output.produce(index);
-                }
+                clearBacklogContinuously();
             } else {
-                newPackets.forEach(newPacket -> {
-                    if(newPacket.hasFirstStamp()) {
-                        index = newPacket;
-                        try {
-                            output.produce(newPacket);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        backlog.add(newPacket);
-                    }
-                });
+                addPacketsBeforeFindingFirstStamp(newPackets);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void addPacketsBeforeFindingFirstStamp(List<OrderStampedPacket<T>> newPackets) {
+        newPackets.forEach(newPacket -> {
+            if(newPacket.hasFirstStamp()) {
+                index = newPacket;
+                try {
+                    output.produce(newPacket);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                backlog.add(newPacket);
+            }
+        });
+    }
+
+    private void clearBacklogContinuously() throws InterruptedException {
+        while (!backlog.isEmpty() && index.successor(backlog.peek())) {
+            index = backlog.poll();
+            output.produce(index);
         }
     }
 
