@@ -2,7 +2,6 @@ package mixer;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
-import component.orderer.Orderer;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
@@ -12,7 +11,7 @@ import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.concurrent.ConcurrentHashMap;
 
-class VolumeCalculator {
+class VolumeCalculator extends SampleCalculator{
 
     static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>> buildPipe() {
         return new PipeCallable<>() {
@@ -20,41 +19,13 @@ class VolumeCalculator {
 
             @Override
             public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
-
-                SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>>, Packet<SimpleImmutableEntry<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>>>>, BoundedBuffer<Set<VolumeState>, Packet<Set<VolumeState>>>> precalculatorOutputs = inputBuffer
-                        .connectTo(Orderer.buildPipe("volume calculator - order input"))
-                        .performMethod(((PipeCallable<NewNotesVolumeData, Long>) this::addNewNotes).toSequential(), "volume calculator - add new notes")
-                        .connectTo(MapPrecalculator.buildPipe(
-                                unfinishedSampleFragments,
-                                input2 -> calculateVolumesPerFrequency(input2.getKey(), input2.getValue())
-                        ));
-
-                return precalculatorOutputs.getValue()
-                        .<VolumeState, OrderStampedPacket<VolumeState>>performMethod(input2 -> {
-                            VolumeState sum1 = new VolumeState(new HashMap<>());
-                            for (VolumeState finishedSampleFragment : input2) {
-                                sum1 = sum1.add(finishedSampleFragment);
-                            }
-                            return sum1;
-                        }, "volume calculator - fold precalculated sample fragments")
-                        .connectTo(Orderer.buildPipe("volume calculator - order folded precalculated sample fragments"))
-                        .pairWith(
-                                precalculatorOutputs.getKey()
-                                        .<VolumeState, OrderStampedPacket<VolumeState>>performMethod(input1 -> {
-                                                    VolumeState sum = new VolumeState(new HashMap<>());
-                                                    Long sampleCount = input1.getKey();
-                                                    for (SimpleImmutableEntry<Frequency, Envelope> unfinishedSampleFragment : input1.getValue()) {
-                                                        sum = sum.add(
-                                                                calculateVolumesPerFrequency(
-                                                                        sampleCount,
-                                                                        unfinishedSampleFragment));
-                                                    }
-                                                    return sum;
-                                                },
-                                                "volume calculator - final fragment calculation")
-                                .connectTo(Orderer.buildPipe("volume calculator - order finished fragment calculations")),
-                                "volume calculator - pair calculated and precalculated sample fragments")
-                        .performMethod(input -> input.getKey().add(input.getValue()), "volume calculator - construct finished sample");
+                return buildSampleCalculator(
+                        inputBuffer,
+                        unfinishedSampleFragments,
+                        this::addNewNotes,
+                        input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()),
+                        VolumeState::add,
+                        () -> new VolumeState(new HashMap<>()));
             }
 
             private Long addNewNotes(NewNotesVolumeData newNotesVolumeData) {
