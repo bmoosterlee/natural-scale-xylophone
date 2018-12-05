@@ -3,7 +3,9 @@ package mixer.state;
 import frequency.Frequency;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class AmplitudeState {
 
@@ -15,16 +17,11 @@ public class AmplitudeState {
 
     public AmplitudeState add(AmplitudeState other) {
         HashMap<Frequency, Double> newAmplitudes = new HashMap<>(amplitudes);
-        for(Frequency frequency : other.amplitudes.keySet()){
-            Double oldAmplitude = newAmplitudes.get(frequency);
-            Double otherAmplitude = other.amplitudes.get(frequency);
-            try {
-                newAmplitudes.put(frequency, oldAmplitude + otherAmplitude);
-            }
-            catch(NullPointerException e){
-                newAmplitudes.put(frequency, otherAmplitude);
-            }
-        }
+
+        HashMap<Frequency, Double> newOtherAmplitudes = new HashMap<>(other.amplitudes);
+        newOtherAmplitudes.keySet().removeAll(newAmplitudes.keySet());
+        newAmplitudes.putAll(newOtherAmplitudes);
+
         return new AmplitudeState(newAmplitudes);
     }
 }
