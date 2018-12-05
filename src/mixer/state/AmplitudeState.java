@@ -17,11 +17,7 @@ public class AmplitudeState {
 
     public AmplitudeState add(AmplitudeState other) {
         HashMap<Frequency, Double> newAmplitudes = new HashMap<>(amplitudes);
-
-        HashMap<Frequency, Double> newOtherAmplitudes = new HashMap<>(other.amplitudes);
-        newOtherAmplitudes.keySet().removeAll(newAmplitudes.keySet());
-        newAmplitudes.putAll(newOtherAmplitudes);
-
+        newAmplitudes.putAll(other.amplitudes);
         return new AmplitudeState(newAmplitudes);
     }
 }
