@@ -15,16 +15,20 @@ public class VolumeState {
 
     public VolumeState add(VolumeState other) {
         HashMap<Frequency, Double> newVolumes = new HashMap<>(volumes);
-        for(Frequency frequency : other.volumes.keySet()){
+
+        HashMap<Frequency, Double> existingOtherVolumes = new HashMap<>(other.volumes);
+        existingOtherVolumes.keySet().retainAll(newVolumes.keySet());
+
+        HashMap<Frequency, Double> newOtherVolumes = new HashMap<>(other.volumes);
+        newOtherVolumes.keySet().removeAll(newVolumes.keySet());
+
+        for(Frequency frequency : existingOtherVolumes.keySet()){
             Double oldVolume = newVolumes.get(frequency);
             Double otherVolume = other.volumes.get(frequency);
-            try {
-                newVolumes.put(frequency, oldVolume + otherVolume);
-            }
-            catch(NullPointerException e){
-                newVolumes.put(frequency, otherVolume);
-            }
+            newVolumes.put(frequency, oldVolume + otherVolume);
         }
+        newVolumes.putAll(newOtherVolumes);
+
         return new VolumeState(newVolumes);
     }
 }
