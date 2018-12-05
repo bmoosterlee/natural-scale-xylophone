@@ -19,10 +19,10 @@ public class Mixer {
     public static <A extends Packet<Pulse>, B extends Packet<Frequency>> SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildComponent(BoundedBuffer<Pulse, A> inputBuffer, BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate){
             LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
                     inputBuffer
-                            .performMethod(Counter.build(), "count samples")
+                            .performMethod(Counter.build(), "mixer - count samples")
                             .connectTo(OrderStamper.buildPipe())
                             .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                            .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "build envelope")
+                            .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "mixer - build envelope")
                             .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, "mixer - add new notes")
                     .broadcast(2, "mixer - new note data"));
 
