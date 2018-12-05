@@ -105,9 +105,12 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
             I unfinishedKey = unfinishedKeyIterator.next().getKey();
             if(!unfinishedData.get(unfinishedKey).isEmpty()) {
                 HashSet<K> finishedItems = new HashSet<>();
-                for(K unfinishedItem : unfinishedData.get(unfinishedKey)) {
-                    calculate(unfinishedKey, unfinishedItem);
-                    finishedItems.add(unfinishedItem);
+                Set<K> unfinishedItems = unfinishedData.get(unfinishedKey);
+                synchronized (unfinishedItems) {
+                    unfinishedItems.forEach(unfinishedItem -> {
+                        calculate(unfinishedKey, unfinishedItem);
+                        finishedItems.add(unfinishedItem);
+                    });
                 }
                 unfinishedData.get(unfinishedKey).removeAll(finishedItems);
             }
