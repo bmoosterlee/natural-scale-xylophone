@@ -49,7 +49,7 @@ public class SoundEnvironment {
                         .resize(sampleLookahead);
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse");
-                batchPulses.performMethod(Flusher.flush(fittedAmplitudes), "sound environment - flush fitted amplitudes")
+                batchPulses.performMethod(Flusher.flushOrConsume(fittedAmplitudes), "sound environment - flush fitted amplitudes")
                 .performMethod(((PipeCallable<List<Byte>, byte[]>) input -> {
                     int size = input.size();
                     byte[] array = new byte[size];
