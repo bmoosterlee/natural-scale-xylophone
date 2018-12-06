@@ -1,6 +1,5 @@
 package component.orderer;
 
-import component.Separator;
 import component.buffer.*;
 
 import java.util.*;
@@ -19,45 +18,33 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
     @Override
     protected void tick() {
         try {
-            backlog.add(input.consume());
-            if (index != null) {
+            OrderStampedPacket<T> consumed = input.consume();
+            if ((index != null && index.successor(consumed)) || (index == null && consumed.hasFirstStamp())) {
+                index = consumed;
+                output.produce(consumed);
                 clearBacklog();
-                defragmentContinuously();
-            } else {
-                tryProduceFirstPacket();
+            } else{
+                backlog.add(consumed);
             }
+            defragmentContinuously();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void clearBacklog() {
-        if(!backlog.isEmpty()) {
-            defragmentBacklog();
-        }
-        if (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())) {
-            LinkedList<OrderStampedPacket<T>> nextFragment = defragmentedBacklog.poll();
-            index = nextFragment.peekLast();
-            nextFragment.forEach(input ->
-            {
-                try {
-                    output.produce(input);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+    private void clearBacklog() throws InterruptedException {
+        while((!backlog.isEmpty() && index.successor(backlog.peek()) || (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())))) {
+            if(!backlog.isEmpty() && index.successor(backlog.peek())) {
+                OrderStampedPacket<T> nextPacket = backlog.poll();
+                index = nextPacket;
+                output.produce(nextPacket);
             }
-            );
-        }
-    }
-
-    private void tryProduceFirstPacket() {
-        if(!backlog.isEmpty() && backlog.peek().hasFirstStamp()) {
-            OrderStampedPacket<T> firstPacket = backlog.poll();
-            index = firstPacket;
-            try {
-                output.produce(firstPacket);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            if (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())) {
+                LinkedList<OrderStampedPacket<T>> nextFragment = defragmentedBacklog.poll();
+                index = nextFragment.peekLast();
+                for (OrderStampedPacket<T> tOrderStampedPacket : nextFragment) {
+                    output.produce(tOrderStampedPacket);
+                }
             }
         }
     }
