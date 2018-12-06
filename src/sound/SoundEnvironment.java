@@ -50,26 +50,28 @@ public class SoundEnvironment {
                 sourceDataLine.start();
 
                 BoundedBuffer<Byte, OrderStampedPacket<Byte>> fittedAmplitudes = inputBuffer
-                        .performMethod(VolumeAmplitudeState::toDouble, "volume amplitude to signal")
-                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "fit amplitude")
+                        .performMethod(VolumeAmplitudeState::toDouble, "sound environment - volume amplitude to signal")
+                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "sound environment - fit amplitude")
                         .connectTo(Orderer.buildPipe("sound environment - sample orderer"))
                         .resize(sampleLookahead);
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse");
-                batchPulses.performMethod(Flusher.flushOrConsume(fittedAmplitudes), "sound environment - flush fitted amplitudes")
-                .performMethod(((PipeCallable<List<Byte>, byte[]>) input -> {
-                    int size = input.size();
-                    byte[] array = new byte[size];
-                    for(int i = 0; i<size; i++){
-                        array[i] = input.get(i);
-                    }
-                    return array;
-                }).toSequential(), "sound environment - byte list to byte array")
-                .performMethod(((PipeCallable<byte[], Pulse>) input -> {
-                    writeToBuffer(input);
-                    return new Pulse();
-                }).toSequential())
-                .relayTo(batchPulses);
+                batchPulses
+                        .performMethod(Flusher.flushOrConsume(fittedAmplitudes), "sound environment - flush fitted amplitudes")
+                        .performMethod(((PipeCallable<List<Byte>, byte[]>) input -> {
+                            int size = input.size();
+                            byte[] array = new byte[size];
+                            for(int i = 0; i<size; i++){
+                                array[i] = input.get(i);
+                            }
+                            return array;
+                        }).toSequential(), "sound environment - byte list to byte array")
+                        .performMethod(((PipeCallable<byte[], Pulse>) input -> {
+                            writeToBuffer(input);
+                            return new Pulse();
+                        }).toSequential())
+                        .relayTo(batchPulses);
+
                 try {
                     batchPulses.createOutputPort().produce(new SimplePacket<>(new Pulse()));
                 } catch (InterruptedException e) {
@@ -110,7 +112,7 @@ public class SoundEnvironment {
                         VolumeAmplitudeState.build(
                                 input.getKey(),
                                 input.getValue()),
-                        "Merge volume and amplitude state")
+                        "sound environment - merge volume and amplitude state")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }
