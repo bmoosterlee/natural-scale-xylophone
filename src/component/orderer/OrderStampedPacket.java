@@ -6,18 +6,18 @@ import component.buffer.SimplePacket;
 
 public class OrderStampedPacket<T> extends SimplePacket<T> implements Comparable<OrderStampedPacket<T>>{
     private final OrderStamper orderStamper;
-    final long orderStamp;
+    public final OrderStamp stamp;
 
-    OrderStampedPacket(OrderStamper orderStamper, T content) {
+    OrderStampedPacket(OrderStamper orderStamper, OrderStamp stamp, T content) {
         super(content);
         this.orderStamper = orderStamper;
-        orderStamp = orderStamper.stamp();
+        this.stamp = stamp;
     }
 
     private <K> OrderStampedPacket(OrderStampedPacket<K> previousPacket, PipeCallable<K, T> method) {
         super(previousPacket, method);
         this.orderStamper = previousPacket.orderStamper;
-        this.orderStamp = previousPacket.orderStamp;
+        this.stamp = previousPacket.stamp;
     }
 
     @Override
@@ -26,12 +26,12 @@ public class OrderStampedPacket<T> extends SimplePacket<T> implements Comparable
     }
 
     public boolean successor(OrderStampedPacket<T> other) {
-        return orderStamper.successor(this, other);
+        return stamp.successor(other.stamp);
     }
 
     @Override
     public int compareTo(OrderStampedPacket<T> other) {
-        return orderStamper.compare(this, other);
+        return stamp.compareTo(other.stamp);
     }
 
     public boolean hasFirstStamp() {
