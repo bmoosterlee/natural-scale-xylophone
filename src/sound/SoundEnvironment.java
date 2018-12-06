@@ -107,7 +107,7 @@ public class SoundEnvironment {
         OrderStampedPacketPairer.buildComponent(
                 volumeInputBuffer,
                 amplitudeInputBuffer)
-                .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
+                        .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
                         performMethod(input ->
                         VolumeAmplitudeState.build(
                                 input.getKey(),
