@@ -5,21 +5,21 @@ import component.buffer.*;
 
 import java.util.*;
 
-public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<OrderStampedPacket<T>>>, List<OrderStampedPacket<T>>, SimplePacket<LinkedList<LinkedList<OrderStampedPacket<T>>>>, SimplePacket<List<OrderStampedPacket<T>>>> {
-    private final PriorityQueue<LinkedList<OrderStampedPacket<T>>> backlog;
+public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T>, OrderStampedPacket<T>> {
+    private final PriorityQueue<OrderStampedPacket<T>> backlog;
     private LinkedList<LinkedList<OrderStampedPacket<T>>> defragmentedBacklog;
     private OrderStampedPacket<T> index;
 
-    public Orderer(BoundedBuffer<LinkedList<LinkedList<OrderStampedPacket<T>>>, SimplePacket<LinkedList<LinkedList<OrderStampedPacket<T>>>>> input, BoundedBuffer<List<OrderStampedPacket<T>>, SimplePacket<List<OrderStampedPacket<T>>>> output) {
+    public Orderer(BoundedBuffer<T, OrderStampedPacket<T>> input, BoundedBuffer<T, OrderStampedPacket<T>> output) {
         super(input.createInputPort(), output.createOutputPort());
-        backlog = new PriorityQueue<>(Comparator.comparing(o -> o.peek()));
+        backlog = new PriorityQueue<>();
         defragmentedBacklog = new LinkedList<>();
     }
 
     @Override
     protected void tick() {
         try {
-            backlog.addAll(input.consume().unwrap());
+            backlog.add(input.consume());
             if (index != null) {
                 clearBacklog();
                 defragmentContinuously();
@@ -31,29 +31,33 @@ public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<Orde
         }
     }
 
-    private void clearBacklog() throws InterruptedException {
+    private void clearBacklog() {
         if(!backlog.isEmpty()) {
             defragmentBacklog();
         }
         if (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())) {
             LinkedList<OrderStampedPacket<T>> nextFragment = defragmentedBacklog.poll();
             index = nextFragment.peekLast();
-            output.produce(new SimplePacket<>(nextFragment));
+            nextFragment.forEach(input ->
+            {
+                try {
+                    output.produce(input);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            );
         }
     }
 
     private void tryProduceFirstPacket() {
-        if(!backlog.isEmpty() && backlog.peek().peek().hasFirstStamp()) {
-            LinkedList<OrderStampedPacket<T>> topDefragmentedSegment = backlog.poll();
-            OrderStampedPacket<T> firstPacket = topDefragmentedSegment.poll();
+        if(!backlog.isEmpty() && backlog.peek().hasFirstStamp()) {
+            OrderStampedPacket<T> firstPacket = backlog.poll();
             index = firstPacket;
             try {
-                output.produce(new SimplePacket<>(Collections.singletonList(firstPacket)));
+                output.produce(firstPacket);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            if(!topDefragmentedSegment.isEmpty()){
-                backlog.add(topDefragmentedSegment);
             }
         }
     }
@@ -65,7 +69,7 @@ public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<Orde
     }
 
     private void defragmentBacklog() {
-        LinkedList<OrderStampedPacket<T>> fragmentToBePlaced = new LinkedList<>(backlog.poll());
+        LinkedList<OrderStampedPacket<T>> fragmentToBePlaced = new LinkedList<>(Collections.singletonList(backlog.poll()));
         LinkedList<LinkedList<OrderStampedPacket<T>>> fragmentsLowerThanFragmentToBePlaced = new LinkedList<>();
         while(!defragmentedBacklog.isEmpty()){
             LinkedList<OrderStampedPacket<T>> otherFragment = defragmentedBacklog.poll();
@@ -110,21 +114,9 @@ public class Orderer<T> extends AbstractPipeComponent<LinkedList<LinkedList<Orde
 
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(String name){
         return inputBuffer -> {
-            SimpleBuffer<List<OrderStampedPacket<T>>, SimplePacket<List<OrderStampedPacket<T>>>> outputBuffer = new SimpleBuffer<>(100, name);
-            SimpleBuffer<LinkedList<LinkedList<OrderStampedPacket<T>>>, SimplePacket<LinkedList<LinkedList<OrderStampedPacket<T>>>>> defragmentedOrderedPackets = new SimpleBuffer<>(100, name + " defragmenter");
-            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.resize(100).createInputPort(), defragmentedOrderedPackets.createOutputPort()) {
-                @Override
-                protected void tick() {
-                    try {
-                        PriorityQueue<OrderStampedPacket<T>> newPackets = new PriorityQueue<>(input.flushOrConsume());
-                        output.produce(new SimplePacket<>(defragment(newPackets)));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            new TickRunningStrategy(new Orderer<>(defragmentedOrderedPackets, outputBuffer));
-            return outputBuffer.connectTo(Separator.buildPacketsPipe());
+            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, name);
+            new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
+            return outputBuffer;
         };
     }
 }
