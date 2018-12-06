@@ -67,15 +67,7 @@ class Main {
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
                 .broadcast(2, "main volume - broadcast"));
 
-        OrderStampedPacketPairer.buildComponent(
-                volumeBroadcast.poll(),
-                volumeAmplitudeStateBuffers.getValue())
-                .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>performMethod(input ->
-                                new VolumeAmplitudeState(
-                                        input.getKey(),
-                                        input.getValue())
-                        , "main - construct volume amplitude state")
-                .connectTo(SoundEnvironment.buildPipe(SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead));
+        SoundEnvironment.buildComponent(volumeBroadcast.poll(), volumeAmplitudeStateBuffers.getValue(), SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
             SpectrumBuilder.buildComponent(

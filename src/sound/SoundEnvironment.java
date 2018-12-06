@@ -5,24 +5,31 @@ import component.Pulse;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import component.orderer.Orderer;
+import frequency.Frequency;
+import main.OrderStampedPacketPairer;
+import mixer.state.AmplitudeState;
+import mixer.state.VolumeAmplitude;
 import mixer.state.VolumeAmplitudeState;
+import mixer.state.VolumeState;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 public class SoundEnvironment {
 
-    public static InputCallable<BoundedBuffer<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
+    public static InputCallable<BoundedBuffer<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
             private double marginalSampleSize;
 
             @Override
-            public void call(BoundedBuffer<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>> inputBuffer) {
+            public void call(BoundedBuffer<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>> inputBuffer) {
                 sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
                 marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -92,5 +99,18 @@ public class SoundEnvironment {
 //                sourceDataLine.stop();
 //            }
         };
+    }
+
+    public static void buildComponent(SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeInputBuffer, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
+        OrderStampedPacketPairer.buildComponent(
+                volumeInputBuffer,
+                amplitudeInputBuffer)
+                .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
+                        performMethod(input ->
+                        VolumeAmplitudeState.build(
+                                input.getKey(),
+                                input.getValue()),
+                        "Merge volume and amplitude state")
+                .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }
