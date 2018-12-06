@@ -13,7 +13,7 @@ public class Separator{
         return separateInternal(Separator::separate);
     }
 
-    static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPacketsPipe(){
+    public static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPacketsPipe(){
         return separateInternal(Separator::separatePackets);
     }
 
