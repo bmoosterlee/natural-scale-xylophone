@@ -67,12 +67,9 @@ class Main {
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
                 .broadcast(2, "main volume - broadcast"));
 
-        volumeBroadcast.poll()
-                .connectTo(Orderer.buildPipe("main - sample volume orderer"))
-                .pairWith(
-                        volumeAmplitudeStateBuffers.getValue()
-                        .connectTo(Orderer.buildPipe("main - sample amplitude orderer")),
-                        "main - pair volume and amplitude")
+        OrderStampedPacketPairer.buildComponent(
+                volumeBroadcast.poll(),
+                volumeAmplitudeStateBuffers.getValue())
                 .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>performMethod(input ->
                                 new VolumeAmplitudeState(
                                         input.getKey(),

@@ -6,6 +6,7 @@ import component.buffer.PipeCallable;
 import component.orderer.OrderStampedPacket;
 import component.orderer.Orderer;
 import frequency.Frequency;
+import main.OrderStampedPacketPairer;
 
 import java.util.AbstractMap;
 import java.util.Set;
@@ -24,8 +25,9 @@ class SampleCalculator {
                         calculation
                 ));
 
-        return precalculatorOutputs.getValue()
-                .<O, OrderStampedPacket<O>>performMethod(input1 -> {
+        return OrderStampedPacketPairer.buildComponent(
+                precalculatorOutputs.getValue()
+                .performMethod(input1 -> {
                             try {
                                 return input1.stream().reduce(outputIdentityBuilder.call(), add);
                             } catch (Exception e) {
@@ -33,37 +35,33 @@ class SampleCalculator {
                                 return null;
                             }
                         },
-                        "sample calculator - fold precalculated fragments")
-                .connectTo(Orderer.buildPipe("sample calculator - order folded precalculated fragments"))
-                .pairWith(
-                        precalculatorOutputs.getKey()
-                                .performMethod(input2 -> {
-                                            Long sampleCount = input2.getKey();
-                                            return input2.getValue().stream().map(unfinishedFragment -> {
-                                                        try {
-                                                            return calculation.call(
-                                                                    new AbstractMap.SimpleImmutableEntry<>(
-                                                                            sampleCount,
-                                                                            unfinishedFragment));
-                                                        } catch (Exception e) {
-                                                            e.printStackTrace();
-                                                            return null;
-                                                        }
-                                                    })
-                                                    .collect(Collectors.toSet());
-                                        },
-                                        "sample calculator - calculate fragments")
-                                .<O, OrderStampedPacket<O>>performMethod(input2 -> {
-                                            try {
-                                                return input2.stream().reduce(outputIdentityBuilder.call(), add);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                                return null;
-                                            }
-                                        },
-                                        "sample calculator - fold calculated fragments")
-                                .connectTo(Orderer.buildPipe("sample calculator - order folded calculated fragments")),
-                        "sample calculator - pair calculated and precalculated fragments")
+                        "sample calculator - fold precalculated fragments"),
+                precalculatorOutputs.getKey()
+                        .performMethod(input2 -> {
+                                    Long sampleCount = input2.getKey();
+                                    return input2.getValue().stream().map(unfinishedFragment -> {
+                                                try {
+                                                    return calculation.call(
+                                                            new AbstractMap.SimpleImmutableEntry<>(
+                                                                    sampleCount,
+                                                                    unfinishedFragment));
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                    return null;
+                                                }
+                                            })
+                                            .collect(Collectors.toSet());
+                                },
+                                "sample calculator - calculate fragments")
+                        .performMethod(input2 -> {
+                                    try {
+                                        return input2.stream().reduce(outputIdentityBuilder.call(), add);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        return null;
+                                    }
+                                },
+                                "sample calculator - fold calculated fragments"))
                 .performMethod(input -> add.apply(input.getKey(), input.getValue()), "sample calculator - construct finished sample");
     }
 }
