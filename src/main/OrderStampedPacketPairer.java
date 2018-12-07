@@ -7,7 +7,6 @@ import component.orderer.OrderStampedPacket;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     private final InputPort<K, OrderStampedPacket<K>> inputPort1;
