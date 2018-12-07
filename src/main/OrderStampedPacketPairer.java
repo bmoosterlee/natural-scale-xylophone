@@ -10,29 +10,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class OrderStampedPacketPairer{
 
-    private static <P, Q> OrderStampedPacket<Q> add(OrderStampedPacket<P> input, Map<OrderStamp, OrderStampedPacket<P>> myMap, Map<OrderStamp, OrderStampedPacket<Q>> counterMap, Map<OrderStamp, Object> lockMap) {
-        synchronized(findOrCreateLock(input.stamp, lockMap)) {
-            if (counterMap.containsKey(input.stamp)) {
-                lockMap.remove(input.stamp);
-                return counterMap.remove(input.stamp);
-            } else {
-                myMap.put(input.stamp, input);
+    private static <K, V> void tryPairAndProduce(OrderStamp stamp, Map<OrderStamp, OrderStampedPacket<K>> firstMap, Map<OrderStamp, OrderStampedPacket<V>> secondMap, OutputPort<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> outputPort) throws InterruptedException {
+        if (firstMap.containsKey(stamp) && secondMap.containsKey(stamp)) {
+            OrderStampedPacket<K> firstInput = firstMap.remove(stamp);
+            if(firstInput!=null) {
+                OrderStampedPacket<SimpleImmutableEntry<K, V>> pair = firstInput.transform(input1 ->
+                        new SimpleImmutableEntry<>(
+                                input1,
+                                secondMap.remove(stamp).unwrap()));
+                outputPort.produce(pair);
             }
         }
-        return null;
-    }
-
-    private static Object findOrCreateLock(OrderStamp stamp, Map<OrderStamp, Object> lockMap) {
-        return lockMap.computeIfAbsent(stamp, orderStamp -> new Object());
-    }
-
-    private static <K, V> void pairAndProduce(OrderStampedPacket<K> consumed1, OrderStampedPacket<V> counterPart, OutputPort<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> outputPort) throws InterruptedException {
-        OrderStampedPacket<SimpleImmutableEntry<K, V>> transform =
-                consumed1.transform(input ->
-                        new SimpleImmutableEntry<>(
-                                input,
-                                counterPart.unwrap()));
-        outputPort.produce(transform);
     }
 
     public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> buildComponent(BoundedBuffer<K, OrderStampedPacket<K>> inputBuffer1, BoundedBuffer<V, OrderStampedPacket<V>> inputBuffer2){
@@ -40,22 +28,17 @@ public class OrderStampedPacketPairer{
 
         final Map<OrderStamp, OrderStampedPacket<K>> input1Map = new ConcurrentHashMap<>();
         final Map<OrderStamp, OrderStampedPacket<V>> input2Map = new ConcurrentHashMap<>();
-        final Map<OrderStamp, Object> lockMap = new ConcurrentHashMap<>();
 
         new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer1.createInputPort(), outputBuffer.createOutputPort()) {
             @Override
             protected void tick() {
                 try {
-                    tryPairAndProduceType1(input.consume());
+                    OrderStampedPacket<K> input1 = input.consume();
+                    OrderStamp stamp = input1.stamp;
+                    input1Map.put(stamp, input1);
+                    tryPairAndProduce(stamp, input1Map, input2Map, output);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
-            }
-
-            private void tryPairAndProduceType1(OrderStampedPacket<K> input) throws InterruptedException {
-                OrderStampedPacket<V> counterPart = add(input, input1Map, input2Map, lockMap);
-                if(counterPart!=null){
-                    pairAndProduce(input, counterPart, output);
                 }
             }
         });
@@ -63,18 +46,15 @@ public class OrderStampedPacketPairer{
             @Override
             protected void tick() {
                 try {
-                    tryPairAndProduceType2(input.consume());
+                    OrderStampedPacket<V> input1 = input.consume();
+                    OrderStamp stamp = input1.stamp;
+                    input2Map.put(stamp, input1);
+                    tryPairAndProduce(stamp, input1Map, input2Map, output);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
 
-            private void tryPairAndProduceType2(OrderStampedPacket<V> input) throws InterruptedException {
-                OrderStampedPacket<K> counterPart = add(input, input2Map, input1Map, lockMap);
-                if(counterPart!=null){
-                    pairAndProduce(counterPart, input, output);
-                }
-            }
         });
 
         return outputBuffer;
