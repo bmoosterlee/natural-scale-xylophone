@@ -92,7 +92,9 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
     private Set<K> getUnfinishedData(I sampleCount) {
         Set<K> finalUnfinishedData;
         if (unfinishedData.containsKey(sampleCount)) {
-            finalUnfinishedData = unfinishedData.remove(sampleCount);
+            synchronized(unfinishedData.get(sampleCount)) {
+                finalUnfinishedData = unfinishedData.remove(sampleCount);
+            }
         } else {
             finalUnfinishedData = Collections.emptySet();
         }
@@ -103,16 +105,19 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
         Iterator<Map.Entry<I, Set<K>>> unfinishedKeyIterator = unfinishedData.entrySet().iterator();
         while (inputPort.isEmpty() && unfinishedKeyIterator.hasNext()) {
             I unfinishedKey = unfinishedKeyIterator.next().getKey();
-            if(!unfinishedData.get(unfinishedKey).isEmpty()) {
-                HashSet<K> finishedItems = new HashSet<>();
-                Set<K> unfinishedItems = unfinishedData.get(unfinishedKey);
-                synchronized (unfinishedItems) {
-                    unfinishedItems.forEach(unfinishedItem -> {
-                        calculate(unfinishedKey, unfinishedItem);
-                        finishedItems.add(unfinishedItem);
-                    });
+            try {
+                synchronized (unfinishedData.get(unfinishedKey)) {
+                    if (!unfinishedData.get(unfinishedKey).isEmpty()) {
+                        HashSet<K> finishedItems = new HashSet<>();
+                        Set<K> unfinishedItems = unfinishedData.get(unfinishedKey);
+                        unfinishedItems.forEach(unfinishedItem -> {
+                            calculate(unfinishedKey, unfinishedItem);
+                            finishedItems.add(unfinishedItem);
+                        });
+                        unfinishedData.get(unfinishedKey).removeAll(finishedItems);
+                    }
                 }
-                unfinishedData.get(unfinishedKey).removeAll(finishedItems);
+            } catch (NullPointerException ignored){
             }
         }
     }
@@ -159,11 +164,5 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
                     ));
             return new SimpleImmutableEntry<>(unfinishedOutputBuffer, finishedOutputBuffer);
         };
-    }
-
-
-    @Override
-    public Boolean isParallelisable() {
-        return false;
     }
 }
