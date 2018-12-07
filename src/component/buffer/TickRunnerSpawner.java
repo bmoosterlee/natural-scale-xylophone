@@ -2,6 +2,7 @@ package component.buffer;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class TickRunnerSpawner extends TickRunner{
     private final Collection<BoundedBuffer> inputBuffers;
@@ -10,6 +11,7 @@ public class TickRunnerSpawner extends TickRunner{
     private final AbstractComponent component;
     private final int minimumThreadCount;
     private final int maxThreadCount;
+    private final int timeTillNextCheck = 100;
 
     public TickRunnerSpawner(AbstractComponent component, int maxThreadCount){
         this.maxThreadCount = maxThreadCount;
@@ -21,6 +23,12 @@ public class TickRunnerSpawner extends TickRunner{
         liveRunners = new LinkedList<>();
         minimumThreadCount = 1;
 
+        try {
+            Thread.sleep(new Random().nextInt(timeTillNextCheck));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         add();
     }
 
@@ -31,7 +39,7 @@ public class TickRunnerSpawner extends TickRunner{
     @Override
     protected void tick() {
         if(!anyClog(outputBuffers)){
-            if(anyClog(inputBuffers)) {
+            if(!allEmpty(inputBuffers)) {
                 add();
             }
         } else {
@@ -39,7 +47,7 @@ public class TickRunnerSpawner extends TickRunner{
         }
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(timeTillNextCheck);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
