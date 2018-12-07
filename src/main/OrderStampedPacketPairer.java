@@ -23,8 +23,8 @@ public class OrderStampedPacketPairer{
         }
     }
 
-    public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> buildComponent(BoundedBuffer<K, OrderStampedPacket<K>> inputBuffer1, BoundedBuffer<V, OrderStampedPacket<V>> inputBuffer2){
-        SimpleBuffer<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> outputBuffer = new SimpleBuffer<>(1, "order stamped packet pairer - output");
+    public static <K, V> SimpleBuffer<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> buildComponent(BoundedBuffer<K, OrderStampedPacket<K>> inputBuffer1, BoundedBuffer<V, OrderStampedPacket<V>> inputBuffer2, String name){
+        SimpleBuffer<SimpleImmutableEntry<K, V>, OrderStampedPacket<SimpleImmutableEntry<K, V>>> outputBuffer = new SimpleBuffer<>(1, name);
 
         final Map<OrderStamp, OrderStampedPacket<K>> input1Map = new ConcurrentHashMap<>();
         final Map<OrderStamp, OrderStampedPacket<V>> input2Map = new ConcurrentHashMap<>();

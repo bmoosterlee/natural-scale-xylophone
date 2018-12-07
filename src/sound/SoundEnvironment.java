@@ -16,7 +16,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 
@@ -106,7 +105,7 @@ public class SoundEnvironment {
     public static void buildComponent(SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeInputBuffer, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
         OrderStampedPacketPairer.buildComponent(
                 volumeInputBuffer,
-                amplitudeInputBuffer)
+                amplitudeInputBuffer, "sound environment - pair volume and amplitude")
                         .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
                         performMethod(input ->
                         VolumeAmplitudeState.build(
