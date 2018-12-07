@@ -61,7 +61,8 @@ class SampleCalculator {
                                         return null;
                                     }
                                 },
-                                "sample calculator - fold calculated fragments"), "sample calculator - pair calculated and precalculated fragments")
+                                "sample calculator - fold calculated fragments"),
+                "sample calculator - pair calculated and precalculated fragments")
                 .performMethod(input -> add.apply(input.getKey(), input.getValue()), "sample calculator - construct finished sample");
     }
 }
