@@ -34,14 +34,8 @@ public class TickRunnerSpawner extends TickRunner{
             if(anyClog(inputBuffers)) {
                 add();
             }
-            else{
-                tryRemove();
-            }
-        }
-        else {
-//            if (allEmpty(inputBuffers)) {
-                tryRemove();
-//            }
+        } else {
+            tryRemove();
         }
 
         try {
