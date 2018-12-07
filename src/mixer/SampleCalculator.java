@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 class SampleCalculator {
     static <I, K, O> BoundedBuffer<O, OrderStampedPacket<O>> buildSampleCalculator(BoundedBuffer<I, OrderStampedPacket<I>> inputBuffer, ConcurrentHashMap<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>> unfinishedSampleFragments, PipeCallable<I, Long> addNewNotes, PipeCallable<AbstractMap.SimpleImmutableEntry<Long, AbstractMap.SimpleImmutableEntry<Frequency, K>>, O> calculation, BinaryOperator<O> add, Callable<O> outputIdentityBuilder) {
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>, Packet<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>>>, BoundedBuffer<Set<O>, Packet<Set<O>>>> precalculatorOutputs = inputBuffer
-                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes.toSequential(), "sample calculator - add new notes")
+                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes, "sample calculator - add new notes")
                 .connectTo(Orderer.buildPipe("sample calculator - order input"))
                 .connectTo(MapPrecalculator.buildPipe(
                         unfinishedSampleFragments,
