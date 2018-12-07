@@ -32,15 +32,15 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     protected void tick() {
         try {
             if(!inputPort1.isEmpty()){
-                addType1(inputPort1.consume());
+                tryPairAndProduceType1(inputPort1.consume());
             }
             else if(!inputPort2.isEmpty()){
-                addType2(inputPort2.consume());
+                tryPairAndProduceType2(inputPort2.consume());
             } else {
                 if (index) {
-                    addType1(inputPort1.consume());
+                    tryPairAndProduceType1(inputPort1.consume());
                 } else {
-                    addType2(inputPort2.consume());
+                    tryPairAndProduceType2(inputPort2.consume());
                 }
                 index = !index;
             }
@@ -49,26 +49,29 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
         }
     }
 
-    private void addType1(OrderStampedPacket<K> input1) throws InterruptedException {
-        synchronized(findOrCreateLock(input1.stamp)) {
-            if (input2Map.containsKey(input1.stamp)) {
-                OrderStampedPacket<V> counterPart = input2Map.remove(input1.stamp);
-                pairAndProduce(input1, counterPart);
-            } else {
-                input1Map.put(input1.stamp, input1);
-            }
+    private void tryPairAndProduceType1(OrderStampedPacket<K> input) throws InterruptedException {
+        OrderStampedPacket<V> counterPart = add(input, input1Map, input2Map);
+        if(counterPart!=null){
+            pairAndProduce(input, counterPart);
         }
     }
 
-    private void addType2(OrderStampedPacket<V> input2) throws InterruptedException {
-        synchronized (findOrCreateLock(input2.stamp)) {
-            if (input1Map.containsKey(input2.stamp)) {
-                OrderStampedPacket<K> counterPart = input1Map.remove(input2.stamp);
-                pairAndProduce(counterPart, input2);
+    private void tryPairAndProduceType2(OrderStampedPacket<V> input) throws InterruptedException {
+        OrderStampedPacket<K> counterPart = add(input, input2Map, input1Map);
+        if(counterPart!=null){
+            pairAndProduce(counterPart, input);
+        }
+    }
+
+    private <P, Q> OrderStampedPacket<Q> add(OrderStampedPacket<P> input, Map<OrderStamp, OrderStampedPacket<P>> myMap, Map<OrderStamp, OrderStampedPacket<Q>> counterMap) {
+        synchronized(findOrCreateLock(input.stamp)) {
+            if (counterMap.containsKey(input.stamp)) {
+                return counterMap.remove(input.stamp);
             } else {
-                input2Map.put(input2.stamp, input2);
+                myMap.put(input.stamp, input);
             }
         }
+        return null;
     }
 
     private Object findOrCreateLock(OrderStamp stamp) {
