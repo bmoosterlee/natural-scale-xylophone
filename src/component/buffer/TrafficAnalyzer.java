@@ -21,7 +21,7 @@ public class TrafficAnalyzer {
             while(true){
                 List<Map.Entry<String, AtomicInteger>> clogLog = getClogLog();
                 for (Map.Entry<String, AtomicInteger> aClogLog : clogLog) {
-                    System.out.println(aClogLog);
+                    System.out.println(String.valueOf(aClogLog.getValue()) + ": " + aClogLog.getKey());
                 }
 
                 try {
