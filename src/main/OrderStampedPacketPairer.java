@@ -7,6 +7,7 @@ import component.orderer.OrderStampedPacket;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     private final InputPort<K, OrderStampedPacket<K>> inputPort1;
@@ -75,14 +76,7 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     }
 
     private Object findOrCreateLock(OrderStamp stamp) {
-        Object lock = new Object();
-        Object existingLock = lockMap.putIfAbsent(stamp, lock);
-        if (existingLock != null) {
-            lockMap.remove(stamp);
-            return existingLock;
-        } else {
-            return lock;
-        }
+        return lockMap.computeIfAbsent(stamp, orderStamp -> new Object());
     }
 
     private void pairAndProduce(OrderStampedPacket<K> consumed1, OrderStampedPacket<V> counterPart) throws InterruptedException {
