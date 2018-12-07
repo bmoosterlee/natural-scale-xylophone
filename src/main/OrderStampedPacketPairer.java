@@ -6,6 +6,7 @@ import component.orderer.OrderStampedPacket;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     private final InputPort<K, OrderStampedPacket<K>> inputPort1;
@@ -14,7 +15,7 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
 
     private final Map<OrderStamp, OrderStampedPacket<K>> input1Map;
     private final Map<OrderStamp, OrderStampedPacket<V>> input2Map;
-    private final HashMap<OrderStamp, Object> lockMap;
+    private final Map<OrderStamp, Object> lockMap;
 
     private boolean index;
 
@@ -25,7 +26,7 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
 
         input1Map = new HashMap<>();
         input2Map = new HashMap<>();
-        lockMap = new HashMap<>();
+        lockMap = new ConcurrentHashMap<>();
     }
 
     protected void tick() {
@@ -71,14 +72,14 @@ public class OrderStampedPacketPairer<K, V> extends AbstractComponent {
     }
 
     private Object findOrCreateLock(OrderStamp stamp) {
-        synchronized (lockMap){
-            if (!lockMap.containsKey(stamp)) {
-                Object lock = new Object();
-                lockMap.put(stamp, lock);
-                return lock;
-            }
+        Object lock = new Object();
+        Object existingLock = lockMap.putIfAbsent(stamp, lock);
+        if (existingLock != null) {
+            lockMap.remove(stamp);
+            return existingLock;
+        } else {
+            return lock;
         }
-        return lockMap.remove(stamp);
     }
 
     private void pairAndProduce(OrderStampedPacket<K> consumed1, OrderStampedPacket<V> counterPart) throws InterruptedException {
