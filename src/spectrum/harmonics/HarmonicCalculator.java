@@ -69,6 +69,11 @@ public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<
             public Iterator<Entry<Harmonic, Double>> call(VolumeState input) {
                 return calculateHarmonics(input);
             }
+
+            @Override
+            public Boolean isParallelisable() {
+                return false;
+            }
         };
     }
 
