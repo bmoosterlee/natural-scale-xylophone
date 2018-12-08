@@ -17,7 +17,10 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
     private final double margin = height * 0.05;
 
     private final GUIPanel guiPanel;
-    private final OutputPort<Graphics, SimplePacket<Graphics>> graphicsPort;
+    private final InputPort<Map<Integer, Integer>, Packet<Map<Integer, Integer>>> harmonicInputPort;
+    private final InputPort<Map<Integer, Integer>, Packet<Map<Integer, Integer>>> noteInputPort;
+    private final InputPort<Integer, Packet<Integer>> cursorInputPort;
+    private final OutputPort repaintPort;
 
     public GUI(SimpleBuffer<Buckets, N> noteInputBuffer, SimpleBuffer<Buckets, H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
         LinkedList<SimpleBuffer<Buckets, N>> noteSpectrumBroadcast =
@@ -25,29 +28,22 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
 
         guiPanel = new GUIPanel();
 
-        graphicsPort = new OutputPort<>();
+        harmonicInputPort = harmonicInputBuffer
+                .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
+                .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
+                .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
 
-        graphicsPort.getBuffer()
-        .pairWith(
-            harmonicInputBuffer
-            .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
-            .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
-            .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics"))
-        .performMethod(input -> {renderHarmonicsBuckets(input.getKey(), input.getValue()); return input.getKey();})
-        .pairWith(
-                noteSpectrumBroadcast.poll()
+        noteInputPort = noteSpectrumBroadcast.poll()
                 .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
-                .resize(20))
-        .performMethod(input -> {renderNoteBuckets(input.getKey(), input.getValue()); return input.getKey();})
-        .pairWith(
-                noteSpectrumBroadcast.poll()
-                .performMethod(input1 -> new Pulse(), "harmonics - spectrum to pulse")
-                .connectTo(CursorMover.buildPipe(guiPanel)).resize(20))
-        .performMethod(input -> {renderCursorLine(input.getKey(), input.getValue()); return input.getKey();});
+                .createInputPort();
+
+        cursorInputPort = noteSpectrumBroadcast.poll()
+                .performMethod(input1 -> new Pulse(), "gui - cursor mover")
+                .connectTo(CursorMover.buildPipe(guiPanel)).createInputPort();
 
         noteSpectrumBroadcast.poll()
-            .performMethod(input -> new Pulse(), "note - spectrum to pulse")
+            .performMethod(input -> new Pulse(), "gui - note clicker")
             .connectTo(NoteClicker.buildPipe(spectrumWindow, guiPanel))
         .relayTo(outputBuffer);
 
@@ -58,27 +54,9 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
         frame.pack();
         frame.setVisible(true);
 
-        new SimpleTickRunner(new AbstractComponent() {
-            @Override
-            protected void tick() {
-                guiPanel.repaint();
-            }
+        repaintPort = new OutputPort<>();
 
-            @Override
-            protected Collection<BoundedBuffer> getInputBuffers() {
-                return Collections.singleton(graphicsPort.getBuffer());
-            }
-
-            @Override
-            protected Collection<BoundedBuffer> getOutputBuffers() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
-        }).start();
+        repaintPort.getBuffer().performMethod((InputCallable<Pulse>) input -> guiPanel.repaint());
     }
 
     class GUIPanel extends JPanel {
@@ -87,7 +65,10 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             try {
-                graphicsPort.produce(new SimplePacket<>(g));
+                renderHarmonicsBuckets(g, harmonicInputPort.consume().unwrap());
+                renderNoteBuckets(g, noteInputPort.consume().unwrap());
+                renderCursorLine(g, cursorInputPort.consume().unwrap());
+                repaintPort.produce(new SimplePacket<>(new Pulse()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
