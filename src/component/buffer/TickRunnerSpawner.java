@@ -11,7 +11,7 @@ public class TickRunnerSpawner extends TickRunner{
     private final AbstractComponent component;
     private final int minimumThreadCount;
     private final int maxThreadCount;
-    private final int timeTillNextCheck = 100;
+    private final int timeTillNextCheck = 10000;
 
     public TickRunnerSpawner(AbstractComponent component, int maxThreadCount){
         this.maxThreadCount = maxThreadCount;
@@ -22,12 +22,6 @@ public class TickRunnerSpawner extends TickRunner{
 
         liveRunners = new LinkedList<>();
         minimumThreadCount = 1;
-
-        try {
-            Thread.sleep(new Random().nextInt(timeTillNextCheck));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         add();
     }
@@ -41,9 +35,9 @@ public class TickRunnerSpawner extends TickRunner{
         if(!anyClog(outputBuffers)){
             if(!allEmpty(inputBuffers)) {
                 add();
+            } else {
+                tryRemove();
             }
-        } else {
-            tryRemove();
         }
 
         try {
