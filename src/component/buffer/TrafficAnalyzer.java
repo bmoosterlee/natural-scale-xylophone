@@ -9,6 +9,7 @@ public class TrafficAnalyzer {
     protected static TrafficAnalyzer trafficAnalyzer;
 
     private Map<String, AtomicInteger> clogLog;
+    private List<Map.Entry<String, AtomicInteger>> topClogs;
 
     public TrafficAnalyzer(){
         clogLog = new ConcurrentHashMap<>();
@@ -19,9 +20,9 @@ public class TrafficAnalyzer {
     private void start() {
         new Thread(() -> {
             while(true){
-                List<Map.Entry<String, AtomicInteger>> clogLog = getClogLog();
-                for (Map.Entry<String, AtomicInteger> aClogLog : clogLog) {
-                    System.out.println(String.valueOf(aClogLog.getValue()) + ": " + aClogLog.getKey());
+                topClogs = getTopClogs();
+                for (Map.Entry<String, AtomicInteger> clogEntry : topClogs) {
+                    System.out.println(String.valueOf(clogEntry.getValue()) + ": " + clogEntry.getKey());
                 }
 
                 try {
@@ -33,7 +34,7 @@ public class TrafficAnalyzer {
         }).start();
     }
 
-    private List<Map.Entry<String, AtomicInteger>> getClogLog(){
+    private List<Map.Entry<String, AtomicInteger>> getTopClogs(){
         Map<String, AtomicInteger> currentClogLog = clogLog;
         clogLog = new ConcurrentHashMap<>();
         Comparator<Map.Entry<String, AtomicInteger>> entryComparator = Comparator.comparingInt(o -> o.getValue().get());
