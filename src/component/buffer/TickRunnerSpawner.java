@@ -2,7 +2,9 @@ package component.buffer;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class TickRunnerSpawner extends TickRunner{
     private final Collection<BoundedBuffer> inputBuffers;
@@ -11,7 +13,7 @@ public class TickRunnerSpawner extends TickRunner{
     private final AbstractComponent component;
     private final int minimumThreadCount;
     private final int maxThreadCount;
-    private final int timeTillNextCheck = 10000;
+    private final int timeTillNextCheck = 1000;
 
     public TickRunnerSpawner(AbstractComponent component, int maxThreadCount){
         this.maxThreadCount = maxThreadCount;
@@ -32,12 +34,10 @@ public class TickRunnerSpawner extends TickRunner{
 
     @Override
     protected void tick() {
-        if(!anyClog(outputBuffers)){
-            if(!allEmpty(inputBuffers)) {
-                add();
-            } else {
-                tryRemove();
-            }
+        if(anyTopClog(inputBuffers) && !anyTopClog(outputBuffers)) {
+            add();
+        } else {
+            tryRemove();
         }
 
         try {
@@ -67,6 +67,15 @@ public class TickRunnerSpawner extends TickRunner{
     private boolean anyClog(Collection<? extends BoundedBuffer> buffers) {
         for (BoundedBuffer buffer : buffers) {
             if (buffer.isFull()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean anyTopClog(Collection<? extends BoundedBuffer> buffers) {
+        for (BoundedBuffer buffer : buffers) {
+            if (TrafficAnalyzer.trafficAnalyzer.topClogs.stream().map(Map.Entry::getKey).collect(Collectors.toSet()).contains(buffer.getName())) {
                 return true;
             }
         }
