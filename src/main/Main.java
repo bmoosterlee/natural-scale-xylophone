@@ -122,15 +122,15 @@ class Main {
     private static void playTestTone(SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer, SpectrumWindow spectrumWindow) {
         OutputPort<Frequency, SimplePacket<Frequency>> frequencyOutputPort = new OutputPort<>(newNoteBuffer);
         Frequency centerFrequency = spectrumWindow.getCenterFrequency();
-            try {
-                frequencyOutputPort.produce(new SimplePacket<>(centerFrequency));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            frequencyOutputPort.produce(new SimplePacket<>(centerFrequency));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
