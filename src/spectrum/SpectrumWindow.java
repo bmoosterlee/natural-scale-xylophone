@@ -49,7 +49,7 @@ public class SpectrumWindow {
         return centerFrequency;
     }
 
-    <V, A extends Packet<Integer>, B extends Packet<V>, Y extends Packet<AbstractMap.SimpleImmutableEntry<Integer, V>>> PipeCallable<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>> buildInBoundsFilterPipe() {
+    <V, Y extends Packet<AbstractMap.SimpleImmutableEntry<Integer, V>>> PipeCallable<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>, BoundedBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y>> buildInBoundsFilterPipe() {
         return inputBuffer1 -> {
             SimpleBuffer<AbstractMap.SimpleImmutableEntry<Integer, V>, Y> outputBuffer = new SimpleBuffer<>(1, "spectrumBuilder - in bounds filter");
 
