@@ -13,12 +13,11 @@ public class PrecalculatedBucketHistoryComponent {
             int capacity = 100;
             double multiplier = 1. / size;
 
-            BufferChainLink<Buckets, SimplePacket<Buckets>> bucketsPacketBufferChainLink = inputBuffer
-                    .rewrap()
-                    .performMethod(input1 -> input1.multiply(multiplier), "precalculated bucket history component - multiply");
             LinkedList<BoundedBuffer<Buckets, SimplePacket<Buckets>>> preparedBucketsBroadcast =
                 new LinkedList<>(
-                    bucketsPacketBufferChainLink
+                    inputBuffer
+                            .rewrap()
+                            .<Buckets, SimplePacket<Buckets>>performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.multiply(multiplier)).toSequential(), "precalculated bucket history component - multiply")
                     .broadcast(2, "precalculatedNoteHistoryComponent preparedBuckets - broadcast"));
 
             SimpleBuffer<ImmutableLinkedList<Buckets>, SimplePacket<ImmutableLinkedList<Buckets>>> historyBuffer = new SimpleBuffer<>(capacity, "history - input");
@@ -32,17 +31,15 @@ public class PrecalculatedBucketHistoryComponent {
                         .pairWith(
                                 preparedBucketsBroadcast.poll())
                         .performMethod(
-                                input1 ->
-                                        input1.getKey()
-                                        .add(input1.getValue()), "precalculated bucket history - add new buckets")
+                                ((PipeCallable<SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, ImmutableLinkedList<Buckets>>) input1 -> input1.getKey()
+                                        .add(input1.getValue())).toSequential(), "precalculated bucket history - add new buckets")
                         .pairWith(
                                 timeAverageBroadcast.poll()
                                 .pairWith(
                                         preparedBucketsBroadcast.poll())
                                 .performMethod(
-                                        input1 ->
-                                                input1.getKey()
-                                                .add(input1.getValue()), "precalculated bucket history component - add new buckets to time average"))
+                                        ((PipeCallable<SimpleImmutableEntry<Buckets, Buckets>, Buckets>) input1 -> input1.getKey()
+                                                .add(input1.getValue())).toSequential(), "precalculated bucket history component - add new buckets to time average"))
                         .performMethod(removeOldHistory(size)));
 
             unpair.getKey().relayTo(historyBuffer);
@@ -60,7 +57,7 @@ public class PrecalculatedBucketHistoryComponent {
     }
 
     public static PipeCallable<SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>> removeOldHistory(int size){
-        return input -> {
+        return ((PipeCallable<SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>, SimpleImmutableEntry<ImmutableLinkedList<Buckets>, Buckets>>) input -> {
             ImmutableLinkedList<Buckets> history = input.getKey();
             Buckets timeAverage = input.getValue();
 
@@ -72,7 +69,7 @@ public class PrecalculatedBucketHistoryComponent {
             }
 
             return new SimpleImmutableEntry<>(history, timeAverage);
-        };
+        }).toSequential();
     }
 
 }
