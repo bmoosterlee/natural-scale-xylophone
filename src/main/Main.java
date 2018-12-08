@@ -73,7 +73,6 @@ class Main {
             SpectrumBuilder.buildComponent(
                 OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
             volumeBroadcast.poll()
-                .rewrap()
                 .toOverwritable(),
             spectrumWindow);
 
