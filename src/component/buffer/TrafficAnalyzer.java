@@ -9,7 +9,7 @@ public class TrafficAnalyzer {
     protected static TrafficAnalyzer trafficAnalyzer;
 
     private Map<String, AtomicInteger> clogLog;
-    private List<Map.Entry<String, AtomicInteger>> topClogs;
+    public List<Map.Entry<String, AtomicInteger>> topClogs;
 
     public TrafficAnalyzer(){
         clogLog = new ConcurrentHashMap<>();
@@ -21,7 +21,7 @@ public class TrafficAnalyzer {
         new Thread(() -> {
             while(true){
                 topClogs = getTopClogs();
-                for (Map.Entry<String, AtomicInteger> clogEntry : topClogs) {
+                for (Map.Entry<String, AtomicInteger> clogEntry : topClogs.subList(0,Math.min(10, topClogs.size()))) {
                     System.out.println(String.valueOf(clogEntry.getValue()) + ": " + clogEntry.getKey());
                 }
 
@@ -41,7 +41,7 @@ public class TrafficAnalyzer {
         PriorityQueue<Map.Entry<String, AtomicInteger>> priorityQueue = new PriorityQueue<>(entryComparator);
         for (Map.Entry<String, AtomicInteger> entry : currentClogLog.entrySet()) {
             priorityQueue.add(entry);
-            if(priorityQueue.size() > 10){
+            if(priorityQueue.size() > 30){
                 priorityQueue.poll();
             }
         }
