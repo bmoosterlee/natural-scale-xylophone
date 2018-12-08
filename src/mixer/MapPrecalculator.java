@@ -148,12 +148,12 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
     public static <I, K, V, A extends Packet<I>, C extends Packet<SimpleImmutableEntry<I, Set<K>>>, B extends Packet<Set<V>>>
         PipeCallable<BoundedBuffer<I, A>, SimpleImmutableEntry<BoundedBuffer<SimpleImmutableEntry<I, Set<K>>, C>, BoundedBuffer<Set<V>, B>>> buildPipe(
             final ConcurrentHashMap<I, Set<K>> unfinishedData,
-            PipeCallable<SimpleImmutableEntry<I, K>, V> calculator) {
+            PipeCallable<SimpleImmutableEntry<I, K>, V> calculator, final String name) {
         return inputBuffer -> {
             SimpleBuffer<SimpleImmutableEntry<I, Set<K>>, C> unfinishedOutputBuffer =
-                    new SimpleBuffer<>(1, "precalculator - unfinished output");
+                    new SimpleBuffer<>(1, name + "precalculator - unfinished output");
             SimpleBuffer<Set<V>, B> finishedOutputBuffer =
-                    new SimpleBuffer<>(1, "precalculator - finished output");
+                    new SimpleBuffer<>(1, name + "precalculator - finished output");
             new TickRunningStrategy(
                     new MapPrecalculator<>(
                             inputBuffer,

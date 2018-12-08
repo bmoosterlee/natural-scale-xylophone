@@ -16,13 +16,14 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 class SampleCalculator {
-    static <I, K, O> BoundedBuffer<O, OrderStampedPacket<O>> buildSampleCalculator(BoundedBuffer<I, OrderStampedPacket<I>> inputBuffer, ConcurrentHashMap<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>> unfinishedSampleFragments, PipeCallable<I, Long> addNewNotes, PipeCallable<AbstractMap.SimpleImmutableEntry<Long, AbstractMap.SimpleImmutableEntry<Frequency, K>>, O> calculation, BinaryOperator<O> add, Callable<O> outputIdentityBuilder) {
+    static <I, K, O> BoundedBuffer<O, OrderStampedPacket<O>> buildSampleCalculator(BoundedBuffer<I, OrderStampedPacket<I>> inputBuffer, ConcurrentHashMap<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>> unfinishedSampleFragments, PipeCallable<I, Long> addNewNotes, PipeCallable<AbstractMap.SimpleImmutableEntry<Long, AbstractMap.SimpleImmutableEntry<Frequency, K>>, O> calculation, BinaryOperator<O> add, Callable<O> outputIdentityBuilder, String name) {
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>, Packet<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>>>, BoundedBuffer<Set<O>, Packet<Set<O>>>> precalculatorOutputs = inputBuffer
-                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes, "sample calculator - add new notes")
-                .connectTo(Orderer.buildPipe("sample calculator - order input"))
+                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes, name + " - add new notes")
+                .connectTo(Orderer.buildPipe(name + " - order input"))
                 .connectTo(MapPrecalculator.buildPipe(
                         unfinishedSampleFragments,
-                        calculation
+                        calculation,
+                        name
                 ));
 
         return OrderStampedPacketPairer.buildComponent(
@@ -35,7 +36,7 @@ class SampleCalculator {
                                 return null;
                             }
                         },
-                        "sample calculator - fold precalculated fragments"),
+                        name + " - fold precalculated fragments"),
                 precalculatorOutputs.getKey()
                         .performMethod(input2 -> {
                                     Long sampleCount = input2.getKey();
@@ -52,7 +53,7 @@ class SampleCalculator {
                                             })
                                             .collect(Collectors.toSet());
                                 },
-                                "sample calculator - calculate fragments")
+                                name + " - calculate fragments")
                         .performMethod(input2 -> {
                                     try {
                                         return input2.stream().reduce(outputIdentityBuilder.call(), add);
@@ -61,8 +62,8 @@ class SampleCalculator {
                                         return null;
                                     }
                                 },
-                                "sample calculator - fold calculated fragments"),
-                "sample calculator - pair calculated and precalculated fragments")
-                .performMethod(input -> add.apply(input.getKey(), input.getValue()), "sample calculator - construct finished sample");
+                                name + " - fold calculated fragments"),
+                name + " - pair calculated and precalculated fragments")
+                .performMethod(input -> add.apply(input.getKey(), input.getValue()), name + " - construct finished sample");
     }
 }

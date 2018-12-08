@@ -25,7 +25,8 @@ class VolumeCalculator extends SampleCalculator{
                         this::addNewNotes,
                         input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()),
                         VolumeState::add,
-                        () -> new VolumeState(new HashMap<>()));
+                        () -> new VolumeState(new HashMap<>()),
+                        "volume calculator");
             }
 
             private Long addNewNotes(NewNotesVolumeData newNotesVolumeData) {

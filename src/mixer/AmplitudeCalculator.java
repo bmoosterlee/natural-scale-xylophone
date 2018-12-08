@@ -29,7 +29,8 @@ class AmplitudeCalculator extends SampleCalculator {
                         this::addNewNotes,
                         input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()),
                         AmplitudeState::add,
-                        () -> new AmplitudeState(new HashMap<>()));
+                        () -> new AmplitudeState(new HashMap<>()),
+                        "amplitude calculator");
             }
 
             private Long addNewNotes(NewNotesAmplitudeData newNotesAmplitudeData) {
