@@ -21,7 +21,7 @@ public class Mapper<K, V, B extends Packet<V>, Y extends Packet<SimpleImmutableE
     protected void tick() {
         try {
             Y consumed = inputPort.consume();
-            outputPortMap.get(consumed.unwrap().getKey()).produce(consumed.transform(input -> input.getValue()));
+            outputPortMap.get(consumed.unwrap().getKey()).produce(consumed.transform(SimpleImmutableEntry::getValue));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
