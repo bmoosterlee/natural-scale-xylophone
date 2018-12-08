@@ -57,6 +57,11 @@ public class Mapper<K, V, B extends Packet<V>, Y extends Packet<SimpleImmutableE
         return outputBuffers;
     }
 
+    @Override
+    public Boolean isParallelisable(){
+        return false;
+    }
+
     public static <K, V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> Map<K, BoundedBuffer<V, B>> buildComponent(BoundedBuffer<SimpleImmutableEntry<K, V>, Y> inputBuffer, Collection<K> range){
         Map<K, BoundedBuffer<V, B>> outputBufferMap = new HashMap<>();
         for (K index : range) {
