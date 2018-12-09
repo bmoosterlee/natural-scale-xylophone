@@ -9,7 +9,7 @@ public class Batcher {
 
     public static <K, V, A extends Packet<K>, B extends Packet<V>> PipeCallable<BoundedBuffer<K, A>, BoundedBuffer<V, B>> buildPipe(PipeCallable<K, V> method){
         return inputBuffer -> {
-            SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "batcher - pulse to flusher");
+            SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(inputBuffer.getSize(), "batcher - pulse to flusher");
 
             LinkedList<SimpleBuffer<List<B>, SimplePacket<List<B>>>> processedBatch = new LinkedList<>(
                     batchPulses
