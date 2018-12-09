@@ -151,9 +151,9 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
             PipeCallable<SimpleImmutableEntry<I, K>, V> calculator, final String name) {
         return inputBuffer -> {
             SimpleBuffer<SimpleImmutableEntry<I, Set<K>>, C> unfinishedOutputBuffer =
-                    new SimpleBuffer<>(1, name + " precalculator - unfinished output");
+                    new SimpleBuffer<>(100, name + " precalculator - unfinished output");
             SimpleBuffer<Set<V>, B> finishedOutputBuffer =
-                    new SimpleBuffer<>(1, name + " precalculator - finished output");
+                    new SimpleBuffer<>(100, name + " precalculator - finished output");
             new TickRunningStrategy(
                     new MapPrecalculator<>(
                             inputBuffer,

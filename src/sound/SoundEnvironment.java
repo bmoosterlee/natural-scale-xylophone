@@ -49,9 +49,9 @@ public class SoundEnvironment {
                 sourceDataLine.start();
 
                 BoundedBuffer<Byte, OrderStampedPacket<Byte>> fittedAmplitudes = inputBuffer
-                        .performMethod(VolumeAmplitudeState::toDouble, "sound environment - volume amplitude to signal")
-                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, "sound environment - fit amplitude")
-                        .connectTo(Orderer.buildPipe("sound environment - sample orderer"))
+                        .performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
+                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, 100, "sound environment - fit amplitude")
+                        .connectTo(Orderer.buildPipe(100, "sound environment - sample orderer"))
                         .resize(Math.max(1, sampleLookahead));
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse");
@@ -112,6 +112,7 @@ public class SoundEnvironment {
                         VolumeAmplitudeState.build(
                                 input.getKey(),
                                 input.getValue()),
+                        100,
                         "sound environment - merge volume and amplitude state")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }

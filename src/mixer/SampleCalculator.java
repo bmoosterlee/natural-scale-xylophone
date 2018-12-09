@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 class SampleCalculator {
     static <I, K, O> BoundedBuffer<O, OrderStampedPacket<O>> buildSampleCalculator(BoundedBuffer<I, OrderStampedPacket<I>> inputBuffer, ConcurrentHashMap<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>> unfinishedSampleFragments, PipeCallable<I, Long> addNewNotes, PipeCallable<AbstractMap.SimpleImmutableEntry<Long, AbstractMap.SimpleImmutableEntry<Frequency, K>>, O> calculation, BinaryOperator<O> add, Callable<O> outputIdentityBuilder, String name) {
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>, Packet<AbstractMap.SimpleImmutableEntry<Long, Set<AbstractMap.SimpleImmutableEntry<Frequency, K>>>>>, BoundedBuffer<Set<O>, Packet<Set<O>>>> precalculatorOutputs = inputBuffer
-                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes, name + " - add new notes")
-                .connectTo(Orderer.buildPipe(name + " - order input"))
+                .<Long, OrderStampedPacket<Long>>performMethod(addNewNotes, 100, name + " - add new notes")
+                .connectTo(Orderer.buildPipe(100, name + " - order input"))
                 .connectTo(MapPrecalculator.buildPipe(
                         unfinishedSampleFragments,
                         calculation,
@@ -36,6 +36,7 @@ class SampleCalculator {
                                 return null;
                             }
                         },
+                        100,
                         name + " - fold precalculated fragments"),
                 precalculatorOutputs.getKey()
                         .performMethod(input2 -> {
@@ -53,6 +54,7 @@ class SampleCalculator {
                                             })
                                             .collect(Collectors.toSet());
                                 },
+                                100,
                                 name + " - calculate fragments")
                         .performMethod(input2 -> {
                                     try {
@@ -62,8 +64,9 @@ class SampleCalculator {
                                         return null;
                                     }
                                 },
+                                100,
                                 name + " - fold calculated fragments"),
                 name + " - pair calculated and precalculated fragments")
-                .performMethod(input -> add.apply(input.getKey(), input.getValue()), name + " - construct finished sample");
+                .performMethod(input -> add.apply(input.getKey(), input.getValue()), 100, name + " - construct finished sample");
     }
 }

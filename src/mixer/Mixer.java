@@ -19,11 +19,11 @@ public class Mixer {
     public static <A extends Packet<Pulse>, B extends Packet<Frequency>> SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildComponent(BoundedBuffer<Pulse, A> inputBuffer, BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate){
             LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
                     inputBuffer
-                            .performMethod(Counter.build(), "mixer - count samples")
+                            .performMethod(Counter.build(), sampleRate.sampleRate / 32, "mixer - count samples")
                             .connectTo(OrderStamper.buildPipe())
                             .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                            .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), "mixer - build envelope")
-                            .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, "mixer - add new notes")
+                            .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "mixer - build envelope")
+                            .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - add new notes")
                     .broadcast(2, "mixer - new note data"));
 
             return new SimpleImmutableEntry<>(
@@ -34,7 +34,7 @@ public class Mixer {
                                     new NewNotesAmplitudeData(
                                             input.getSampleCount(),
                                             input.getEndingSampleCount(),
-                                            input.getNewNotes()), "mixer - extract amplitude data from new note data")
+                                            input.getNewNotes()), sampleRate.sampleRate / 32, "mixer - extract amplitude data from new note data")
                             .connectTo(AmplitudeCalculator.buildPipe(sampleRate)));
     }
 

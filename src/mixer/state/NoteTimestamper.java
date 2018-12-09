@@ -20,14 +20,14 @@ public class NoteTimestamper {
             return sampleCountBroadcast.poll()
                     .pairWith(
                             sampleCountBroadcast.poll()
-                                    .performMethod(((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(), "note timestamper - to pulse")
-                                    .performMethod(Flusher.flush(newNoteBuffer).toSequential(), "note timestamper - flush new notes"))
+                                    .performMethod(((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(), 100, "note timestamper - to pulse")
+                                    .performMethod(Flusher.flush(newNoteBuffer).toSequential(), 100, "note timestamper - flush new notes"))
                     .performMethod(
                             ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
                                     input1 -> new TimestampedFrequencies(
                                             input1.getKey(),
                                             input1.getValue()))
-                                    .toSequential(), "note timestamper - build timestamped frequencies");
+                                    .toSequential(), 100, "note timestamper - build timestamped frequencies");
         };
     }
 
