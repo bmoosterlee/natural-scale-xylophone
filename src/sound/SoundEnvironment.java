@@ -105,13 +105,14 @@ public class SoundEnvironment {
     public static void buildComponent(SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeInputBuffer, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
         OrderStampedPacketPairer.buildComponent(
                 volumeInputBuffer,
-                amplitudeInputBuffer, "sound environment - pair volume and amplitude")
-                .toOverwritable()
-                        .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
+                amplitudeInputBuffer,
+                100,
+                "sound environment - pair volume and amplitude")
+                .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
                         performMethod(input ->
-                        VolumeAmplitudeState.build(
-                                input.getKey(),
-                                input.getValue()),
+                                VolumeAmplitudeState.build(
+                                        input.getKey(),
+                                        input.getValue()),
                         100,
                         "sound environment - merge volume and amplitude state")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));

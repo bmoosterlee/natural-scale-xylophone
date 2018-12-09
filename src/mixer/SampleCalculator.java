@@ -66,6 +66,7 @@ class SampleCalculator {
                                 },
                                 100,
                                 name + " - fold calculated fragments"),
+                100,
                 name + " - pair calculated and precalculated fragments")
                 .performMethod(input -> add.apply(input.getKey(), input.getValue()), 100, name + " - construct finished sample");
     }
