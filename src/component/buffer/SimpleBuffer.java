@@ -24,6 +24,11 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
+    public int getSize() {
+        return boundedStrategy.getSize();
+    }
+
+    @Override
     public List<A> flush() throws InterruptedException {
         return boundedStrategy.flush();
     }

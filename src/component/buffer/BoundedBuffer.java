@@ -9,6 +9,8 @@ import java.util.List;
 public interface BoundedBuffer<K, A extends Packet<K>> {
     String getName();
 
+    int getSize();
+
     List<A> flush() throws InterruptedException;
 
     void offer(A packet) throws InterruptedException;

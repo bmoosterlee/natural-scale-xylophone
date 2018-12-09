@@ -16,4 +16,6 @@ public interface BufferStrategy<T> {
     boolean isFull();
 
     String getName();
+
+    int getSize();
 }

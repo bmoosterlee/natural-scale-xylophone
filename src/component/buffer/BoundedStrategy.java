@@ -6,12 +6,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 
 public class BoundedStrategy<T> implements BufferStrategy<T> {
+    private final int capacity;
     private String name;
     private final ConcurrentLinkedQueue<T> buffer;
     private final Semaphore emptySpots;
     private final Semaphore filledSpots;
 
     public BoundedStrategy(int capacity, String name) {
+        this.capacity = capacity;
         if (name == null) {
             this.name = "unnamed";
         }
@@ -19,8 +21,8 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
             this.name = name;
         }
         buffer = new ConcurrentLinkedQueue<>();
-        emptySpots = new Semaphore(capacity);
-        filledSpots = new Semaphore(capacity);
+        emptySpots = new Semaphore(Math.max(1, capacity));
+        filledSpots = new Semaphore(Math.max(1, capacity));
 
         filledSpots.drainPermits();
     }
@@ -84,6 +86,11 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public int getSize() {
+        return capacity;
     }
 
     ConcurrentLinkedQueue<T> getBuffer() {

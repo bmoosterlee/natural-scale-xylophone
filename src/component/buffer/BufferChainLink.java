@@ -26,6 +26,11 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
+    public int getSize() {
+        return buffer.getSize();
+    }
+
+    @Override
     public List<A> flush() throws InterruptedException {
         return buffer.flush();
     }
