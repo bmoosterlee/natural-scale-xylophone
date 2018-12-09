@@ -20,33 +20,34 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
         try {
             OrderStampedPacket<T> consumed = input.consume();
             if ((index != null && index.successor(consumed)) || (index == null && consumed.hasFirstStamp())) {
-                index = consumed;
                 output.produce(consumed);
-                clearBacklog();
+                index = clearBacklog(consumed);
             } else{
                 backlog.add(consumed);
             }
-            defragmentContinuously();
+//            defragmentContinuously();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void clearBacklog() throws InterruptedException {
-        while((!backlog.isEmpty() && index.successor(backlog.peek()) || (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())))) {
-            if(!backlog.isEmpty() && index.successor(backlog.peek())) {
+    private OrderStampedPacket<T> clearBacklog(OrderStampedPacket<T> startingIndex) throws InterruptedException {
+        OrderStampedPacket<T> currentIndex = startingIndex;
+        while((!backlog.isEmpty() && currentIndex.successor(backlog.peek()) || (!defragmentedBacklog.isEmpty() && currentIndex.successor(defragmentedBacklog.peek().peek())))) {
+            if(!backlog.isEmpty() && currentIndex.successor(backlog.peek())) {
                 OrderStampedPacket<T> nextPacket = backlog.poll();
-                index = nextPacket;
+                currentIndex = nextPacket;
                 output.produce(nextPacket);
             }
             if (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())) {
                 LinkedList<OrderStampedPacket<T>> nextFragment = defragmentedBacklog.poll();
-                index = nextFragment.peekLast();
+                currentIndex = nextFragment.peekLast();
                 for (OrderStampedPacket<T> tOrderStampedPacket : nextFragment) {
                     output.produce(tOrderStampedPacket);
                 }
             }
         }
+        return currentIndex;
     }
 
     private void defragmentContinuously() {
@@ -92,11 +93,6 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
         }
         defragmentedInput.add(defragmentedSegment);
         return defragmentedInput;
-    }
-
-    @Override
-    public Boolean isParallelisable(){
-        return false;
     }
 
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(String name){
