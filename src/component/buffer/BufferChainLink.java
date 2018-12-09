@@ -76,7 +76,12 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
 
     @Override
     public <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, String name) {
-        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, 1, name);
+        return performMethod(method, 1, name);
+    }
+
+    @Override
+    public <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, int capacity, String name) {
+        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, method, capacity, name);
     }
 
     @Override

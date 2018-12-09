@@ -1,5 +1,7 @@
 package component.buffer;
 
+import component.Broadcast;
+
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.List;
@@ -26,6 +28,8 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
     <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method);
 
     <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, String name);
+
+    <V, B extends Packet<V>> BufferChainLink<V, B> performMethod(PipeCallable<K, V> method, int capacity, String name);
 
     void performMethod(InputCallable<K> method);
 
