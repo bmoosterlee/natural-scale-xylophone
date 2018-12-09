@@ -15,7 +15,7 @@ public class Batcher {
                     batchPulses
                     .performMethodUnchained(Flusher.flushOrConsumePackets(inputBuffer), "batcher - input")
                     .<List<B>, SimplePacket<List<B>>>performMethodUnchained(batch(input1 -> input1.transform(method)), "batcher - processed batch")
-                    .broadcast(2));
+                    .broadcast(2, "batcher - processed batch broadcast"));
 
             processedBatch.poll()
                     .performMethodUnchained(input -> new Pulse(), "batcher - output to pulse")
