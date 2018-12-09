@@ -100,8 +100,12 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
     }
 
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(String name){
+        return buildPipe(1, name);
+    }
+
+    public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(int capacity, String name){
         return inputBuffer -> {
-            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, name);
+            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(capacity, name);
             new TickRunningStrategy(new Orderer<>(inputBuffer, outputBuffer));
             return outputBuffer;
         };
