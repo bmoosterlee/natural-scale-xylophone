@@ -58,7 +58,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
     }
 
     @Override
-    protected Collection<BoundedBuffer<?, ? extends Packet<? extends Object>>> getOutputBuffers() {
+    protected Collection<BoundedBuffer<?, ? extends Packet<?>>> getOutputBuffers() {
         return Arrays.asList(unfinishedOutputPort.getBuffer(), finishedOutputPort.getBuffer());
     }
 
