@@ -64,7 +64,7 @@ public class TickRunnerSpawner extends TickRunner{
         }
     }
 
-    private boolean anyClog(Collection<? extends BoundedBuffer> buffers) {
+    static boolean anyClog(Collection<? extends BoundedBuffer> buffers) {
         for (BoundedBuffer buffer : buffers) {
             if (buffer.isFull()) {
                 return true;
