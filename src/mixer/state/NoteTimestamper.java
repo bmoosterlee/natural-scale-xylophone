@@ -15,7 +15,7 @@ public class NoteTimestamper {
             LinkedList<BoundedBuffer<Long, A>> sampleCountBroadcast =
                     new LinkedList<>(
                             inputBuffer
-                                    .broadcast(2, "note timestamper - broadcast"));
+                                    .broadcast(2, 100, "note timestamper - broadcast"));
 
             return sampleCountBroadcast.poll()
                     .pairWith(

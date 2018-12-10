@@ -23,7 +23,7 @@ public class Mixer {
                             .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                             .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "mixer - build envelope")
                             .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - extract new note data")
-                    .broadcast(2, "mixer - new note data"));
+                    .broadcast(2, 100, "mixer - new note data"));
 
             return new SimpleImmutableEntry<>(
                     newNoteDataBroadcast.poll()

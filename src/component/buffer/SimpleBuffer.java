@@ -115,6 +115,11 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers, int capacity, String name) {
+        return Broadcast.broadcast(this, consumers, capacity, name);
+    }
+
+    @Override
     public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other){
         return Pairer.pair(this, other);
     }

@@ -43,6 +43,8 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     Collection<SimpleBuffer<K, A>> broadcast(int consumers, String name);
 
+    Collection<SimpleBuffer<K, A>> broadcast(int consumers, int capacity, String name);
+
     <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other);
 
     <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other, String name);

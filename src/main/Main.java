@@ -65,7 +65,7 @@ class Main {
 
         LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
-                .broadcast(2, "main volume - broadcast"));
+                .broadcast(2, 100, "main volume - broadcast"));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), volumeAmplitudeStateBuffers.getValue(), SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 

@@ -115,6 +115,11 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers, int capacity, String name) {
+        return breakChain().broadcast(consumers, capacity, name);
+    }
+
+    @Override
     public <V, B extends Packet<V>, Y extends Packet<AbstractMap.SimpleImmutableEntry<K, V>>> SimpleBuffer<AbstractMap.SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other){
         return breakChain().pairWith(other);
     }
