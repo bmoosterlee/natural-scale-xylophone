@@ -28,6 +28,7 @@ public class NoteTimestamper {
                                             Flusher.flush(newNoteBuffer).toSequential(),
                                             100,
                                             "note timestamper - flush new notes"),
+                            100,
                             "note timestamper - pair notes and sample count")
                     .performMethod(
                             ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
