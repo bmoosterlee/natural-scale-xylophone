@@ -75,7 +75,7 @@ public class TickRunnerSpawner extends TickRunner{
 
     private boolean anyTopClog(Collection<? extends BoundedBuffer> buffers) {
         for (BoundedBuffer buffer : buffers) {
-            if (TrafficAnalyzer.trafficAnalyzer.topClogs.stream().map(Map.Entry::getKey).collect(Collectors.toSet()).contains(buffer.getName())) {
+            if (TrafficAnalyzer.trafficAnalyzer.topClogs.keySet().contains(buffer.getName())) {
                 return true;
             }
         }
