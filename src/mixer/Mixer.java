@@ -12,7 +12,6 @@ import sound.SampleRate;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.concurrent.Callable;
 
 public class Mixer {
 
@@ -20,7 +19,7 @@ public class Mixer {
             LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
                     inputBuffer
                             .performMethod(Counter.build(), sampleRate.sampleRate / 32, "mixer - count samples")
-                            .connectTo(OrderStamper.buildPipe())
+                            .connectTo(OrderStamper.buildPipe(sampleRate.sampleRate / 32))
                             .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                             .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "mixer - build envelope")
                             .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - add new notes")

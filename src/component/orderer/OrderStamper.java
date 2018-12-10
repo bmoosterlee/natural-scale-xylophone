@@ -11,9 +11,9 @@ public class OrderStamper {
         counter = firstStamp;
     }
 
-    public static <T, A extends Packet<T>> PipeCallable<BoundedBuffer<T, A>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(){
+    public static <T, A extends Packet<T>> PipeCallable<BoundedBuffer<T, A>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(int capacity){
         return inputBuffer -> {
-            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(1, "order stamper");
+            SimpleBuffer<T, OrderStampedPacket<T>> outputBuffer = new SimpleBuffer<>(capacity, "order stamper");
 
             InputPort<T, A> inputPort = inputBuffer.createInputPort();
             new TickRunningStrategy(new AbstractPipeComponent<>(inputPort, outputBuffer.createOutputPort()) {
