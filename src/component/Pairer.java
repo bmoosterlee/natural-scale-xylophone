@@ -55,9 +55,4 @@ public class Pairer<K, V, A extends Packet<K>, B extends Packet<V>, Y extends Pa
     protected Collection<BoundedBuffer> getOutputBuffers() {
         return Collections.singletonList(outputPort.getBuffer());
     }
-
-    @Override
-    public Boolean isParallelisable(){
-        return false;
-    }
 }
