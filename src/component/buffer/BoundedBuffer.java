@@ -39,9 +39,9 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     void connectTo(InputCallable<BoundedBuffer<K, A>> pipe);
 
-    Collection<SimpleBuffer<K, A>> broadcast(int size);
+    Collection<SimpleBuffer<K, A>> broadcast(int consumers);
 
-    Collection<SimpleBuffer<K, A>> broadcast(int size, String name);
+    Collection<SimpleBuffer<K, A>> broadcast(int consumers, String name);
 
     <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other);
 

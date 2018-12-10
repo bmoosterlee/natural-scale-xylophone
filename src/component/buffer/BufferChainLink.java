@@ -105,13 +105,13 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
-    public Collection<SimpleBuffer<K, A>> broadcast(int size) {
-        return breakChain().broadcast(size);
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers) {
+        return breakChain().broadcast(consumers);
     }
 
     @Override
-    public Collection<SimpleBuffer<K, A>> broadcast(int size, String name) {
-        return breakChain().broadcast(size, name);
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers, String name) {
+        return breakChain().broadcast(consumers, name);
     }
 
     @Override

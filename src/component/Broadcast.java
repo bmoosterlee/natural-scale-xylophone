@@ -32,13 +32,13 @@ public class Broadcast<K, T extends Packet<K>> extends AbstractComponent<K, K, T
         }
     }
 
-    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int size){
-        return broadcast(inputBuffer, size, "unnamed broadcast");
+    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int consumers){
+        return broadcast(inputBuffer, consumers, "unnamed broadcast");
     }
 
-    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int size, String name) {
+    public static <K, T extends Packet<K>> Collection<SimpleBuffer<K, T>> broadcast(SimpleBuffer<K, T> inputBuffer, int consumers, String name) {
         Collection<SimpleBuffer<K, T>> outputBuffers = new LinkedList<>();
-        for(int i = 0; i<size; i++){
+        for(int i = 0; i<consumers; i++){
             outputBuffers.add(new SimpleBuffer<>(1, name + " broadcast: buffer " + String.valueOf(i)));
         }
         new TickRunningStrategy(new Broadcast<>(inputBuffer, outputBuffers));

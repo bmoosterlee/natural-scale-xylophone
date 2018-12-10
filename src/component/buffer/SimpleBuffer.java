@@ -105,13 +105,13 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
-    public Collection<SimpleBuffer<K, A>> broadcast(int size) {
-        return Broadcast.broadcast(this, size);
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers) {
+        return Broadcast.broadcast(this, consumers);
     }
 
     @Override
-    public Collection<SimpleBuffer<K, A>> broadcast(int size, String name) {
-        return Broadcast.broadcast(this, size, name);
+    public Collection<SimpleBuffer<K, A>> broadcast(int consumers, String name) {
+        return Broadcast.broadcast(this, consumers, name);
     }
 
     @Override
