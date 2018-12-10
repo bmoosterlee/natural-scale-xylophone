@@ -130,6 +130,11 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BoundedBuffer<V, B> other, int capacity, String name) {
+        return Pairer.pair(this, other, capacity, name);
+    }
+
+    @Override
     public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other){
         return Pairer.pair(this, other.breakChain());
     }
@@ -137,6 +142,11 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     @Override
     public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other, String name){
         return Pairer.pair(this, other.breakChain(), name);
+    }
+
+    @Override
+    public <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other, int capacity, String name) {
+        return Pairer.pair(this, other.breakChain(), capacity, name);
     }
 
     @Override

@@ -37,7 +37,11 @@ public class Pairer<K, V, A extends Packet<K>, B extends Packet<V>, Y extends Pa
     }
 
     public static <K, V, A extends Packet<K>, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pair(BoundedBuffer<K, A> inputBuffer1, BoundedBuffer<V, B> inputBuffer2, String name){
-        SimpleBuffer<SimpleImmutableEntry<K, V>, Y> outputBuffer = new SimpleBuffer<>(1, name);
+        return pair(inputBuffer1, inputBuffer2, 1, name);
+    }
+
+    public static <K, V, A extends Packet<K>, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pair(BoundedBuffer<K, A> inputBuffer1, BoundedBuffer<V, B> inputBuffer2, int capacity, String name){
+        SimpleBuffer<SimpleImmutableEntry<K, V>, Y> outputBuffer = new SimpleBuffer<>(capacity, name);
         new TickRunningStrategy(new Pairer<>(inputBuffer1, inputBuffer2, outputBuffer));
         return outputBuffer;
     }
