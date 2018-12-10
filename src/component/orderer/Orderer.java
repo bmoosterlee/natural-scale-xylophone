@@ -3,15 +3,16 @@ package component.orderer;
 import component.buffer.*;
 
 import java.util.*;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T>, OrderStampedPacket<T>> {
-    private final PriorityQueue<OrderStampedPacket<T>> backlog;
+    private final PriorityBlockingQueue<OrderStampedPacket<T>> backlog;
     private LinkedList<LinkedList<OrderStampedPacket<T>>> defragmentedBacklog;
     private OrderStampedPacket<T> index;
 
     public Orderer(BoundedBuffer<T, OrderStampedPacket<T>> input, BoundedBuffer<T, OrderStampedPacket<T>> output) {
         super(input.createInputPort(), output.createOutputPort());
-        backlog = new PriorityQueue<>();
+        backlog = new PriorityBlockingQueue<>();
         defragmentedBacklog = new LinkedList<>();
     }
 
@@ -39,7 +40,7 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
                 currentIndex = nextPacket;
                 output.produce(nextPacket);
             }
-            if (!defragmentedBacklog.isEmpty() && index.successor(defragmentedBacklog.peek().peek())) {
+            if (!defragmentedBacklog.isEmpty() && currentIndex.successor(defragmentedBacklog.peek().peek())) {
                 LinkedList<OrderStampedPacket<T>> nextFragment = defragmentedBacklog.poll();
                 currentIndex = nextFragment.peekLast();
                 for (OrderStampedPacket<T> tOrderStampedPacket : nextFragment) {
