@@ -2,15 +2,15 @@ package component.buffer;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class BoundedStrategy<T> implements BufferStrategy<T> {
     private final int capacity;
     private String name;
-    private final ConcurrentLinkedQueue<T> buffer;
-    private final Semaphore emptySpots;
-    private final Semaphore filledSpots;
+    private final ArrayBlockingQueue<T> buffer;
 
     public BoundedStrategy(int capacity, String name) {
         this.capacity = capacity;
@@ -20,22 +20,14 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         else {
             this.name = name;
         }
-        buffer = new ConcurrentLinkedQueue<>();
-        emptySpots = new Semaphore(Math.max(1, capacity));
-        filledSpots = new Semaphore(Math.max(1, capacity));
-
-        filledSpots.drainPermits();
+        buffer = new ArrayBlockingQueue<>(capacity);
     }
 
     @Override
     public List<T> flush() throws InterruptedException {
-        int length = filledSpots.availablePermits();
-        int count = 0;
-
         List<T> list = new LinkedList<>();
-        while (!isEmpty() && count < length) {
+        while (!isEmpty()) {
             list.add(poll());
-            count++;
         }
         return list;
     }
@@ -48,39 +40,33 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         if (isFull()) {
             TrafficAnalyzer.logClog(name);
         }
-        emptySpots.acquire();
-        buffer.offer(packet);
-        filledSpots.release();
+        buffer.put(packet);
     }
 
     @Override
     public T poll() throws InterruptedException {
-        filledSpots.acquire();
-        T item = buffer.poll();
-        emptySpots.release();
-        return item;
+        return buffer.take();
     }
 
     @Override
     public T tryPoll() {
-        if(filledSpots.tryAcquire()){
-            T item = buffer.poll();
-            emptySpots.release();
-            return item;
+        T item = null;
+        try {
+            item = buffer.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        else{
-            return null;
-        }
+        return item;
     }
 
     @Override
     public boolean isEmpty() {
-        return filledSpots.availablePermits() == 0;
+        return buffer.isEmpty();
     }
 
     @Override
     public boolean isFull() {
-        return emptySpots.availablePermits() == 0;
+        return buffer.remainingCapacity() == 0;
     }
 
     @Override
@@ -93,15 +79,8 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         return capacity;
     }
 
-    ConcurrentLinkedQueue<T> getBuffer() {
+    ArrayBlockingQueue<T> getBuffer() {
         return buffer;
     }
 
-    Semaphore getEmptySpots() {
-        return emptySpots;
-    }
-
-    Semaphore getFilledSpots() {
-        return filledSpots;
-    }
 }

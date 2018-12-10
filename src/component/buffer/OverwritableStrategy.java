@@ -6,15 +6,13 @@ public class OverwritableStrategy<T> extends BoundedStrategy<T> {
     }
 
     @Override
-    public void offer(T packet) throws InterruptedException {
-        if(getEmptySpots().availablePermits()==0){
+    public void offer(T packet) {
+        if(isFull()){
             getBuffer().offer(packet);
             getBuffer().poll();
         }
         else{
-            getEmptySpots().acquire();
             getBuffer().offer(packet);
-            getFilledSpots().release();
         }
     }
 }
