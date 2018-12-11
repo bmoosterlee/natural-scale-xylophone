@@ -146,12 +146,15 @@ public class TrafficAnalyzer {
     public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap, Callable<Integer> threadCountFunction) {
         this.bufferMap.putAll(bufferMap);
 
-        Set<String> nonRootNodes = components.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-        LinkedList<String> rootInputNames = new LinkedList<>(inputNames);
-        rootInputNames.removeAll(nonRootNodes);
-        rootComponents.addAll(rootInputNames);
-
-        rootComponents.removeAll(outputNames);
+        if(!inputNames.isEmpty()) {
+            Set<String> nonRootNodes = components.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+            LinkedList<String> rootInputNames = new LinkedList<>(inputNames);
+            rootInputNames.removeAll(nonRootNodes);
+            rootComponents.addAll(rootInputNames);
+            rootComponents.removeAll(outputNames);
+        } else {
+            rootComponents.addAll(outputNames);
+        }
 
         if(!outputNames.isEmpty()) {
             inputNames.forEach(inputName -> {
