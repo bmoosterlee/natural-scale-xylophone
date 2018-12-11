@@ -35,21 +35,21 @@ public class BucketsAverager {
                 LinkedList<SimpleBuffer<Buckets, A>> multiplierBroadcast =
                         new LinkedList<>(
                                 hollowBucketsBroadcast.poll()
-                                        .<Buckets, A>performMethod(((PipeCallable<Buckets, Buckets>) input2 -> input2.multiply(multipliers[finalIMultiplier])).toSequential(), "buckets averager multiplier - output")
+                                        .<Buckets, A>performMethod(((PipeCallable<Buckets, Buckets>) input2 -> input2.multiply(multipliers[finalIMultiplier])).toSequential(), "buckets averager multiplier - output" + multipliers[finalIMultiplier])
                                         .broadcast(2, "buckets averager multiplier - broadcast"));
 
                 int finalI = i + 1;
 
                 adderBuffers.add(
                         multiplierBroadcast.poll()
-                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(finalI)).toSequential(), "buckets averager transpose positive"));
+                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(finalI)).toSequential(), "buckets averager transpose positive" + finalI));
 
                 adderBuffers.add(
                         multiplierBroadcast.poll()
-                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(-(finalI))).toSequential(), "buckets averager transpose negative"));
+                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(-(finalI))).toSequential(), "buckets averager transpose negative" + -finalI));
             }
 
-            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(((PipeCallable<List<Buckets>, Buckets>) Buckets::add).toSequential(), "buckets averager - add buckets");
+            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(((PipeCallable<List<Buckets>, Buckets>) Buckets::add).toSequential(), "buckets averager with width: " + averagingWidth + " - add buckets");
         };
     }
 
