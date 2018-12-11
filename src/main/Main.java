@@ -4,12 +4,10 @@ import component.Pulse;
 import component.Separator;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
-import component.orderer.Orderer;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
 import mixer.state.AmplitudeState;
-import mixer.state.VolumeAmplitudeState;
 import mixer.state.VolumeState;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
@@ -19,7 +17,6 @@ import sound.SoundEnvironment;
 import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
 import spectrum.buckets.Buckets;
-import time.PerformanceTracker;
 import time.Pulser;
 import time.TimeInSeconds;
 
@@ -31,7 +28,6 @@ import java.util.LinkedList;
 class Main {
 
     public static void main(String[] args){
-//        new PerformanceTracker();
         new TrafficAnalyzer();
 
         int SAMPLE_RATE = 44100/256;
@@ -39,7 +35,6 @@ class Main {
         int SAMPLE_SIZE_IN_BITS = 8;
 
         int frameRate = 60/6;
-        int frameLookahead = frameRate / 4;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth()/2;
 
         double octaveRange = 3.;
@@ -51,10 +46,10 @@ class Main {
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, frameLookahead, spectrumWindow, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, spectrumWindow, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
     }
 
-    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, int frameLookahead, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
+    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
         SimpleBuffer<Pulse, SimplePacket<Pulse>> mixerPulserRelay = new SimpleBuffer<>(100, "mixer - pulser");
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
@@ -71,7 +66,8 @@ class Main {
 
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
             SpectrumBuilder.buildComponent(
-                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), frameLookahead, "GUI ticker"),
+                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), 1, "GUI ticker")
+                    .toOverwritable(),
             volumeBroadcast.poll()
                 .toOverwritable(),
             spectrumWindow);

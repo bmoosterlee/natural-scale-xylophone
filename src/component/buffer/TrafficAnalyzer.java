@@ -30,7 +30,7 @@ public class TrafficAnalyzer {
             Map<String, String> passedBuffers = new HashMap<>();
 
             @Override
-            public Void call() throws Exception {
+            public Void call() {
                 passedBuffers.clear();
                 for(String root : rootComponents){
                     print("", root);
