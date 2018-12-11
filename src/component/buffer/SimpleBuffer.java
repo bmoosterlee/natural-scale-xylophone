@@ -156,13 +156,17 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
-    public BufferChainLink<K, A> toOverwritable() {
-        return PipeComponentChainLink.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+    public SimpleBuffer<K, A> toOverwritable(String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(1, name));
+        new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
+        return outputBuffer;
     }
 
     @Override
-    public BufferChainLink<K, A> resize(int size) {
-        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
+    public SimpleBuffer<K, A> resize(int size, String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(size, name);
+        new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
+        return outputBuffer;
     }
 
     @Override

@@ -24,7 +24,12 @@ public class NoteClicker {
 
                 guiPanel.addMouseListener(new MyMouseListener());
 
-                return inputBuffer.performMethod(Flusher.flush(clickedFrequenciesPort.getBuffer().toOverwritable().resize(10)), "note clicker - clicked frequencies");
+                return inputBuffer.performMethod(
+                        Flusher.flush(
+                                clickedFrequenciesPort.getBuffer()
+                                        .toOverwritable("note clicker - dump input overflow")
+                                        .resize(10, "note clicker - resize frequency buffer")),
+                        "note clicker - clicked frequencies");
             }
 
             class MyMouseListener implements MouseListener {

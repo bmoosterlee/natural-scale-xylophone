@@ -155,13 +155,13 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
-    public BufferChainLink<K, A> toOverwritable() {
-        return PipeComponentChainLink.chainToOverwritableBuffer(this, 1, "to overwritable - output");
+    public SimpleBuffer<K, A> toOverwritable(String name) {
+        return breakChain().toOverwritable(name);
     }
 
     @Override
-    public BufferChainLink<K, A> resize(int size) {
-        return PipeComponentChainLink.methodToComponentWithOutputBuffer(this, input -> input, size, "buffer expansion");
+    public SimpleBuffer<K, A> resize(int size, String name) {
+        return breakChain().resize(size, name);
     }
 
     @Override

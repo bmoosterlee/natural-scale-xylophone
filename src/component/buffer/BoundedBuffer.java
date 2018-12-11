@@ -59,9 +59,9 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer);
 
-    BufferChainLink<K, A> toOverwritable();
+    SimpleBuffer<K, A> toOverwritable(String name);
 
-    BufferChainLink<K, A> resize(int size);
+    SimpleBuffer<K, A> resize(int size, String name);
 
     BoundedBuffer<K, SimplePacket<K>> rewrap();
 }

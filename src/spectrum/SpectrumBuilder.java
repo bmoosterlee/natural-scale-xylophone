@@ -51,8 +51,8 @@ public class SpectrumBuilder {
                                 .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())), "harmonic spectrum - build bucket")
                                 .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()), "harmonic spectrum - frequency to integer")
                                 .connectTo(spectrumWindow.buildInBoundsFilterPipe())
-                                .toOverwritable()
-                                .resize(100)))
+                                .toOverwritable("harmonic spectrum - dump output overflow")
+                                .resize(100, "harmonic spectrum - finished bucket list")))
                 .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
                 .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
     }
