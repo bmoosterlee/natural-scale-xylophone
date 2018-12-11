@@ -31,11 +31,9 @@ public class NoteTimestamper {
                             100,
                             "note timestamper - pair notes and sample count")
                     .performMethod(
-                            ((PipeCallable<AbstractMap.SimpleImmutableEntry<Long, List<Frequency>>, TimestampedFrequencies>)
-                                    input1 -> new TimestampedFrequencies(
-                                            input1.getKey(),
-                                            input1.getValue()))
-                                    .toSequential(),
+                            input1 -> new TimestampedFrequencies(
+                                    input1.getKey(),
+                                    input1.getValue()),
                             100,
                             "note timestamper - build timestamped frequencies");
         };
