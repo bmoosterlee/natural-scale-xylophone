@@ -1,6 +1,7 @@
 package component.buffer;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -14,13 +15,81 @@ public class TrafficAnalyzer {
     private Map<String, Collection<String>> components;
     private Set<String> rootComponents;
     private Map<String, BoundedBuffer> bufferMap;
+    private Map<String, Callable<Integer>> threadCountMap;
+    private Callable<Void> print;
 
     public TrafficAnalyzer(){
         clogLog = new ConcurrentHashMap<>();
         components = new HashMap<>();
         rootComponents = new HashSet<>();
         bufferMap = new HashMap<>();
+        threadCountMap = new HashMap<>();
         trafficAnalyzer = this;
+
+        print = new Callable<>() {
+            Map<String, String> passedBuffers = new HashMap<>();
+
+            @Override
+            public Void call() throws Exception {
+                passedBuffers.clear();
+                for(String root : rootComponents){
+                    print("", root);
+                    System.out.println("END OF SUBGRAPH");
+                    System.out.println();
+                }
+                return null;
+            }
+
+            private void print(String parentChain, String node) {
+                Map<String, AtomicInteger> currenTopClogs = topClogs;
+
+                String cloggingValue;
+                if(currenTopClogs.containsKey(node)){
+                    cloggingValue = String.valueOf(currenTopClogs.get(node));
+                } else {
+                    cloggingValue = "   ";
+                }
+                String threadCount;
+                Integer threadCountValue = null;
+                if(threadCountMap.containsKey(node)) {
+                    try {
+                        threadCountValue = threadCountMap.get(node).call();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    threadCountValue = 0;
+                }
+
+                threadCount = String.valueOf(threadCountValue);
+
+
+                System.out.println(cloggingValue + "    " + threadCount + " " + parentChain + node);
+
+                if(components.containsKey(node)){
+                    Collection<String> outputs = components.get(node);
+                    int i = 0;
+                    for (String output : outputs) {
+                        if(i!=outputs.size()-1) {
+                            if(passedBuffers.containsKey(output)){
+                                System.out.println("    " + "    " + "   " + parentChain + "|---\"" + output + "\" is continued at node \"" + passedBuffers.get(output) + "\"");
+                            } else {
+                                passedBuffers.put(output, node);
+                                print(parentChain + "|---", output);
+                            }
+                        } else {
+                            if(passedBuffers.containsKey(output)){
+                                System.out.println("    " + "    " + "   " + parentChain + "    \"" + output + "\" is continued at node \"" + passedBuffers.get(output) + "\"");
+                            } else {
+                                passedBuffers.put(output, node);
+                                print(parentChain + "    ", output);
+                            }
+                        }
+                        i++;
+                    }
+                }
+            }
+        };
         start();
     }
 
@@ -28,12 +97,14 @@ public class TrafficAnalyzer {
         new Thread(() -> {
             while(true){
                 topClogs = getTopClogs();
-                for (Map.Entry<String, AtomicInteger> clogEntry : topClogs.entrySet()) {
-                    System.out.println(String.valueOf(clogEntry.getValue()) + ": " + clogEntry.getKey());
+                try {
+                    print.call();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(10000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -72,7 +143,7 @@ public class TrafficAnalyzer {
         trafficAnalyzer.logClogInternal(bufferName);
     }
 
-    public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap) {
+    public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap, Callable<Integer> threadCountFunction) {
         this.bufferMap.putAll(bufferMap);
 
         Set<String> nonRootNodes = components.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
@@ -93,5 +164,14 @@ public class TrafficAnalyzer {
                 }
             });
         }
+
+        inputNames.forEach(inputName -> {
+            if (!threadCountMap.containsKey(inputName)) {
+                threadCountMap.put(inputName, threadCountFunction);
+            } else {
+                Callable<Integer> oldCallable = threadCountMap.get(inputName);
+                threadCountMap.put(inputName, () -> oldCallable.call() + threadCountFunction.call());
+            }
+        });
     }
 }

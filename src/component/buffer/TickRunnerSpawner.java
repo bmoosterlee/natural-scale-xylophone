@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class TickRunnerSpawner extends TickRunner{
     private final Collection<BoundedBuffer> inputBuffers;
     private final Collection<BoundedBuffer> outputBuffers;
-    private final LinkedList<SimpleTickRunner> liveRunners;
+    final LinkedList<SimpleTickRunner> liveRunners;
     private final AbstractComponent component;
     private final int minimumThreadCount;
     private final int maxThreadCount;
@@ -34,7 +34,8 @@ public class TickRunnerSpawner extends TickRunner{
 
     @Override
     protected void tick() {
-        if(anyTopClog(inputBuffers) && !anyTopClog(outputBuffers)) {
+        if(anyTopClog(inputBuffers)) {
+            add();
             add();
         } else {
             tryRemove();

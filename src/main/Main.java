@@ -31,7 +31,7 @@ import java.util.LinkedList;
 class Main {
 
     public static void main(String[] args){
-        new PerformanceTracker();
+//        new PerformanceTracker();
         new TrafficAnalyzer();
 
         int SAMPLE_RATE = 44100/256;
