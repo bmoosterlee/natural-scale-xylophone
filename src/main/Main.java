@@ -50,12 +50,12 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> mixerPulserRelay = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump sample ticker overflow"));
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> sampleTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump sample ticker overflow"));
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
         SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
-                mixerPulserRelay
-                .resize(100, "main - sample ticker"),
+                sampleTickerOutput
+                .resize(100, "main - sample ticker resize"),
                 newNoteBuffer,
                 sampleRate);
 
@@ -64,13 +64,14 @@ class Main {
                 .broadcast(2, 100, "main volume - broadcast"));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), volumeAmplitudeStateBuffers.getValue(), SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
+        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
 
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
             SpectrumBuilder.buildComponent(
-                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(frameRate)), 1, "GUI ticker")
-                    .toOverwritable(),
+            guiTickerOutput,
             volumeBroadcast.poll()
-                .toOverwritable(),
+                .toOverwritable("main - dump spectrum volume input overflow"),
             spectrumWindow);
 
         LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
@@ -85,33 +86,26 @@ class Main {
             spectrumWindow,
             inaudibleFrequencyMargin
         );
+        new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
         PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
 //        PianolaPattern pianolaPattern = new SimpleArpeggio(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer,3, spectrumWindow);
 
-
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> pianolaTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump pianola ticker overflow"));
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
         pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
-
         new Pianola(
-                OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)),
-                    pianolaLookahead,
-                    "Pianola ticker")
-                .toOverwritable(),
+            pianolaTickerOutput,
             noteSpectrumBroadcast.poll()
-                .toOverwritable(),
+                .toOverwritable("main - dump pianola note spectrum input overflow"),
             harmonicSpectrumBroadcast.poll()
-                .toOverwritable(),
+                .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
             pianolaOutputBuffer,
             pianolaPattern,
             inaudibleFrequencyMargin);
-
-        OutputComponentChainLink.buildOutputBuffer(Pulser.build(new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)),
-                sampleLookahead,
-                "sample ticker - output")
-                .relayTo(mixerPulserRelay);
+        new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
 
         playTestTone(newNoteBuffer, spectrumWindow);
     }
