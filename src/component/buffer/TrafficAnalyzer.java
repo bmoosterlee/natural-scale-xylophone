@@ -32,11 +32,17 @@ public class TrafficAnalyzer {
             @Override
             public Void call() {
                 passedBuffers.clear();
-                for(String root : rootComponents){
-                    print("", root);
-                    System.out.println("END OF SUBGRAPH");
-                    System.out.println();
+                System.out.println();
+                System.out.println("START OF TRAFFIC ANALYSIS");
+                synchronized (rootComponents) {
+                    for (String root : rootComponents) {
+                        print("", root);
+                        System.out.println("END OF SUBGRAPH");
+                        System.out.println();
+                    }
                 }
+                System.out.println("END OF TRAFFIC ANALYSIS");
+                System.out.println();
                 return null;
             }
 
@@ -146,14 +152,17 @@ public class TrafficAnalyzer {
     public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap, Callable<Integer> threadCountFunction) {
         this.bufferMap.putAll(bufferMap);
 
-        if(!inputNames.isEmpty()) {
-            Set<String> nonRootNodes = components.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-            LinkedList<String> rootInputNames = new LinkedList<>(inputNames);
-            rootInputNames.removeAll(nonRootNodes);
-            rootComponents.addAll(rootInputNames);
-            rootComponents.removeAll(outputNames);
-        } else {
-            rootComponents.addAll(outputNames);
+        synchronized (rootComponents) {
+            if (!inputNames.isEmpty()) {
+                Set<String> nonRootNodes = components.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+                LinkedList<String> rootInputNames = new LinkedList<>(inputNames);
+                rootInputNames.removeAll(nonRootNodes);
+                rootComponents.addAll(rootInputNames);
+                rootComponents.removeAll(outputNames);
+
+            } else {
+                rootComponents.addAll(outputNames);
+            }
         }
 
         if(!outputNames.isEmpty()) {
