@@ -27,11 +27,11 @@ public class Pianola<I extends Packet<Pulse>, N extends Packet<Buckets>, H exten
         .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
         .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
         .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
-        .connectTo(BucketsAverager.buildPipe(2 * inaudibleFrequencyMargin))
+        .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average note spectrum")
         .pairWith(
             tickBroadcast.poll()
             .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer), "pianola - consume from harmonic spectrum buffer")
-            .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin)))
+            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - average harmonic spectrum"))
         .performMethod(input -> new LinkedList<>(pianolaPattern.playPattern(input.getKey(), input.getValue())), "pianola - play pattern")
         .relayTo(outputBuffer);
     }

@@ -1,55 +1,43 @@
 package spectrum.buckets;
 
-import component.Collator;
-import component.buffer.*;
+import component.buffer.PipeCallable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class BucketsAverager {
 
-    public static <A extends Packet<Buckets>, B extends Packet<Buckets>> PipeCallable<BoundedBuffer<Buckets, A>, BoundedBuffer<Buckets, B>> buildPipe(int averagingWidth) {
-        return inputBuffer -> {
-
-            LinkedList<SimpleBuffer<Buckets, A>> methodInputBroadcast =
-                    new LinkedList<>(
-                            inputBuffer
-                                    .broadcast(2, "buckets averager - broadcast"));
-
+    public static PipeCallable<Buckets, Buckets> build(int averagingWidth) {
+        return input -> {
             final double[] multipliers = new double[averagingWidth - 1];
             for (int i = 0; i < averagingWidth - 1; i++) {
                 multipliers[i] = ((double) averagingWidth - (i + 1)) / averagingWidth;
             }
 
-            Set<BoundedBuffer<Buckets, A>> adderBuffers = new HashSet<>();
-            adderBuffers.add(methodInputBroadcast.poll());
+            Set<Buckets> bucketsToBeSummed = new HashSet<>();
+            bucketsToBeSummed.add(input);
 
-            LinkedList<SimpleBuffer<Buckets, A>> hollowBucketsBroadcast =
-                    new LinkedList<>(
-                            methodInputBroadcast.poll()
-                                    .<Buckets, A>performMethod(((PipeCallable<Buckets, Buckets>) BucketsAverager::getHollowBuckets).toSequential(), "hollow buckets - output")
-                                    .broadcast(averagingWidth - 1, "hollow buckets - broadcast"));
+            Buckets hollowBuckets = getHollowBuckets(input);
 
             for (int i = 0; i < averagingWidth - 1; i++) {
-                int finalIMultiplier = i;
+                Buckets multipliedBuckets =
+                        hollowBuckets
+                                .multiply(multipliers[i]);
 
-                LinkedList<SimpleBuffer<Buckets, A>> multiplierBroadcast =
-                        new LinkedList<>(
-                                hollowBucketsBroadcast.poll()
-                                        .<Buckets, A>performMethod(((PipeCallable<Buckets, Buckets>) input2 -> input2.multiply(multipliers[finalIMultiplier])).toSequential(), "buckets averager multiplier - output" + multipliers[finalIMultiplier])
-                                        .broadcast(2, "buckets averager multiplier - broadcast"));
+                int iAdjusted = i + 1;
 
-                int finalI = i + 1;
+                bucketsToBeSummed.add(
+                        multipliedBuckets
+                                .transpose(iAdjusted));
 
-                adderBuffers.add(
-                        multiplierBroadcast.poll()
-                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(finalI)).toSequential(), "buckets averager transpose positive" + finalI));
-
-                adderBuffers.add(
-                        multiplierBroadcast.poll()
-                                .performMethod(((PipeCallable<Buckets, Buckets>) input1 -> input1.transpose(-(finalI))).toSequential(), "buckets averager transpose negative" + -finalI));
+                bucketsToBeSummed.add(
+                        multipliedBuckets
+                                .transpose(-(iAdjusted)));
             }
 
-            return Collator.collate(new ArrayList<>(adderBuffers)).performMethod(((PipeCallable<List<Buckets>, Buckets>) Buckets::add).toSequential(), "buckets averager with width: " + averagingWidth + " - add buckets");
+            return Buckets.add(bucketsToBeSummed);
         };
     }
 

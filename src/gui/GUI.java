@@ -29,7 +29,7 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
         guiPanel = new GUIPanel();
 
         harmonicInputPort = harmonicInputBuffer
-                .connectTo(BucketsAverager.buildPipe(inaudibleFrequencyMargin))
+                .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "gui - average harmonic spectrum")
                 .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
 
