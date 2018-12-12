@@ -50,7 +50,7 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> mixerPulserRelay = new SimpleBuffer<>(new OverwritableStrategy<>(1, "main - dump sample ticker overflow"));
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> mixerPulserRelay = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump sample ticker overflow"));
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
         SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(

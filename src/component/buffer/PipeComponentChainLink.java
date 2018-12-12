@@ -198,14 +198,14 @@ public class PipeComponentChainLink<K, V, A extends Packet<K>, B extends Packet<
         return outputChainLink;
     }
 
-    static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(BufferChainLink<K, A> inputBuffer, int capacity, String name) {
-        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+    static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(BufferChainLink<K, A> inputBuffer, String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(name));
         PipeCallable<K, K> method = input -> input;
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }
 
-    public static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(SimpleBuffer<K, A> inputBuffer, int capacity, String name) {
-        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(capacity, name));
+    public static <K, A extends Packet<K>> BufferChainLink<K, A> chainToOverwritableBuffer(SimpleBuffer<K, A> inputBuffer, String name) {
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(name));
         PipeCallable<K, K> method = input -> input;
         return getBufferChainLink(inputBuffer, outputBuffer, method);
     }

@@ -157,7 +157,7 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
 
     @Override
     public SimpleBuffer<K, A> toOverwritable(String name) {
-        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(1, name));
+        SimpleBuffer<K, A> outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>(name));
         new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
         return outputBuffer;
     }

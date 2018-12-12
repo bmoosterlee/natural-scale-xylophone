@@ -2,17 +2,14 @@ package component.buffer;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class BoundedStrategy<T> implements BufferStrategy<T> {
     private final int capacity;
     private String name;
-    private final ArrayBlockingQueue<T> buffer;
+    private final BlockingQueue<T> buffer;
 
-    public BoundedStrategy(int capacity, String name) {
+    BoundedStrategy(BlockingQueue<T> queue, int capacity, String name) {
         this.capacity = capacity;
         if (name == null) {
             this.name = "unnamed";
@@ -20,7 +17,11 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
         else {
             this.name = name;
         }
-        buffer = new ArrayBlockingQueue<>(capacity);
+        buffer = queue;
+    }
+
+    public BoundedStrategy(int capacity, String name) {
+        this(new ArrayBlockingQueue<>(capacity), capacity, name);
     }
 
     @Override
@@ -50,13 +51,7 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
 
     @Override
     public T tryPoll() {
-        T item = null;
-        try {
-            item = buffer.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return item;
+        return buffer.poll();
     }
 
     @Override
@@ -77,10 +72,6 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
     @Override
     public int getSize() {
         return capacity;
-    }
-
-    ArrayBlockingQueue<T> getBuffer() {
-        return buffer;
     }
 
 }
