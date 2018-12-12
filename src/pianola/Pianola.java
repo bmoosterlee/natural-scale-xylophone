@@ -12,7 +12,7 @@ import frequency.Frequency;
 import pianola.patterns.PianolaPattern;
 import spectrum.buckets.Buckets;
 import spectrum.buckets.BucketsAverager;
-import spectrum.buckets.PrecalculatedBucketHistoryComponent;
+import spectrum.buckets.PrecalculatedBucketHistory;
 
 import java.util.*;
 
@@ -25,7 +25,7 @@ public class Pianola<I extends Packet<Pulse>, N extends Packet<Buckets>, H exten
 
         tickBroadcast.poll()
         .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
-        .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(50))
+        .performMethod(PrecalculatedBucketHistory.build(50), "pianola - note spectrum history")
         .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
         .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average note spectrum")
         .pairWith(

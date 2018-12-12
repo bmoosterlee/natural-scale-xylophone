@@ -10,10 +10,7 @@ import spectrum.harmonics.HarmonicCalculator;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class SpectrumBuilder {
 
@@ -54,7 +51,7 @@ public class SpectrumBuilder {
                                 .toOverwritable("harmonic spectrum - dump output overflow")
                                 .resize(100, "harmonic spectrum - finished bucket list")))
                 .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
-                .connectTo(PrecalculatedBucketHistoryComponent.buildPipe(200));
+                .performMethod(PrecalculatedBucketHistory.build(200), "spectrum builder - harmonic spectrum history");
     }
 
     private static <A extends Packet<Map.Entry<Harmonic, Double>>, B extends Packet<Iterator<Map.Entry<Harmonic, Double>>>> BoundedBuffer<Map.Entry<Harmonic, Double>, A> calculateHarmonicsContinuously(BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>, B> harmonicsIteratorBuffer) {
