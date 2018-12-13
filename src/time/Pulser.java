@@ -8,6 +8,8 @@ import component.buffer.SimplePacket;
 
 public class Pulser extends MethodOutputComponent<Pulse> {
 
+    private static final Pulse pulse = new Pulse();
+
     public Pulser(SimpleBuffer<Pulse, SimplePacket<Pulse>> outputBuffer, TimeInNanoSeconds frameTime){
         super(outputBuffer, build(frameTime));
     }
@@ -34,7 +36,7 @@ public class Pulser extends MethodOutputComponent<Pulse> {
                     }
                 }
 
-                return new Pulse();
+                return pulse;
             }
 
             @Override
