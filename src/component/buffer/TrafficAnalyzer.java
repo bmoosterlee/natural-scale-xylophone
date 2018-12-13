@@ -133,8 +133,7 @@ public class TrafficAnalyzer {
     }
 
     private void logClogInternal(String bufferName){
-        Collection<String> outputNames = components.get(bufferName);
-        if(outputNames==null || !TickRunnerSpawner.anyClog(outputNames.stream().map(bufferMap::get).collect(Collectors.toList())))
+        if(!components.containsKey(bufferName) || !TickRunnerSpawner.anyClog(components.get(bufferName).stream().map(bufferMap::get).collect(Collectors.toList())))
         {
             Map<String, AtomicInteger> clogLog = this.clogLog;
             if (clogLog.containsKey(bufferName)) {
