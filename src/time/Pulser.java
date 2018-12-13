@@ -16,18 +16,14 @@ public class Pulser extends MethodOutputComponent<Pulse> {
 
     public static OutputCallable<Pulse> build(TimeInNanoSeconds frameTime) {
         return new OutputCallable<>() {
-
-            private TimeInNanoSeconds getTimeLeftInFrame(TimeInNanoSeconds startTime) {
-                TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
-                TimeInNanoSeconds timePassed = currentTime.subtract(startTime);
-                return frameTime.subtract(timePassed);
-            }
+            TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
+            long frameCount = 0;
 
             @Override
             public Pulse call() {
-                TimeInNanoSeconds startTime = TimeInNanoSeconds.now();
-
-                long timeLeftInFrame = getTimeLeftInFrame(startTime).toMilliSeconds().getValue();
+                TimeInNanoSeconds endTime = startTime.add(frameTime.multiply(frameCount));
+                TimeInNanoSeconds currentTime = TimeInNanoSeconds.now();
+                long timeLeftInFrame = endTime.subtract(currentTime).toMilliSeconds().getValue();
                 if (timeLeftInFrame > 0) {
                     try {
                         Thread.sleep(timeLeftInFrame);
@@ -36,6 +32,7 @@ public class Pulser extends MethodOutputComponent<Pulse> {
                     }
                 }
 
+                frameCount = frameCount + 1;
                 return pulse;
             }
 

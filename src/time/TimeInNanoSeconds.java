@@ -42,4 +42,8 @@ public class TimeInNanoSeconds {
     public boolean lessThan(TimeInNanoSeconds other) {
         return value < other.value;
     }
+
+    public TimeInNanoSeconds multiply(long x) {
+        return new TimeInNanoSeconds(value*x);
+    }
 }
