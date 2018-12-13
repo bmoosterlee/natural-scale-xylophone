@@ -41,14 +41,14 @@ public class SpectrumBuilder {
                         calculateHarmonicsContinuously(
                                 volumeBroadcast.poll()
                                         .performMethod(HarmonicCalculator.calculateHarmonics(100), "harmonic spectrum - build harmonics iterator"))
+                                .toOverwritable("harmonic spectrum - dump output overflow")
                                 .performMethod(harmonicWithVolume -> {
                                     Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
                                     return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());
-                                    }, "harmonic spectrum - extract harmonic")
+                                }, "harmonic spectrum - extract harmonic")
                                 .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())), "harmonic spectrum - build bucket")
                                 .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()), "harmonic spectrum - frequency to integer")
                                 .connectTo(spectrumWindow.buildInBoundsFilterPipe())
-                                .toOverwritable("harmonic spectrum - dump output overflow")
                                 .resize(100, "harmonic spectrum - finished bucket list")))
                 .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
                 .performMethod(PrecalculatedBucketHistory.build(200), "spectrum builder - harmonic spectrum history");
