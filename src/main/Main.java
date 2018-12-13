@@ -63,7 +63,6 @@ class Main {
                 .broadcast(2, 100, "main volume - broadcast"));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), volumeAmplitudeStateBuffers.getValue(), SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
-        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
 
         SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
         AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
@@ -85,7 +84,6 @@ class Main {
             spectrumWindow,
             inaudibleFrequencyMargin
         );
-        new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
 
 //        PianolaPattern pianolaPattern = new Sweep(this, 8, spectrumWindow.getCenterFrequency());
 //        PianolaPattern pianolaPattern = new PatternPauser(8, new SweepToTarget(pianolaNotesBucketsBuffer, pianolaHarmonicsBucketsBuffer, 5, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow), 5);
@@ -104,6 +102,9 @@ class Main {
             pianolaOutputBuffer,
             pianolaPattern,
             inaudibleFrequencyMargin);
+
+        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
+        new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
         new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
 
         playTestTone(newNoteBuffer, spectrumWindow);
