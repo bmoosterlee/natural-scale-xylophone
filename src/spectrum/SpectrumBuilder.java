@@ -35,7 +35,7 @@ public class SpectrumBuilder {
     private static <B extends Packet<VolumeState>> BoundedBuffer<Buckets, SimplePacket<Buckets>> buildHarmonicSpectrumPipe(BoundedBuffer<VolumeState, B> volumeBuffer, SpectrumWindow spectrumWindow) {
         LinkedList<BoundedBuffer<VolumeState, B>> volumeBroadcast = new LinkedList<>(volumeBuffer.broadcast(2, "build harmonic spectrum - tick broadcast"));
 
-        int maxHarmonics = 100;
+        int maxHarmonics = 200;
         return volumeBroadcast.poll()
                 .performMethod(input -> new Pulse(), "harmonic spectrum - to pulse")
                 .performMethod(Flusher.flush(
