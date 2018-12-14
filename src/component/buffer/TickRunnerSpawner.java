@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TickRunnerSpawner extends TickRunner{
@@ -34,7 +35,7 @@ public class TickRunnerSpawner extends TickRunner{
 
     @Override
     protected void tick() {
-        if(anyTopClog(inputBuffers)) {
+        if(anyTopClog(inputBuffers) && anySignificantClog(inputBuffers)) {
             add();
             add();
         } else {
@@ -77,6 +78,16 @@ public class TickRunnerSpawner extends TickRunner{
     private boolean anyTopClog(Collection<? extends BoundedBuffer> buffers) {
         for (BoundedBuffer buffer : buffers) {
             if (TrafficAnalyzer.trafficAnalyzer.topClogs.keySet().contains(buffer.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean anySignificantClog(Collection<BoundedBuffer> buffers) {
+        Map<String, AtomicInteger> topClogs = TrafficAnalyzer.trafficAnalyzer.topClogs;
+        for (BoundedBuffer buffer : buffers) {
+            if (topClogs.keySet().contains(buffer.getName()) && topClogs.get(buffer.getName()).get()>=buffer.getSize()) {
                 return true;
             }
         }
