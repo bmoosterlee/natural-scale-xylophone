@@ -35,12 +35,13 @@ public class SpectrumBuilder {
     private static <B extends Packet<VolumeState>> BoundedBuffer<Buckets, SimplePacket<Buckets>> buildHarmonicSpectrumPipe(BoundedBuffer<VolumeState, B> volumeBuffer, SpectrumWindow spectrumWindow) {
         LinkedList<BoundedBuffer<VolumeState, B>> volumeBroadcast = new LinkedList<>(volumeBuffer.broadcast(2, "build harmonic spectrum - tick broadcast"));
 
+        int maxHarmonics = 100;
         return volumeBroadcast.poll()
                 .performMethod(input -> new Pulse(), "harmonic spectrum - to pulse")
                 .performMethod(Flusher.flush(
                         calculateHarmonicsContinuously(
                                 volumeBroadcast.poll()
-                                        .performMethod(HarmonicCalculator.calculateHarmonics(100), "harmonic spectrum - build harmonics iterator"))
+                                        .performMethod(HarmonicCalculator.calculateHarmonics(maxHarmonics), "harmonic spectrum - build harmonics iterator"))
                                 .toOverwritable("harmonic spectrum - dump output overflow")
                                 .performMethod(harmonicWithVolume -> {
                                     Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
@@ -49,7 +50,7 @@ public class SpectrumBuilder {
                                 .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())), "harmonic spectrum - build bucket")
                                 .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()), "harmonic spectrum - frequency to integer")
                                 .connectTo(spectrumWindow.buildInBoundsFilterPipe())
-                                .resize(100, "harmonic spectrum - finished bucket list")))
+                                .resize(maxHarmonics, "harmonic spectrum - finished bucket list")))
                 .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
                 .performMethod(PrecalculatedBucketHistory.build(200), "spectrum builder - harmonic spectrum history");
     }
