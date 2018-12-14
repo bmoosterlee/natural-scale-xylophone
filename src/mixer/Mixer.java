@@ -9,14 +9,19 @@ import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.state.*;
 import sound.SampleRate;
+import time.Pulser;
+import time.TimeInSeconds;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
 
 public class Mixer {
 
-    public static <A extends Packet<Pulse>, B extends Packet<Frequency>> SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildComponent(BoundedBuffer<Pulse, A> inputBuffer, BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate){
-            LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
+    public static <A extends Packet<Pulse>, B extends Packet<Frequency>> SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate){
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> inputBuffer = new SimpleBuffer<>(new OverflowStrategy<>("main - sample ticker overflow"));
+        new TickRunningStrategy(new Pulser(inputBuffer, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
+
+        LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
                     inputBuffer
                             .performMethod(Counter.build(), sampleRate.sampleRate / 32, "mixer - count samples")
                             .connectTo(OrderStamper.buildPipe(sampleRate.sampleRate / 32))

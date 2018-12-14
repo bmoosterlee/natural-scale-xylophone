@@ -50,11 +50,9 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> sampleTickerOutput = new SimpleBuffer<>(new OverflowStrategy<>("main - sample ticker overflow"));
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
         SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
-                sampleTickerOutput,
                 newNoteBuffer,
                 sampleRate);
 
@@ -103,7 +101,6 @@ class Main {
             pianolaPattern,
             inaudibleFrequencyMargin);
 
-        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
         new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
         new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
 
