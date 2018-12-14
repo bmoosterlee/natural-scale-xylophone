@@ -72,8 +72,6 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
             finishedOutputPort.produce(
                     key.transform(transformFinished)
             );
-
-            calculateContinuously();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -92,9 +90,7 @@ class MapPrecalculator<I, K, V, A extends Packet<I>, B extends Packet<Set<V>>, C
     private Set<K> getUnfinishedData(I sampleCount) {
         Set<K> finalUnfinishedData;
         if (unfinishedData.containsKey(sampleCount)) {
-            synchronized(unfinishedData.get(sampleCount)) {
-                finalUnfinishedData = unfinishedData.remove(sampleCount);
-            }
+            finalUnfinishedData = unfinishedData.remove(sampleCount);
         } else {
             finalUnfinishedData = Collections.emptySet();
         }
