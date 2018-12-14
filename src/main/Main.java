@@ -30,12 +30,12 @@ class Main {
     public static void main(String[] args){
         new TrafficAnalyzer();
 
-        int SAMPLE_RATE = 44100/256;
+        int SAMPLE_RATE = 44100/2;
         int sampleLookahead = SAMPLE_RATE / 4;
         int SAMPLE_SIZE_IN_BITS = 8;
 
-        int frameRate = 60/6;
-        int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth()/2;
+        int frameRate = 60/2;
+        int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
 
         double octaveRange = 3.;
         int inaudibleFrequencyMargin = (int) (width/octaveRange/12/5);
