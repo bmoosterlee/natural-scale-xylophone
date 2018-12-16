@@ -129,7 +129,7 @@ public class TrafficAnalyzer {
                 priorityQueue.poll();
             }
         }
-        return priorityQueue.stream().sorted(entryComparator.reversed()).collect(Collectors.toMap(input -> input.getKey(), input -> input.getValue(), (e1, e2) -> e1, LinkedHashMap::new));
+        return priorityQueue.stream().sorted(entryComparator.reversed()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
     }
 
     private void logClogInternal(String bufferName){
