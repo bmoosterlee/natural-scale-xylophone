@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 
 public class TrafficAnalyzer {
 
-    protected static TrafficAnalyzer trafficAnalyzer;
-
+    static TrafficAnalyzer trafficAnalyzer;
     private Map<String, AtomicInteger> clogLog;
-    public Map<String, AtomicInteger> topClogs;
+    private final ConcurrentHashMap<String, AtomicInteger> throughputLog;
+    Map<String, AtomicInteger> topClogs;
     private Map<String, Collection<String>> components;
     private Set<String> rootComponents;
     private Map<String, BoundedBuffer> bufferMap;
@@ -20,6 +20,7 @@ public class TrafficAnalyzer {
 
     public TrafficAnalyzer(){
         clogLog = new ConcurrentHashMap<>();
+        throughputLog = new ConcurrentHashMap<>();
         components = new HashMap<>();
         rootComponents = new HashSet<>();
         bufferMap = new HashMap<>();
@@ -27,11 +28,11 @@ public class TrafficAnalyzer {
         trafficAnalyzer = this;
 
         print = new Callable<>() {
-            Map<String, String> passedBuffers = new HashMap<>();
+            Map<String, String> buffersAlreadyPrintedAt = new HashMap<>();
 
             @Override
             public Void call() {
-                passedBuffers.clear();
+                buffersAlreadyPrintedAt.clear();
                 System.out.println();
                 System.out.println("START OF TRAFFIC ANALYSIS");
                 synchronized (rootComponents) {
@@ -69,26 +70,32 @@ public class TrafficAnalyzer {
 
                 threadCount = String.valueOf(threadCountValue);
 
+                String throughputValue;
+                if(throughputLog.containsKey(node)){
+                    throughputValue = String.valueOf(throughputLog.remove(node));
+                } else {
+                    throughputValue = "   ";
+                }
 
-                System.out.println(cloggingValue + "    " + threadCount + " " + parentChain + node);
+                System.out.println(cloggingValue + "    " + throughputValue + "    " + threadCount + " " + parentChain + node);
 
                 if(components.containsKey(node)){
-                    Collection<String> outputs = components.get(node);
+                    Collection<String> outputBufferNames = components.get(node);
                     int i = 0;
-                    for (String output : outputs) {
-                        if(i!=outputs.size()-1) {
-                            if(passedBuffers.containsKey(output)){
-                                System.out.println("    " + "    " + "   " + parentChain + "|---\"" + output + "\" is continued at node \"" + passedBuffers.get(output) + "\"");
+                    for (String outputBufferName : outputBufferNames) {
+                        if(i!=outputBufferNames.size()-1) {
+                            if(buffersAlreadyPrintedAt.containsKey(outputBufferName)){
+                                System.out.println("    " + "    " + "   " + parentChain + "|---\"" + outputBufferName + "\" is continued at node \"" + buffersAlreadyPrintedAt.get(outputBufferName) + "\"");
                             } else {
-                                passedBuffers.put(output, node);
-                                print(parentChain + "|---", output);
+                                buffersAlreadyPrintedAt.put(outputBufferName, node);
+                                print(parentChain + "|---", outputBufferName);
                             }
                         } else {
-                            if(passedBuffers.containsKey(output)){
-                                System.out.println("    " + "    " + "   " + parentChain + "    \"" + output + "\" is continued at node \"" + passedBuffers.get(output) + "\"");
+                            if(buffersAlreadyPrintedAt.containsKey(outputBufferName)){
+                                System.out.println("    " + "    " + "   " + parentChain + "    \"" + outputBufferName + "\" is continued at node \"" + buffersAlreadyPrintedAt.get(outputBufferName) + "\"");
                             } else {
-                                passedBuffers.put(output, node);
-                                print(parentChain + "    ", output);
+                                buffersAlreadyPrintedAt.put(outputBufferName, node);
+                                print(parentChain + "    ", outputBufferName);
                             }
                         }
                         i++;
@@ -146,6 +153,17 @@ public class TrafficAnalyzer {
 
     public static void logClog(String bufferName){
         trafficAnalyzer.logClogInternal(bufferName);
+    }
+
+    public static void logConsumption(String bufferName){ trafficAnalyzer.logConsumptionInternal(bufferName);}
+
+    private void logConsumptionInternal(String bufferName) {
+        Map<String, AtomicInteger> throughputLog = this.throughputLog;
+        if(throughputLog.containsKey(bufferName)) {
+            throughputLog.get(bufferName).incrementAndGet();
+        } else {
+            throughputLog.put(bufferName, new AtomicInteger(1));
+        }
     }
 
     public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap, Callable<Integer> threadCountFunction) {

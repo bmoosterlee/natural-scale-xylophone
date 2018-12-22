@@ -46,12 +46,17 @@ public class BoundedStrategy<T> implements BufferStrategy<T> {
 
     @Override
     public T poll() throws InterruptedException {
+        TrafficAnalyzer.logConsumption(name);
         return buffer.take();
     }
 
     @Override
     public T tryPoll() {
-        return buffer.poll();
+        T poll = buffer.poll();
+        if(poll!=null){
+            TrafficAnalyzer.logConsumption(name);
+        }
+        return poll;
     }
 
     @Override
