@@ -63,7 +63,7 @@ public class SpectrumBuilder {
                 try {
                     B harmonicsIterator = input.consume();
                     while (input.isEmpty() && harmonicsIterator.unwrap().hasNext()) {
-                        output.produce(harmonicsIterator.transform(input -> input.next()));
+                        output.produce(harmonicsIterator.transform(Iterator::next));
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
