@@ -39,17 +39,19 @@ public class SpectrumBuilder {
         return volumeBroadcast.poll()
                 .performMethod(input -> new Pulse(), "harmonic spectrum - to pulse")
                 .performMethod(Flusher.flush(
-                        calculateHarmonicsContinuously(
-                                volumeBroadcast.poll()
-                                        .performMethod(HarmonicCalculator.calculateHarmonics(maxHarmonics), "harmonic spectrum - build harmonics iterator"), maxHarmonics)
-                                .performMethod(harmonicWithVolume -> {
-                                    Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
-                                    return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());
-                                }, maxHarmonics, "harmonic spectrum - extract harmonic")
-                                .performMethod(input -> new SimpleImmutableEntry<>(input.getKey(), new AtomicBucket(input.getKey(), input.getValue())), maxHarmonics, "harmonic spectrum - build bucket")
-                                .performMethod(input -> new SimpleImmutableEntry<>(spectrumWindow.getX(input.getKey()), input.getValue()), maxHarmonics, "harmonic spectrum - frequency to integer")
-                                .connectTo(spectrumWindow.buildInBoundsFilterPipe(maxHarmonics))
-                                .resize(maxHarmonics, "harmonic spectrum - finished bucket list")))
+                        (SimpleBuffer<SimpleImmutableEntry<Integer, AtomicBucket>, Packet<SimpleImmutableEntry<Integer, AtomicBucket>>>)
+                                calculateHarmonicsContinuously(
+                                    volumeBroadcast.poll()
+                                            .performMethod(HarmonicCalculator.calculateHarmonics(maxHarmonics), "harmonic spectrum - build harmonics iterator"), maxHarmonics)
+                                    .performMethod(harmonicWithVolume -> {
+                                        Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
+                                        return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());
+                                    }, maxHarmonics, "harmonic spectrum - extract harmonic")
+                                    .performMethod(input1 -> new SimpleImmutableEntry<>(input1.getKey(), new AtomicBucket(input1.getKey(), input1.getValue())), maxHarmonics, "harmonic spectrum - build bucket")
+                                    .performMethod(input1 -> new SimpleImmutableEntry<>(spectrumWindow.getX(input1.getKey()), input1.getValue()), maxHarmonics, "harmonic spectrum - frequency to integer")
+                                    .connectTo(spectrumWindow.buildInBoundsFilterPipe(maxHarmonics))
+                                    .relayTo(new SimpleBuffer<>(new OverflowStrategy<>("harmonic spectrum - finished bucket list")))),
+                        "harmonic spectrum - flush new harmonic buckets")
                 .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
                 .performMethod(PrecalculatedBucketHistory.build(200), "spectrum builder - harmonic spectrum history");
     }
