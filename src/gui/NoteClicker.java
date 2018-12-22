@@ -16,19 +16,19 @@ public class NoteClicker {
     public static <A extends Packet<Pulse>, B extends Packet<List<Frequency>>> PipeCallable<BoundedBuffer<Pulse, A>, BoundedBuffer<List<Frequency>, B>> buildPipe(SpectrumWindow spectrumWindow, JPanel guiPanel) {
         return new PipeCallable<>() {
 
+            private SimpleBuffer<Frequency, SimplePacket<Frequency>> outputBuffer;
             private OutputPort<Frequency, SimplePacket<Frequency>> clickedFrequenciesPort;
 
             @Override
             public BoundedBuffer<List<Frequency>, B> call(BoundedBuffer<Pulse, A> inputBuffer) {
-                clickedFrequenciesPort = new OutputPort<>("clicked frequency buffer");
-
                 guiPanel.addMouseListener(new MyMouseListener());
+
+                outputBuffer = new SimpleBuffer<>(new OverwritableStrategy<>("note clicker - output"));
+                clickedFrequenciesPort = outputBuffer.createOutputPort();
 
                 return inputBuffer.performMethod(
                         Flusher.flush(
-                                clickedFrequenciesPort.getBuffer()
-                                        .toOverwritable("note clicker - dump input overflow")
-                                        .resize(10, "note clicker - resize frequency buffer")),
+                                outputBuffer),
                         "note clicker - clicked frequencies");
             }
 

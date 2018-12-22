@@ -43,6 +43,7 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
                 .connectTo(CursorMover.buildPipe(guiPanel)).createInputPort();
 
         noteSpectrumBroadcast.poll()
+            .toOverwritable("gui - note clicker - dump input overflow")
             .performMethod(input -> new Pulse(), "gui - note clicker")
             .connectTo(NoteClicker.buildPipe(spectrumWindow, guiPanel))
         .relayTo(outputBuffer);
