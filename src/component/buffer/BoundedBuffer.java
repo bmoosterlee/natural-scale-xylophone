@@ -57,7 +57,7 @@ public interface BoundedBuffer<K, A extends Packet<K>> {
 
     <V, B extends Packet<V>, Y extends Packet<SimpleImmutableEntry<K, V>>> SimpleBuffer<SimpleImmutableEntry<K, V>, Y> pairWith(BufferChainLink<V, B> other, int capacity, String name);
 
-    SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer);
+    SimpleBuffer<? super K, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer);
 
     SimpleBuffer<K, A> toOverwritable(String name);
 

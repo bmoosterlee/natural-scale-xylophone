@@ -150,7 +150,7 @@ public class SimpleBuffer<K, A extends Packet<K>> implements BoundedBuffer<K, A>
     }
 
     @Override
-    public SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer) {
+    public SimpleBuffer<? super K, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer) {
         new TickRunningStrategy(new MethodPipeComponent<>(this, outputBuffer, input -> input));
         return outputBuffer;
     }

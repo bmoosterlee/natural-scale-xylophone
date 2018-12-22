@@ -150,7 +150,7 @@ public class BufferChainLink<K, A extends Packet<K>> implements BoundedBuffer<K,
     }
 
     @Override
-    public SimpleBuffer<?, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer) {
+    public SimpleBuffer<? super K, ?> relayTo(SimpleBuffer<? super K, ?> outputBuffer) {
         return breakChain().relayTo(outputBuffer);
     }
 
