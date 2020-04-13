@@ -5,7 +5,11 @@ public class VolumeAmplitude {
     private final Double amplitude;
 
     VolumeAmplitude(Double volume, Double amplitude) {
-        this.volume = volume;
+        if(volume!=null) {
+            this.volume = volume;
+        } else {
+            this.volume = 0.;
+        }
         this.amplitude = amplitude;
     }
 

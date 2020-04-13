@@ -4,6 +4,7 @@ import component.buffer.*;
 import frequency.Frequency;
 
 import java.util.AbstractMap;
+import java.util.HashMap;
 
 public class SpectrumWindow {
     private final Frequency centerFrequency = new Frequency(2 * 261.63);
@@ -13,6 +14,8 @@ public class SpectrumWindow {
     private final double logFrequencyMultiplier;
     private final double logFrequencyAdditive;
     private final double xMultiplier;
+
+    public final HashMap<Integer, Frequency> staticFrequencyWindow;
 
     public SpectrumWindow(int width, double octaveRange) {
         this.width = width;
@@ -26,6 +29,11 @@ public class SpectrumWindow {
         logFrequencyMultiplier = this.width / logRange;
         logFrequencyAdditive = logLowerBound * this.width / logRange;
         xMultiplier = logRange / this.width;
+
+        staticFrequencyWindow = new HashMap<>();
+        for(int x = 0; x < width; x++){
+            staticFrequencyWindow.put(x, getFrequency(x));
+        }
     }
 
     public int getX(Frequency frequency) {
