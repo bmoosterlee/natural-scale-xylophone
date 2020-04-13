@@ -6,7 +6,7 @@ import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
-import mixer.NoteMixer;
+import notebuilder.NoteBuilder;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
@@ -55,7 +55,7 @@ class Main {
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeBuffer = NoteMixer.buildComponent(newNoteBuffer, sampleRate, stampedSampleBroadcast.poll());
+        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, stampedSampleBroadcast.poll());
 
         BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> correctedVolumeBuffer = volumeBuffer.performMethod(input -> {
             return new VolumeState(new HashMap<>(input.volumes.entrySet().stream().map(input0 -> new SimpleImmutableEntry<>(spectrumWindow.staticFrequencyWindow.get((spectrumWindow.getX(input0.getKey()))), input0.getValue())).collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue))));

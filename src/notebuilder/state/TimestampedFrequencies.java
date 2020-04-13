@@ -1,4 +1,4 @@
-package mixer.state;
+package notebuilder.state;
 
 import frequency.Frequency;
 

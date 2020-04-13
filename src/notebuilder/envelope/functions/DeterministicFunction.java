@@ -1,4 +1,4 @@
-package mixer.envelope.functions;
+package notebuilder.envelope.functions;
 
 import sound.SampleRate;
 import time.TimeInSeconds;

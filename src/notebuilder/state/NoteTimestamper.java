@@ -1,12 +1,10 @@
-package mixer.state;
+package notebuilder.state;
 
 import component.*;
 import component.buffer.*;
 import frequency.Frequency;
 
-import java.util.AbstractMap;
 import java.util.LinkedList;
-import java.util.List;
 
 public class NoteTimestamper {
 

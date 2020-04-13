@@ -1,4 +1,4 @@
-package mixer;
+package notebuilder;
 
 public class PrecalculatorOutputData<I, K, V> {
     private final I index;

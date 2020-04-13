@@ -1,25 +1,25 @@
-package mixer;
+package notebuilder;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.Packet;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
-import mixer.envelope.DeterministicEnvelope;
-import mixer.state.EnvelopeBuilder;
-import mixer.state.NoteTimestamper;
-import mixer.state.TimestampedNewNotesWithEnvelope;
+import notebuilder.envelope.DeterministicEnvelope;
+import notebuilder.state.EnvelopeBuilder;
+import notebuilder.state.NoteTimestamper;
+import notebuilder.state.TimestampedNewNotesWithEnvelope;
 import sound.SampleRate;
 import sound.VolumeState;
 
 import java.util.Collection;
 
-public class NoteMixer {
+public class NoteBuilder {
 
     public static <B extends Packet<Frequency>> BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer) {
         BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> newNoteData = stampedSamplesBuffer
                 .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
-                .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "mixer - build envelope")
-                .performMethod(NoteMixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - extract new note data");
+                .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "notebuilder - build envelope")
+                .performMethod(NoteBuilder::extractNewNotesData, sampleRate.sampleRate / 32, "notebuilder - extract new note data");
 
         return newNoteData
                 .connectTo(VolumeCalculator.buildPipe());

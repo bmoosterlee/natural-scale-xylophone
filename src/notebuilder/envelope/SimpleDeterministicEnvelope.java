@@ -1,6 +1,6 @@
-package mixer.envelope;
+package notebuilder.envelope;
 
-import mixer.envelope.functions.DeterministicFunction;
+import notebuilder.envelope.functions.DeterministicFunction;
 import sound.SampleRate;
 
 import java.util.Arrays;

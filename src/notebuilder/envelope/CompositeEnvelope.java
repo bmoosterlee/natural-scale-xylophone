@@ -1,4 +1,4 @@
-package mixer.envelope;
+package notebuilder.envelope;
 
 import java.util.Collection;
 import java.util.HashSet;

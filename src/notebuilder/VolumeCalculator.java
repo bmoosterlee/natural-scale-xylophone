@@ -1,10 +1,10 @@
-package mixer;
+package notebuilder;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
-import mixer.envelope.DeterministicEnvelope;
-import mixer.envelope.Envelope;
+import notebuilder.envelope.DeterministicEnvelope;
+import notebuilder.envelope.Envelope;
 import sound.VolumeState;
 
 import java.util.*;

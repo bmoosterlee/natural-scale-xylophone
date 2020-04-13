@@ -1,4 +1,4 @@
-package mixer;
+package notebuilder;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.Packet;

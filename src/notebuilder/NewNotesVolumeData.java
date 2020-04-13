@@ -1,7 +1,7 @@
-package mixer;
+package notebuilder;
 
 import frequency.Frequency;
-import mixer.envelope.DeterministicEnvelope;
+import notebuilder.envelope.DeterministicEnvelope;
 
 import java.util.Collection;
 

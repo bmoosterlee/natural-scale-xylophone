@@ -1,11 +1,11 @@
-package mixer.state;
+package notebuilder.state;
 
 import component.buffer.*;
 import frequency.Frequency;
-import mixer.envelope.DeterministicEnvelope;
-import mixer.envelope.SimpleDeterministicEnvelope;
-import mixer.envelope.functions.DeterministicFunction;
-import mixer.envelope.functions.LinearFunctionMemoizer;
+import notebuilder.envelope.DeterministicEnvelope;
+import notebuilder.envelope.SimpleDeterministicEnvelope;
+import notebuilder.envelope.functions.DeterministicFunction;
+import notebuilder.envelope.functions.LinearFunctionMemoizer;
 import sound.SampleRate;
 import time.TimeInSeconds;
 

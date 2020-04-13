@@ -1,6 +1,6 @@
-package mixer.envelope;
+package notebuilder.envelope;
 
-import mixer.envelope.functions.EnvelopeFunction;
+import notebuilder.envelope.functions.EnvelopeFunction;
 import sound.SampleRate;
 import time.TimeInSeconds;
 

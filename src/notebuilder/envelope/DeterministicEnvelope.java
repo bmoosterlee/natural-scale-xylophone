@@ -1,4 +1,4 @@
-package mixer.envelope;
+package notebuilder.envelope;
 
 public interface DeterministicEnvelope extends Envelope {
     long getEndingSampleCount();

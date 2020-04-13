@@ -1,4 +1,4 @@
-package mixer.envelope;
+package notebuilder.envelope;
 
 import sound.SampleRate;
 

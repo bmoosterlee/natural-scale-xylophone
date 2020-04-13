@@ -1,4 +1,4 @@
-package mixer;
+package notebuilder;
 
 import frequency.Frequency;
 
