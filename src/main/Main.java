@@ -63,13 +63,7 @@ class Main {
             new LinkedList<>(correctedVolumeBuffer
                 .broadcast(2, 100, "main volume - broadcast"));
 
-        HashMap<Frequency, Wave> waveTable = new HashMap<>();
-        for(int x = 0; x < spectrumWindow.width; x++){
-            Frequency frequency = spectrumWindow.staticFrequencyWindow.get(x);
-            waveTable.put(frequency, new Wave(frequency, sampleRate));
-        }
-
-        BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeStateBuffer = stampedSampleBroadcast.poll().performMethod(input -> new AmplitudeState(new HashMap<>(waveTable.entrySet().stream().map(input0 -> new SimpleImmutableEntry<>(input0.getKey(), input0.getValue().getAmplitude(input))).collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue)))),100, "main - calculate amplitude");
+        BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeStateBuffer = stampedSampleBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
