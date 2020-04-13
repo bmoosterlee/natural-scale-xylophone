@@ -59,7 +59,7 @@ class Main {
 
         BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> correctedVolumeBuffer = volumeBuffer.performMethod(input -> {
             return new VolumeState(new HashMap<>(input.volumes.entrySet().stream().map(input0 -> new SimpleImmutableEntry<>(spectrumWindow.staticFrequencyWindow.get((spectrumWindow.getX(input0.getKey()))), input0.getValue())).collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue))));
-        });
+        }, 100, "main - correct volume frequencies");
 
         LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
             new LinkedList<>(correctedVolumeBuffer
