@@ -19,4 +19,19 @@ public class Frequency {
     public Frequency multiplyBy(double multiplier) {
         return new Frequency(value * multiplier);
     }
+
+    @Override
+    public boolean equals(Object o){
+        if(o == this){
+            return true;
+        }
+
+        if(!(o instanceof Frequency)){
+            return false;
+        }
+
+        Frequency oo = (Frequency) o;
+
+        return Double.compare(value, oo.value) == 0;
+    }
 }
