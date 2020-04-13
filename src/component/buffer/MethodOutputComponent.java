@@ -17,9 +17,4 @@ public class MethodOutputComponent<V> extends AbstractOutputComponent<V, SimpleP
         }
     }
 
-    @Override
-    public Boolean isParallelisable(){
-        return method.isParallelisable();
-    }
-
 }

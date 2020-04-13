@@ -12,10 +12,6 @@ public interface PipeCallable<K, V> extends ComponentCallable {
                 return PipeCallable.this.call(input);
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         };
     }
 
@@ -27,10 +23,6 @@ public interface PipeCallable<K, V> extends ComponentCallable {
                 return PipeCallable.this.call(input);
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return true;
-            }
         };
     }
 

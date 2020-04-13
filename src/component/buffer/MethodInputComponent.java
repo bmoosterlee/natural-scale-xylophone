@@ -42,9 +42,4 @@ public class MethodInputComponent<K, A extends Packet<K>> extends AbstractInputC
         method.call(consumed.unwrap());
     }
 
-    @Override
-    public Boolean isParallelisable(){
-        return method.isParallelisable();
-    }
-
 }

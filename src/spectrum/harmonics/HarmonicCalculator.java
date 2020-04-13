@@ -70,10 +70,6 @@ public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<
                 return calculateHarmonics(input);
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         };
     }
 

@@ -17,6 +17,4 @@ public abstract class ComponentChainLink<K, V, A extends Packet<K>, B extends Pa
 
     protected abstract void wrap(InputCallable<V> nextMethod, int chainLinks);
 
-    abstract Boolean isParallelisable();
-
 }

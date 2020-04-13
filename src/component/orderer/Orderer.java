@@ -96,11 +96,6 @@ public class Orderer<T> extends AbstractPipeComponent<T, T, OrderStampedPacket<T
         return defragmentedInput;
     }
 
-    @Override
-    public Boolean isParallelisable(){
-        return false;
-    }
-
     public static <T> PipeCallable<BoundedBuffer<T, OrderStampedPacket<T>>, BoundedBuffer<T, OrderStampedPacket<T>>> buildPipe(String name){
         return buildPipe(1, name);
     }

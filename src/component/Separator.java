@@ -36,11 +36,6 @@ public class Separator{
                     }
                 }
 
-                @Override
-                public Boolean isParallelisable(){
-                    return false;
-                }
-
             });
             return outputBuffer;
         };

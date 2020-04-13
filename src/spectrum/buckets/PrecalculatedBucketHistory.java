@@ -28,10 +28,6 @@ public class PrecalculatedBucketHistory {
                 return timeAverage;
             }
 
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
         };
     }
 }

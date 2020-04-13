@@ -50,8 +50,4 @@ public class Unpairer<K, V, A extends Packet<K>, B extends Packet<V>, Y extends 
         return Arrays.asList(output1.getBuffer(), output2.getBuffer());
     }
 
-    @Override
-    public Boolean isParallelisable() {
-        return false;
-    }
 }

@@ -12,10 +12,6 @@ public interface InputCallable<K> extends ComponentCallable {
                 InputCallable.this.call(input);
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         };
     }
 
@@ -27,10 +23,6 @@ public interface InputCallable<K> extends ComponentCallable {
                 InputCallable.this.call(input);
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return true;
-            }
         };
     }
 

@@ -28,10 +28,6 @@ public class Flusher {
                 return flushingStrategy.call(inputPort).stream().map(unwrappingStrategy::call).collect(Collectors.toList());
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         };
     }
 

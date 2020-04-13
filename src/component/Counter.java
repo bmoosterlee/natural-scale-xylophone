@@ -15,10 +15,6 @@ public class Counter {
                 return oldCalculatedTicks;
             }
 
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
         };
     }
 }

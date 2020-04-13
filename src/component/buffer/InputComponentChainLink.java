@@ -11,33 +11,18 @@ public class InputComponentChainLink<K, A extends Packet<K>> extends ComponentCh
     }
 
     @Override
-    Boolean isParallelisable() {
-        return method.isParallelisable();
-    }
-
-    @Override
     protected void wrap() {
         if(previousComponentChainLink!=null) {
-            if(isParallelisable()!=previousComponentChainLink.isParallelisable()){
-                startAutonomousComponent();
-                previousComponentChainLink.wrap();
-            }
-            else {
-                InputCallable<K> call;
-                if (!isParallelisable()) {
-                    call = new InputCallable<>() {
-                        @Override
-                        public void call(K input) {
-                            synchronized (this) {
-                                method.call(input);
-                            }
-                        }
-                    };
-                } else {
-                    call = method;
+            InputCallable<K> call;
+            call = new InputCallable<>() {
+                @Override
+                public void call(K input) {
+                    synchronized (this) {
+                        method.call(input);
+                    }
                 }
-                previousComponentChainLink.wrap(call, 1);
-            }
+            };
+            previousComponentChainLink.wrap(call, 1);
         }
         else{
             startAutonomousComponent();

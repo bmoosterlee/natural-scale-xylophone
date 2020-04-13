@@ -72,10 +72,6 @@ public class SpectrumBuilder {
                 }
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         });
 
         return outputBuffer;

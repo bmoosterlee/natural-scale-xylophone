@@ -47,9 +47,4 @@ public class MethodPipeComponent<K, V, A extends Packet<K>, B extends Packet<V>>
         }
     }
 
-    @Override
-    public Boolean isParallelisable(){
-        return method.isParallelisable();
-    }
-
 }

@@ -14,10 +14,6 @@ public interface OutputCallable<V> extends ComponentCallable {
                 return OutputCallable.this.call();
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return false;
-            }
         };
     }
 
@@ -29,10 +25,6 @@ public interface OutputCallable<V> extends ComponentCallable {
                 return OutputCallable.this.call();
             }
 
-            @Override
-            public Boolean isParallelisable() {
-                return true;
-            }
         };
     }
 

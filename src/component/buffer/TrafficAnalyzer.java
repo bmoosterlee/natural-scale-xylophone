@@ -15,7 +15,6 @@ public class TrafficAnalyzer {
     private Map<String, Collection<String>> components;
     private Set<String> rootComponents;
     private Map<String, BoundedBuffer> bufferMap;
-    private Map<String, Callable<Integer>> threadCountMap;
     private Callable<Void> print;
 
     public TrafficAnalyzer(){
@@ -24,7 +23,6 @@ public class TrafficAnalyzer {
         components = new HashMap<>();
         rootComponents = new HashSet<>();
         bufferMap = new HashMap<>();
-        threadCountMap = new HashMap<>();
         trafficAnalyzer = this;
 
         print = new Callable<>() {
@@ -56,19 +54,6 @@ public class TrafficAnalyzer {
                 } else {
                     cloggingValue = "   ";
                 }
-                String threadCount;
-                Integer threadCountValue = null;
-                if(threadCountMap.containsKey(node)) {
-                    try {
-                        threadCountValue = threadCountMap.get(node).call();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    threadCountValue = 0;
-                }
-
-                threadCount = String.valueOf(threadCountValue);
 
                 String throughputValue;
                 if(throughputLog.containsKey(node)){
@@ -77,7 +62,7 @@ public class TrafficAnalyzer {
                     throughputValue = "   ";
                 }
 
-                System.out.println(cloggingValue + "    " + throughputValue + "    " + threadCount + " " + parentChain + node);
+                System.out.println(cloggingValue + "    " + throughputValue + "    " + parentChain + node);
 
                 if(components.containsKey(node)){
                     Collection<String> outputBufferNames = components.get(node);
@@ -140,7 +125,7 @@ public class TrafficAnalyzer {
     }
 
     private void logClogInternal(String bufferName){
-        if(!components.containsKey(bufferName) || !TickRunnerSpawner.anyClog(components.get(bufferName).stream().map(bufferMap::get).collect(Collectors.toList())))
+        if(!components.containsKey(bufferName))
         {
             Map<String, AtomicInteger> clogLog = this.clogLog;
             if (clogLog.containsKey(bufferName)) {
@@ -166,7 +151,7 @@ public class TrafficAnalyzer {
         }
     }
 
-    public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap, Callable<Integer> threadCountFunction) {
+    public void addComponent(List<String> inputNames, List<String> outputNames, Map<String, BoundedBuffer> bufferMap) {
         this.bufferMap.putAll(bufferMap);
 
         synchronized (rootComponents) {
@@ -193,14 +178,5 @@ public class TrafficAnalyzer {
                 }
             });
         }
-
-        inputNames.forEach(inputName -> {
-            if (!threadCountMap.containsKey(inputName)) {
-                threadCountMap.put(inputName, threadCountFunction);
-            } else {
-                Callable<Integer> oldCallable = threadCountMap.get(inputName);
-                threadCountMap.put(inputName, () -> oldCallable.call() + threadCountFunction.call());
-            }
-        });
     }
 }

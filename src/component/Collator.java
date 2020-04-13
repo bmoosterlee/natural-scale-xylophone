@@ -52,9 +52,4 @@ public class Collator<T, A extends Packet<T>> extends AbstractComponent<T, List<
         return Collections.singleton(outputPort.getBuffer());
     }
 
-    @Override
-    public Boolean isParallelisable(){
-        return false;
-    }
-
 }

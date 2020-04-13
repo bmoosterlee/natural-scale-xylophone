@@ -36,10 +36,6 @@ public class Pulser extends MethodOutputComponent<Pulse> {
                 return pulse;
             }
 
-            @Override
-            public Boolean isParallelisable(){
-                return false;
-            }
         };
     }
 

@@ -32,20 +32,12 @@ public class Batcher {
     }
 
     private static <K, V> PipeCallable<List<K>, List<V>> batch(PipeCallable<K, V> method) {
-        return new PipeCallable<>() {
-            @Override
-            public List<V> call(List<K> input) {
-                List<V> results = new LinkedList<>();
-                for (K element : input) {
-                    results.add(method.call(element));
-                }
-                return results;
+        return input -> {
+            List<V> results = new LinkedList<>();
+            for (K element : input) {
+                results.add(method.call(element));
             }
-
-            @Override
-            public Boolean isParallelisable() {
-                return method.isParallelisable();
-            }
+            return results;
         };
     }
 }

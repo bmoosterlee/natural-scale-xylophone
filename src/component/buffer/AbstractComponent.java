@@ -10,7 +10,4 @@ public abstract class AbstractComponent<K, V, A extends Packet<K>, B extends Pac
 
     protected abstract void tick();
 
-    public Boolean isParallelisable(){
-        return true;
-    }
 }

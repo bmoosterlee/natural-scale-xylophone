@@ -21,13 +21,8 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
 
     @Override
     protected <W, C extends Packet<W>> void wrap(PipeCallable<V, W> nextMethodChain, SimpleBuffer<W, C> outputBuffer, int chainLinks) {
-        if(!isParallelisable()) {
-            OutputCallable<W> sequentialCallChain = createSequentialLink(nextMethodChain);
-            startChainedSequentialComponent(sequentialCallChain, outputBuffer, chainLinks);
-        } else {
-            OutputCallable<W> parallelCallChain = createParallelLink(nextMethodChain);
-            startChainedParallelComponent(parallelCallChain, outputBuffer);
-        }
+        OutputCallable<W> parallelCallChain = createParallelLink(nextMethodChain);
+        startChainedParallelComponent(parallelCallChain, outputBuffer);
     }
 
     private <W> OutputCallable<W> createSequentialLink(PipeCallable<V, W> nextMethodChain) {
@@ -46,13 +41,8 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
 
     @Override
     protected void wrap(InputCallable<V> nextMethodChain, int chainLinks) {
-        if(!isParallelisable()) {
-            Callable<Void> sequentialCallChain = createSequentialLink(nextMethodChain);
-            startShutInSequentialComponent(sequentialCallChain, chainLinks);
-        } else {
-            Callable<Void> parallelCallChain = createParallelLink(nextMethodChain);
-            startShutInParallelComponent(parallelCallChain);
-        }
+        Callable<Void> sequentialCallChain = createSequentialLink(nextMethodChain);
+        startShutInSequentialComponent(sequentialCallChain);
     }
 
     private Callable<Void> createSequentialLink(InputCallable<V> nextMethodChain) {
@@ -76,8 +66,8 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
         };
     }
 
-    private <W, C extends Packet<W>> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W, C> outputBuffer, int chainLinks) {
-        new TickRunningStrategy(createMethodOutputComponent(sequentialCallChain, outputBuffer), chainLinks + 1);
+    private <W, C extends Packet<W>> void startChainedSequentialComponent(OutputCallable<W> sequentialCallChain, BoundedBuffer<W, C> outputBuffer) {
+        new TickRunningStrategy(createMethodOutputComponent(sequentialCallChain, outputBuffer));
     }
 
     private <W, C extends Packet<W>> void startChainedParallelComponent(OutputCallable<W> parallelCallChain, BoundedBuffer<W, C> outputBuffer) {
@@ -108,10 +98,9 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
 
     }
 
-    private void startShutInSequentialComponent(Callable<Void> sequentialCallChain, int chainLinks) {
+    private void startShutInSequentialComponent(Callable<Void> sequentialCallChain) {
         new TickRunningStrategy(
-                createShutInComponent(sequentialCallChain),
-                chainLinks + 1);
+                createShutInComponent(sequentialCallChain));
     }
 
     private void startShutInParallelComponent(Callable<Void> parallelCallChain) {
@@ -139,11 +128,6 @@ public class OutputComponentChainLink<V> extends ComponentChainLink<Void, V, Pac
                 }
             }
         };
-    }
-
-    @Override
-    Boolean isParallelisable() {
-        return method.isParallelisable();
     }
 
     public static <V> BufferChainLink<V, SimplePacket<V>> buildOutputBuffer(OutputCallable<V> method, int capacity, String name) {
