@@ -15,14 +15,14 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Collection;
 import java.util.LinkedList;
 
-public class Mixer {
+public class NoteMixer {
 
     public static <B extends Packet<Frequency>> SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer) {
         LinkedList<SimpleBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>> newNoteDataBroadcast = new LinkedList<>(
                     stampedSamplesBuffer
                             .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                             .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "mixer - build envelope")
-                            .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(Mixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - extract new note data")
+                            .<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>performMethod(NoteMixer::extractNewNotesData, sampleRate.sampleRate / 32, "mixer - extract new note data")
                     .broadcast(2, 100, "mixer - new note data"));
 
         return new SimpleImmutableEntry<>(

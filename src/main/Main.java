@@ -6,7 +6,7 @@ import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
-import mixer.Mixer;
+import mixer.NoteMixer;
 import sound.SampleTicker;
 import sound.AmplitudeState;
 import sound.VolumeState;
@@ -55,7 +55,7 @@ class Main {
 
         BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
 
-        SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(newNoteBuffer, sampleRate, stampedSamplesBuffer);
+        SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = NoteMixer.buildComponent(newNoteBuffer, sampleRate, stampedSamplesBuffer);
 
         LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
