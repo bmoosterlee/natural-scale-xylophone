@@ -1,4 +1,4 @@
-package notebuilder.envelope;
+package pianola.notebuilder.envelope;
 
 public interface DeterministicEnvelope extends Envelope {
     long getEndingSampleCount();

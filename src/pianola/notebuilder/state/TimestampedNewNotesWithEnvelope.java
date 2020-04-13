@@ -1,7 +1,7 @@
-package notebuilder.state;
+package pianola.notebuilder.state;
 
 import frequency.Frequency;
-import notebuilder.envelope.DeterministicEnvelope;
+import pianola.notebuilder.envelope.DeterministicEnvelope;
 
 import java.util.Collection;
 

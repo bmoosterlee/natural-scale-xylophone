@@ -1,6 +1,6 @@
-package notebuilder.envelope;
+package pianola.notebuilder.envelope;
 
-import notebuilder.envelope.functions.DeterministicFunction;
+import pianola.notebuilder.envelope.functions.DeterministicFunction;
 import sound.SampleRate;
 
 import java.util.Arrays;

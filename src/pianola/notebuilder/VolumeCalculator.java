@@ -1,10 +1,10 @@
-package notebuilder;
+package pianola.notebuilder;
 
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
-import notebuilder.envelope.DeterministicEnvelope;
-import notebuilder.envelope.Envelope;
+import pianola.notebuilder.envelope.DeterministicEnvelope;
+import pianola.notebuilder.envelope.Envelope;
 import sound.VolumeState;
 
 import java.util.*;

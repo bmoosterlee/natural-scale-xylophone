@@ -1,4 +1,4 @@
-package notebuilder;
+package pianola.notebuilder;
 
 import component.buffer.*;
 

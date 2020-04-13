@@ -6,7 +6,7 @@ import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
-import notebuilder.NoteBuilder;
+import pianola.notebuilder.NoteBuilder;
 import pianola.Pianola;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;

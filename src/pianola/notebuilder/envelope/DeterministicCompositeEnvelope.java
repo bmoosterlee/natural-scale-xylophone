@@ -1,4 +1,4 @@
-package notebuilder.envelope;
+package pianola.notebuilder.envelope;
 
 import java.util.Collection;
 import java.util.HashSet;
