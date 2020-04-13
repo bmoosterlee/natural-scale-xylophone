@@ -1,4 +1,4 @@
-package mixer.state;
+package sound;
 
 public class VolumeAmplitude {
     private final Double volume;

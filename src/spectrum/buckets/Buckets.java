@@ -1,7 +1,7 @@
 package spectrum.buckets;
 
 import frequency.Frequency;
-import mixer.state.VolumeState;
+import sound.VolumeState;
 import spectrum.SpectrumWindow;
 
 import java.util.*;

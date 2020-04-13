@@ -3,7 +3,7 @@ package spectrum;
 import component.*;
 import component.buffer.*;
 import frequency.Frequency;
-import mixer.state.VolumeState;
+import sound.VolumeState;
 import spectrum.buckets.*;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;

@@ -5,7 +5,7 @@ import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import mixer.envelope.DeterministicEnvelope;
 import mixer.envelope.Envelope;
-import mixer.state.VolumeState;
+import sound.VolumeState;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;

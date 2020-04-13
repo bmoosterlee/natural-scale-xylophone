@@ -2,7 +2,7 @@ package spectrum.harmonics;
 
 import component.buffer.*;
 import frequency.Frequency;
-import mixer.state.VolumeState;
+import sound.VolumeState;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Iterator;

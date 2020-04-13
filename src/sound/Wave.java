@@ -1,4 +1,4 @@
-package mixer.state;
+package sound;
 
 import frequency.Frequency;
 import sound.SampleRate;

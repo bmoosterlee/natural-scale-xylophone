@@ -3,8 +3,8 @@ package mixer;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
-import mixer.state.AmplitudeState;
-import mixer.state.Wave;
+import sound.AmplitudeState;
+import sound.Wave;
 import sound.SampleRate;
 
 import java.util.*;

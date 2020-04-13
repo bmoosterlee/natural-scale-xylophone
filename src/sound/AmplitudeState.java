@@ -1,11 +1,9 @@
-package mixer.state;
+package sound;
 
 import frequency.Frequency;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class AmplitudeState {
 

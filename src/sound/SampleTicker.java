@@ -1,11 +1,10 @@
-package mixer;
+package sound;
 
 import component.Counter;
 import component.Pulse;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import component.orderer.OrderStamper;
-import sound.SampleRate;
 import time.Pulser;
 import time.TimeInSeconds;
 

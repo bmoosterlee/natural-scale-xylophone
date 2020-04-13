@@ -7,10 +7,6 @@ import component.orderer.OrderStampedPacket;
 import component.orderer.Orderer;
 import frequency.Frequency;
 import main.OrderStampedPacketPairer;
-import mixer.state.AmplitudeState;
-import mixer.state.VolumeAmplitude;
-import mixer.state.VolumeAmplitudeState;
-import mixer.state.VolumeState;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
