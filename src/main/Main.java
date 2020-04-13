@@ -51,9 +51,9 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
-
         BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
+
+        SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
         SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = NoteMixer.buildComponent(newNoteBuffer, sampleRate, stampedSamplesBuffer);
 

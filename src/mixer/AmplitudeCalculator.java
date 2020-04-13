@@ -9,7 +9,6 @@ import sound.SampleRate;
 
 import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 class AmplitudeCalculator extends SampleCalculator {
