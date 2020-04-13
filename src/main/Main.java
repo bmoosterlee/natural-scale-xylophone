@@ -7,6 +7,7 @@ import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
 import mixer.Mixer;
+import mixer.SampleTicker;
 import mixer.state.AmplitudeState;
 import mixer.state.VolumeState;
 import pianola.Pianola;
@@ -52,9 +53,9 @@ class Main {
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(
-                newNoteBuffer,
-                sampleRate);
+        BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
+
+        SimpleImmutableEntry<BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> volumeAmplitudeStateBuffers = Mixer.buildComponent(newNoteBuffer, sampleRate, stampedSamplesBuffer);
 
         LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
             new LinkedList<>(volumeAmplitudeStateBuffers.getKey()
