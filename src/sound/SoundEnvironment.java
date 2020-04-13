@@ -17,14 +17,14 @@ import java.util.Map;
 
 public class SoundEnvironment {
 
-    public static InputCallable<BoundedBuffer<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
+    public static InputCallable<BoundedBuffer<Double, OrderStampedPacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
             private double marginalSampleSize;
 
             @Override
-            public void call(BoundedBuffer<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>> inputBuffer) {
+            public void call(BoundedBuffer<Double, OrderStampedPacket<Double>> inputBuffer) {
                 sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
                 marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -45,7 +45,6 @@ public class SoundEnvironment {
                 sourceDataLine.start();
 
                 BoundedBuffer<Byte, OrderStampedPacket<Byte>> fittedAmplitudes = inputBuffer
-                        .performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
                         .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, 100, "sound environment - fit amplitude")
                         .connectTo(Orderer.buildPipe(Math.max(1, sampleLookahead), "sound environment - sample orderer"));
 
@@ -110,6 +109,7 @@ public class SoundEnvironment {
                                         input.getValue()),
                         100,
                         "sound environment - merge volume and amplitude state")
+                .<Double, OrderStampedPacket<Double>>performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }
