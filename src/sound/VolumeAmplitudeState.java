@@ -1,25 +1,22 @@
 package sound;
 
-import frequency.Frequency;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 public class VolumeAmplitudeState {
 
-    public static Map<Frequency, VolumeAmplitude> build(VolumeState volumeState, AmplitudeState amplitudeState){
-        Map<Frequency, VolumeAmplitude> volumeAmplitudes = new HashMap<>();
-        for(Frequency frequency : volumeState.volumes.keySet()){
-            volumeAmplitudes.put(frequency,
-                    new VolumeAmplitude(
-                            volumeState.volumes.get(frequency),
-                            amplitudeState.amplitudes.get(frequency)));
+    public final VolumeAmplitude[] volumeAmplitudes;
+
+    public VolumeAmplitudeState(VolumeState volumeState, AmplitudeState amplitudeState) {
+        volumeAmplitudes = new VolumeAmplitude[amplitudeState.amplitudes.length];
+        for (int i = 0; i < amplitudeState.amplitudes.length; i++) {
+            volumeAmplitudes[i] = new VolumeAmplitude(
+                    volumeState.volumes[i],
+                    amplitudeState.amplitudes[i]);
         }
-        return volumeAmplitudes;
     }
 
-    public static Double toDouble(Map<Frequency, VolumeAmplitude> volumeAmplitudes){
-        return volumeAmplitudes.values().stream()
+    public Double toDouble() {
+        return Arrays.stream(volumeAmplitudes)
                 .map(VolumeAmplitude::getValue)
                 .reduce(0., Double::sum);
     }

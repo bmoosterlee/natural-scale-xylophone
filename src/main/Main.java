@@ -6,23 +6,19 @@ import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
-import pianola.notebuilder.NoteBuilder;
 import pianola.Pianola;
+import pianola.notebuilder.NoteBuilder;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
 import sound.*;
 import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
-import spectrum.buckets.Buckets;
 import time.Pulser;
 import time.TimeInSeconds;
 
 import java.awt.*;
 import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.stream.Collectors;
 
 class Main {
 
@@ -55,12 +51,10 @@ class Main {
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, stampedSampleBroadcast.poll());
-
-        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> correctedVolumeBuffer = volumeBuffer.performMethod(input -> new VolumeState(new HashMap<>(input.volumes.entrySet().stream().map(input0 -> new SimpleImmutableEntry<>(spectrumWindow.staticFrequencyWindow.get((spectrumWindow.getX(input0.getKey()))), input0.getValue())).collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue)))), 100, "main - correct volume frequencies");
+        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, stampedSampleBroadcast.poll());
 
         LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
-            new LinkedList<>(correctedVolumeBuffer
+            new LinkedList<>(volumeBuffer
                 .broadcast(2, 100, "main volume - broadcast"));
 
         BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeStateBuffer = stampedSampleBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
@@ -68,15 +62,15 @@ class Main {
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
         SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
-        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Buckets, SimplePacket<Buckets>>, BoundedBuffer<Buckets, SimplePacket<Buckets>>> spectrumPair =
+        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Double[], SimplePacket<Double[]>>, BoundedBuffer<Double[], SimplePacket<Double[]>>> spectrumPair =
             SpectrumBuilder.buildComponent(
             guiTickerOutput,
             volumeBroadcast.poll()
                 .toOverwritable("main - dump spectrum volume input overflow"),
             spectrumWindow);
 
-        LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Buckets, ? extends Packet<Buckets>>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
 
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         guiOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);

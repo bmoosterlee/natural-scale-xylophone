@@ -1,7 +1,7 @@
 package spectrum.buckets;
 
 import frequency.Frequency;
-import sound.VolumeState;
+import sound.VolumeStateMap;
 import spectrum.SpectrumWindow;
 
 import java.util.*;
@@ -24,7 +24,7 @@ public class Buckets {
         this(map.keySet(), map);
     }
 
-    public Buckets(VolumeState volumeState, SpectrumWindow spectrumWindow){
+    public Buckets(VolumeStateMap volumeState, SpectrumWindow spectrumWindow){
         Map<Frequency, Double> volumes = volumeState.volumes;
         Set<Frequency> keys = volumes.keySet();
 
@@ -169,5 +169,13 @@ public class Buckets {
         }
 
         return new Buckets(newIndices, newEntries);
+    }
+
+    private static Map<Integer, Double> bucketsToMap(Buckets buckets) {
+        Map<Integer, Double> volumes = new HashMap<>();
+        for(Integer index : buckets.getIndices()) {
+            volumes.put(index, buckets.getValue(index).getVolume());
+        }
+        return volumes;
     }
 }

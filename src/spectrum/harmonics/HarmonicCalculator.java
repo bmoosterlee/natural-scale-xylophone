@@ -2,7 +2,7 @@ package spectrum.harmonics;
 
 import component.buffer.*;
 import frequency.Frequency;
-import sound.VolumeState;
+import sound.VolumeStateMap;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Iterator;
@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<Iterator<Entry<Harmonic, Double>>>> extends MethodPipeComponent<VolumeState, Iterator<Entry<Harmonic, Double>>, A, B> {
+public class HarmonicCalculator<A extends Packet<VolumeStateMap>, B extends Packet<Iterator<Entry<Harmonic, Double>>>> extends MethodPipeComponent<VolumeStateMap, Iterator<Entry<Harmonic, Double>>, A, B> {
 
-    public HarmonicCalculator(SimpleBuffer<VolumeState, A> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>, B> outputBuffer, int maxHarmonics){
+    public HarmonicCalculator(SimpleBuffer<VolumeStateMap, A> inputBuffer, SimpleBuffer<Iterator<Entry<Harmonic, Double>>, B> outputBuffer, int maxHarmonics){
          super(inputBuffer, outputBuffer, calculateHarmonics(maxHarmonics));
     }
 
-    public static PipeCallable<VolumeState, Iterator<Entry<Harmonic, Double>>> calculateHarmonics(int maxHarmonics1){
+    public static PipeCallable<VolumeStateMap, Iterator<Entry<Harmonic, Double>>> calculateHarmonics(int maxHarmonics1){
         return new PipeCallable<>() {
             private NewHarmonicsCalculator newHarmonicsCalculator;
             private MemoizedHighValueHarmonics memoizedHighValueHarmonics;
@@ -30,7 +30,7 @@ public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<
                 memoizedHighValueHarmonics = new MemoizedHighValueHarmonics();
             }
 
-            private Iterator<Entry<Harmonic, Double>> calculateHarmonics(VolumeState volumeState) {
+            private Iterator<Entry<Harmonic, Double>> calculateHarmonics(VolumeStateMap volumeState) {
                 Map<Frequency, Double> volumes = volumeState.volumes;
                 Set<Frequency> liveFrequencies = volumes.keySet();
                 Iterator<Entry<Harmonic, Double>> harmonicHierarchyIterator = getHarmonicHierarchyIterator(liveFrequencies, volumes);
@@ -66,7 +66,7 @@ public class HarmonicCalculator<A extends Packet<VolumeState>, B extends Packet<
             }
 
             @Override
-            public Iterator<Entry<Harmonic, Double>> call(VolumeState input) {
+            public Iterator<Entry<Harmonic, Double>> call(VolumeStateMap input) {
                 return calculateHarmonics(input);
             }
 

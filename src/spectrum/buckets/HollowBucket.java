@@ -7,7 +7,7 @@ import java.util.*;
 public class HollowBucket implements Bucket {
     private final Double volume;
 
-    HollowBucket(double volume) {
+    public HollowBucket(double volume) {
         this.volume = volume;
     }
 

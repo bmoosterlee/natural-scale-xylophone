@@ -1,31 +1,32 @@
 package pianola.notebuilder;
 
-import component.buffer.*;
+import component.buffer.BoundedBuffer;
+import component.buffer.PipeCallable;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import pianola.notebuilder.envelope.DeterministicEnvelope;
 import pianola.notebuilder.envelope.Envelope;
-import sound.VolumeState;
+import sound.VolumeStateMap;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 class VolumeCalculator extends SampleCalculator{
 
-    static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>>> buildPipe() {
+    static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeStateMap, OrderStampedPacket<VolumeStateMap>>> buildPipe() {
         return new PipeCallable<>() {
             final ConcurrentHashMap<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>> unfinishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
-            public BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
+            public BoundedBuffer<VolumeStateMap, OrderStampedPacket<VolumeStateMap>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
                 return buildSampleCalculator(
                         inputBuffer,
                         unfinishedSampleFragments,
                         this::addNewNotes,
                         input -> calculateVolumesPerFrequency(input.getKey(), input.getValue()),
-                        VolumeState::add,
-                        () -> new VolumeState(new HashMap<>()),
+                        VolumeStateMap::add,
+                        () -> new VolumeStateMap(new HashMap<>()),
                         "volume calculator");
             }
 
@@ -61,7 +62,7 @@ class VolumeCalculator extends SampleCalculator{
         return newNotesWithEnvelopes;
     }
 
-    private static VolumeState calculateVolumesPerFrequency(Long sampleCount, SimpleImmutableEntry<Frequency, Envelope> envelopePerFrequency) {
-        return new VolumeState(Collections.singletonMap(envelopePerFrequency.getKey(), envelopePerFrequency.getValue().getVolume(sampleCount)));
+    private static VolumeStateMap calculateVolumesPerFrequency(Long sampleCount, SimpleImmutableEntry<Frequency, Envelope> envelopePerFrequency) {
+        return new VolumeStateMap(Collections.singletonMap(envelopePerFrequency.getKey(), envelopePerFrequency.getValue().getVolume(sampleCount)));
     }
 }

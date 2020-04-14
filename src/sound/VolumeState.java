@@ -1,33 +1,19 @@
 package sound;
 
-import frequency.Frequency;
-
-import java.util.HashMap;
-import java.util.Map;
-
 public class VolumeState {
 
-    public final Map<Frequency, Double> volumes;
+    public final Double[] volumes;
 
-    public VolumeState(Map<Frequency, Double> volumes) {
+    public VolumeState(Double[] volumes) {
         this.volumes = volumes;
     }
 
     public VolumeState add(VolumeState other) {
-        HashMap<Frequency, Double> newVolumes = new HashMap<>(volumes);
+        Double[] newVolumes = new Double[volumes.length];
 
-        HashMap<Frequency, Double> existingOtherVolumes = new HashMap<>(other.volumes);
-        existingOtherVolumes.keySet().retainAll(newVolumes.keySet());
-
-        HashMap<Frequency, Double> newOtherVolumes = new HashMap<>(other.volumes);
-        newOtherVolumes.keySet().removeAll(newVolumes.keySet());
-
-        for(Frequency frequency : existingOtherVolumes.keySet()){
-            Double oldVolume = newVolumes.get(frequency);
-            Double otherVolume = other.volumes.get(frequency);
-            newVolumes.put(frequency, oldVolume + otherVolume);
+        for(int i = 0; i < volumes.length; i++){
+            newVolumes[i] = volumes[i] + other.volumes[i];
         }
-        newVolumes.putAll(newOtherVolumes);
 
         return new VolumeState(newVolumes);
     }

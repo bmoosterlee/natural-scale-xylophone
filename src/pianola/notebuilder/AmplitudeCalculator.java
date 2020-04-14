@@ -3,7 +3,7 @@ package pianola.notebuilder;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
-import sound.AmplitudeState;
+import sound.AmplitudeStateMap;
 import sound.Wave;
 import sound.SampleRate;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class AmplitudeCalculator extends SampleCalculator {
 
-    static PipeCallable<BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>>, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>>> buildPipe(SampleRate sampleRate) {
+    static PipeCallable<BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>>, BoundedBuffer<AmplitudeStateMap, OrderStampedPacket<AmplitudeStateMap>>> buildPipe(SampleRate sampleRate) {
         final Map<Frequency, Wave> liveWaves = new HashMap<>();
         final Map<Frequency, Long> waveTimeOuts = new HashMap<>();
 
@@ -21,14 +21,14 @@ class AmplitudeCalculator extends SampleCalculator {
             final ConcurrentHashMap<Long, Set<SimpleImmutableEntry<Frequency, Wave>>> unfinishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
-            public BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
+            public BoundedBuffer<AmplitudeStateMap, OrderStampedPacket<AmplitudeStateMap>> call(BoundedBuffer<NewNotesAmplitudeData, OrderStampedPacket<NewNotesAmplitudeData>> inputBuffer) {
                 return buildSampleCalculator(
                         inputBuffer,
                         unfinishedSampleFragments,
                         this::addNewNotes,
                         input -> calculateAmplitudesPerFrequency(input.getKey(), input.getValue()),
-                        AmplitudeState::add,
-                        () -> new AmplitudeState(new HashMap<>()),
+                        AmplitudeStateMap::add,
+                        () -> new AmplitudeStateMap(new HashMap<>()),
                         "amplitude calculator");
             }
 
@@ -127,7 +127,7 @@ class AmplitudeCalculator extends SampleCalculator {
     }
 
 
-    private static AmplitudeState calculateAmplitudesPerFrequency(Long sampleCount, Map.Entry<Frequency, Wave> wavesPerFrequency) {
-        return new AmplitudeState(Collections.singletonMap(wavesPerFrequency.getKey(), wavesPerFrequency.getValue().getAmplitude(sampleCount)));
+    private static AmplitudeStateMap calculateAmplitudesPerFrequency(Long sampleCount, Map.Entry<Frequency, Wave> wavesPerFrequency) {
+        return new AmplitudeStateMap(Collections.singletonMap(wavesPerFrequency.getKey(), wavesPerFrequency.getValue().getAmplitude(sampleCount)));
     }
 }

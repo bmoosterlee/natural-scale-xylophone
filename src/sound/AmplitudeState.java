@@ -1,21 +1,20 @@
 package sound;
 
-import frequency.Frequency;
-
-import java.util.HashMap;
-import java.util.Map;
-
 public class AmplitudeState {
 
-    public final Map<Frequency, Double> amplitudes;
+    public final Double[] amplitudes;
 
-    public AmplitudeState(Map<Frequency, Double> amplitudes) {
+    public AmplitudeState(Double[] amplitudes) {
         this.amplitudes = amplitudes;
     }
 
     public AmplitudeState add(AmplitudeState other) {
-        HashMap<Frequency, Double> newAmplitudes = new HashMap<>(amplitudes);
-        newAmplitudes.putAll(other.amplitudes);
+        Double[] newAmplitudes = new Double[amplitudes.length];
+
+        for(int i = 0; i<amplitudes.length; i++){
+            newAmplitudes[i] = amplitudes[i] + other.amplitudes[i];
+        }
+
         return new AmplitudeState(newAmplitudes);
     }
 }

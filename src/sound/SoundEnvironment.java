@@ -5,7 +5,6 @@ import component.Pulse;
 import component.buffer.*;
 import component.orderer.OrderStampedPacket;
 import component.orderer.Orderer;
-import frequency.Frequency;
 import main.OrderStampedPacketPairer;
 
 import javax.sound.sampled.AudioFormat;
@@ -13,7 +12,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import java.util.List;
-import java.util.Map;
 
 public class SoundEnvironment {
 
@@ -102,9 +100,9 @@ public class SoundEnvironment {
                 amplitudeInputBuffer,
                 100,
                 "sound environment - pair volume and amplitude")
-                .<Map<Frequency, VolumeAmplitude>, OrderStampedPacket<Map<Frequency, VolumeAmplitude>>>
+                .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>
                         performMethod(input ->
-                                VolumeAmplitudeState.build(
+                                new VolumeAmplitudeState(
                                         input.getKey(),
                                         input.getValue()),
                         100,
