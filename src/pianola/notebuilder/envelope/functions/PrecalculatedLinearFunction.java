@@ -1,4 +1,4 @@
-package notebuilder.envelope.functions;
+package pianola.notebuilder.envelope.functions;
 
 import sound.SampleRate;
 import time.TimeInSeconds;

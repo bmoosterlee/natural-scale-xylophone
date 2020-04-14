@@ -1,11 +1,11 @@
-package notebuilder.state;
+package pianola.notebuilder.state;
 
 import component.buffer.*;
 import frequency.Frequency;
-import notebuilder.envelope.DeterministicEnvelope;
-import notebuilder.envelope.SimpleDeterministicEnvelope;
-import notebuilder.envelope.functions.DeterministicFunction;
-import notebuilder.envelope.functions.LinearFunctionMemoizer;
+import pianola.notebuilder.envelope.DeterministicEnvelope;
+import pianola.notebuilder.envelope.SimpleDeterministicEnvelope;
+import pianola.notebuilder.envelope.functions.DeterministicFunction;
+import pianola.notebuilder.envelope.functions.LinearFunctionMemoizer;
 import sound.SampleRate;
 import time.TimeInSeconds;
 

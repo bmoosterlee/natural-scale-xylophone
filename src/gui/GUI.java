@@ -4,14 +4,14 @@ import component.Pulse;
 import component.buffer.*;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
-import spectrum.buckets.Buckets;
-import spectrum.buckets.BucketsAverager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
-public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends Packet<java.util.List<Frequency>>> {
+public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O extends Packet<java.util.List<Frequency>>> {
     private final int height = 600;
     private final double yScale = height * 0.95;
     private final double margin = height * 0.05;
@@ -22,19 +22,18 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
     private final InputPort<Integer, Packet<Integer>> cursorInputPort;
     private final OutputPort repaintPort;
 
-    public GUI(SimpleBuffer<Buckets, N> noteInputBuffer, SimpleBuffer<Buckets, H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
-        LinkedList<SimpleBuffer<Buckets, N>> noteSpectrumBroadcast =
+    public GUI(SimpleBuffer<Double[], N> noteInputBuffer, SimpleBuffer<Double[], H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+        LinkedList<SimpleBuffer<Double[], N>> noteSpectrumBroadcast =
                 new LinkedList<>(noteInputBuffer.broadcast(3, "GUI note spectrum - broadcast"));
 
         guiPanel = new GUIPanel();
 
         harmonicInputPort = harmonicInputBuffer
-                .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "gui - average harmonic spectrum")
-                .performMethod(GUI::bucketsToVolumes, "buckets to volumes - harmonics")
+                .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - harmonics")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
 
         noteInputPort = noteSpectrumBroadcast.poll()
-                .performMethod(GUI::bucketsToVolumes, "buckets to volumes - notes")
+                .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - notes")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
                 .createInputPort();
 
@@ -58,6 +57,14 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
         repaintPort = new OutputPort<>();
 
         repaintPort.getBuffer().performMethod((InputCallable<Pulse>) input -> guiPanel.repaint());
+    }
+
+    private Map<Integer, Double> doubleArrayToMap(SpectrumWindow spectrumWindow, Double[] input) {
+        Map<Integer, Double> volumes = new HashMap<>();
+        for(int i = 0; i<spectrumWindow.width; i++) {
+            volumes.put(i, input[i]);
+        }
+        return volumes;
     }
 
     class GUIPanel extends JPanel {
@@ -108,14 +115,6 @@ public class GUI<N extends Packet<Buckets>, H extends Packet<Buckets>, O extends
             yValues.put(index, y);
         }
         return yValues;
-    }
-
-    private static Map<Integer, Double> bucketsToVolumes(Buckets buckets) {
-        Map<Integer, Double> volumes = new HashMap<>();
-        for(Integer index : buckets.getIndices()) {
-            volumes.put(index, buckets.getValue(index).getVolume());
-        }
-        return volumes;
     }
 
 }

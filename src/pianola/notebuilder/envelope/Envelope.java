@@ -1,6 +1,6 @@
-package notebuilder.envelope;
+package pianola.notebuilder.envelope;
 
-import notebuilder.envelope.functions.EnvelopeFunction;
+import pianola.notebuilder.envelope.functions.EnvelopeFunction;
 import sound.SampleRate;
 
 public interface Envelope {
