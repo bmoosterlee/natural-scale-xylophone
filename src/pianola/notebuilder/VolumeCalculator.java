@@ -2,7 +2,7 @@ package pianola.notebuilder;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.PipeCallable;
-import component.orderer.OrderStampedPacket;
+import component.buffer.SimplePacket;
 import frequency.Frequency;
 import pianola.notebuilder.envelope.DeterministicEnvelope;
 import pianola.notebuilder.envelope.Envelope;
@@ -14,12 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class VolumeCalculator extends SampleCalculator{
 
-    static PipeCallable<BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>>, BoundedBuffer<VolumeStateMap, OrderStampedPacket<VolumeStateMap>>> buildPipe() {
+    static PipeCallable<BoundedBuffer<NewNotesVolumeData, SimplePacket<NewNotesVolumeData>>, BoundedBuffer<VolumeStateMap, SimplePacket<VolumeStateMap>>> buildPipe() {
         return new PipeCallable<>() {
             final ConcurrentHashMap<Long, Set<SimpleImmutableEntry<Frequency, Envelope>>> unfinishedSampleFragments = new ConcurrentHashMap<>();
 
             @Override
-            public BoundedBuffer<VolumeStateMap, OrderStampedPacket<VolumeStateMap>> call(BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> inputBuffer) {
+            public BoundedBuffer<VolumeStateMap, SimplePacket<VolumeStateMap>> call(BoundedBuffer<NewNotesVolumeData, SimplePacket<NewNotesVolumeData>> inputBuffer) {
                 return buildSampleCalculator(
                         inputBuffer,
                         unfinishedSampleFragments,

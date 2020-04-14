@@ -2,12 +2,12 @@ package sound;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.PipeCallable;
-import component.orderer.OrderStampedPacket;
+import component.buffer.SimplePacket;
 import frequency.Frequency;
 import spectrum.SpectrumWindow;
 
 public class AmplitudeCalculator {
-    public static PipeCallable<BoundedBuffer<Long, OrderStampedPacket<Long>>, BoundedBuffer<Double[], OrderStampedPacket<Double[]>>> buildPipe(SampleRate sampleRate, SpectrumWindow spectrumWindow) {
+    public static PipeCallable<BoundedBuffer<Long, SimplePacket<Long>>, BoundedBuffer<Double[], SimplePacket<Double[]>>> buildPipe(SampleRate sampleRate, SpectrumWindow spectrumWindow) {
         return inputBuffer -> {
             int width = spectrumWindow.width;
 

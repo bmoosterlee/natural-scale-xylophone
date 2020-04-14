@@ -2,7 +2,7 @@ package pianola.notebuilder;
 
 import component.buffer.BoundedBuffer;
 import component.buffer.Packet;
-import component.orderer.OrderStampedPacket;
+import component.buffer.SimplePacket;
 import frequency.Frequency;
 import pianola.notebuilder.envelope.DeterministicEnvelope;
 import pianola.notebuilder.state.EnvelopeBuilder;
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 
 public class NoteBuilder {
 
-    public static <B extends Packet<Frequency>> BoundedBuffer<Double[], OrderStampedPacket<Double[]>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, SpectrumWindow spectrumWindow, BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer) {
-        BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> newNoteData = stampedSamplesBuffer
+    public static <B extends Packet<Frequency>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, SpectrumWindow spectrumWindow, BoundedBuffer<Long, SimplePacket<Long>> stampedSamplesBuffer) {
+        BoundedBuffer<NewNotesVolumeData, SimplePacket<NewNotesVolumeData>> newNoteData = stampedSamplesBuffer
                 .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                 .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "pianola.notebuilder - build envelope")
                 .performMethod(NoteBuilder::extractNewNotesData, sampleRate.sampleRate / 32, "pianola.notebuilder - extract new note data");

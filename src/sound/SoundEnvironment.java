@@ -1,11 +1,12 @@
 package sound;
 
 import component.Flusher;
+import component.Pairer;
 import component.Pulse;
-import component.buffer.*;
-import component.orderer.OrderStampedPacket;
-import component.orderer.Orderer;
-import main.OrderStampedPacketPairer;
+import component.buffer.BoundedBuffer;
+import component.buffer.InputCallable;
+import component.buffer.SimpleBuffer;
+import component.buffer.SimplePacket;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -14,14 +15,14 @@ import javax.sound.sampled.SourceDataLine;
 
 public class SoundEnvironment {
 
-    public static InputCallable<BoundedBuffer<Double, OrderStampedPacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
+    public static InputCallable<BoundedBuffer<Double, SimplePacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
             private double marginalSampleSize;
 
             @Override
-            public void call(BoundedBuffer<Double, OrderStampedPacket<Double>> inputBuffer) {
+            public void call(BoundedBuffer<Double, SimplePacket<Double>> inputBuffer) {
                 sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
                 marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
 
@@ -41,9 +42,8 @@ public class SoundEnvironment {
                 }
                 sourceDataLine.start();
 
-                BoundedBuffer<Byte, OrderStampedPacket<Byte>> fittedAmplitudes = inputBuffer
-                        .<Byte, OrderStampedPacket<Byte>>performMethod(this::fitAmplitude, 100, "sound environment - fit amplitude")
-                        .connectTo(Orderer.buildPipe(Math.max(1, sampleLookahead), "sound environment - sample orderer"));
+                BoundedBuffer<Byte, SimplePacket<Byte>> fittedAmplitudes = inputBuffer
+                        .<Byte, SimplePacket<Byte>>performMethod(this::fitAmplitude, 100, "sound environment - fit amplitude");
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse");
                 batchPulses
@@ -93,20 +93,20 @@ public class SoundEnvironment {
         };
     }
 
-    public static void buildComponent(BoundedBuffer<Double[], OrderStampedPacket<Double[]>> volumeInputBuffer, BoundedBuffer<Double[], OrderStampedPacket<Double[]>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
-        OrderStampedPacketPairer.buildComponent(
+    public static void buildComponent(BoundedBuffer<Double[], SimplePacket<Double[]>> volumeInputBuffer, BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
+        Pairer.pair(
                 volumeInputBuffer,
                 amplitudeInputBuffer,
                 100,
                 "sound environment - pair volume and amplitude")
-                .<VolumeAmplitudeState, OrderStampedPacket<VolumeAmplitudeState>>
+                .<VolumeAmplitudeState, SimplePacket<VolumeAmplitudeState>>
                         performMethod(input ->
                                 new VolumeAmplitudeState(
                                         input.getKey(),
                                         input.getValue()),
                         100,
                         "sound environment - merge volume and amplitude state")
-                .<Double, OrderStampedPacket<Double>>performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
+                .<Double, SimplePacket<Double>>performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }

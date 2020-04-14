@@ -3,14 +3,16 @@ package main;
 import component.Pulse;
 import component.Separator;
 import component.buffer.*;
-import component.orderer.OrderStampedPacket;
 import frequency.Frequency;
 import gui.GUI;
 import pianola.Pianola;
 import pianola.notebuilder.NoteBuilder;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
-import sound.*;
+import sound.AmplitudeCalculator;
+import sound.SampleRate;
+import sound.SampleTicker;
+import sound.SoundEnvironment;
 import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
 import time.Pulser;
@@ -45,19 +47,19 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
+        BoundedBuffer<Long, SimplePacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
 
-        LinkedList<SimpleBuffer<Long, OrderStampedPacket<Long>>> stampedSampleBroadcast = new LinkedList<>(stampedSamplesBuffer.broadcast(2, 100, "main - stamped samples buffer broadcast"));
+        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(stampedSamplesBuffer.broadcast(2, 100, "main - stamped samples buffer broadcast"));
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        BoundedBuffer<Double[], OrderStampedPacket<Double[]>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, stampedSampleBroadcast.poll());
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, sampleCountBroadcast.poll());
 
-        LinkedList<BoundedBuffer<Double[], OrderStampedPacket<Double[]>>> volumeBroadcast =
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcast =
             new LinkedList<>(volumeBuffer
                 .broadcast(2, 100, "main volume - broadcast"));
 
-        BoundedBuffer<Double[], OrderStampedPacket<Double[]>> amplitudeStateBuffer = stampedSampleBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
+        BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
