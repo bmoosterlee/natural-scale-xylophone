@@ -81,25 +81,4 @@ public class SpectrumBuilder {
         }, 200, "spectrum builder - calculate harmonics");
     }
 
-    private static <A extends Packet<Map.Entry<Harmonic, Double>>, B extends Packet<Iterator<Map.Entry<Harmonic, Double>>>> BoundedBuffer<Map.Entry<Harmonic, Double>, A> calculateHarmonicsContinuously(BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>, B> harmonicsIteratorBuffer, int maxHarmonics) {
-        SimpleBuffer<Map.Entry<Harmonic, Double>, A> outputBuffer = new SimpleBuffer<>(maxHarmonics, "spectrum builder - harmonic calculation");
-
-        new TickRunningStrategy(new AbstractPipeComponent<>(harmonicsIteratorBuffer.createInputPort(), outputBuffer.createOutputPort()){
-            @Override
-            protected void tick() {
-                try {
-                    B harmonicsIterator = input.consume();
-                    while (input.isEmpty() && harmonicsIterator.unwrap().hasNext()) {
-                        output.produce(harmonicsIterator.transform(Iterator::next));
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        });
-
-        return outputBuffer;
-    }
-
 }
