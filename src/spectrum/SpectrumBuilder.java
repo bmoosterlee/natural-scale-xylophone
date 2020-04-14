@@ -1,39 +1,23 @@
 package spectrum;
 
-import component.Pulse;
-import component.TimedConsumer;
 import component.buffer.BoundedBuffer;
 import component.buffer.Packet;
 import component.buffer.PipeCallable;
 import component.buffer.SimplePacket;
 import frequency.Frequency;
+import sound.SampleRate;
 import sound.VolumeStateMap;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class SpectrumBuilder {
 
-    public static <B extends Packet<Double[]>> SimpleImmutableEntry<BoundedBuffer<Double[], SimplePacket<Double[]>>, BoundedBuffer<Double[], SimplePacket<Double[]>>> buildComponent(BoundedBuffer<Pulse, ? extends Packet<Pulse>> frameTickBuffer, BoundedBuffer<Double[], B> inputBuffer, SpectrumWindow spectrumWindow) {
-        BoundedBuffer<Double[], B> volumeStatePacketBufferChainLink = frameTickBuffer
-                .performMethod(TimedConsumer.consumeFrom(inputBuffer), "spectrum builder - consume from volume state buffer");
-        LinkedList<BoundedBuffer<Double[], B>> volumeBroadcast =
-                new LinkedList<>(
-                        volumeStatePacketBufferChainLink
-                                .broadcast(2, "spectrum builder - volume broadcast"));
-
-        return new SimpleImmutableEntry<>(
-                volumeBroadcast.poll().rewrap(),
-                buildHarmonicSpectrumPipe(volumeBroadcast.poll(), spectrumWindow));
-    }
-
-    private static <B extends Packet<Double[]>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<Double[], B> volumeBuffer, SpectrumWindow spectrumWindow) {
-        int maxHarmonics = 200;
+    public static <B extends Packet<Double[]>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<Double[], B> volumeBuffer, SpectrumWindow spectrumWindow, SampleRate sampleRate) {
+        int maxHarmonics = 1000;
 
         Double[][] harmonics = new Double[spectrumWindow.width][spectrumWindow.width];
         PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> harmonicCalculator = HarmonicCalculator.calculateHarmonics(maxHarmonics);
@@ -69,13 +53,18 @@ public class SpectrumBuilder {
             for(int i = 0; i<spectrumWindow.width; i++){
                 harmonicsForThisVolumeSpectrum[i] = 0.;
             }
+            Double volumeBucket;
             for(int i = 0; i<spectrumWindow.width; i++){
+                volumeBucket = input[i];
+                if(volumeBucket == 0.){
+                    continue;
+                }
                 for(int j = 0; j<spectrumWindow.width; j++) {
-                    harmonicsForThisVolumeSpectrum[j] += input[i] * harmonics[i][j];
+                    harmonicsForThisVolumeSpectrum[j] += volumeBucket * harmonics[i][j];
                 }
             }
             return harmonicsForThisVolumeSpectrum;
-        }, 200, "spectrum builder - calculate harmonics");
+        }, sampleRate.sampleRate / 32, "spectrum builder - calculate harmonics");
     }
 
 }

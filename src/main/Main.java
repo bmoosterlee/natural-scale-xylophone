@@ -19,7 +19,6 @@ import time.Pulser;
 import time.TimeInSeconds;
 
 import java.awt.*;
-import java.util.AbstractMap;
 import java.util.LinkedList;
 
 class Main {
@@ -55,30 +54,23 @@ class Main {
 
         BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, sampleCountBroadcast.poll());
 
-        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcast =
-            new LinkedList<>(volumeBuffer
-                .broadcast(2, 100, "main volume - broadcast"));
-
         BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
-        SoundEnvironment.buildComponent(volumeBroadcast.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastOverwritable = new LinkedList<>(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow").broadcast(2, "main note spectrum overwritable - broadcast"));
+
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastAudio = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll(), spectrumWindow, sampleRate).broadcast(2, "main harmonic spectrum - broadcast"));
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastOverwritable = new LinkedList<>(harmonicSpectrumBroadcastAudio.poll().toOverwritable("main - harmonic spectrum overflow").broadcast(2, "main harmonic spectrum overwritable - broadcast"));
+
+        SoundEnvironment.buildComponent(harmonicSpectrumBroadcastAudio.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
         SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
-        AbstractMap.SimpleImmutableEntry<BoundedBuffer<Double[], SimplePacket<Double[]>>, BoundedBuffer<Double[], SimplePacket<Double[]>>> spectrumPair =
-            SpectrumBuilder.buildComponent(
-            guiTickerOutput,
-            volumeBroadcast.poll()
-                .toOverwritable("main - dump spectrum volume input overflow"),
-            spectrumWindow);
-
-        LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> noteSpectrumBroadcast = new LinkedList<>(spectrumPair.getKey().broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> harmonicSpectrumBroadcast = new LinkedList<>(spectrumPair.getValue().broadcast(2, "main harmonic spectrum - broadcast"));
-
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         guiOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
         new GUI(
-            noteSpectrumBroadcast.poll(),
-            harmonicSpectrumBroadcast.poll(),
+            guiTickerOutput,
+            volumeBroadcastOverwritable.poll().toOverwritable("main - dump spectrum volume input overflow"),
+            harmonicSpectrumBroadcastOverwritable.poll().toOverwritable("main - dump spectrum harmonic input overflow"),
             guiOutputBuffer,
             spectrumWindow,
             inaudibleFrequencyMargin
@@ -91,9 +83,9 @@ class Main {
         pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
         new Pianola(
             pianolaTickerOutput,
-            noteSpectrumBroadcast.poll()
+            volumeBroadcastOverwritable.poll()
                 .toOverwritable("main - dump pianola note spectrum input overflow"),
-            harmonicSpectrumBroadcast.poll()
+            harmonicSpectrumBroadcastOverwritable.poll()
                 .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
             pianolaOutputBuffer,
             pianolaPattern,
@@ -102,7 +94,7 @@ class Main {
         new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
         new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
 
-        playTestTone(newNoteBuffer, spectrumWindow);
+//        playTestTone(newNoteBuffer, spectrumWindow);
     }
 
     private static void playTestTone(SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer, SpectrumWindow spectrumWindow) {
