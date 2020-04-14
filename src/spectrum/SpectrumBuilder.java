@@ -2,9 +2,11 @@ package spectrum;
 
 import component.Pulse;
 import component.TimedConsumer;
-import component.buffer.*;
+import component.buffer.BoundedBuffer;
+import component.buffer.Packet;
+import component.buffer.PipeCallable;
+import component.buffer.SimplePacket;
 import frequency.Frequency;
-import sound.VolumeState;
 import sound.VolumeStateMap;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
@@ -17,25 +19,20 @@ import java.util.Map;
 
 public class SpectrumBuilder {
 
-    public static <A extends Packet<Double[]>, B extends Packet<VolumeState>> SimpleImmutableEntry<BoundedBuffer<Double[], A>, BoundedBuffer<Double[], SimplePacket<Double[]>>> buildComponent(BoundedBuffer<Pulse, ? extends Packet<Pulse>> frameTickBuffer, BoundedBuffer<VolumeState, B> inputBuffer, SpectrumWindow spectrumWindow) {
-        BufferChainLink<VolumeState, B> volumeStatePacketBufferChainLink = frameTickBuffer
+    public static <B extends Packet<Double[]>> SimpleImmutableEntry<BoundedBuffer<Double[], SimplePacket<Double[]>>, BoundedBuffer<Double[], SimplePacket<Double[]>>> buildComponent(BoundedBuffer<Pulse, ? extends Packet<Pulse>> frameTickBuffer, BoundedBuffer<Double[], B> inputBuffer, SpectrumWindow spectrumWindow) {
+        BoundedBuffer<Double[], B> volumeStatePacketBufferChainLink = frameTickBuffer
                 .performMethod(TimedConsumer.consumeFrom(inputBuffer), "spectrum builder - consume from volume state buffer");
-        LinkedList<BoundedBuffer<VolumeState, B>> volumeBroadcast =
+        LinkedList<BoundedBuffer<Double[], B>> volumeBroadcast =
                 new LinkedList<>(
                         volumeStatePacketBufferChainLink
                                 .broadcast(2, "spectrum builder - volume broadcast"));
 
         return new SimpleImmutableEntry<>(
-                buildNoteSpectrumPipe(volumeBroadcast.poll(), spectrumWindow),
+                volumeBroadcast.poll().rewrap(),
                 buildHarmonicSpectrumPipe(volumeBroadcast.poll(), spectrumWindow));
     }
 
-    private static <A extends Packet<Double[]>, B extends Packet<VolumeState>> BufferChainLink<Double[], A> buildNoteSpectrumPipe(BoundedBuffer<VolumeState, B> inputBuffer, SpectrumWindow spectrumWindow) {
-        return inputBuffer
-                .performMethod(input -> input.volumes, "build note spectrum");
-    }
-
-    private static <B extends Packet<VolumeState>, C extends Packet<VolumeStateMap>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<VolumeState, B> volumeBuffer, SpectrumWindow spectrumWindow) {
+    private static <B extends Packet<Double[]>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<Double[], B> volumeBuffer, SpectrumWindow spectrumWindow) {
         int maxHarmonics = 200;
 
         Double[][] harmonics = new Double[spectrumWindow.width][spectrumWindow.width];
@@ -74,7 +71,7 @@ public class SpectrumBuilder {
             }
             for(int i = 0; i<spectrumWindow.width; i++){
                 for(int j = 0; j<spectrumWindow.width; j++) {
-                    harmonicsForThisVolumeSpectrum[j] += input.volumes[i] * harmonics[i][j];
+                    harmonicsForThisVolumeSpectrum[j] += input[i] * harmonics[i][j];
                 }
             }
             return harmonicsForThisVolumeSpectrum;

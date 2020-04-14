@@ -51,13 +51,13 @@ class Main {
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, stampedSampleBroadcast.poll());
+        BoundedBuffer<Double[], OrderStampedPacket<Double[]>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, stampedSampleBroadcast.poll());
 
-        LinkedList<SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>>> volumeBroadcast =
+        LinkedList<BoundedBuffer<Double[], OrderStampedPacket<Double[]>>> volumeBroadcast =
             new LinkedList<>(volumeBuffer
                 .broadcast(2, 100, "main volume - broadcast"));
 
-        BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeStateBuffer = stampedSampleBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
+        BoundedBuffer<Double[], OrderStampedPacket<Double[]>> amplitudeStateBuffer = stampedSampleBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
         SoundEnvironment.buildComponent(volumeBroadcast.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 

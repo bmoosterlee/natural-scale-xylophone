@@ -9,7 +9,6 @@ import pianola.notebuilder.state.EnvelopeBuilder;
 import pianola.notebuilder.state.NoteTimestamper;
 import pianola.notebuilder.state.TimestampedNewNotesWithEnvelope;
 import sound.SampleRate;
-import sound.VolumeState;
 import spectrum.SpectrumWindow;
 
 import java.util.AbstractMap;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class NoteBuilder {
 
-    public static <B extends Packet<Frequency>> BoundedBuffer<VolumeState, OrderStampedPacket<VolumeState>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, SpectrumWindow spectrumWindow, BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer) {
+    public static <B extends Packet<Frequency>> BoundedBuffer<Double[], OrderStampedPacket<Double[]>> buildComponent(BoundedBuffer<Frequency, B> noteInputBuffer, SampleRate sampleRate, SpectrumWindow spectrumWindow, BoundedBuffer<Long, OrderStampedPacket<Long>> stampedSamplesBuffer) {
         BoundedBuffer<NewNotesVolumeData, OrderStampedPacket<NewNotesVolumeData>> newNoteData = stampedSamplesBuffer
                 .connectTo(NoteTimestamper.buildPipe(noteInputBuffer))
                 .performMethod(EnvelopeBuilder.buildEnvelope(sampleRate), sampleRate.sampleRate / 32, "pianola.notebuilder - build envelope")
@@ -38,8 +37,7 @@ public class NoteBuilder {
                         volumes[entry.getKey()] = entry.getValue();
                     }
                     return volumes;
-                }, 100, "notebuilder - convert to array")
-                .performMethod(VolumeState::new, 100, "note builder - create volume state");
+                }, 100, "notebuilder - convert to array");
     }
 
     private static NewNotesVolumeData extractNewNotesData(TimestampedNewNotesWithEnvelope timestampedNewNotesWithEnvelope) {

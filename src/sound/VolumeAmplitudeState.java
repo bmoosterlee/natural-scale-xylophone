@@ -6,12 +6,12 @@ public class VolumeAmplitudeState {
 
     public final VolumeAmplitude[] volumeAmplitudes;
 
-    public VolumeAmplitudeState(VolumeState volumeState, AmplitudeState amplitudeState) {
-        volumeAmplitudes = new VolumeAmplitude[amplitudeState.amplitudes.length];
-        for (int i = 0; i < amplitudeState.amplitudes.length; i++) {
+    public VolumeAmplitudeState(Double[] volumeState, Double[] amplitudeState) {
+        volumeAmplitudes = new VolumeAmplitude[amplitudeState.length];
+        for (int i = 0; i < amplitudeState.length; i++) {
             volumeAmplitudes[i] = new VolumeAmplitude(
-                    volumeState.volumes[i],
-                    amplitudeState.amplitudes[i]);
+                    volumeState[i],
+                    amplitudeState[i]);
         }
     }
 

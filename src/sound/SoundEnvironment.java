@@ -94,7 +94,7 @@ public class SoundEnvironment {
         };
     }
 
-    public static void buildComponent(SimpleBuffer<VolumeState, OrderStampedPacket<VolumeState>> volumeInputBuffer, BoundedBuffer<AmplitudeState, OrderStampedPacket<AmplitudeState>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
+    public static void buildComponent(BoundedBuffer<Double[], OrderStampedPacket<Double[]>> volumeInputBuffer, BoundedBuffer<Double[], OrderStampedPacket<Double[]>> amplitudeInputBuffer, int sample_size_in_bits, SampleRate sampleRate, int sampleLookahead) {
         OrderStampedPacketPairer.buildComponent(
                 volumeInputBuffer,
                 amplitudeInputBuffer,
