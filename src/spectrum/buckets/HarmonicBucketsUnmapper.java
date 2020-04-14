@@ -9,7 +9,7 @@ public class HarmonicBucketsUnmapper {
 
     public static <A extends Packet<Pulse>, B extends Packet<Buckets>> PipeCallable<BoundedBuffer<Pulse, A>, BoundedBuffer<Buckets, B>> buildPipe(Map<Integer, BoundedBuffer<AtomicBucket, SimplePacket<AtomicBucket>>> bufferMap) {
         return inputBuffer -> toBucketMap(inputBuffer, bufferMap)
-            .performMethod(((PipeCallable<Map<Integer, MemoizedBucket>, Buckets>) Buckets::new).toSequential(), "harmonic buckets unmapper - create buckets");
+            .performMethod(((PipeCallable<Map<Integer, MemoizedBucket>, Buckets>) Buckets::new), "harmonic buckets unmapper - create buckets");
     }
 
     private static <A extends Packet<Pulse>> SimpleBuffer<Map<Integer, MemoizedBucket>, SimplePacket<Map<Integer, MemoizedBucket>>> toBucketMap(BoundedBuffer<Pulse, A> input, Map<Integer, BoundedBuffer<AtomicBucket, SimplePacket<AtomicBucket>>> bufferMap) {
@@ -28,7 +28,7 @@ public class HarmonicBucketsUnmapper {
                 Mapper.forEach(
                     Mapper.forEach(
                         Mapper.forEach(frameTickers, flushers),
-                            ((PipeCallable<List<AtomicBucket>, CompositeBucket<AtomicBucket>>) CompositeBucket::new).toSequential()),
-                        ((PipeCallable<CompositeBucket<AtomicBucket>, MemoizedBucket>) MemoizedBucket::new).toSequential()));
+                            CompositeBucket::new),
+                        MemoizedBucket::new));
     }
 }

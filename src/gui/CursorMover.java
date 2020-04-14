@@ -18,7 +18,7 @@ public class CursorMover {
             public BoundedBuffer<Integer, B> call(BoundedBuffer<Pulse, A> inputBuffer) {
                 guiPanel.addMouseMotionListener(new CursorListener());
 
-                return inputBuffer.performMethod(((PipeCallable<Pulse, Integer>) input -> getCursorX()).toSequential(), "cursor location");
+                return inputBuffer.performMethod(input -> getCursorX(), "cursor location");
             }
 
             class CursorListener implements MouseMotionListener {

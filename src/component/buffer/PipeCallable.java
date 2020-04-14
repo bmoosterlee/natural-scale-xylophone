@@ -4,28 +4,6 @@ public interface PipeCallable<K, V> extends ComponentCallable {
 
     V call(K input);
 
-    default PipeCallable<K, V> toSequential(){
-        return new PipeCallable<>(){
-
-            @Override
-            public V call(K input) {
-                return PipeCallable.this.call(input);
-            }
-
-        };
-    }
-
-    default PipeCallable<K, V> toParallel(){
-        return new PipeCallable<>(){
-
-            @Override
-            public V call(K input) {
-                return PipeCallable.this.call(input);
-            }
-
-        };
-    }
-
     default <W> PipeCallable<K, W> chainTo(PipeCallable<V, W> nextMethod){
         return input -> nextMethod.call(PipeCallable.this.call(input));
     }

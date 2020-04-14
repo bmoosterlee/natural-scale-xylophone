@@ -19,11 +19,11 @@ public class NoteTimestamper {
                     .pairWith(
                             sampleCountBroadcast.poll()
                                     .performMethod(
-                                            ((PipeCallable<Long, Pulse>) input1 -> new Pulse()).toSequential(),
+                                            input1 -> new Pulse(),
                                             100,
                                             "note timestamper - to pulse")
                                     .performMethod(
-                                            Flusher.flush(newNoteBuffer).toSequential(),
+                                            Flusher.flush(newNoteBuffer),
                                             100,
                                             "note timestamper - flush new notes"),
                             100,
