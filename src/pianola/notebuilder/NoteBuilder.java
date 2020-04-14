@@ -11,11 +11,8 @@ import pianola.notebuilder.state.TimestampedNewNotesWithEnvelope;
 import sound.SampleRate;
 import spectrum.SpectrumWindow;
 
-import java.util.AbstractMap;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class NoteBuilder {
 
@@ -27,14 +24,13 @@ public class NoteBuilder {
 
         return newNoteData
                 .connectTo(VolumeCalculator.buildPipe())
-                .performMethod(input -> new HashMap<>(input.volumes.entrySet().stream().map(input0 -> new AbstractMap.SimpleImmutableEntry<>(((spectrumWindow.getX(input0.getKey()))), input0.getValue())).collect(Collectors.toMap(AbstractMap.SimpleImmutableEntry::getKey, AbstractMap.SimpleImmutableEntry::getValue))), 100, "note builder - correct volume frequencies")
                 .performMethod(input -> {
                     Double[] volumes = new Double[spectrumWindow.width];
                     for(int i = 0; i<spectrumWindow.width; i++){
                         volumes[i] = 0.;
                     }
-                    for(Map.Entry<Integer, Double> entry : input.entrySet()){
-                        volumes[entry.getKey()] = entry.getValue();
+                    for(Map.Entry<Frequency, Double> entry : input.volumes.entrySet()){
+                        volumes[spectrumWindow.getX(entry.getKey())] += entry.getValue();
                     }
                     return volumes;
                 }, 100, "notebuilder - convert to array");
