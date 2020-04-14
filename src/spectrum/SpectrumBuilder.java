@@ -39,24 +39,34 @@ public class SpectrumBuilder {
         int maxHarmonics = 200;
 
         Double[][] harmonics = new Double[spectrumWindow.width][spectrumWindow.width];
-        PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> volumeStateMapIteratorPipeCallable = HarmonicCalculator.calculateHarmonics(maxHarmonics);
+        PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> harmonicCalculator = HarmonicCalculator.calculateHarmonics(maxHarmonics);
         for (int i = 0; i < spectrumWindow.width; i++) {
-            HashMap<Frequency, Double> temp = new HashMap<>();
-            temp.put(spectrumWindow.staticFrequencyWindow.get(i), 1.);
             Double[] harmonicsForThisIndex = new Double[spectrumWindow.width];
             for (int j = 0; j < spectrumWindow.width; j++) {
                 harmonicsForThisIndex[j] = 0.;
             }
-            volumeStateMapIteratorPipeCallable.call(new VolumeStateMap(temp)).forEachRemaining(harmonicWithVolume -> {
-                Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
-                int x = (spectrumWindow.getX(frequency));
-                if(x >= 0 && x < spectrumWindow.width) {
-                    harmonicsForThisIndex[x] += harmonicWithVolume.getValue();
+            HashMap<Frequency, Double> tempBottom = new HashMap<>();
+            tempBottom.put(spectrumWindow.getFrequency(i), 1.);
+            HashMap<Frequency, Double> tempTop = new HashMap<>();
+            tempTop.put(spectrumWindow.getFrequency(i+1), 1.);
+            Iterator<Map.Entry<Harmonic, Double>> bottomHarmonicsIterator = harmonicCalculator.call(new VolumeStateMap(tempBottom));
+            Iterator<Map.Entry<Harmonic, Double>> topHarmonicsIterator = harmonicCalculator.call(new VolumeStateMap(tempTop));
+            while(bottomHarmonicsIterator.hasNext()) {
+                Map.Entry<Harmonic, Double> bottomHarmonicWithVolume = bottomHarmonicsIterator.next();
+                Map.Entry<Harmonic, Double> topHarmonicWithVolume = topHarmonicsIterator.next();
+                Frequency bottomFrequency = bottomHarmonicWithVolume.getKey().getHarmonicFrequency();
+                Frequency topFrequency = topHarmonicWithVolume.getKey().getHarmonicFrequency();
+                int x0 = (spectrumWindow.getX(bottomFrequency));
+                int x1 = (spectrumWindow.getX(topFrequency));
+                for(int x = x0; x==x0 || x<x1; x++) {
+                    if (x >= 0 && x < spectrumWindow.width) {
+                        harmonicsForThisIndex[x] += bottomHarmonicWithVolume.getValue();
+                    }
                 }
-            });
+            }
             harmonics[i] = harmonicsForThisIndex;
         }
-        
+
         return volumeBuffer.performMethod(input -> {
             Double[] harmonicsForThisVolumeSpectrum = new Double[spectrumWindow.width];
             for(int i = 0; i<spectrumWindow.width; i++){
