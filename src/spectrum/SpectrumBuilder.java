@@ -1,16 +1,11 @@
 package spectrum;
 
-import component.Flusher;
 import component.Pulse;
 import component.TimedConsumer;
 import component.buffer.*;
 import frequency.Frequency;
 import sound.VolumeState;
 import sound.VolumeStateMap;
-import spectrum.buckets.AtomicBucket;
-import spectrum.buckets.Bucket;
-import spectrum.buckets.Buckets;
-import spectrum.buckets.PrecalculatedBucketHistory;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
 
@@ -19,7 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SpectrumBuilder {
 
@@ -42,46 +36,39 @@ public class SpectrumBuilder {
     }
 
     private static <B extends Packet<VolumeState>, C extends Packet<VolumeStateMap>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<VolumeState, B> volumeBuffer, SpectrumWindow spectrumWindow) {
-        LinkedList<BoundedBuffer<VolumeStateMap, C>> volumeBroadcast = new LinkedList<>(((BoundedBuffer<VolumeStateMap, C>) volumeBuffer
-                .performMethod(input2 -> {
-                    HashMap<Frequency, Double> volumes = new HashMap<>();
-                    for (int i = 0; i < spectrumWindow.width; i++) {
-                        volumes.put(spectrumWindow.staticFrequencyWindow.get(i), input2.volumes[i]);
-                    }
-                    return new VolumeStateMap(volumes);
-                }, "build harmonic spectrum - convert to map"))
-                .broadcast(2, "build harmonic spectrum - tick broadcast"));
-
         int maxHarmonics = 200;
-        return volumeBroadcast.poll()
-                .performMethod(input -> new Pulse(), "harmonic spectrum - to pulse")
-                .performMethod(Flusher.flush(
-                        (SimpleBuffer<SimpleImmutableEntry<Integer, AtomicBucket>, Packet<SimpleImmutableEntry<Integer, AtomicBucket>>>)
-                                calculateHarmonicsContinuously(
-                                    volumeBroadcast.poll()
-                                            .performMethod(HarmonicCalculator.calculateHarmonics(maxHarmonics), "harmonic spectrum - build harmonics iterator"), maxHarmonics)
-                                    .performMethod(harmonicWithVolume -> {
-                                        Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
-                                        return new SimpleImmutableEntry<>(frequency, harmonicWithVolume.getValue());
-                                    }, maxHarmonics, "harmonic spectrum - extract harmonic")
-                                    .performMethod(input1 -> new SimpleImmutableEntry<>(input1.getKey(), new AtomicBucket(input1.getKey(), input1.getValue())), maxHarmonics, "harmonic spectrum - build bucket")
-                                    .performMethod(input1 -> new SimpleImmutableEntry<>(spectrumWindow.getX(input1.getKey()), input1.getValue()), maxHarmonics, "harmonic spectrum - frequency to integer")
-                                    .connectTo(spectrumWindow.buildInBoundsFilterPipe(maxHarmonics))
-                                    .relayTo(new SimpleBuffer<>(new OverflowStrategy<>("harmonic spectrum - finished bucket list")))),
-                        "harmonic spectrum - flush new harmonic buckets")
-                .performMethod(input -> new Buckets(input.stream().collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue, Bucket::add))), "spectrum builder - bucket list to buckets")
-                .performMethod(PrecalculatedBucketHistory.build(200), "spectrum builder - harmonic spectrum history")
-                .performMethod(input -> {
-                    Double[] harmonics = new Double[spectrumWindow.width];
-                    for(int i = 0; i<spectrumWindow.width; i++){
-                        harmonics[i] = 0.;
-                    }
-                    for(int i : input.getIndices()) {
-                        harmonics[i] = input.getValue(i).getVolume();
-                    }
 
-                    return harmonics;
-                }, "spectrum builder - convert to array");
+        Double[][] harmonics = new Double[spectrumWindow.width][spectrumWindow.width];
+        PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> volumeStateMapIteratorPipeCallable = HarmonicCalculator.calculateHarmonics(maxHarmonics);
+        for (int i = 0; i < spectrumWindow.width; i++) {
+            HashMap<Frequency, Double> temp = new HashMap<>();
+            temp.put(spectrumWindow.staticFrequencyWindow.get(i), 1.);
+            Double[] harmonicsForThisIndex = new Double[spectrumWindow.width];
+            for (int j = 0; j < spectrumWindow.width; j++) {
+                harmonicsForThisIndex[j] = 0.;
+            }
+            volumeStateMapIteratorPipeCallable.call(new VolumeStateMap(temp)).forEachRemaining(harmonicWithVolume -> {
+                Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
+                int x = (spectrumWindow.getX(frequency));
+                if(x >= 0 && x < spectrumWindow.width) {
+                    harmonicsForThisIndex[x] += harmonicWithVolume.getValue();
+                }
+            });
+            harmonics[i] = harmonicsForThisIndex;
+        }
+        
+        return volumeBuffer.performMethod(input -> {
+            Double[] harmonicsForThisVolumeSpectrum = new Double[spectrumWindow.width];
+            for(int i = 0; i<spectrumWindow.width; i++){
+                harmonicsForThisVolumeSpectrum[i] = 0.;
+            }
+            for(int i = 0; i<spectrumWindow.width; i++){
+                for(int j = 0; j<spectrumWindow.width; j++) {
+                    harmonicsForThisVolumeSpectrum[j] += input.volumes[i] * harmonics[i][j];
+                }
+            }
+            return harmonicsForThisVolumeSpectrum;
+        }, 200, "spectrum builder - calculate harmonics");
     }
 
     private static <A extends Packet<Map.Entry<Harmonic, Double>>, B extends Packet<Iterator<Map.Entry<Harmonic, Double>>>> BoundedBuffer<Map.Entry<Harmonic, Double>, A> calculateHarmonicsContinuously(BoundedBuffer<Iterator<Map.Entry<Harmonic, Double>>, B> harmonicsIteratorBuffer, int maxHarmonics) {
