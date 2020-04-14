@@ -13,7 +13,9 @@ public class AmplitudeCalculator {
 
             Wave[] waveTable = new Wave[width];
             for (int x = 0; x < width; x++) {
-                Frequency frequency = spectrumWindow.getFrequency(x);
+                Frequency frequency0 = spectrumWindow.getFrequency(x);
+                Frequency frequency1 = spectrumWindow.getFrequency(x+1);
+                Frequency frequency = new Frequency((frequency0.getValue() + frequency1.getValue())/2.);
                 waveTable[x] = new Wave(frequency, sampleRate);
             }
 
