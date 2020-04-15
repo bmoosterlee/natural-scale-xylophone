@@ -97,23 +97,23 @@ class Main {
                 inaudibleFrequencyMargin
         );
 
-        PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
-
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> pianolaTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump pianola ticker overflow"));
-        SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
-        new Pianola<>(
-                pianolaTickerOutput,
-                volumeBroadcastOverwritable.poll()
-                        .toOverwritable("main - dump pianola note spectrum input overflow"),
-                harmonicSpectrumBroadcastOverwritable.poll()
-                        .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
-                pianolaOutputBuffer,
-                pianolaPattern,
-                inaudibleFrequencyMargin);
+//        PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
+//
+//        SimpleBuffer<Pulse, SimplePacket<Pulse>> pianolaTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump pianola ticker overflow"));
+//        SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
+//        pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
+//        new Pianola<>(
+//                pianolaTickerOutput,
+//                volumeBroadcastOverwritable.poll()
+//                        .toOverwritable("main - dump pianola note spectrum input overflow"),
+//                harmonicSpectrumBroadcastOverwritable.poll()
+//                        .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
+//                pianolaOutputBuffer,
+//                pianolaPattern,
+//                inaudibleFrequencyMargin);
 
         new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
-        new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
+//        new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
         new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
 
 //        playTestTone(newNoteBuffer, spectrumWindow);
