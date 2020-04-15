@@ -12,7 +12,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import java.util.Arrays;
 
 public class SoundEnvironment {
 
@@ -100,19 +99,17 @@ public class SoundEnvironment {
                 amplitudeInputBuffer,
                 100,
                 "sound environment - pair volume and amplitude")
-                .performMethod(input -> {
-                            Double[] volumeAmplitudes = new Double[input.getValue().length];
+                .<Double, SimplePacket<Double>>performMethod(input -> {
+                            double volumeAmplitudes = 0.;
                             for (int i = 0; i < input.getValue().length; i++) {
-                                volumeAmplitudes[i] =
+                                volumeAmplitudes +=
                                         input.getKey()[i] *
                                                 input.getValue()[i];
                             }
                             return volumeAmplitudes;
                         },
                         100,
-                        "sound environment - merge volume and amplitude state")
-                .<Double, SimplePacket<Double>>performMethod(input -> Arrays.stream(input)
-                        .reduce(0., Double::sum), 100, "sound environment - volume amplitude to signal")
+                        "sound environment - merge volume and amplitude to signal")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }
