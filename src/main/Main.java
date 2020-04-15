@@ -1,6 +1,7 @@
 package main;
 
 import component.Counter;
+import component.Pairer;
 import component.Pulse;
 import component.Separator;
 import component.buffer.*;
@@ -11,6 +12,7 @@ import pianola.notebuilder.NoteBuilder;
 import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
 import sound.AmplitudeCalculator;
+import sound.FFTEnvironment;
 import sound.SampleRate;
 import sound.SoundEnvironment;
 import spectrum.SpectrumBuilder;
@@ -36,25 +38,42 @@ class Main {
         double octaveRange = 3.;
         int inaudibleFrequencyMargin = (int) (width / octaveRange / 12 / 5);
 
+        double gain = (1. / 20.);
+
         int pianolaRate = 4;
         int pianolaLookahead = pianolaRate / 4;
 
         SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, spectrumWindow, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, spectrumWindow, inaudibleFrequencyMargin, gain, pianolaRate, pianolaLookahead);
     }
 
-    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
+    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, double gain, int pianolaRate, int pianolaLookahead) {
         SimpleBuffer<Pulse, SimplePacket<Pulse>> sampleTickerOutput = new SimpleBuffer<>(new OverflowStrategy<>("sample ticker overflow"));
         BoundedBuffer<Long, SimplePacket<Long>> sampleCountBuffer = sampleTickerOutput
                 .performMethod(Counter.build(), sampleRate.sampleRate / 32, "count samples");
 
-        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(2, 100, "main - stamped samples buffer broadcast"));
+        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(3, 100, "main - stamped samples buffer broadcast"));
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
-        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, sampleCountBroadcast.poll());
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBufferNotes = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, sampleCountBroadcast.poll());
+
+        BoundedBuffer<Double, SimplePacket<Double>> audioIn = sampleCountBroadcast.poll()
+                .connectTo(SoundEnvironment.buildPipeSource(SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead));
+
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumesOfAudioIn = audioIn
+                .performMethod(FFTEnvironment.buildPipe(spectrumWindow, gain));
+
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = Pairer.pair(volumeBufferNotes, volumesOfAudioIn).performMethod(input -> {
+                Double[] addedVolumes = new Double[spectrumWindow.width];
+                for(int i = 0; i < spectrumWindow.width; i++){
+                    addedVolumes[i] = input.getKey()[i] + input.getValue()[i];
+                }
+                return addedVolumes;
+        }
+    );
 
         BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 

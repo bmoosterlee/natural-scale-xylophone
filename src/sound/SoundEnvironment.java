@@ -3,30 +3,23 @@ package sound;
 import component.Flusher;
 import component.Pairer;
 import component.Pulse;
-import component.buffer.BoundedBuffer;
-import component.buffer.InputCallable;
-import component.buffer.SimpleBuffer;
-import component.buffer.SimplePacket;
+import component.buffer.*;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.*;
 
 public class SoundEnvironment {
+
+    private static AudioFormat af;
+    private static int sampleSize;
+    private static double marginalSampleSize;
 
     public static InputCallable<BoundedBuffer<Double, SimplePacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead) {
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
-            private int sampleSize;
-            private double marginalSampleSize;
+
 
             @Override
             public void call(BoundedBuffer<Double, SimplePacket<Double>> inputBuffer) {
-                sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
-                marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
-
-                AudioFormat af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
                 SourceDataLine newSourceDataLine;
                 try {
                     newSourceDataLine = AudioSystem.getSourceDataLine(af);
@@ -111,5 +104,44 @@ public class SoundEnvironment {
                         100,
                         "sound environment - merge volume and amplitude to signal")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
+    }
+
+    public static PipeCallable<BoundedBuffer<Long, SimplePacket<Long>> ,BoundedBuffer<Double, SimplePacket<Double>>> buildPipeSource(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead) {
+        return new PipeCallable<>() {
+
+            private TargetDataLine targetDataLine;
+
+            @Override
+            public BoundedBuffer<Double, SimplePacket<Double>> call(BoundedBuffer<Long, SimplePacket<Long>> inputBuffer) {
+
+                af = new AudioFormat((float) sampleRate.sampleRate, SAMPLE_SIZE_IN_BITS, 1, true, false);
+                sampleSize = (int) (Math.pow(2, SAMPLE_SIZE_IN_BITS) - 1);
+                marginalSampleSize = 1. / Math.pow(2, SAMPLE_SIZE_IN_BITS);
+
+                DataLine.Info info = new DataLine.Info(TargetDataLine.class, af);
+
+                try {
+                    targetDataLine = (TargetDataLine) AudioSystem.getLine(info);
+                    targetDataLine.open(af);
+                } catch (LineUnavailableException e) {
+                    e.printStackTrace();
+                }
+                targetDataLine.start();
+
+                return inputBuffer.performMethod(input -> read(), 100, "sound environment - get audio input")
+                        .performMethod(this::buildAmplitude, 100, "sound environment - build amplitude");
+            }
+
+            private byte read() {
+                byte[] ar = new byte[1];
+                targetDataLine.read(ar, 0, ar.length);
+                return ar[0];
+            }
+
+            private double buildAmplitude(byte signal) {
+                return signal * 2.0 / sampleSize;
+            }
+
+        };
     }
 }
