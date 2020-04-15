@@ -1,4 +1,4 @@
-package main;
+package sound;
 
 public class CalculateFFT {
 
@@ -17,7 +17,7 @@ public class CalculateFFT {
             complexSignal[i] = new Complex(temp,0.0);
         }
 
-        y = FFT.fft(complexSignal); // --> Here I use main.FFT class
+        y = FFT.fft(complexSignal); // --> Here I use sound.FFT class
 
 //        mMaxFFTSample = 0.0;
 //        mPeakPos = 0;
