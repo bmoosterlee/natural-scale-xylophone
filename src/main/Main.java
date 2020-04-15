@@ -1,5 +1,6 @@
 package main;
 
+import component.Counter;
 import component.Pulse;
 import component.Separator;
 import component.buffer.*;
@@ -11,7 +12,6 @@ import pianola.patterns.PianolaPattern;
 import pianola.patterns.SweepToTargetUpDown;
 import sound.AmplitudeCalculator;
 import sound.SampleRate;
-import sound.SampleTicker;
 import sound.SoundEnvironment;
 import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
@@ -46,9 +46,11 @@ class Main {
     }
 
     private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        BoundedBuffer<Long, SimplePacket<Long>> stampedSamplesBuffer = SampleTicker.buildComponent(sampleRate);
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> sampleTickerOutput = new SimpleBuffer<>(new OverflowStrategy<>("sample ticker overflow"));
+        BoundedBuffer<Long, SimplePacket<Long>> sampleCountBuffer = sampleTickerOutput
+                .performMethod(Counter.build(), sampleRate.sampleRate / 32, "count samples");
 
-        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(stampedSamplesBuffer.broadcast(2, 100, "main - stamped samples buffer broadcast"));
+        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(2, 100, "main - stamped samples buffer broadcast"));
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
@@ -93,6 +95,7 @@ class Main {
 
         new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
         new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
+        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
 
 //        playTestTone(newNoteBuffer, spectrumWindow);
     }
