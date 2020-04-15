@@ -64,7 +64,7 @@ class Main {
                 .connectTo(SoundEnvironment.buildPipeSource(SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead));
 
         BoundedBuffer<Double[], SimplePacket<Double[]>> volumesOfAudioIn = audioIn
-                .performMethod(FFTEnvironment.buildPipe(spectrumWindow, gain));
+                .performMethod(FFTEnvironment.buildPipe(sampleRate.sampleRate, spectrumWindow, gain), sampleLookahead, "main - perform FFT");
 
         BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = Pairer.pair(volumeBufferNotes, volumesOfAudioIn).performMethod(input -> {
                 Double[] addedVolumes = new Double[spectrumWindow.width];

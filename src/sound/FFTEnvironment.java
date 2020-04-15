@@ -5,7 +5,7 @@ import spectrum.SpectrumWindow;
 
 public class FFTEnvironment {
 
-    public static PipeCallable<Double, Double[]> buildPipe(SpectrumWindow spectrumWindow, final double gain) {
+    public static PipeCallable<Double, Double[]> buildPipe(int sampleRate, SpectrumWindow spectrumWindow, final double gain) {
         return new PipeCallable<>() {
             int fftN;
 
@@ -13,6 +13,9 @@ public class FFTEnvironment {
 
             double[] bottomFrequencies = new double[spectrumWindow.width];
             double[] topFrequencies = new double[spectrumWindow.width];
+
+            long sampleCount = 0;
+            long lastSample = 0;
 
             {
                 for (int i = 0; i < spectrumWindow.width; i++) {
@@ -24,19 +27,25 @@ public class FFTEnvironment {
                 do {
                     fftN = (int) Math.pow(2, i);
                     i++;
-                } while (fftN < spectrumWindow.upperBound.getValue());
+                } while (fftN / 2 < spectrumWindow.upperBound.getValue());
 
                 history = new double[fftN];
             }
 
             @Override
             public Double[] call(Double input) {
-                double[] newHistory = new double[fftN];
-                System.arraycopy(history, 1, newHistory, 0, fftN - 1);
-                newHistory[fftN - 1] = input;
-                history = newHistory;
+                long adjustedSampleCount = (long) ((double) (sampleCount % sampleRate) / sampleRate * fftN);
+                if(adjustedSampleCount != lastSample) {
+                    lastSample = adjustedSampleCount;
 
-                double[] magnitudeSpectrum = CalculateFFT.calculateFFT(newHistory, fftN);
+                    double[] newHistory = new double[fftN];
+                    System.arraycopy(history, 1, newHistory, 0, fftN - 1);
+                    newHistory[fftN - 1] = input;
+                    history = newHistory;
+                }
+                sampleCount++;
+
+                double[] magnitudeSpectrum = CalculateFFT.calculateFFT(history, fftN);
 
                 Double[] magnitudes = new Double[spectrumWindow.width];
                 for(int i = 0; i<spectrumWindow.width; i++){
