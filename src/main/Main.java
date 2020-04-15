@@ -7,10 +7,7 @@ import component.Separator;
 import component.buffer.*;
 import frequency.Frequency;
 import gui.GUI;
-import pianola.Pianola;
 import pianola.notebuilder.NoteBuilder;
-import pianola.patterns.PianolaPattern;
-import pianola.patterns.SweepToTargetUpDown;
 import sound.AmplitudeCalculator;
 import sound.FFTEnvironment;
 import sound.SampleRate;
@@ -78,10 +75,10 @@ class Main {
         BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
         LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastOverwritable = new LinkedList<>(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow").broadcast(2, "main note spectrum overwritable - broadcast"));
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastOverwritable = new LinkedList<>(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow").broadcast(1, "main note spectrum overwritable - broadcast"));
 
         LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastAudio = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll(), spectrumWindow, sampleRate).broadcast(2, "main harmonic spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastOverwritable = new LinkedList<>(harmonicSpectrumBroadcastAudio.poll().toOverwritable("main - harmonic spectrum overflow").broadcast(2, "main harmonic spectrum overwritable - broadcast"));
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastOverwritable = new LinkedList<>(harmonicSpectrumBroadcastAudio.poll().toOverwritable("main - harmonic spectrum overflow").broadcast(1, "main harmonic spectrum overwritable - broadcast"));
 
         SoundEnvironment.buildComponent(harmonicSpectrumBroadcastAudio.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
