@@ -44,7 +44,7 @@ public class FFTEnvironment {
                     int bottomIndex = (int) bottomFrequencies[i];
                     int topIndex = (int) topFrequencies[i];
 
-                    double bottomFraction = bottomFrequencies[i] - bottomIndex;
+                    double bottomFraction = 1. - (bottomFrequencies[i] - bottomIndex);
                     double bottomValue0 = magnitudeSpectrum[bottomIndex];
                     double bottomValue1 = magnitudeSpectrum[bottomIndex + 1];
                     double bottomValue = bottomValue0 + bottomFraction * (bottomValue1 - bottomValue0);
