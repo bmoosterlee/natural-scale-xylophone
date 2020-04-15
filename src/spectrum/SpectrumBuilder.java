@@ -18,7 +18,7 @@ import java.util.Map;
 public class SpectrumBuilder {
 
     public static <B extends Packet<Double[]>> BoundedBuffer<Double[], SimplePacket<Double[]>> buildHarmonicSpectrumPipe(BoundedBuffer<Double[], B> volumeBuffer, SpectrumWindow spectrumWindow, SampleRate sampleRate) {
-        int maxHarmonics = 1000;
+        int maxHarmonics = 20;
 
         Double[][] harmonics = new Double[spectrumWindow.width][spectrumWindow.width];
         PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> harmonicCalculator = HarmonicCalculator.calculateHarmonics(maxHarmonics);
@@ -70,7 +70,11 @@ public class SpectrumBuilder {
                     continue;
                 }
                 for(int j = 0; j<spectrumWindow.width; j++) {
-                    harmonicsForThisVolumeSpectrum[j] += volumeBucket * harmonics[i][j];
+                    Double harmonicBucket = harmonics[i][j];
+                    if(harmonicBucket == 0.){
+                        continue;
+                    }
+                    harmonicsForThisVolumeSpectrum[j] += volumeBucket * harmonicBucket;
                 }
             }
             return harmonicsForThisVolumeSpectrum;
