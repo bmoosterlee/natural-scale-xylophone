@@ -12,10 +12,11 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import java.util.Arrays;
 
 public class SoundEnvironment {
 
-    public static InputCallable<BoundedBuffer<Double, SimplePacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead){
+    public static InputCallable<BoundedBuffer<Double, SimplePacket<Double>>> buildPipe(int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int sampleLookahead) {
         return new InputCallable<>() {
             private SourceDataLine sourceDataLine;
             private int sampleSize;
@@ -51,7 +52,7 @@ public class SoundEnvironment {
                         .performMethod(input -> {
                             int size = input.size();
                             byte[] array = new byte[size];
-                            for(int i = 0; i<size; i++){
+                            for (int i = 0; i < size; i++) {
                                 array[i] = input.get(i);
                             }
                             return array;
@@ -99,14 +100,19 @@ public class SoundEnvironment {
                 amplitudeInputBuffer,
                 100,
                 "sound environment - pair volume and amplitude")
-                .<VolumeAmplitudeState, SimplePacket<VolumeAmplitudeState>>
-                        performMethod(input ->
-                                new VolumeAmplitudeState(
-                                        input.getKey(),
-                                        input.getValue()),
+                .performMethod(input -> {
+                            Double[] volumeAmplitudes = new Double[input.getValue().length];
+                            for (int i = 0; i < input.getValue().length; i++) {
+                                volumeAmplitudes[i] =
+                                        input.getKey()[i] *
+                                                input.getValue()[i];
+                            }
+                            return volumeAmplitudes;
+                        },
                         100,
                         "sound environment - merge volume and amplitude state")
-                .<Double, SimplePacket<Double>>performMethod(VolumeAmplitudeState::toDouble, 100, "sound environment - volume amplitude to signal")
+                .<Double, SimplePacket<Double>>performMethod(input -> Arrays.stream(input)
+                        .reduce(0., Double::sum), 100, "sound environment - volume amplitude to signal")
                 .connectTo(buildPipe(sample_size_in_bits, sampleRate, sampleLookahead));
     }
 }
