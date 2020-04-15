@@ -20,6 +20,7 @@ public class SoundEnvironment {
 
             @Override
             public void call(BoundedBuffer<Double, SimplePacket<Double>> inputBuffer) {
+
                 SourceDataLine newSourceDataLine;
                 try {
                     newSourceDataLine = AudioSystem.getSourceDataLine(af);
@@ -36,7 +37,7 @@ public class SoundEnvironment {
                 sourceDataLine.start();
 
                 BoundedBuffer<Byte, SimplePacket<Byte>> fittedAmplitudes = inputBuffer
-                        .<Byte, SimplePacket<Byte>>performMethod(this::fitAmplitude, 100, "sound environment - fit amplitude");
+                        .<Byte, SimplePacket<Byte>>performMethod(this::fitAmplitude, sampleLookahead, "sound environment - fit amplitude");
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse");
                 batchPulses
@@ -52,7 +53,7 @@ public class SoundEnvironment {
                         .performMethod(input -> {
                             writeToBuffer(input);
                             return new Pulse();
-                        })
+                        }, "sound environment - write to buffer")
                         .relayTo(batchPulses);
 
                 try {
@@ -132,20 +133,21 @@ public class SoundEnvironment {
 //                        .performMethod(this::buildAmplitude, 100, "sound environment - build amplitude");
 
                 SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse source");
-                SimpleBuffer<Double, SimplePacket<Double>> output = new SimpleBuffer<>(1, "sound environment - source data buffer");
-                OutputPort<Double, SimplePacket<Double>> outputPort = output.createOutputPort();
+                SimpleBuffer<Byte, SimplePacket<Byte>> sourceByte = new SimpleBuffer<>(sampleLookahead, "sound environment - source data buffer");
+                OutputPort<Byte, SimplePacket<Byte>> outputPort = sourceByte.createOutputPort();
+                BoundedBuffer<Double, SimplePacket<Double>> output = sourceByte.performMethod(this::buildAmplitude, sampleLookahead, "sound environment - build amplitude");
                 batchPulses
                         .performMethod(Flusher.flushOrConsume(inputBuffer), "sound environment - flush sample counts")
                         .performMethod(input -> {
                             for(byte sample : read(input.size())){
                                 try {
-                                    outputPort.produce(new SimplePacket<>(buildAmplitude(sample)));
+                                    outputPort.produce(new SimplePacket<>(sample));
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
                             }
                             return new Pulse();
-                        })
+                        }, "sound environment - byte list to separate bytes")
                         .relayTo(batchPulses);
 
                 try {
