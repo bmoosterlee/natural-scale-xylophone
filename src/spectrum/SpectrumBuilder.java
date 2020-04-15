@@ -10,6 +10,7 @@ import sound.VolumeStateMap;
 import spectrum.harmonics.Harmonic;
 import spectrum.harmonics.HarmonicCalculator;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -46,6 +47,15 @@ public class SpectrumBuilder {
                 }
             }
             harmonics[i] = harmonicsForThisIndex;
+        }
+
+        double magnitude = Arrays.stream(harmonics[spectrumWindow.width/2]).reduce(0., Double::sum);
+        if(magnitude!=0.) {
+            for (int i = 0; i < spectrumWindow.width; i++) {
+                for (int j = 0; j < spectrumWindow.width; j++) {
+                    harmonics[i][j] /= magnitude;
+                }
+            }
         }
 
         return volumeBuffer.performMethod(input -> {
