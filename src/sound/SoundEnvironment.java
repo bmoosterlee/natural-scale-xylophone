@@ -128,14 +128,45 @@ public class SoundEnvironment {
                 }
                 targetDataLine.start();
 
-                return inputBuffer.performMethod(input -> read(), 100, "sound environment - get audio input")
-                        .performMethod(this::buildAmplitude, 100, "sound environment - build amplitude");
+//                return inputBuffer.performMethod(input -> read(), 100, "sound environment - get audio input")
+//                        .performMethod(this::buildAmplitude, 100, "sound environment - build amplitude");
+
+                SimpleBuffer<Pulse, SimplePacket<Pulse>> batchPulses = new SimpleBuffer<>(1, "sound environment - batch pulse source");
+                SimpleBuffer<Double, SimplePacket<Double>> output = new SimpleBuffer<>(1, "sound environment - source data buffer");
+                OutputPort<Double, SimplePacket<Double>> outputPort = output.createOutputPort();
+                batchPulses
+                        .performMethod(Flusher.flushOrConsume(inputBuffer), "sound environment - flush sample counts")
+                        .performMethod(input -> {
+                            for(byte sample : read(input.size())){
+                                try {
+                                    outputPort.produce(new SimplePacket<>(buildAmplitude(sample)));
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            return new Pulse();
+                        })
+                        .relayTo(batchPulses);
+
+                try {
+                    batchPulses.createOutputPort().produce(new SimplePacket<>(new Pulse()));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                return output;
             }
 
             private byte read() {
                 byte[] ar = new byte[1];
-                targetDataLine.read(ar, 0, ar.length);
+                targetDataLine.read(ar, 0, 1);
                 return ar[0];
+            }
+
+            private byte[] read(int size) {
+                byte[] ar = new byte[size];
+                targetDataLine.read(ar, 0, size);
+                return ar;
             }
 
             private double buildAmplitude(byte signal) {

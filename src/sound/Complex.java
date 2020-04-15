@@ -1,16 +1,16 @@
-package main; /******************************************************************************
- *  Compilation:  javac main.Complex.java
- *  Execution:    java main.Complex
+package sound; /******************************************************************************
+ *  Compilation:  javac sound.Complex.java
+ *  Execution:    java sound.Complex
  *
  *  Data type for complex numbers.
  *
  *  The data type is "immutable" so once you create and initialize
- *  a main.Complex object, you cannot change it. The "final" keyword
+ *  a sound.Complex object, you cannot change it. The "final" keyword
  *  when declaring re and im enforces this rule, making it a
  *  compile-time error to change the .re or .im instance variables after
  *  they've been initialized.
  *
- *  % java main.Complex
+ *  % java sound.Complex
  *  a            = 5.0 + 6.0i
  *  b            = -3.0 + 4.0i
  *  Re(a)        = 5.0
@@ -39,7 +39,7 @@ public class Complex {
         im = imag;
     }
 
-    // return a string representation of the invoking main.Complex object
+    // return a string representation of the invoking sound.Complex object
     public String toString() {
         if (im == 0) return re + "";
         if (re == 0) return im + "i";
@@ -57,7 +57,7 @@ public class Complex {
         return Math.atan2(im, re);
     }
 
-    // return a new main.Complex object whose value is (this + b)
+    // return a new sound.Complex object whose value is (this + b)
     public Complex plus(Complex b) {
         Complex a = this;             // invoking object
         double real = a.re + b.re;
@@ -65,7 +65,7 @@ public class Complex {
         return new Complex(real, imag);
     }
 
-    // return a new main.Complex object whose value is (this - b)
+    // return a new sound.Complex object whose value is (this - b)
     public Complex minus(Complex b) {
         Complex a = this;
         double real = a.re - b.re;
@@ -73,7 +73,7 @@ public class Complex {
         return new Complex(real, imag);
     }
 
-    // return a new main.Complex object whose value is (this * b)
+    // return a new sound.Complex object whose value is (this * b)
     public Complex times(Complex b) {
         Complex a = this;
         double real = a.re * b.re - a.im * b.im;
@@ -86,12 +86,12 @@ public class Complex {
         return new Complex(alpha * re, alpha * im);
     }
 
-    // return a new main.Complex object whose value is the conjugate of this
+    // return a new sound.Complex object whose value is the conjugate of this
     public Complex conjugate() {
         return new Complex(re, -im);
     }
 
-    // return a new main.Complex object whose value is the reciprocal of this
+    // return a new sound.Complex object whose value is the reciprocal of this
     public Complex reciprocal() {
         double scale = re*re + im*im;
         return new Complex(re / scale, -im / scale);
@@ -107,22 +107,22 @@ public class Complex {
         return a.times(b.reciprocal());
     }
 
-    // return a new main.Complex object whose value is the complex exponential of this
+    // return a new sound.Complex object whose value is the complex exponential of this
     public Complex exp() {
         return new Complex(Math.exp(re) * Math.cos(im), Math.exp(re) * Math.sin(im));
     }
 
-    // return a new main.Complex object whose value is the complex sine of this
+    // return a new sound.Complex object whose value is the complex sine of this
     public Complex sin() {
         return new Complex(Math.sin(re) * Math.cosh(im), Math.cos(re) * Math.sinh(im));
     }
 
-    // return a new main.Complex object whose value is the complex cosine of this
+    // return a new sound.Complex object whose value is the complex cosine of this
     public Complex cos() {
         return new Complex(Math.cos(re) * Math.cosh(im), -Math.sin(re) * Math.sinh(im));
     }
 
-    // return a new main.Complex object whose value is the complex tangent of this
+    // return a new sound.Complex object whose value is the complex tangent of this
     public Complex tan() {
         return sin().divides(cos());
     }

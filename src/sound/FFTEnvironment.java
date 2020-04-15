@@ -1,7 +1,6 @@
 package sound;
 
 import component.buffer.PipeCallable;
-import main.CalculateFFT;
 import spectrum.SpectrumWindow;
 
 public class FFTEnvironment {

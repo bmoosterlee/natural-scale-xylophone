@@ -1,11 +1,11 @@
-package main;
+package sound;
 
 /******************************************************************************
- *  Compilation:  javac main.FFT.java
- *  Execution:    java main.FFT n
- *  Dependencies: main.Complex.java
+ *  Compilation:  javac sound.FFT.java
+ *  Execution:    java sound.FFT n
+ *  Dependencies: sound.Complex.java
  *
- *  Compute the main.FFT and inverse main.FFT of a length n complex sequence
+ *  Compute the sound.FFT and inverse sound.FFT of a length n complex sequence
  *  using the radix 2 Cooley-Tukey algorithm.
 
  *  Bare bones implementation that runs in O(n log n) time and O(n)
@@ -26,33 +26,33 @@ package main;
  *      it re-allocates memory for the subarray, instead of doing
  *      in-place or reusing a single temporary array)
  *  
- *  For an in-place radix 2 Cooley-Tukey main.FFT, see
+ *  For an in-place radix 2 Cooley-Tukey sound.FFT, see
  *  https://introcs.cs.princeton.edu/java/97data/InplaceFFT.java.html
  *
  ******************************************************************************/
 
 public class FFT {
 
-    // compute the main.FFT of x[], assuming its length n is a power of 2
+    // compute the sound.FFT of x[], assuming its length n is a power of 2
     public static Complex[] fft(Complex[] x) {
         int n = x.length;
 
         // base case
         if (n == 1) return new Complex[] { x[0] };
 
-        // radix 2 Cooley-Tukey main.FFT
+        // radix 2 Cooley-Tukey sound.FFT
         if (n % 2 != 0) {
             throw new IllegalArgumentException("n is not a power of 2");
         }
 
-        // compute main.FFT of even terms
+        // compute sound.FFT of even terms
         Complex[] even = new Complex[n/2];
         for (int k = 0; k < n/2; k++) {
             even[k] = x[2*k];
         }
         Complex[] evenFFT = fft(even);
 
-        // compute main.FFT of odd terms
+        // compute sound.FFT of odd terms
         Complex[] odd  = even;  // reuse the array (to avoid n log n space)
         for (int k = 0; k < n/2; k++) {
             odd[k] = x[2*k + 1];
@@ -71,7 +71,7 @@ public class FFT {
     }
 
 
-    // compute the inverse main.FFT of x[], assuming its length n is a power of 2
+    // compute the inverse sound.FFT of x[], assuming its length n is a power of 2
     public static Complex[] ifft(Complex[] x) {
         int n = x.length;
         Complex[] y = new Complex[n];
@@ -81,7 +81,7 @@ public class FFT {
             y[i] = x[i].conjugate();
         }
 
-        // compute forward main.FFT
+        // compute forward sound.FFT
         y = fft(y);
 
         // take conjugate again
@@ -109,7 +109,7 @@ public class FFT {
 
         int n = x.length;
 
-        // compute main.FFT of each sequence
+        // compute sound.FFT of each sequence
         Complex[] a = fft(x);
         Complex[] b = fft(y);
 
@@ -119,7 +119,7 @@ public class FFT {
             c[i] = a[i].times(b[i]);
         }
 
-        // compute inverse main.FFT
+        // compute inverse sound.FFT
         return ifft(c);
     }
 
