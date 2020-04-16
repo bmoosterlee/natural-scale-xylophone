@@ -51,7 +51,7 @@ class Main {
         BoundedBuffer<Long, SimplePacket<Long>> sampleCountBuffer = sampleTickerOutput
                 .performMethod(Counter.build(), sampleRate.sampleRate / 32, "count samples");
 
-        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(3, 100, "main - stamped samples buffer broadcast"));
+        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(3, sampleLookahead, "main - stamped samples buffer broadcast"));
 
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
 
