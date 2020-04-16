@@ -20,14 +20,15 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
     private final InputPort<Map<Integer, Integer>, Packet<Map<Integer, Integer>>> harmonicInputPort;
     private final InputPort<Map<Integer, Integer>, Packet<Map<Integer, Integer>>> noteInputPort;
     private final InputPort<Integer, Packet<Integer>> cursorInputPort;
+    private final OutputPort repaintPort;
 
-    public GUI(BoundedBuffer<Pulse, SimplePacket<Pulse>> frameTicker, BoundedBuffer<Double[], N> noteInputBuffer, BoundedBuffer<Double[], H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
-        LinkedList<SimpleBuffer<Pulse, SimplePacket<Pulse>>> tickBroadcast =
-                new LinkedList<>(frameTicker.broadcast(3, "GUI - tick broadcast"));
+    public GUI(BoundedBuffer<Double[], N> noteInputBuffer, BoundedBuffer<Double[], H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+        LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> harmonicSpectrumBroadcast =
+                new LinkedList<>(harmonicInputBuffer.broadcast(3, "GUI - tick broadcast"));
 
         guiPanel = new GUIPanel();
 
-        harmonicInputPort = harmonicInputBuffer
+        harmonicInputPort = harmonicSpectrumBroadcast.poll()
                 .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - harmonics")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
 
@@ -36,12 +37,13 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
                 .createInputPort();
 
-        cursorInputPort = tickBroadcast.poll()
-                .toOverwritable("gui - cursor location overflow")
+        cursorInputPort = harmonicSpectrumBroadcast.poll()
+                .performMethod(input -> {return new Pulse();})
                 .connectTo(CursorMover.buildPipe(guiPanel)).createInputPort();
 
-        tickBroadcast.poll()
+        harmonicSpectrumBroadcast.poll()
             .toOverwritable("gui - note clicker - dump input overflow")
+            .performMethod(input -> {return new Pulse();})
             .connectTo(NoteClicker.buildPipe(spectrumWindow, guiPanel))
         .relayTo(outputBuffer);
 
@@ -52,9 +54,10 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
         frame.pack();
         frame.setVisible(true);
 
-        tickBroadcast.poll()
-                .toOverwritable("gui - repaint overflow")
-                .performMethod((InputCallable<Pulse>) input -> guiPanel.repaint());
+        repaintPort = new OutputPort<>();
+
+        repaintPort.getBuffer().performMethod((InputCallable<Pulse>) input -> guiPanel.repaint());
+
     }
 
     private Map<Integer, Double> doubleArrayToMap(SpectrumWindow spectrumWindow, Double[] input) {
@@ -74,6 +77,7 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
                 renderHarmonicsBuckets(g, harmonicInputPort.consume().unwrap());
                 renderNoteBuckets(g, noteInputPort.consume().unwrap());
                 renderCursorLine(g, cursorInputPort.consume().unwrap());
+                repaintPort.produce(new SimplePacket<>(new Pulse()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -1,9 +1,6 @@
 package main;
 
-import component.Counter;
-import component.Pairer;
-import component.Pulse;
-import component.Separator;
+import component.*;
 import component.buffer.*;
 import frequency.Frequency;
 import gui.GUI;
@@ -75,20 +72,22 @@ class Main {
         BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
 
         LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastOverwritable = new LinkedList<>(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow").broadcast(1, "main note spectrum overwritable - broadcast"));
+        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastAudio = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll(), spectrumWindow, sampleRate).broadcast(1, "main harmonic spectrum - broadcast"));
 
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastAudio = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll(), spectrumWindow, sampleRate).broadcast(2, "main harmonic spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastOverwritable = new LinkedList<>(harmonicSpectrumBroadcastAudio.poll().toOverwritable("main - harmonic spectrum overflow").broadcast(1, "main harmonic spectrum overwritable - broadcast"));
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeAtGUISpeed = guiTickerOutput.performMethod(TimedConsumer.consumeFrom(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow")));
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeAtGUISpeedBroadcast = new LinkedList<>(volumeAtGUISpeed.broadcast(2));
+
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastForGUI = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeAtGUISpeedBroadcast.poll(), spectrumWindow, sampleRate).broadcast(1, "main - harmonic spectrum for gui"));
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeSpectrumBroadcastForGUI = new LinkedList<>(volumeAtGUISpeedBroadcast.poll().broadcast(1, "main - volume spectrum for gui"));
 
         SoundEnvironment.buildComponent(harmonicSpectrumBroadcastAudio.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
 
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
         guiOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
         new GUI<>(
-                guiTickerOutput,
-                volumeBroadcastOverwritable.poll().toOverwritable("main - dump spectrum volume input overflow"),
-                harmonicSpectrumBroadcastOverwritable.poll().toOverwritable("main - dump spectrum harmonic input overflow"),
+                volumeSpectrumBroadcastForGUI.poll(),
+                harmonicSpectrumBroadcastForGUI.poll(),
                 guiOutputBuffer,
                 spectrumWindow,
                 inaudibleFrequencyMargin
@@ -103,7 +102,7 @@ class Main {
 //                pianolaTickerOutput,
 //                volumeBroadcastOverwritable.poll()
 //                        .toOverwritable("main - dump pianola note spectrum input overflow"),
-//                harmonicSpectrumBroadcastOverwritable.poll()
+//                harmonicSpectrumBroadcastForGUI.poll()
 //                        .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
 //                pianolaOutputBuffer,
 //                pianolaPattern,
