@@ -8,17 +8,17 @@ import java.util.List;
 
 public class Separator{
 
-    public static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPipe(){
-        return separateInternal(Separator::separate);
+    public static <T, L extends Collection<T>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPipe(String name){
+        return separateInternal(Separator::separate, name);
     }
 
-    public static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPacketsPipe(){
-        return separateInternal(Separator::separatePackets);
+    public static <T, L extends Collection<A>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> buildPacketsPipe(String name){
+        return separateInternal(Separator::separatePackets, name);
     }
 
-    private static <T, L extends Collection<?>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> separateInternal(final PipeCallable<B, List<A>> separationStrategy) {
+    private static <T, L extends Collection<?>, A extends Packet<T>, B extends Packet<L>> PipeCallable<BoundedBuffer<L, B>, BoundedBuffer<T, A>> separateInternal(final PipeCallable<B, List<A>> separationStrategy, String name) {
         return inputBuffer -> {
-            SimpleBuffer<T, A> outputBuffer = new SimpleBuffer<>(1, "separator - output");
+            SimpleBuffer<T, A> outputBuffer = new SimpleBuffer<>(1, name);
             new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
                 @Override
                 protected void tick() {

@@ -27,7 +27,7 @@ public class Batcher {
                 e.printStackTrace();
             }
 
-            return processedBatch.poll().connectTo(Separator.buildPacketsPipe());
+            return processedBatch.poll().connectTo(Separator.buildPacketsPipe("batcher - separate packets"));
         };
     }
 
