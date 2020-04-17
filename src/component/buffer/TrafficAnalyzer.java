@@ -145,7 +145,11 @@ public class TrafficAnalyzer {
     private void logConsumptionInternal(String bufferName) {
         Map<String, AtomicInteger> throughputLog = this.throughputLog;
         if(throughputLog.containsKey(bufferName)) {
-            throughputLog.get(bufferName).incrementAndGet();
+            try {
+                throughputLog.get(bufferName).incrementAndGet();
+            } catch(NullPointerException ignored){
+
+            }
         } else {
             throughputLog.put(bufferName, new AtomicInteger(1));
         }
