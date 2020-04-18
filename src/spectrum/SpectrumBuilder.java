@@ -64,21 +64,16 @@ public class SpectrumBuilder {
                 harmonicsForThisVolumeSpectrum[i] = 0.;
             }
             Double volumeBucket;
+            Double[] harmonic;
             for(int i = 0; i<spectrumWindow.width; i++){
                 volumeBucket = input[i];
-                if(volumeBucket == 0.){
-                    continue;
-                }
+                harmonic = harmonics[i];
                 for(int j = 0; j<spectrumWindow.width; j++) {
-                    Double harmonicBucket = harmonics[i][j];
-                    if(harmonicBucket == 0.){
-                        continue;
-                    }
-                    harmonicsForThisVolumeSpectrum[j] += volumeBucket * harmonicBucket;
+                    harmonicsForThisVolumeSpectrum[j] += volumeBucket * harmonic[j];
                 }
             }
             return harmonicsForThisVolumeSpectrum;
-        }, sampleRate.sampleRate / 32, "spectrum builder - calculate harmonics");
+        }, "spectrum builder - calculate harmonics");
     }
 
 }
