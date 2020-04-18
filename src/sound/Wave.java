@@ -1,7 +1,6 @@
 package sound;
 
 import frequency.Frequency;
-import sound.SampleRate;
 
 public class Wave {
 
@@ -9,10 +8,13 @@ public class Wave {
     private final Frequency frequency;
     private final double frequencyAngleComponent;
 
+    private long offset;
+
     public Wave(Frequency frequency, SampleRate sampleRate) {
         this.sampleRate = sampleRate;
         this.frequency = frequency;
         frequencyAngleComponent = calculateFrequencyAngleComponent(frequency);
+        offset = (long) (Math.random() * 60 * sampleRate.sampleRate);
     }
 
     private static double calculateFrequencyAngleComponent(Frequency frequency) {
@@ -24,7 +26,7 @@ public class Wave {
     }
 
     public double getAmplitude(long sampleCount) {
-        return getAmplitude(sampleRate.asTime(sampleCount).getValue());
+        return getAmplitude(sampleRate.asTime(sampleCount + offset).getValue());
     }
 
     private double getAmplitude(double timeInSeconds) {
