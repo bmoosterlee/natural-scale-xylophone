@@ -39,7 +39,7 @@ public class Main {
         boolean microphoneOn = true;
         boolean IFFTSynthesis = true;
         boolean audioOutTonicOnly = false;
-        boolean harmonicsFromSpectrumInsteadOfSample = true;
+        boolean harmonicsFromSpectrumInsteadOfSample = false;
 
         int frameRate = 60 / 2;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();

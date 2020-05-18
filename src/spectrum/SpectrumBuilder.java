@@ -76,7 +76,7 @@ public class SpectrumBuilder {
 
     Map.Entry<Double, Double>[] harmonics;
 
-    public SpectrumBuilder(int numberOfHarmonics, boolean tonicIncluded){
+    public SpectrumBuilder(int numberOfHarmonics, boolean tonicIncluded) {
         harmonics = calculateHarmonics(numberOfHarmonics, tonicIncluded);
     }
 
@@ -86,7 +86,7 @@ public class SpectrumBuilder {
 
 //        Skip tonic
         int tonic;
-        if(tonicIncluded) {
+        if (tonicIncluded) {
             tonic = 1;
         } else {
             tonic = 0;
@@ -97,21 +97,21 @@ public class SpectrumBuilder {
         tempMap.put(new Frequency(1), 1.);
         Iterator<Map.Entry<Harmonic, Double>> harmonicsIterator = harmonicCalculator.call(new VolumeStateMap(tempMap));
 
-        if(!tonicIncluded){
+        if (!tonicIncluded) {
             harmonicsIterator.next();
         }
 
-        while(harmonicsIterator.hasNext()) {
+        while (harmonicsIterator.hasNext()) {
             Map.Entry<Harmonic, Double> harmonicWithVolume = harmonicsIterator.next();
             harmonics[counter] = new AbstractMap.SimpleImmutableEntry<>(harmonicWithVolume.getKey().getHarmonicFrequency().getValue(), harmonicWithVolume.getValue());
             counter++;
         }
 
         double magnitude = Arrays.stream(harmonics).map(Map.Entry::getValue).reduce(0., Double::sum);
-        if(magnitude!=0.) {
+        if (magnitude != 0.) {
             for (int j = 0; j < harmonics.length; j++) {
                 Map.Entry<Double, Double> harmonic = harmonics[j];
-                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue()/magnitude);
+                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue() / magnitude);
             }
         }
         return harmonics;
@@ -129,9 +129,9 @@ public class SpectrumBuilder {
             int x1;
             double xFraction;
             Double volumeMultiplier;
-            for(int i = 0; i<FFTEnvironment.resamplingWindow; i++){
+            for (int i = 0; i < FFTEnvironment.resamplingWindow; i++) {
                 volumeBucket = input[i];
-                for(int j = 0; j<harmonics.length; j++) {
+                for (int j = 0; j < harmonics.length; j++) {
                     harmonic = harmonics[j];
                     frequencyMultiplier = harmonic.getKey();
                     newFrequency = i * frequencyMultiplier;
@@ -139,10 +139,10 @@ public class SpectrumBuilder {
                     x1 = x0 + 1;
                     xFraction = newFrequency - x0;
                     volumeMultiplier = harmonic.getValue();
-                    if(x0 >= 0 && x0 < FFTEnvironment.resamplingWindow) {
+                    if (x0 >= 0 && x0 < FFTEnvironment.resamplingWindow) {
                         harmonicsForThisVolumeSpectrum[x0] = harmonicsForThisVolumeSpectrum[x0].plus(volumeBucket.scale((1 - xFraction) * volumeMultiplier));
                     }
-                    if(x1 >= 0 && x1 < FFTEnvironment.resamplingWindow) {
+                    if (x1 >= 0 && x1 < FFTEnvironment.resamplingWindow) {
                         harmonicsForThisVolumeSpectrum[x1] = harmonicsForThisVolumeSpectrum[x1].plus(volumeBucket.scale(xFraction * volumeMultiplier));
                     }
                 }
@@ -154,7 +154,7 @@ public class SpectrumBuilder {
     public PipeCallable<BoundedBuffer<Double, SimplePacket<Double>>, BoundedBuffer<Double, SimplePacket<Double>>> buildHarmonicSamplePipe(int resamplingWindow) {
         return inputBuffer ->
         {
-            BoundedBuffer<Double, SimplePacket<Double>> outputBuffer = new SimpleBuffer<>(resamplingWindow*2, "spectrum builder - harmonics from sample - output");
+            BoundedBuffer<Double, SimplePacket<Double>> outputBuffer = new SimpleBuffer<>(resamplingWindow * 2, "spectrum builder - harmonics from sample - output");
 
             new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
                 double[] history;
@@ -175,7 +175,7 @@ public class SpectrumBuilder {
 
                             double[] harmonizedSample = harmonizeSample(history);
 
-                            for(Double amplitude : harmonizedSample) {
+                            for (Double amplitude : harmonizedSample) {
                                 output.produce(new SimplePacket<>(amplitude));
                             }
                         }
@@ -200,22 +200,43 @@ public class SpectrumBuilder {
                     double resampleIndex;
                     double value0;
                     double diff;
+                    double finalValue;
+                    double frontBackFraction;
                     for (int j = 0; j < harmonics.length; j++) {
                         harmonic = harmonics[j];
                         frequencyMultiplier = harmonic.getKey();
                         harmonicSampleWindowSize = sample.length / frequencyMultiplier;
                         volumeMultiplier = harmonic.getValue();
-                        for(int i = 0; i<sample.length; i++) {
+                        for (int i = 0; i < sample.length; i++) {
+                            frontBackFraction = ((double) i) / (sample.length - 1);
                             resampleIndex = (i % harmonicSampleWindowSize) * frequencyMultiplier;
-                            x0 = (int) resampleIndex;
-                            x1 = x0 + 1;
-                            xFraction = resampleIndex - x0;
-                            value0 = sample[x0];
-                            if(xFraction > 0.) {
-                                diff = sample[x1] - value0;
-                                result[i] += (value0 + xFraction * diff) * volumeMultiplier;
-                            } else {
-                                result[i] += value0 * volumeMultiplier;
+                            {
+                                x0 = (int) resampleIndex;
+                                x1 = x0 + 1;
+                                xFraction = resampleIndex - x0;
+                                value0 = sample[x0];
+                                if (xFraction > 0.) {
+                                    diff = sample[x1] - value0;
+                                    finalValue = value0 + xFraction * diff;
+                                } else {
+                                    finalValue = value0;
+                                }
+                                result[i] += finalValue * volumeMultiplier * (1. - frontBackFraction);
+                            }
+
+                            resampleIndex = sample.length - 1 - resampleIndex;
+                            {
+                                x0 = (int) resampleIndex;
+                                x1 = x0 + 1;
+                                xFraction = resampleIndex - x0;
+                                value0 = sample[x0];
+                                if (xFraction > 0.) {
+                                    diff = sample[x1] - value0;
+                                    finalValue = value0 + xFraction * diff;
+                                } else {
+                                    finalValue = value0;
+                                }
+                                result[sample.length - 1 - i] += finalValue * volumeMultiplier * (1. - frontBackFraction);
                             }
                         }
                     }
