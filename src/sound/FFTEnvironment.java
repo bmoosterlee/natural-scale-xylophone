@@ -1,77 +1,168 @@
 package sound;
 
-import component.buffer.PipeCallable;
+import component.buffer.*;
 import spectrum.SpectrumWindow;
 
 public class FFTEnvironment {
 
-    public static PipeCallable<Double, Double[]> buildPipe(int sampleRate, SpectrumWindow spectrumWindow, final double gain) {
-        return new PipeCallable<>() {
-            private Double[] magnitudes;
-            int fftN;
+    static int fftN;
+    static int fftNLowerBound;
+    static int diff;
+    public static int resamplingWindow;
 
-            double[] history;
+    public FFTEnvironment(SampleRate sampleRate){
+        {
+            int k = 0;
+            do {
+                fftN = (int) Math.pow(2, k);
+                k++;
+//                        } while (fftN / 2 < spectrumWindow.upperBound.getValue());
+            } while (fftN * 2 < sampleRate.sampleRate);
 
-            double[] bottomFrequencies = new double[spectrumWindow.width];
-            double[] topFrequencies = new double[spectrumWindow.width];
+//                        k = 0;
+//                        do {
+//                            fftNLowerBound = (int) Math.pow(2, k);
+//                            resamplingWindow = fftN / fftNLowerBound;
+//                            k++;
+//                        } while (fftNLowerBound * 2 * 16 < spectrumWindow.lowerBound.getValue() && resamplingWindow > 512);
 
-            long sampleCount = 0;
-            long lastSample = -1;
+            fftNLowerBound = 1;
+//                    fftNLowerBound = 32;
 
-            {
-                for (int i = 0; i < spectrumWindow.width; i++) {
-                    bottomFrequencies[i] = spectrumWindow.getFrequency(i).getValue();
-                    topFrequencies[i] = spectrumWindow.getFrequency(i + 1).getValue();
+            //                Using a resampling window, the magnitude at i = 0 is the lower bound frequency,
+            //                The magnitude at i = resamplingWindow is fftN.
+            //                To convert from frequency to i we do the following:
+            //                i = (f-fftNLowerBound)/diff * resamplingWindow;
+            diff = fftN - fftNLowerBound;
+            resamplingWindow = fftN / fftNLowerBound;
+        }
+    }
+
+    public PipeCallable<BoundedBuffer<Double, SimplePacket<Double>>, BoundedBuffer<Complex[], SimplePacket<Complex[]>>> buildAudioInPipe(SpectrumWindow spectrumWindow, int sampleRate) {
+        return inputBuffer ->
+        {
+            BoundedBuffer<Complex[], SimplePacket<Complex[]>> outputBuffer = new SimpleBuffer<>(1, "FFT input");
+
+            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+                long sampleCount = 0;
+                long lastSample = -1;
+                double[] history;
+                int count = 0;
+
+                {
+//                    Double[] oldMagnitudes;
+//                    Double[] magnitudes;
+
+                    history = new double[resamplingWindow];
+//                        oldMagnitudes = new Double[history.length];
+//                        magnitudes = new Double[history.length];
+//                        for (int i = 0; i < history.length; i++) {
+//                            magnitudes[i] = 0.;
+//                            oldMagnitudes[i] = 0.;
+//                        }
                 }
 
-                int i = 0;
-                do {
-                    fftN = (int) Math.pow(2, i);
-                    i++;
-                } while (fftN / 2 < spectrumWindow.upperBound.getValue());
+                @Override
+                public void tick() {
+                    double in = 0;
+                    try {
+                        in = input.consume().unwrap();
 
-                history = new double[fftN];
-            }
+                        if (count >= history.length) {
+                            count = 0;
 
-            @Override
-            public Double[] call(Double input) {
-                long adjustedSampleCount = (long) ((double) (sampleCount % sampleRate) / sampleRate * fftN);
-                if (adjustedSampleCount != lastSample) {
-                    lastSample = adjustedSampleCount;
+                            Complex[] magnitudeSpectrum = CalculateFFT.calculateFFT(history, history.length);
 
-                    double[] newHistory = new double[fftN];
-                    System.arraycopy(history, 1, newHistory, 0, fftN - 1);
-                    newHistory[fftN - 1] = input;
-                    history = newHistory;
+//                            oldMagnitudes = magnitudes;
+//                            magnitudes = new Double[history.length];
+//                            for(int i = 0; i<history.length; i++){
+//                                magnitudes[i] = magnitudeSpectrum[i];
+//                            }
 
-                    double[] magnitudeSpectrum = CalculateFFT.calculateFFT(history, fftN);
+                            output.produce(new SimplePacket<>(magnitudeSpectrum));
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
 
-                    magnitudes = new Double[spectrumWindow.width];
-                    for (int i = 0; i < spectrumWindow.width; i++) {
-                        int bottomIndex = (int) bottomFrequencies[i];
-                        int topIndex = (int) topFrequencies[i];
+                    long adjustedSampleCount = (long) ((double) sampleCount / sampleRate * fftN);
+                    if (adjustedSampleCount != lastSample) {
+                        lastSample = adjustedSampleCount;
 
-                        double bottomFraction = 1. - (bottomFrequencies[i] - bottomIndex);
-                        double bottomValue0 = magnitudeSpectrum[bottomIndex];
-                        double bottomValue1 = magnitudeSpectrum[bottomIndex + 1];
-                        double bottomValue = bottomValue0 + bottomFraction * (bottomValue1 - bottomValue0);
+                        history[count] = in;
+                        count++;
+                    }
 
-                        double valuesInBetween = 0.;
-                        for (int j = bottomIndex + 1; j < topIndex; j++) {
-                            valuesInBetween += magnitudeSpectrum[j];
+                    sampleCount++;
+
+//                        Double[] interpolatedMagnitudes = new Double[history.length];
+//                        double completion = (double) count / (history.length - 1);
+//
+//                        for (int i = 0; i < history.length; i++) {
+//                            interpolatedMagnitudes[i] = (1. - completion) * oldMagnitudes[i] + completion * magnitudes[i];
+//                        }
+//
+//                        return interpolatedMagnitudes;
+                }
+            });
+            return outputBuffer;
+        };
+    }
+
+    public static double getMagnitudeSpectrumI(double frequency) {
+        return (frequency - fftNLowerBound) / diff * resamplingWindow;
+    }
+
+    public PipeCallable<BoundedBuffer<Complex[], SimplePacket<Complex[]>>, BoundedBuffer<Double, SimplePacket<Double>>> buildAudioOutPipe(SampleRate sampleRate) {
+        return inputBuffer -> {
+            BoundedBuffer<Double, SimplePacket<Double>> outputBuffer = new SimpleBuffer<>(1, "FFT output");
+
+            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+
+                long sampleCount = 0;
+                double lastSample = -1;
+                double[] results = new double[0];
+                int count = 0;
+
+                Double oldValue;
+                Double newValue = 0.;
+
+                @Override
+                public void tick() {
+                    try {
+                        if (count >= results.length) {
+                            count = 0;
+
+                            Complex[] magnitudeSpectrum = input.consume().unwrap();
+
+                            results = CalculateFFT.calculateIFFT(magnitudeSpectrum, magnitudeSpectrum.length);
                         }
 
-                        double topFraction = topFrequencies[i] - topIndex;
-                        double topValue0 = magnitudeSpectrum[topIndex];
-                        double topValue1 = magnitudeSpectrum[topIndex + 1];
-                        double topValue = topValue0 + topFraction * (topValue1 - topValue0);
+                        double adjustedSampleCount = ((double) sampleCount / sampleRate.sampleRate * fftN);
+                        if ((long) adjustedSampleCount != (long) lastSample) {
+                            lastSample = adjustedSampleCount;
 
-                        magnitudes[i] = (bottomValue + valuesInBetween + topValue) * gain;
+                            oldValue = newValue;
+                            newValue = results[count];
+                            count++;
+                        }
+
+                        double completion = (double) sampleCount / sampleRate.sampleRate * fftN - lastSample;
+
+                        Double interpolatedValue = (1. - completion) * oldValue + completion * newValue;
+
+                        sampleCount++;
+
+                        output.produce(new SimplePacket<>(interpolatedValue));
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+
                 }
-                sampleCount++;
-                return magnitudes;
-            }
+            });
+
+            return outputBuffer;
         };
     }
 }

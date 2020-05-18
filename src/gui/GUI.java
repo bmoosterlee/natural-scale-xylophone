@@ -22,17 +22,19 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
     private final InputPort<Integer, Packet<Integer>> cursorInputPort;
     private final OutputPort repaintPort;
 
-    public GUI(BoundedBuffer<Double[], N> noteInputBuffer, BoundedBuffer<Double[], H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin) {
+    public GUI(BoundedBuffer<Double[], N> noteInputBuffer, BoundedBuffer<Double[], H> harmonicInputBuffer, SimpleBuffer<java.util.List<Frequency>, O> outputBuffer, SpectrumWindow spectrumWindow) {
         LinkedList<SimpleBuffer<Double[], ? extends Packet<Double[]>>> harmonicSpectrumBroadcast =
                 new LinkedList<>(harmonicInputBuffer.broadcast(3, "GUI - tick broadcast"));
 
         guiPanel = new GUIPanel();
 
         harmonicInputPort = harmonicSpectrumBroadcast.poll()
+                .performMethod(spectrumWindow::toSpectrumWindow, "gui - harmonics to spectrum window")
                 .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - harmonics")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
 
         noteInputPort = noteInputBuffer
+                .performMethod(spectrumWindow::toSpectrumWindow, "gui - notes to spectrum window")
                 .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - notes")
                 .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
                 .createInputPort();

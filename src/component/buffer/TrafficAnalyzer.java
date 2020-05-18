@@ -88,10 +88,9 @@ public class TrafficAnalyzer {
                 }
             }
         };
-        start();
     }
 
-    private void start() {
+    public void start() {
         new Thread(() -> {
             while(true){
                 topClogs = getTopClogs();

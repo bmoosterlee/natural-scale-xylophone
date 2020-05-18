@@ -1,118 +1,260 @@
 package main;
 
-import component.*;
+import component.Flusher;
+import component.Memorizer;
+import component.Pulse;
+import component.Separator;
 import component.buffer.*;
 import frequency.Frequency;
 import gui.GUI;
-import pianola.notebuilder.NoteBuilder;
-import sound.AmplitudeCalculator;
-import sound.FFTEnvironment;
-import sound.SampleRate;
-import sound.SoundEnvironment;
+import pianola.Pianola;
+import pianola.patterns.PianolaPattern;
+import pianola.patterns.SweepToTargetUpDown;
+import sound.*;
 import spectrum.SpectrumBuilder;
 import spectrum.SpectrumWindow;
 import time.Pulser;
 import time.TimeInSeconds;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
-class Main {
+public class Main {
+
+    static float gain = (1f / 100f);
 
     public static void main(String[] args) {
-        new TrafficAnalyzer();
+        TrafficAnalyzer trafficAnalyzer = new TrafficAnalyzer();
 
-        int SAMPLE_RATE = 44100/2;
-        int sampleLookahead = SAMPLE_RATE / 4;
+        int SAMPLE_RATE = 44100;
+        SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
+        int sampleLookahead = SAMPLE_RATE;
         int SAMPLE_SIZE_IN_BITS = 8;
+        SoundEnvironment soundEnvironment = new SoundEnvironment(sampleRate, SAMPLE_SIZE_IN_BITS);
+        FFTEnvironment fftEnvironment = new FFTEnvironment(sampleRate);
+
+        boolean microphoneOn = true;
+        boolean IFFTSynthesis = true;
+        boolean audioOutTonicOnly = false;
 
         int frameRate = 60 / 2;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-
         double octaveRange = 3.;
-        int inaudibleFrequencyMargin = (int) (width / octaveRange / 12 / 5);
-
-        double gain = (1. / 20.);
-
-        int pianolaRate = 4;
-        int pianolaLookahead = pianolaRate / 4;
-
-        SampleRate sampleRate = new SampleRate(SAMPLE_RATE);
         SpectrumWindow spectrumWindow = new SpectrumWindow(width, octaveRange);
 
-        build(sampleLookahead, SAMPLE_SIZE_IN_BITS, sampleRate, frameRate, spectrumWindow, inaudibleFrequencyMargin, gain, pianolaRate, pianolaLookahead);
+        boolean pianolaOn = false;
+        int inaudibleFrequencyMargin = (int) (width / octaveRange / 12 / 5);
+        int pianolaRate = 1;
+        int pianolaLookahead = pianolaRate / 4;
+
+
+        Runnable build = new Main().build(soundEnvironment, sampleLookahead, sampleRate, microphoneOn, fftEnvironment, IFFTSynthesis, audioOutTonicOnly, frameRate, spectrumWindow, pianolaOn, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+
+        trafficAnalyzer.start();
+        build.run();
     }
 
-    private static void build(int sampleLookahead, int SAMPLE_SIZE_IN_BITS, SampleRate sampleRate, int frameRate, SpectrumWindow spectrumWindow, int inaudibleFrequencyMargin, double gain, int pianolaRate, int pianolaLookahead) {
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> sampleTickerOutput = new SimpleBuffer<>(new OverflowStrategy<>("sample ticker overflow"));
-        BoundedBuffer<Long, SimplePacket<Long>> sampleCountBuffer = sampleTickerOutput
-                .performMethod(Counter.build(), sampleRate.sampleRate / 32, "count samples");
+    public static Double[] toMagnitudeSpectrum(Complex[] input) {
+        double[] magnitudes = CalculateFFT.getMagnitudes(input, input.length);
+        return Arrays.stream(magnitudes).boxed().toArray(Double[]::new);
+    }
 
-        LinkedList<SimpleBuffer<Long, SimplePacket<Long>>> sampleCountBroadcast = new LinkedList<>(sampleCountBuffer.broadcast(3, sampleLookahead, "main - stamped samples buffer broadcast"));
+    private Runnable build(SoundEnvironment soundEnvironment, int sampleLookahead, SampleRate sampleRate, boolean microphoneOn, FFTEnvironment fftEnvironment, boolean IFFTSynthesis, boolean audioOutTonicOnly, int frameRate, SpectrumWindow spectrumWindow, boolean pianolaOn, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
+        System.out.println(sampleRate.sampleRate);
 
-        SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, "new notes");
+        SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, ("new notes"));
 
-        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBufferNotes = NoteBuilder.buildComponent(newNoteBuffer, sampleRate, spectrumWindow, sampleCountBroadcast.poll());
+        BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumesOfAudioIn;
+        MethodOutputComponent<byte[]> audioIn;
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> secondTickerOutput;
+        if(microphoneOn) {
+            SimpleBuffer<byte[], SimplePacket<byte[]>> rawAudioInBuffer = new SimpleBuffer<>(sampleLookahead, "main - audio in buffer");
+            audioIn = soundEnvironment.audioIn(rawAudioInBuffer);
+            BoundedBuffer<Double, SimplePacket<Double>> audioInBuffer = soundEnvironment.prepareAudioFromMixer(rawAudioInBuffer);
 
-        BoundedBuffer<Double, SimplePacket<Double>> audioIn = sampleCountBroadcast.poll()
-                .connectTo(SoundEnvironment.buildPipeSource(SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead));
+            volumesOfAudioIn = audioInBuffer
+                    .connectTo(fftEnvironment.buildAudioInPipe(spectrumWindow, sampleRate.sampleRate));
 
-        BoundedBuffer<Double[], SimplePacket<Double[]>> volumesOfAudioIn = audioIn
-                .performMethod(FFTEnvironment.buildPipe(sampleRate.sampleRate, spectrumWindow, gain), sampleLookahead, "main - perform FFT");
-
-        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeBuffer = Pairer.pair(volumeBufferNotes, volumesOfAudioIn).performMethod(input -> {
-                Double[] addedVolumes = new Double[spectrumWindow.width];
-                for(int i = 0; i < spectrumWindow.width; i++){
-                    addedVolumes[i] = input.getKey()[i] + input.getValue()[i];
+            secondTickerOutput = null;
+        } else {
+            secondTickerOutput = new SimpleBuffer<>(100, ("main - second ticker"));
+            volumesOfAudioIn = secondTickerOutput.performMethod(input -> {
+                Complex[] spectrum = new Complex[FFTEnvironment.resamplingWindow];
+                for(int i = 0; i<FFTEnvironment.resamplingWindow; i++){
+                    spectrum[i] = new Complex(0., 0.);
                 }
-                return addedVolumes;
+                return spectrum;
+            }, "main - second to empty spectrum");
+
+            audioIn = null;
         }
-    );
 
-        BoundedBuffer<Double[], SimplePacket<Double[]>> amplitudeStateBuffer = sampleCountBroadcast.poll().connectTo(AmplitudeCalculator.buildPipe(sampleRate, spectrumWindow));
+        BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer = volumesOfAudioIn.performMethod(input -> {
+            List<Frequency> call = Flusher.flush(newNoteBuffer).call(new Pulse());
+            Complex[] output = new Complex[input.length];
+            System.arraycopy(input, 0, output, 0, input.length);
+            int[] ints = call.stream().mapToInt(freq -> (int) freq.getValue()).toArray();
+            for(int i : ints){
+                output[i] = output[i].plus(new Complex(5000., 0.));
+            }
+            return output;
+        }, "main - add clicked and pianola notes to input");
+        LinkedList<SimpleBuffer<Complex[], SimplePacket<Complex[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
 
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
-        LinkedList<SimpleBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastAudio = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll(), spectrumWindow, sampleRate).broadcast(1, "main harmonic spectrum - broadcast"));
+        SimpleBuffer<byte[], SimplePacket<byte[]>> rawAudioOutBuffer = new SimpleBuffer<>(sampleLookahead, "main - raw audio relay");
+        if(audioOutTonicOnly){
+            soundEnvironment.prepareAudioForMixer(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).relayTo(rawAudioOutBuffer);
+        } else {
+            soundEnvironment.prepareAudioForMixer(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll()), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).relayTo(rawAudioOutBuffer);
+        }
+        MethodInputComponent<byte[], SimplePacket<byte[]>> audioOut = soundEnvironment.audioOut(rawAudioOutBuffer);
 
-        SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump GUI ticker overflow"));
-        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeAtGUISpeed = guiTickerOutput.performMethod(TimedConsumer.consumeFrom(volumeBroadcastAudio.poll().toOverwritable("main - volume spectrum overflow")));
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(1, ("main - dump GUI ticker overflow"));
+        BoundedBuffer<Double[], SimplePacket<Double[]>> volumeAtGUISpeed = guiTickerOutput.connectTo(
+                Memorizer.buildPipe(
+                        volumeBroadcastAudio.poll()
+                                .toOverwritable("main - volume spectrum overflow"), "main - volume spectrum memorizer"))
+                .performMethod(Main::toMagnitudeSpectrum, "main - complex to magnitude")
+//                .performMethod(input -> normalizeGain(input, spectrumWindow), "FFT - normalize magnitudes")
+                .performMethod(Main::reduceNoise, "main - reduce noise")
+                .performMethod(Main::normalize, "main - normalize");
         LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeAtGUISpeedBroadcast = new LinkedList<>(volumeAtGUISpeed.broadcast(2));
 
-        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastForGUI = new LinkedList<>(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeAtGUISpeedBroadcast.poll(), spectrumWindow, sampleRate).broadcast(1, "main - harmonic spectrum for gui"));
-        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeSpectrumBroadcastForGUI = new LinkedList<>(volumeAtGUISpeedBroadcast.poll().broadcast(1, "main - volume spectrum for gui"));
-
-        SoundEnvironment.buildComponent(harmonicSpectrumBroadcastAudio.poll(), amplitudeStateBuffer, SAMPLE_SIZE_IN_BITS, sampleRate, sampleLookahead);
+        int pianolaOnValue;
+        if(pianolaOn){
+            pianolaOnValue = 1;
+        } else {
+            pianolaOnValue = 0;
+        }
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> volumeSpectrumBroadcastForGUIAndPianola = new LinkedList<>(volumeAtGUISpeedBroadcast.poll().broadcast(1+pianolaOnValue, "main - volume spectrum for gui"));
+        LinkedList<BoundedBuffer<Double[], SimplePacket<Double[]>>> harmonicSpectrumBroadcastForGUIAndPianola = new LinkedList<>(volumeAtGUISpeedBroadcast.poll().broadcast(1+pianolaOnValue, "main - harmonic spectrum for gui"));
 
         SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> guiOutputBuffer = new SimpleBuffer<>(1, "gui output");
-        guiOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
+        guiOutputBuffer.connectTo(Separator.buildPipe("main - gui separate new notes")).relayTo(newNoteBuffer);
         new GUI<>(
-                volumeSpectrumBroadcastForGUI.poll(),
-                harmonicSpectrumBroadcastForGUI.poll(),
+                volumeSpectrumBroadcastForGUIAndPianola.poll(),
+                harmonicSpectrumBroadcastForGUIAndPianola.poll(),
                 guiOutputBuffer,
-                spectrumWindow,
-                inaudibleFrequencyMargin
+                spectrumWindow
         );
 
-//        PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
-//
-//        SimpleBuffer<Pulse, SimplePacket<Pulse>> pianolaTickerOutput = new SimpleBuffer<>(new OverwritableStrategy<>("main - dump pianola ticker overflow"));
-//        SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "gui output");
-//        pianolaOutputBuffer.connectTo(Separator.buildPipe()).relayTo(newNoteBuffer);
-//        new Pianola<>(
-//                pianolaTickerOutput,
-//                volumeBroadcastOverwritable.poll()
-//                        .toOverwritable("main - dump pianola note spectrum input overflow"),
-//                harmonicSpectrumBroadcastForGUI.poll()
-//                        .toOverwritable("main - dump pianola harmonic spectrum input overflow"),
-//                pianolaOutputBuffer,
-//                pianolaPattern,
-//                inaudibleFrequencyMargin);
+        SimpleBuffer<Pulse, SimplePacket<Pulse>> pianolaTickerOutput = new SimpleBuffer<>(1, ("main - dump pianola ticker overflow"));
+        if(pianolaOn) {
+            PianolaPattern pianolaPattern = new SweepToTargetUpDown(8, spectrumWindow.getCenterFrequency(), 2.0, spectrumWindow, inaudibleFrequencyMargin);
+            SimpleBuffer<java.util.List<Frequency>, ? extends Packet<java.util.List<Frequency>>> pianolaOutputBuffer = new SimpleBuffer<>(1, "pianola output");
+            pianolaOutputBuffer.connectTo(Separator.buildPipe("main - pianola separator")).relayTo(newNoteBuffer);
+            new Pianola<>(
+                    pianolaTickerOutput,
+                    volumeSpectrumBroadcastForGUIAndPianola.poll(),
+                    harmonicSpectrumBroadcastForGUIAndPianola.poll(),
+                    pianolaOutputBuffer,
+                    pianolaPattern,
+                    inaudibleFrequencyMargin);
+        }
 
-        new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
-//        new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
-        new TickRunningStrategy(new Pulser(sampleTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(sampleRate.sampleRate)));
+        return () -> {
+            new TickRunningStrategy(new Pulser(guiTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(frameRate)));
 
-//        playTestTone(newNoteBuffer, spectrumWindow);
+            if(pianolaOn) {
+                new TickRunningStrategy(new Pulser(pianolaTickerOutput, new TimeInSeconds(1).toNanoSeconds().divide(pianolaRate)));
+            }
+
+            new TickRunningStrategy(audioOut);
+            if(microphoneOn) {
+                new TickRunningStrategy(audioIn);
+            } else {
+                new TickRunningStrategy(new Pulser(secondTickerOutput, new TimeInSeconds(1).toNanoSeconds()));
+            }
+        };
+    }
+
+    public static Double[] normalize(Double[] input) {
+        Double[] output = new Double[input.length];
+        double magnitude = Arrays.stream(input).reduce(0., Double::sum);
+        if (magnitude != 0.) {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = input[i] / magnitude;
+            }
+        } else {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = 0.;
+            }
+        }
+        return output;
+    }
+
+    public static Complex[] normalize(Complex[] input) {
+        Complex[] output = new Complex[input.length];
+        double magnitude = Arrays.stream(CalculateFFT.getMagnitudes(input, input.length)).reduce(0., Double::sum);
+        if (magnitude != 0.) {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = input[i].scale(1/magnitude);
+            }
+        } else {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = new Complex(0., 0.);
+            }
+        }
+        return output;
+    }
+
+    public Double[] normalizeGain(Double[] input) {
+        Double[] output = new Double[input.length];
+        double magnitude = Arrays.stream(input).reduce(0., Double::sum);
+        if (magnitude != 0.) {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = gain * input[i] / magnitude;
+            }
+        } else {
+            for (int i = 0; i < input.length; i++) {
+                output[i] = 0.;
+            }
+        }
+        if (magnitude > 1.) {
+            gain *= 0.9999f;
+        } else {
+            gain /= 0.9999f;
+        }
+//        SoundEnvironment.volCtrl.setValue(gain);
+        return output;
+    }
+
+    public static Double[] reduceNoise(Double[] input) {
+//        //                    either reduce below median or below average. Could also reduce below 75th percentile or something.
+////                    Double noiseMeasure = Arrays.stream(input).sorted().collect(Collectors.toList()).get((int) (0.75 * spectrumWindow.width));
+//        Double noiseMeasure = Arrays.stream(input).reduce(0., Double::sum) / spectrumWindow.width;
+//        Double[] output = new Double[spectrumWindow.width];
+//        for (int i = 0; i < spectrumWindow.width; i++) {
+//            if (input[i] <= noiseMeasure) {
+//                output[i] = 0.;
+//            } else {
+//                output[i] = input[i];
+//            }
+//        }
+//        return output;
+
+        Double noiseMeasure = Arrays.stream(input).reduce(0., Double::sum) / input.length;
+//        Double noiseMeasure = Arrays.stream(input).min(Double::compare).orElse(0.);
+        Double[] output = new Double[input.length];
+        for (int i = 0; i < input.length; i++) {
+            output[i] = Math.max(0., input[i] - noiseMeasure);
+        }
+        return output;
+    }
+
+    private static Complex[] reduceNoise(Complex[] input) {
+        double[] magnitudes = CalculateFFT.getMagnitudes(input, input.length);
+        Double noiseMeasure = Arrays.stream(magnitudes).reduce(0., Double::sum) / input.length;
+//        Double noiseMeasure = Arrays.stream(input).min(Double::compare).orElse(0.);
+        Complex[] output = new Complex[input.length];
+        for (int i = 0; i < input.length; i++) {
+            double oldMagnitude = magnitudes[i];
+            double newMagnitude = Math.max(0., oldMagnitude - noiseMeasure);
+            output[i] = input[i].scale(newMagnitude/oldMagnitude);
+        }
+        return output;
     }
 
     private static void playTestTone(SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer, SpectrumWindow spectrumWindow) {

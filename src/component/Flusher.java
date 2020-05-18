@@ -48,4 +48,20 @@ public class Flusher {
             return null;
         }
     }
+
+    public static <T, B extends Packet<T>> SimpleBuffer<List<T>, SimplePacket<List<T>>> flushToList(BoundedBuffer<T, B> inputBuffer) {
+        SimpleBuffer<List<T>, SimplePacket<List<T>>> outputBuffer = new SimpleBuffer<>(1, "sound environment - raw audio out to byte list");
+        new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+            @Override
+            protected void tick() {
+                try {
+                    List<B> flush = input.flush();
+                    output.produce(new SimplePacket<>(flush.stream().map(Packet::unwrap).collect(Collectors.toList())));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        return outputBuffer;
+    }
 }

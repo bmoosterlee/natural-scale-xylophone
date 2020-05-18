@@ -8,7 +8,7 @@ public class Wave {
     private final Frequency frequency;
     private final double frequencyAngleComponent;
 
-    private long offset;
+    public long offset;
 
     public Wave(Frequency frequency, SampleRate sampleRate) {
         this.sampleRate = sampleRate;
@@ -26,12 +26,11 @@ public class Wave {
     }
 
     public double getAmplitude(long sampleCount) {
-        return getAmplitude(sampleRate.asTime(sampleCount + offset).getValue());
+        return getAmplitude(sampleRate.asTime(sampleCount).getValue());
     }
 
-    private double getAmplitude(double timeInSeconds) {
-        double angle = timeInSeconds * frequencyAngleComponent;
-        return Math.sin(angle);
+    public double getAmplitude(double timeInSeconds) {
+        return Math.sin((timeInSeconds + offset) * frequencyAngleComponent);
     }
 
     public static double getAmplitude(SampleRate sampleRate, Frequency frequency, Long sampleCount){

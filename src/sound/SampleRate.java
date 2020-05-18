@@ -13,6 +13,10 @@ public class SampleRate {
         return new TimeInSeconds((double)sampleCount / sampleRate);
     }
 
+    public double asTimeRaw(long sampleCount) {
+        return ((double)sampleCount / sampleRate);
+    }
+
     public long asSampleCount(TimeInSeconds time) {
         return (long) (time.getValue() * sampleRate);
     }

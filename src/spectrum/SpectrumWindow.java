@@ -2,6 +2,7 @@ package spectrum;
 
 import component.buffer.*;
 import frequency.Frequency;
+import sound.FFTEnvironment;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -16,6 +17,9 @@ public class SpectrumWindow {
     private final double xMultiplier;
 
     public final HashMap<Integer, Frequency> staticFrequencyWindow;
+
+    private double[] bottomFrequencies;
+    private double[] topFrequencies;
 
     public SpectrumWindow(int width, double octaveRange) {
         this.width = width;
@@ -33,6 +37,13 @@ public class SpectrumWindow {
         staticFrequencyWindow = new HashMap<>();
         for(int x = 0; x < width; x++){
             staticFrequencyWindow.put(x, getFrequency(x));
+        }
+
+        bottomFrequencies = new double[this.width];
+        topFrequencies = new double[this.width];
+        for (int i = 0; i < width; i++) {
+            bottomFrequencies[i] = getFrequency(i).getValue();
+            topFrequencies[i] = getFrequency(i + 1).getValue();
         }
     }
 
@@ -78,5 +89,33 @@ public class SpectrumWindow {
 
             return outputBuffer;
         };
+    }
+
+    public Double[] toSpectrumWindow(Double[] magnitudeSpectrum) {
+        Double[] magnitudes = new Double[width];
+
+        for (int i = 0; i < width; i++) {
+            int bottomIndex = (int) FFTEnvironment.getMagnitudeSpectrumI(bottomFrequencies[i]);
+            int topIndex = (int) FFTEnvironment.getMagnitudeSpectrumI(topFrequencies[i]);
+
+            double bottomFraction = 1. - (FFTEnvironment.getMagnitudeSpectrumI(bottomFrequencies[i]) - bottomIndex);
+            double bottomValue0 = magnitudeSpectrum[bottomIndex];
+            double bottomValue1 = magnitudeSpectrum[bottomIndex + 1];
+            double bottomValue = bottomValue1 - bottomFraction * (bottomValue1 - bottomValue0);
+
+            double valuesInBetween = 0.;
+            for (int j = bottomIndex + 1; j < topIndex; j++) {
+                valuesInBetween += magnitudeSpectrum[j];
+            }
+
+            double topFraction = FFTEnvironment.getMagnitudeSpectrumI(topFrequencies[i]) - topIndex;
+            double topValue0 = magnitudeSpectrum[topIndex];
+            double topValue1 = magnitudeSpectrum[topIndex + 1];
+            double topValue = topValue0 + topFraction * (topValue1 - topValue0);
+
+            magnitudes[i] = (bottomValue + valuesInBetween + topValue);
+        }
+
+        return magnitudes;
     }
 }

@@ -26,18 +26,17 @@ public class Pianola<I extends Packet<Pulse>, N extends Packet<Double[]>, H exte
         LinkedList<SimpleBuffer<Pulse, I>> tickBroadcast = new LinkedList<>(tickBuffer.broadcast(2, "pianola tick - broadcast"));
 
         tickBroadcast.poll()
-        .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer), "pianola - consume from note spectrum buffer")
-        .performMethod(input -> {
-            return doubleArrayToBuckets(input);
-        }, "pianola - note double array to buckets")
+        .performMethod(TimedConsumer.consumeFrom(noteSpectrumBuffer.toOverwritable("pianola - note spectrum overflow")), "pianola - consume from note spectrum buffer")
+        .performMethod(this::doubleArrayToBuckets, "pianola - note double array to buckets")
         .performMethod(PrecalculatedBucketHistory.build(50), "pianola - note spectrum history")
         .performMethod(input -> input.multiply(repetitionDampener), "pianola - multiply note spectrum")
-        .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average note spectrum")
+//        .performMethod(BucketsAverager.build(2 * inaudibleFrequencyMargin), "pianola - average note spectrum")
         .pairWith(
             tickBroadcast.poll()
-            .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer), "pianola - consume from harmonic spectrum buffer")
-            .performMethod(input -> doubleArrayToBuckets(input), "pianola - harmonic double array to buckets")
-            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - average harmonic spectrum"))
+            .performMethod(TimedConsumer.consumeFrom(harmonicSpectrumBuffer.toOverwritable("pianola - harmonic spectrum overflow")), "pianola - consume from harmonic spectrum buffer")
+            .performMethod(input1 -> doubleArrayToBuckets(input1), "pianola - harmonic double array to buckets")
+//            .performMethod(BucketsAverager.build(inaudibleFrequencyMargin), "pianola - average harmonic spectrum")
+        )
         .performMethod(input -> new LinkedList<>(pianolaPattern.playPattern(input.getKey(), input.getValue())), "pianola - play pattern")
         .relayTo(outputBuffer);
     }
