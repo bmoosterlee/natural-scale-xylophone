@@ -191,6 +191,7 @@ public class SpectrumBuilder {
                     double[] result = new double[sample.length];
                     Map.Entry<Double, Double> harmonic;
                     Double frequencyMultiplier;
+                    Double volumeMultiplier;
                     int x0;
                     int x1;
                     double xFraction;
@@ -203,6 +204,7 @@ public class SpectrumBuilder {
                         harmonic = harmonics[j];
                         frequencyMultiplier = harmonic.getKey();
                         harmonicSampleWindowSize = sample.length / frequencyMultiplier;
+                        volumeMultiplier = harmonic.getValue();
                         for(int i = 0; i<sample.length; i++) {
                             resampleIndex = (i % harmonicSampleWindowSize) * frequencyMultiplier;
                             x0 = (int) resampleIndex;
@@ -211,9 +213,9 @@ public class SpectrumBuilder {
                             value0 = sample[x0];
                             if(xFraction > 0.) {
                                 diff = sample[x1] - value0;
-                                result[i] += value0 + xFraction * diff;
+                                result[i] += (value0 + xFraction * diff) * volumeMultiplier;
                             } else {
-                                result[i] += value0;
+                                result[i] += value0 * volumeMultiplier;
                             }
                         }
                     }
