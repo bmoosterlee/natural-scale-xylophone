@@ -1,9 +1,6 @@
 package spectrum;
 
-import component.buffer.BoundedBuffer;
-import component.buffer.PipeCallable;
-import component.buffer.SimpleBuffer;
-import component.buffer.SimplePacket;
+import component.buffer.*;
 import frequency.Frequency;
 import sound.Complex;
 import sound.FFTEnvironment;
@@ -77,21 +74,24 @@ public class SpectrumBuilder {
 //        }, "spectrum builder - calculate harmonics");
 //    }
 
-    public static BoundedBuffer<Complex[], SimplePacket<Complex[]>> buildHarmonicSpectrumPipe(SimpleBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer) {
-        int maxHarmonics = 20;
+    Map.Entry<Double, Double>[] harmonics;
 
-        PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> harmonicCalculator = HarmonicCalculator.calculateHarmonics(maxHarmonics);
+    public SpectrumBuilder(int numberOfHarmonics, boolean tonicIncluded){
+        harmonics = calculateHarmonics(numberOfHarmonics, tonicIncluded);
+    }
+
+    private static Map.Entry<Double, Double>[] calculateHarmonics(int numberOfHarmonics, boolean tonicIncluded) {
+        PipeCallable<VolumeStateMap, Iterator<Map.Entry<Harmonic, Double>>> harmonicCalculator = HarmonicCalculator.calculateHarmonics(numberOfHarmonics);
         int counter = 0;
 
 //        Skip tonic
-        boolean tonicIncluded = false;
         int tonic;
         if(tonicIncluded) {
             tonic = 1;
         } else {
             tonic = 0;
         }
-        int adjustedNumberOfHarmonics = tonic + maxHarmonics;
+        int adjustedNumberOfHarmonics = tonic + numberOfHarmonics;
         Map.Entry<Double, Double>[] harmonics = new Map.Entry[adjustedNumberOfHarmonics];
         HashMap<Frequency, Double> tempMap = new HashMap<>();
         tempMap.put(new Frequency(1), 1.);
@@ -103,8 +103,6 @@ public class SpectrumBuilder {
 
         while(harmonicsIterator.hasNext()) {
             Map.Entry<Harmonic, Double> harmonicWithVolume = harmonicsIterator.next();
-            Frequency frequency = harmonicWithVolume.getKey().getHarmonicFrequency();
-            int x = (int) frequency.getValue();
             harmonics[counter] = new AbstractMap.SimpleImmutableEntry<>(harmonicWithVolume.getKey().getHarmonicFrequency().getValue(), harmonicWithVolume.getValue());
             counter++;
         }
@@ -116,7 +114,10 @@ public class SpectrumBuilder {
                 harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue()/magnitude);
             }
         }
+        return harmonics;
+    }
 
+    public BoundedBuffer<Complex[], SimplePacket<Complex[]>> buildHarmonicSpectrumPipe(SimpleBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer) {
         return volumeBuffer.performMethod(input -> {
             Complex[] harmonicsForThisVolumeSpectrum = new Complex[FFTEnvironment.resamplingWindow];
             Arrays.fill(harmonicsForThisVolumeSpectrum, new Complex(0., 0.));
@@ -148,5 +149,79 @@ public class SpectrumBuilder {
             }
             return harmonicsForThisVolumeSpectrum;
         }, "spectrum builder - calculate harmonics");
+    }
+
+    public PipeCallable<BoundedBuffer<Double, SimplePacket<Double>>, BoundedBuffer<Double, SimplePacket<Double>>> buildHarmonicSamplePipe(int resamplingWindow) {
+        return inputBuffer ->
+        {
+            BoundedBuffer<Double, SimplePacket<Double>> outputBuffer = new SimpleBuffer<>(resamplingWindow*2, "spectrum builder - harmonics from sample - output");
+
+            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+                double[] history;
+                int count = 0;
+
+                {
+                    history = new double[resamplingWindow];
+                }
+
+                @Override
+                public void tick() {
+                    double in = 0;
+                    try {
+                        in = input.consume().unwrap();
+
+                        if (count >= history.length) {
+                            count = 0;
+
+                            double[] harmonizedSample = harmonizeSample(history);
+
+                            for(Double amplitude : harmonizedSample) {
+                                output.produce(new SimplePacket<>(amplitude));
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    history[count] = in;
+                    count++;
+                }
+
+                private double[] harmonizeSample(double[] sample) {
+                    double[] result = new double[sample.length];
+                    Map.Entry<Double, Double> harmonic;
+                    Double frequencyMultiplier;
+                    int x0;
+                    int x1;
+                    double xFraction;
+
+                    double harmonicSampleWindowSize;
+                    double resampleIndex;
+                    double value0;
+                    double diff;
+                    for (int j = 0; j < harmonics.length; j++) {
+                        harmonic = harmonics[j];
+                        frequencyMultiplier = harmonic.getKey();
+                        harmonicSampleWindowSize = sample.length / frequencyMultiplier;
+                        for(int i = 0; i<sample.length; i++) {
+                            resampleIndex = (i % harmonicSampleWindowSize) * frequencyMultiplier;
+                            x0 = (int) resampleIndex;
+                            x1 = x0 + 1;
+                            xFraction = resampleIndex - x0;
+                            value0 = sample[x0];
+                            if(xFraction > 0.) {
+                                diff = sample[x1] - value0;
+                                result[i] += value0 + xFraction * diff;
+                            } else {
+                                result[i] += value0;
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+            });
+            return outputBuffer;
+        };
     }
 }

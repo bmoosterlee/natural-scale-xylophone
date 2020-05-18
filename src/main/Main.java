@@ -34,10 +34,12 @@ public class Main {
         int SAMPLE_SIZE_IN_BITS = 8;
         SoundEnvironment soundEnvironment = new SoundEnvironment(sampleRate, SAMPLE_SIZE_IN_BITS);
         FFTEnvironment fftEnvironment = new FFTEnvironment(sampleRate);
+        SpectrumBuilder spectrumBuilder = new SpectrumBuilder(20, false);
 
         boolean microphoneOn = true;
         boolean IFFTSynthesis = true;
         boolean audioOutTonicOnly = false;
+        boolean harmonicsFromSpectrumInsteadOfSample = true;
 
         int frameRate = 60 / 2;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
@@ -50,7 +52,7 @@ public class Main {
         int pianolaLookahead = pianolaRate / 4;
 
 
-        Runnable build = new Main().build(soundEnvironment, sampleLookahead, sampleRate, microphoneOn, fftEnvironment, IFFTSynthesis, audioOutTonicOnly, frameRate, spectrumWindow, pianolaOn, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+        Runnable build = new Main().build(soundEnvironment, sampleLookahead, sampleRate, microphoneOn, fftEnvironment, spectrumBuilder, IFFTSynthesis, audioOutTonicOnly, harmonicsFromSpectrumInsteadOfSample, frameRate, spectrumWindow, pianolaOn, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
 
         trafficAnalyzer.start();
         build.run();
@@ -61,9 +63,7 @@ public class Main {
         return Arrays.stream(magnitudes).boxed().toArray(Double[]::new);
     }
 
-    private Runnable build(SoundEnvironment soundEnvironment, int sampleLookahead, SampleRate sampleRate, boolean microphoneOn, FFTEnvironment fftEnvironment, boolean IFFTSynthesis, boolean audioOutTonicOnly, int frameRate, SpectrumWindow spectrumWindow, boolean pianolaOn, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
-        System.out.println(sampleRate.sampleRate);
-
+    private Runnable build(SoundEnvironment soundEnvironment, int sampleLookahead, SampleRate sampleRate, boolean microphoneOn, FFTEnvironment fftEnvironment, SpectrumBuilder spectrumBuilder, boolean IFFTSynthesis, boolean audioOutTonicOnly, boolean harmonicsFromSpectrumInsteadOfSample, int frameRate, SpectrumWindow spectrumWindow, boolean pianolaOn, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, ("new notes"));
 
         BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumesOfAudioIn;
@@ -104,11 +104,17 @@ public class Main {
         LinkedList<SimpleBuffer<Complex[], SimplePacket<Complex[]>>> volumeBroadcastAudio = new LinkedList<>(volumeBuffer.broadcast(2, "main note spectrum - broadcast"));
 
         SimpleBuffer<byte[], SimplePacket<byte[]>> rawAudioOutBuffer = new SimpleBuffer<>(sampleLookahead, "main - raw audio relay");
+        BoundedBuffer<Double, SimplePacket<Double>> rawAmplitudeBuffer;
         if(audioOutTonicOnly){
-            soundEnvironment.prepareAudioForMixer(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).relayTo(rawAudioOutBuffer);
+            rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
         } else {
-            soundEnvironment.prepareAudioForMixer(SpectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll()), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).relayTo(rawAudioOutBuffer);
+            if(harmonicsFromSpectrumInsteadOfSample) {
+                rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(spectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll()), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
+            } else {
+                rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
+            }
         }
+        soundEnvironment.prepareAudioForMixer(rawAmplitudeBuffer).relayTo(rawAudioOutBuffer);
         MethodInputComponent<byte[], SimplePacket<byte[]>> audioOut = soundEnvironment.audioOut(rawAudioOutBuffer);
 
         SimpleBuffer<Pulse, SimplePacket<Pulse>> guiTickerOutput = new SimpleBuffer<>(1, ("main - dump GUI ticker overflow"));

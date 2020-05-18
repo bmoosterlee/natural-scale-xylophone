@@ -48,7 +48,8 @@ public class SoundEnvironment {
         return (byte) (sampleSize * amplitude / 2);
     }
 
-    public BoundedBuffer<byte[], SimplePacket<byte[]>> prepareAudioForMixer(BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer, FFTEnvironment fftEnvironment, SampleRate sampleRate, boolean IFFTSynthesis, SpectrumWindow spectrumWindow) {
+    public BoundedBuffer<byte[], SimplePacket<byte[]>> prepareAudioForMixer(BoundedBuffer<Double, SimplePacket<Double>> rawAmplitudeBuffer) {
+
         try {
             sourceDataLine = AudioSystem.getSourceDataLine(af);
             sourceDataLine.open(af);
@@ -59,6 +60,20 @@ public class SoundEnvironment {
             e.printStackTrace();
         }
 
+        return rawAmplitudeBuffer
+                .performMethod(this::fitAmplitude, "sound environment - fit amplitude")
+                .resize(audioOutBufferSize, "sound environment - raw audio out resize")
+                .connectTo((PipeCallable<BoundedBuffer<Byte, Packet<Byte>>, SimpleBuffer<List<Byte>, SimplePacket<List<Byte>>>>) Flusher::flushToList)
+                .performMethod(input -> {
+                    byte[] array = new byte[input.size()];
+                    for (int i = 0; i < array.length; i++) {
+                        array[i] = input.get(i);
+                    }
+                    return array;
+                }, "sound environment - audio out to byte array");
+    }
+
+    public BoundedBuffer<Double, SimplePacket<Double>> synthesizeAudio(BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer, FFTEnvironment fftEnvironment, SampleRate sampleRate, boolean IFFTSynthesis, SpectrumWindow spectrumWindow) {
         BoundedBuffer<Double, SimplePacket<Double>> rawAmplitudeBuffer;
         if (IFFTSynthesis) {
             rawAmplitudeBuffer = volumeBuffer.connectTo(fftEnvironment.buildAudioOutPipe(sampleRate));
@@ -94,18 +109,7 @@ public class SoundEnvironment {
 
             new TickRunningStrategy(component);
         }
-
-        return rawAmplitudeBuffer
-                .performMethod(this::fitAmplitude, "sound environment - fit amplitude")
-                .resize(audioOutBufferSize, "sound environment - raw audio out resize")
-                .connectTo((PipeCallable<BoundedBuffer<Byte, Packet<Byte>>, SimpleBuffer<List<Byte>, SimplePacket<List<Byte>>>>) Flusher::flushToList)
-                .performMethod(input -> {
-                    byte[] array = new byte[input.size()];
-                    for (int i = 0; i < array.length; i++) {
-                        array[i] = input.get(i);
-                    }
-                    return array;
-                }, "sound environment - audio out to byte array");
+        return rawAmplitudeBuffer;
     }
 
     public MethodOutputComponent<byte[]> audioIn(BoundedBuffer<byte[], SimplePacket<byte[]>> outputBuffer) {
