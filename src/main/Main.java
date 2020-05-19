@@ -197,6 +197,28 @@ public class Main {
         };
     }
 
+    private PipeCallable<Complex[], Complex[]> buildSpectrumNoiseReducer() {
+        return new PipeCallable<>() {
+
+            Double[] memory = new Double[FFTEnvironment.resamplingWindow];
+            {
+                for(int i = 0; i<FFTEnvironment.resamplingWindow; i++){
+                    memory[i] = 0.;
+                }
+            }
+
+            @Override
+            public Complex[] call(Complex[] input) {
+                Complex[] output = new Complex[FFTEnvironment.resamplingWindow];
+                for(int i = 0; i<FFTEnvironment.resamplingWindow; i++){
+                    memory[i] = memory[i] * 0.99 + CalculateFFT.getMagnitude(input[i]);
+                    output[i] = input[i].scale(1./(1. + 0.01 * memory[i]));
+                }
+                return output;
+            }
+        };
+    }
+
     public static Double[] normalize(Double[] input) {
         Double[] output = new Double[input.length];
         double magnitude = Arrays.stream(input).reduce(0., Double::sum);
