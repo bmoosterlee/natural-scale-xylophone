@@ -2,6 +2,7 @@ package spectrum;
 
 import component.buffer.*;
 import frequency.Frequency;
+import main.Main;
 import sound.Complex;
 import sound.FFTEnvironment;
 import sound.VolumeStateMap;
@@ -107,13 +108,13 @@ public class SpectrumBuilder {
             counter++;
         }
 
-        double magnitude = Arrays.stream(harmonics).map(Map.Entry::getValue).reduce(0., Double::sum);
-        if (magnitude != 0.) {
-            for (int j = 0; j < harmonics.length; j++) {
-                Map.Entry<Double, Double> harmonic = harmonics[j];
-                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue() / magnitude);
-            }
-        }
+//        double magnitude = Arrays.stream(harmonics).map(Map.Entry::getValue).reduce(0., Double::sum);
+//        if (magnitude != 0.) {
+//            for (int j = 0; j < harmonics.length; j++) {
+//                Map.Entry<Double, Double> harmonic = harmonics[j];
+//                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue() / magnitude);
+//            }
+//        }
         return harmonics;
     }
 
@@ -140,12 +141,18 @@ public class SpectrumBuilder {
                     xFraction = newFrequency - x0;
                     volumeMultiplier = harmonic.getValue();
                     if (x0 >= 0 && x0 < FFTEnvironment.resamplingWindow) {
-                        harmonicsForThisVolumeSpectrum[x0] = harmonicsForThisVolumeSpectrum[x0].plus(volumeBucket.scale((1 - xFraction) * volumeMultiplier));
+                        harmonicsForThisVolumeSpectrum[x0] = harmonicsForThisVolumeSpectrum[x0].plus(volumeBucket.scale((1. - xFraction) * volumeMultiplier));
                     }
                     if (x1 >= 0 && x1 < FFTEnvironment.resamplingWindow) {
                         harmonicsForThisVolumeSpectrum[x1] = harmonicsForThisVolumeSpectrum[x1].plus(volumeBucket.scale(xFraction * volumeMultiplier));
                     }
                 }
+            }
+
+            double volumesMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(input)).reduce(0., Double::sum);
+            double harmonicsMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(harmonicsForThisVolumeSpectrum)).reduce(0., Double::sum);
+            for (int i = 0; i < FFTEnvironment.resamplingWindow; i++) {
+                harmonicsForThisVolumeSpectrum[i] = harmonicsForThisVolumeSpectrum[i].scale(volumesMagnitude/harmonicsMagnitude);
             }
             return harmonicsForThisVolumeSpectrum;
         }, "spectrum builder - calculate harmonics");
