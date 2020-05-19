@@ -117,7 +117,7 @@ public class SpectrumBuilder {
         return harmonics;
     }
 
-    public BoundedBuffer<Complex[], SimplePacket<Complex[]>> buildHarmonicSpectrumPipe(SimpleBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer) {
+    public BoundedBuffer<Complex[], SimplePacket<Complex[]>> buildHarmonicSpectrumPipe(BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumeBuffer) {
         return volumeBuffer.performMethod(input -> {
             Complex[] harmonicsForThisVolumeSpectrum = new Complex[FFTEnvironment.resamplingWindow];
             Arrays.fill(harmonicsForThisVolumeSpectrum, new Complex(0., 0.));
