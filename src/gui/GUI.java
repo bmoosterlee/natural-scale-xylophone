@@ -31,12 +31,12 @@ public class GUI<N extends Packet<Double[]>, H extends Packet<Double[]>, O exten
         harmonicInputPort = harmonicSpectrumBroadcast.poll()
                 .performMethod(spectrumWindow::toSpectrumWindow, "gui - harmonics to spectrum window")
                 .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - harmonics")
-                .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - harmonics").createInputPort();
+                .performMethod(input2 -> volumesToYs(input2, yScale * 20, margin), "volumes to ys - harmonics").createInputPort();
 
         noteInputPort = noteInputBuffer
                 .performMethod(spectrumWindow::toSpectrumWindow, "gui - notes to spectrum window")
                 .performMethod(input -> doubleArrayToMap(spectrumWindow, input), "buckets to volumes - notes")
-                .performMethod(input2 -> volumesToYs(input2, yScale, margin), "volumes to ys - notes")
+                .performMethod(input2 -> volumesToYs(input2, yScale * 10, margin), "volumes to ys - notes")
                 .createInputPort();
 
         cursorInputPort = harmonicSpectrumBroadcast.poll()
