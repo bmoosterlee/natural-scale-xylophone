@@ -122,13 +122,14 @@ public class Main {
                     rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(finalVolumes, fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
                 }
             } else {
+                int resamplingWindow = sampleRate.sampleRate / 20;
                 if(!differenceOnly) {
-                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
+                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(resamplingWindow));
                 } else {
                     BoundedBuffer<Double, SimplePacket<Double>> synthesizedVolume = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
                     LinkedList<SimpleBuffer<Double, SimplePacket<Double>>> volumeBroadcastForDifference = new LinkedList<>(synthesizedVolume.broadcast(2, "main - difference only volume broadcast"));
-                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedHarmonics = volumeBroadcastForDifference.poll().connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
-                    rawAmplitudeBuffer = Pairer.pair(synthesizedHarmonics, volumeBroadcastForDifference.poll().resize(sampleRate.sampleRate / 20, "main - harmonic from sample resize")).performMethod(
+                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedHarmonics = volumeBroadcastForDifference.poll().connectTo(spectrumBuilder.buildHarmonicSamplePipe(resamplingWindow));
+                    rawAmplitudeBuffer = Pairer.pair(synthesizedHarmonics, volumeBroadcastForDifference.poll().resize(resamplingWindow, "main - harmonic from sample resize")).performMethod(
                             input -> input.getKey()-input.getValue()
                     , "main - calculate difference between harmonics and original signal");
                 }
