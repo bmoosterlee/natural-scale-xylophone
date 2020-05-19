@@ -22,9 +22,13 @@ public class CalculateFFT {
     public static double[] getMagnitudes(Complex[] y, int mNumberOfFFTPoints) {
         double[] absSignal = new double[mNumberOfFFTPoints];
         for(int i = 0; i < (mNumberOfFFTPoints); i++) {
-            absSignal[i] = Math.sqrt(Math.pow(y[i].re(), 2) + Math.pow(y[i].im(), 2));
+            absSignal[i] = getMagnitude(y[i]);
         }
         return absSignal;
+    }
+
+    public static double getMagnitude(Complex y) {
+        return Math.sqrt(Math.pow(y.re(), 2) + Math.pow(y.im(), 2));
     }
 
     public static double[] getPhases(Complex[] y, int mNumberOfFFTPoints) {
