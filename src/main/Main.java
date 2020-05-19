@@ -1,9 +1,6 @@
 package main;
 
-import component.Flusher;
-import component.Memorizer;
-import component.Pulse;
-import component.Separator;
+import component.*;
 import component.buffer.*;
 import frequency.Frequency;
 import gui.GUI;
@@ -40,6 +37,7 @@ public class Main {
         boolean IFFTSynthesis = true;
         boolean audioOutTonicOnly = false;
         boolean harmonicsFromSpectrumInsteadOfSample = false;
+        boolean differenceOnly = false;
 
         int frameRate = 60 / 2;
         int width = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
@@ -52,7 +50,7 @@ public class Main {
         int pianolaLookahead = pianolaRate / 4;
 
 
-        Runnable build = new Main().build(soundEnvironment, sampleLookahead, sampleRate, microphoneOn, fftEnvironment, spectrumBuilder, IFFTSynthesis, audioOutTonicOnly, harmonicsFromSpectrumInsteadOfSample, frameRate, spectrumWindow, pianolaOn, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
+        Runnable build = new Main().build(soundEnvironment, sampleLookahead, sampleRate, microphoneOn, fftEnvironment, spectrumBuilder, IFFTSynthesis, audioOutTonicOnly, harmonicsFromSpectrumInsteadOfSample, differenceOnly, frameRate, spectrumWindow, pianolaOn, inaudibleFrequencyMargin, pianolaRate, pianolaLookahead);
 
         trafficAnalyzer.start();
         build.run();
@@ -63,7 +61,7 @@ public class Main {
         return Arrays.stream(magnitudes).boxed().toArray(Double[]::new);
     }
 
-    private Runnable build(SoundEnvironment soundEnvironment, int sampleLookahead, SampleRate sampleRate, boolean microphoneOn, FFTEnvironment fftEnvironment, SpectrumBuilder spectrumBuilder, boolean IFFTSynthesis, boolean audioOutTonicOnly, boolean harmonicsFromSpectrumInsteadOfSample, int frameRate, SpectrumWindow spectrumWindow, boolean pianolaOn, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
+    private Runnable build(SoundEnvironment soundEnvironment, int sampleLookahead, SampleRate sampleRate, boolean microphoneOn, FFTEnvironment fftEnvironment, SpectrumBuilder spectrumBuilder, boolean IFFTSynthesis, boolean audioOutTonicOnly, boolean harmonicsFromSpectrumInsteadOfSample, boolean differenceOnly, int frameRate, SpectrumWindow spectrumWindow, boolean pianolaOn, int inaudibleFrequencyMargin, int pianolaRate, int pianolaLookahead) {
         SimpleBuffer<Frequency, SimplePacket<Frequency>> newNoteBuffer = new SimpleBuffer<>(64, ("new notes"));
 
         BoundedBuffer<Complex[], SimplePacket<Complex[]>> volumesOfAudioIn;
@@ -109,9 +107,31 @@ public class Main {
             rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
         } else {
             if(harmonicsFromSpectrumInsteadOfSample) {
-                rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(spectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll()), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
+                if(!differenceOnly) {
+                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(spectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastAudio.poll()), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
+                } else {
+                    LinkedList<SimpleBuffer<Complex[], SimplePacket<Complex[]>>> volumeBroadcastForDifference = new LinkedList<>(volumeBroadcastAudio.poll().broadcast(2, "main - difference only volume broadcast"));
+                    BoundedBuffer<Complex[], SimplePacket<Complex[]>> harmonics = spectrumBuilder.buildHarmonicSpectrumPipe(volumeBroadcastForDifference.poll());
+                    BoundedBuffer<Complex[], SimplePacket<Complex[]>> finalVolumes = Pairer.pair(harmonics, volumeBroadcastForDifference.poll()).performMethod(input -> {
+                        Complex[] output = new Complex[input.getKey().length];
+                        for (int i = 0; i < input.getKey().length; i++) {
+                            output[i] = input.getKey()[i].minus(input.getValue()[i]);
+                        }
+                        return output;
+                    }, "main - calculate difference between harmonics and original signal");
+                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(finalVolumes, fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
+                }
             } else {
-                rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
+                if(!differenceOnly) {
+                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
+                } else {
+                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedVolume = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
+                    LinkedList<SimpleBuffer<Double, SimplePacket<Double>>> volumeBroadcastForDifference = new LinkedList<>(synthesizedVolume.broadcast(2, "main - difference only volume broadcast"));
+                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedHarmonics = volumeBroadcastForDifference.poll().connectTo(spectrumBuilder.buildHarmonicSamplePipe(sampleRate.sampleRate / 20));
+                    rawAmplitudeBuffer = Pairer.pair(synthesizedHarmonics, volumeBroadcastForDifference.poll().resize(sampleRate.sampleRate / 20, "main - harmonic from sample resize")).performMethod(
+                            input -> input.getKey()-input.getValue()
+                    , "main - calculate difference between harmonics and original signal");
+                }
             }
         }
         soundEnvironment.prepareAudioForMixer(rawAmplitudeBuffer).relayTo(rawAudioOutBuffer);
