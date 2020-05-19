@@ -205,7 +205,7 @@ public class SpectrumBuilder {
                     for (int j = 0; j < harmonics.length; j++) {
                         harmonic = harmonics[j];
                         frequencyMultiplier = harmonic.getKey();
-                        harmonicSampleWindowSize = sample.length / frequencyMultiplier;
+                        harmonicSampleWindowSize = (sample.length - 1) / frequencyMultiplier;
                         volumeMultiplier = harmonic.getValue();
                         for (int i = 0; i < sample.length; i++) {
                             frontBackFraction = ((double) i) / (sample.length - 1);
