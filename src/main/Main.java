@@ -31,12 +31,12 @@ public class Main {
         int SAMPLE_SIZE_IN_BITS = 8;
         SoundEnvironment soundEnvironment = new SoundEnvironment(sampleRate, SAMPLE_SIZE_IN_BITS);
         FFTEnvironment fftEnvironment = new FFTEnvironment(sampleRate);
-        SpectrumBuilder spectrumBuilder = new SpectrumBuilder(20, false);
+        SpectrumBuilder spectrumBuilder = new SpectrumBuilder(100, true);
 
         boolean microphoneOn = true;
         boolean IFFTSynthesis = true;
         boolean audioOutTonicOnly = false;
-        boolean harmonicsFromSpectrumInsteadOfSample = false;
+        boolean harmonicsFromSpectrumInsteadOfSample = true;
         boolean differenceOnly = false;
 
         int frameRate = 60 / 2;
