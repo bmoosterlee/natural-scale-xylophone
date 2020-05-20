@@ -36,7 +36,7 @@ public class Main {
         boolean microphoneOn = true;
         boolean IFFTSynthesis = true;
         boolean audioOutTonicOnly = false;
-        boolean harmonicsFromSpectrumInsteadOfSample = true;
+        boolean harmonicsFromSpectrumInsteadOfSample = false;
         boolean differenceOnly = false;
 
         int frameRate = 60 / 2;
@@ -122,13 +122,13 @@ public class Main {
                     rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(finalVolumes, fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
                 }
             } else {
-                int resamplingWindow = sampleRate.sampleRate / 20;
+                int resamplingWindow = sampleRate.sampleRate;
                 if(!differenceOnly) {
-                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe(resamplingWindow));
+                    rawAmplitudeBuffer = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow).connectTo(spectrumBuilder.buildHarmonicSamplePipe2(resamplingWindow));
                 } else {
                     BoundedBuffer<Double, SimplePacket<Double>> synthesizedVolume = soundEnvironment.synthesizeAudio(volumeBroadcastAudio.poll(), fftEnvironment, sampleRate, IFFTSynthesis, spectrumWindow);
                     LinkedList<SimpleBuffer<Double, SimplePacket<Double>>> volumeBroadcastForDifference = new LinkedList<>(synthesizedVolume.broadcast(2, "main - difference only volume broadcast"));
-                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedHarmonics = volumeBroadcastForDifference.poll().connectTo(spectrumBuilder.buildHarmonicSamplePipe(resamplingWindow));
+                    BoundedBuffer<Double, SimplePacket<Double>> synthesizedHarmonics = volumeBroadcastForDifference.poll().connectTo(spectrumBuilder.buildHarmonicSamplePipe2(resamplingWindow));
                     rawAmplitudeBuffer = Pairer.pair(synthesizedHarmonics, volumeBroadcastForDifference.poll().resize(resamplingWindow, "main - harmonic from sample resize")).performMethod(
                             input -> input.getKey()-input.getValue()
                     , "main - calculate difference between harmonics and original signal");

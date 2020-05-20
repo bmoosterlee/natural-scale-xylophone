@@ -254,4 +254,106 @@ public class SpectrumBuilder {
             return outputBuffer;
         };
     }
+
+    public PipeCallable<BoundedBuffer<Double, SimplePacket<Double>>, BoundedBuffer<Double, SimplePacket<Double>>> buildHarmonicSamplePipe2(int resamplingWindow) {
+        return inputBuffer ->
+        {
+            BoundedBuffer<Double, SimplePacket<Double>> outputBuffer = new SimpleBuffer<>(resamplingWindow * 2, "spectrum builder - harmonics from sample - output");
+
+            new TickRunningStrategy(new AbstractPipeComponent<>(inputBuffer.createInputPort(), outputBuffer.createOutputPort()) {
+                double[] history;
+                int count = 0;
+
+                double[] oldSample;
+                long sampleCount = 0L;
+                double[] temp;
+
+                {
+                    history = new double[resamplingWindow];
+                    oldSample = new double[resamplingWindow];
+                }
+
+                @Override
+                public void tick() {
+                    double in = 0;
+                    try {
+                        in = input.consume().unwrap();
+
+                        if (count >= history.length) {
+                            count = 0;
+
+                            double[] harmonizedSample = harmonizeSample(history, oldSample);
+
+                            temp = oldSample;
+                            oldSample = history;
+                            history = temp;
+
+                            for (Double amplitude : harmonizedSample) {
+                                output.produce(new SimplePacket<>(amplitude));
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    history[count] = in;
+                    count++;
+                }
+
+                private double[] harmonizeSample(double[] sample, double[] oldSample) {
+                    double[] result = new double[sample.length];
+                    Map.Entry<Double, Double> harmonic;
+                    Double frequencyMultiplier;
+                    Double volumeMultiplier;
+                    int x0;
+                    int x1;
+                    double xFraction;
+
+                    double harmonicSampleWindowSize;
+                    double resampleIndex;
+                    double value0;
+                    double diff;
+                    double finalValue;
+                    double oldNewFraction;
+
+                    for (int j = 0; j < harmonics.length; j++) {
+                        harmonic = harmonics[j];
+                        frequencyMultiplier = harmonic.getKey();
+                        harmonicSampleWindowSize = (sample.length - 1) / frequencyMultiplier;
+                        volumeMultiplier = harmonic.getValue();
+                        for (int i = 0; i < sample.length; i++) {
+                            oldNewFraction = ((double) i) / (sample.length - 1);
+                            resampleIndex = ((sampleCount + ((i + sample.length / 2.) % sample.length)) % harmonicSampleWindowSize) * frequencyMultiplier;
+
+                            x0 = (int) resampleIndex;
+                            x1 = x0 + 1;
+                            xFraction = resampleIndex - x0;
+
+                            value0 = oldSample[x0];
+                            if (xFraction > 0.) {
+                                diff = oldSample[x1] - value0;
+                                finalValue = value0 + xFraction * diff;
+                            } else {
+                                finalValue = value0;
+                            }
+                            result[i] += finalValue * volumeMultiplier * (1. - oldNewFraction);
+
+                            value0 = sample[x0];
+                            if (xFraction > 0.) {
+                                diff = sample[x1] - value0;
+                                finalValue = value0 + xFraction * diff;
+                            } else {
+                                finalValue = value0;
+                            }
+                            result[i] += finalValue * volumeMultiplier * (oldNewFraction);
+                        }
+                    }
+                    sampleCount += sample.length;
+
+                    return result;
+                }
+            });
+            return outputBuffer;
+        };
+    }
 }
