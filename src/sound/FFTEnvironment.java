@@ -17,7 +17,7 @@ public class FFTEnvironment {
                 fftN = (int) Math.pow(2, k);
                 k++;
 //                        } while (fftN / 2 < spectrumWindow.upperBound.getValue());
-            } while (fftN * 2 < sampleRate.sampleRate);
+            } while (fftN < sampleRate.sampleRate);
 
 //                        k = 0;
 //                        do {
