@@ -348,6 +348,40 @@ public class SpectrumBuilder {
                             result[i] += finalValue * volumeMultiplier * (oldNewFraction);
                         }
                     }
+
+//                    TODO find out where exactly we need sample.length and sample.length - 1 in this segment and above
+//                    Modulate the signal by the tonic to preserve the envelope
+//                    for (int i = 0; i < sample.length; i++) {
+//                        oldNewFraction = ((double) i) / (sample.length - 1);
+//                        resampleIndex = ((sampleCount + ((i + sample.length / 2.) % sample.length)) % sample.length);
+//                        x0 = (int) resampleIndex;
+//                        finalValue = oldSample[x0] * (1. - oldNewFraction) + sample[x0] * (oldNewFraction);
+//
+//                        result[i] *= finalValue;
+//                    }
+
+//                    Modulate the signal by the original to preserve the envelope
+                    for (int i = 0; i < sample.length; i++) {
+                        x0 = (i + sample.length / 2) % sample.length;
+                        if(i<sample.length/2) {
+                            finalValue = oldSample[x0];
+                        } else {
+                            finalValue = sample[x0];
+                        }
+                        result[i] *= finalValue;
+                    }
+
+//                    square root of the signal magnitude to fix the amplitude after modulation
+                    double magnitude;
+                    double fixedMagnitude;
+                    for (int i = 0; i < sample.length; i++) {
+                        magnitude = Math.abs(result[i]);
+                        if(magnitude > 0){
+                            fixedMagnitude = Math.sqrt(magnitude);
+                            result[i] *= fixedMagnitude/magnitude;
+                        }
+                    }
+
                     sampleCount += sample.length;
 
                     return result;
