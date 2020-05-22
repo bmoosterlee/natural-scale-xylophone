@@ -108,13 +108,13 @@ public class SpectrumBuilder {
             counter++;
         }
 
-//        double magnitude = Arrays.stream(harmonics).map(Map.Entry::getValue).reduce(0., Double::sum);
-//        if (magnitude != 0.) {
-//            for (int j = 0; j < harmonics.length; j++) {
-//                Map.Entry<Double, Double> harmonic = harmonics[j];
-//                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue() / magnitude);
-//            }
-//        }
+        double magnitude = Arrays.stream(harmonics).map(Map.Entry::getValue).reduce(0., Double::sum);
+        if (magnitude != 0.) {
+            for (int j = 0; j < harmonics.length; j++) {
+                Map.Entry<Double, Double> harmonic = harmonics[j];
+                harmonics[j] = new AbstractMap.SimpleImmutableEntry<>(harmonic.getKey(), harmonic.getValue() / magnitude);
+            }
+        }
         return harmonics;
     }
 
@@ -149,11 +149,11 @@ public class SpectrumBuilder {
                 }
             }
 
-            double volumesMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(input)).reduce(0., Double::sum);
-            double harmonicsMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(harmonicsForThisVolumeSpectrum)).reduce(0., Double::sum);
-            for (int i = 0; i < FFTEnvironment.resamplingWindow; i++) {
-                harmonicsForThisVolumeSpectrum[i] = harmonicsForThisVolumeSpectrum[i].scale(volumesMagnitude/harmonicsMagnitude);
-            }
+//            double volumesMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(input)).reduce(0., Double::sum);
+//            double harmonicsMagnitude = Arrays.stream(Main.toMagnitudeSpectrum(harmonicsForThisVolumeSpectrum)).reduce(0., Double::sum);
+//            for (int i = 0; i < FFTEnvironment.resamplingWindow; i++) {
+//                harmonicsForThisVolumeSpectrum[i] = harmonicsForThisVolumeSpectrum[i].scale(volumesMagnitude/harmonicsMagnitude);
+//            }
             return harmonicsForThisVolumeSpectrum;
         }, "spectrum builder - calculate harmonics");
     }
