@@ -115,7 +115,7 @@ public class Main {
                     BoundedBuffer<Complex[], SimplePacket<Complex[]>> finalVolumes = Pairer.pair(harmonics, volumeBroadcastForDifference.poll()).performMethod(input -> {
                         Complex[] output = new Complex[input.getKey().length];
                         for (int i = 0; i < input.getKey().length; i++) {
-                            output[i] = input.getKey()[i].minus(input.getValue()[i]);
+                            output[i] = (input.getKey()[i].minus(input.getValue()[i])).scale(0.5);
                         }
                         return output;
                     }, "main - calculate difference between harmonics and original signal");
