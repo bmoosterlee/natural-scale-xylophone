@@ -368,7 +368,7 @@ public class SpectrumBuilder {
                         } else {
                             finalValue = sample[x0];
                         }
-                        result[i] *= finalValue;
+                        result[i] *= Math.abs(finalValue);
                     }
 
 //                    square root of the signal magnitude to fix the amplitude after modulation
